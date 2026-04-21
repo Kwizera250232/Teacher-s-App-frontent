@@ -125,6 +125,56 @@
   color: white;
 }
 
+.landing-code-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.landing-code-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 18px;
+  letter-spacing: 4px;
+  text-align: center;
+  font-weight: 700;
+  border: 2px solid #a78bfa;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  outline: none;
+  box-sizing: border-box;
+  text-transform: uppercase;
+}
+
+.landing-code-input::placeholder {
+  letter-spacing: 1px;
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.landing-code-input:focus {
+  border-color: #fff;
+  background: rgba(255,255,255,0.2);
+}
+
+.landing-code-error {
+  color: #fca5a5;
+  font-size: 13px;
+  margin: 0;
+  text-align: center;
+}
+
+.landing-have-account {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
 .landing-footer {
   margin-top: 2rem;
   color: rgba(255,255,255,0.85);

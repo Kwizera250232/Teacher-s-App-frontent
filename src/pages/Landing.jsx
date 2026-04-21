@@ -1,8 +1,23 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Landing.css';
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+
+  const handleJoin = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const trimmed = code.trim().toUpperCase();
+    if (trimmed.length < 4) {
+      setCodeError('Please enter a valid class code.');
+      return;
+    }
+    setCodeError('');
+    navigate(`/register?role=student&code=${trimmed}`);
+  };
 
   return (
     <div className="landing-root">
@@ -25,11 +40,28 @@ export default function Landing() {
             <span>or</span>
           </div>
 
-          <div className="landing-card student-card" onClick={() => navigate('/register?role=student')}>
+          <div className="landing-card student-card">
             <div className="landing-card-icon">👩‍🎓</div>
             <h2>I'm a Student</h2>
-            <p>Join your class using the code your teacher gave you, then access all materials.</p>
-            <button className="landing-btn student-btn">Join a Class →</button>
+            <p>Enter the class code your teacher gave you to join instantly.</p>
+            <form className="landing-code-form" onSubmit={handleJoin}>
+              <input
+                type="text"
+                className="landing-code-input"
+                value={code}
+                onChange={e => { setCode(e.target.value.toUpperCase()); setCodeError(''); }}
+                placeholder="Class code (e.g. X7P9Q2)"
+                maxLength={10}
+                autoComplete="off"
+                spellCheck="false"
+              />
+              {codeError && <p className="landing-code-error">{codeError}</p>}
+              <button type="submit" className="landing-btn student-btn">Join Class →</button>
+            </form>
+            <p className="landing-have-account">
+              Have an account?{' '}
+              <button className="landing-link" onClick={() => navigate(code.trim() ? `/login?code=${code.trim().toUpperCase()}` : '/login')}>Log in</button>
+            </p>
           </div>
         </div>
 

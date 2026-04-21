@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
 export default function Login() {
+  const [searchParams] = useSearchParams();
+  const classCode = searchParams.get('code') || '';
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +20,18 @@ export default function Login() {
     try {
       const data = await api.post('/auth/login', form);
       login(data.token, data.user);
-      navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+      if (data.user.role === 'student' && classCode) {
+        try {
+          const joined = await api.post('/classes/join', { class_code: classCode }, data.token);
+          navigate(`/student/classes/${joined.class.id}`);
+        } catch {
+          navigate('/student/dashboard');
+        }
+      } else if (data.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     } finally {

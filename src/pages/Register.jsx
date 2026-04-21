@@ -7,6 +7,7 @@ import './Auth.css';
 export default function Register() {
   const [searchParams] = useSearchParams();
   const defaultRole = searchParams.get('role') === 'teacher' ? 'teacher' : 'student';
+  const classCode = searchParams.get('code') || '';
   const [form, setForm] = useState({ name: '', email: '', password: '', role: defaultRole, school_id: '', newSchool: '' });
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
@@ -36,7 +37,16 @@ export default function Register() {
         school_id: schoolId || null,
       });
       login(data.token, data.user);
-      navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+      if (data.user.role === 'student' && classCode) {
+        try {
+          const joined = await api.post('/classes/join', { class_code: classCode }, data.token);
+          navigate(`/student/classes/${joined.class.id}`);
+        } catch {
+          navigate('/student/dashboard');
+        }
+      } else {
+        navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
