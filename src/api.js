@@ -16,6 +16,7 @@ async function request(method, endpoint, body, token) {
 export const api = {
   get: (endpoint, token) => request('GET', endpoint, null, token),
   post: (endpoint, body, token) => request('POST', endpoint, body, token),
+  put: (endpoint, body, token) => request('PUT', endpoint, body, token),
   delete: (endpoint, token) => request('DELETE', endpoint, null, token),
 };
 

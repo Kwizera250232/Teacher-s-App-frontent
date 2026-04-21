@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
 export default function Register() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student', school_id: '', newSchool: '' });
+  const [searchParams] = useSearchParams();
+  const defaultRole = searchParams.get('role') === 'teacher' ? 'teacher' : 'student';
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: defaultRole, school_id: '', newSchool: '' });
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

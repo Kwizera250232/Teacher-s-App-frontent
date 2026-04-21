@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import TeacherDashboard from './pages/TeacherDashboard';
@@ -8,6 +9,7 @@ import TeacherClassPage from './pages/TeacherClassPage';
 import StudentClassPage from './pages/StudentClassPage';
 import TakeQuiz from './pages/TakeQuiz';
 import QuizResults from './pages/QuizResults';
+import AdminDashboard from './pages/AdminDashboard';
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -20,7 +22,8 @@ function ProtectedRoute({ children, role }) {
 function HomeRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/welcome" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
   return <Navigate to={user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'} replace />;
 }
 
@@ -30,8 +33,13 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomeRedirect />} />
+          <Route path="/welcome" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          <Route path="/admin" element={
+            <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
+          } />
 
           <Route path="/teacher/dashboard" element={
             <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
