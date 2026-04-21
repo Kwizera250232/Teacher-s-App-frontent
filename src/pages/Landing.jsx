@@ -16,7 +16,7 @@ export default function Landing() {
       return;
     }
     setCodeError('');
-    navigate(`/register?role=student&code=${trimmed}`);
+    navigate(`/join?code=${trimmed}`);
   };
 
   return (
@@ -60,7 +60,7 @@ export default function Landing() {
             </form>
             <p className="landing-have-account">
               Have an account?{' '}
-              <button className="landing-link" onClick={() => navigate(code.trim() ? `/login?code=${code.trim().toUpperCase()}` : '/login')}>Log in</button>
+              <button className="landing-link" onClick={() => navigate(code.trim() ? `/join?code=${code.trim().toUpperCase()}` : '/login')}>Log in</button>
             </p>
           </div>
         </div>

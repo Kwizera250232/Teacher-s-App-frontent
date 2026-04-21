@@ -10,6 +10,7 @@ import StudentClassPage from './pages/StudentClassPage';
 import TakeQuiz from './pages/TakeQuiz';
 import QuizResults from './pages/QuizResults';
 import AdminDashboard from './pages/AdminDashboard';
+import JoinClass from './pages/JoinClass';
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomeRedirect />} />
           <Route path="/welcome" element={<Landing />} />
+          <Route path="/join" element={<JoinClass />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
