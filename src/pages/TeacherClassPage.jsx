@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api, uploadFile } from '../api';
+import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateQuizModal from '../components/CreateQuizModal';
 import '../pages/Dashboard.css';
@@ -22,7 +22,7 @@ export default function TeacherClassPage() {
   // Forms
   const [announcementText, setAnnouncementText] = useState('');
   const [noteForm, setNoteForm] = useState({ title: '', file: null });
-  const [hwForm, setHwForm] = useState({ title: '', description: '', due_date: '' });
+  const [hwForm, setHwForm] = useState({ title: '', description: '', due_date: '', file: null });
   const [discussionText, setDiscussionText] = useState('');
 
   useEffect(() => {
@@ -80,8 +80,13 @@ export default function TeacherClassPage() {
   const postHomework = async (e) => {
     e.preventDefault();
     try {
-      await api.post(`/classes/${id}/homework`, hwForm, token);
-      setHwForm({ title: '', description: '', due_date: '' });
+      const fd = new FormData();
+      fd.append('title', hwForm.title);
+      if (hwForm.description) fd.append('description', hwForm.description);
+      if (hwForm.due_date) fd.append('due_date', hwForm.due_date);
+      if (hwForm.file) fd.append('file', hwForm.file);
+      await uploadFile(`/classes/${id}/homework`, fd, token);
+      setHwForm({ title: '', description: '', due_date: '', file: null });
       loadTab();
       showSuccess('Homework created!');
     } catch (e) { setError(e.message); }
@@ -179,7 +184,7 @@ export default function TeacherClassPage() {
                 <div className="item-card-body">
                   <h3>📄 {n.title}</h3>
                   {n.file_name && (
-                    <a href={`http://localhost:5000/uploads/${n.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }}>
+                    <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }}>
                       Download {n.file_name}
                     </a>
                   )}
@@ -207,6 +212,10 @@ export default function TeacherClassPage() {
                 <label>Due Date</label>
                 <input type="date" value={hwForm.due_date} onChange={e => setHwForm({ ...hwForm, due_date: e.target.value })} />
               </div>
+              <div className="form-group">
+                <label>Attachment (PDF, DOC, etc.)</label>
+                <input type="file" onChange={e => setHwForm({ ...hwForm, file: e.target.files[0] })} accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" />
+              </div>
               <button type="submit" className="btn btn-primary">Create Homework</button>
             </form>
             {data.map(hw => (
@@ -215,6 +224,11 @@ export default function TeacherClassPage() {
                   <h3>📝 {hw.title}</h3>
                   {hw.description && <p>{hw.description}</p>}
                   {hw.due_date && <div className="meta">Due: {new Date(hw.due_date).toLocaleDateString()}</div>}
+                  {hw.file_name && (
+                    <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }}>
+                      📎 {hw.file_name}
+                    </a>
+                  )}
                 </div>
                 <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/homework/${hw.id}`)}>Delete</button>
               </div>

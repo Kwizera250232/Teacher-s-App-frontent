@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import '../pages/Dashboard.css';
 
@@ -94,7 +94,7 @@ export default function StudentClassPage() {
                   <div className="meta">{new Date(n.created_at).toLocaleDateString()}</div>
                 </div>
                 {n.file_path && (
-                  <a href={`http://localhost:5000/uploads/${n.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
+                  <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
                     Download
                   </a>
                 )}
@@ -111,6 +111,11 @@ export default function StudentClassPage() {
                   <h3>📝 {hw.title}</h3>
                   {hw.description && <p>{hw.description}</p>}
                   {hw.due_date && <div className="meta">Due: {new Date(hw.due_date).toLocaleDateString()}</div>}
+                  {hw.file_name && (
+                    <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }}>
+                      📎 Download: {hw.file_name}
+                    </a>
+                  )}
                 </div>
               </div>
             ))
