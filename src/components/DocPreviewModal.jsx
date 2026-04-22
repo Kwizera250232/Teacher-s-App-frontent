@@ -1,7 +1,186 @@
 import { useEffect, useState } from 'react';
 
-export default function DocPreviewModal({ viewerUrl, fileUrl, fileName, onClose }) {
+const EXT_COLORS = {
+  PDF:  '#ef4444',
+  DOCX: '#2563eb', DOC: '#2563eb',
+  PPTX: '#ea580c', PPT: '#ea580c',
+  XLSX: '#16a34a', XLS: '#16a34a',
+  TXT:  '#64748b',
+  JPG:  '#8b5cf6', JPEG: '#8b5cf6', PNG: '#8b5cf6', GIF: '#8b5cf6', WEBP: '#8b5cf6',
+};
+
+function getFileType(ext) {
+  const e = ext.toUpperCase();
+  if (['JPG','JPEG','PNG','GIF','WEBP','BMP','SVG'].includes(e)) return 'image';
+  if (e === 'PDF') return 'pdf';
+  if (e === 'TXT') return 'text';
+  if (['DOC','DOCX','PPT','PPTX','XLS','XLSX'].includes(e)) return 'office';
+  return 'other';
+}
+
+export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
   const [loading, setLoading] = useState(true);
+  const [textContent, setTextContent] = useState('');
+  const [gdocsFailed, setGdocsFailed] = useState(false);
+
+  const displayName = fileName ? fileName.replace(/^\d+-\d+\./, '') : 'Document';
+  const rawExt = displayName.includes('.') ? displayName.split('.').pop() : '';
+  const ext = rawExt.toUpperCase();
+  const fileType = getFileType(rawExt);
+  const badgeColor = EXT_COLORS[ext] || '#667eea';
+
+  // Google Docs viewer URL
+  const gdocsUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+  // Office Online viewer URL (fallback)
+  const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  // Fetch text files
+  useEffect(() => {
+    if (fileType === 'text') {
+      fetch(fileUrl)
+        .then(r => r.text())
+        .then(t => { setTextContent(t); setLoading(false); })
+        .catch(() => { setTextContent('Could not load file.'); setLoading(false); });
+    }
+  }, [fileUrl, fileType]);
+
+  const renderContent = () => {
+    if (fileType === 'image') {
+      return (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', overflow: 'auto', padding: 16 }}>
+          <img
+            src={fileUrl}
+            alt={displayName}
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+            onLoad={() => setLoading(false)}
+            onError={() => setLoading(false)}
+          />
+        </div>
+      );
+    }
+
+    if (fileType === 'pdf') {
+      return (
+        <iframe
+          src={fileUrl}
+          style={{ flex: 1, border: 'none', background: '#fff' }}
+          title={displayName}
+          allowFullScreen
+          onLoad={() => setLoading(false)}
+        />
+      );
+    }
+
+    if (fileType === 'text') {
+      return (
+        <pre style={{
+          flex: 1, overflow: 'auto', padding: 24, margin: 0,
+          background: '#0f172a', color: '#e2e8f0', fontSize: 14,
+          lineHeight: 1.7, fontFamily: 'Consolas, monospace', whiteSpace: 'pre-wrap',
+        }}>
+          {textContent}
+        </pre>
+      );
+    }
+
+    if (fileType === 'office') {
+      const src = gdocsFailed ? officeUrl : gdocsUrl;
+      return (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          {gdocsFailed && (
+            <div style={{ background: '#fef3c7', color: '#92400e', padding: '6px 16px', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+              ⚡ Using Microsoft Office Online viewer
+            </div>
+          )}
+          <iframe
+            key={src}
+            src={src}
+            style={{ flex: 1, border: 'none', background: '#fff' }}
+            title={displayName}
+            allowFullScreen
+            onLoad={() => setLoading(false)}
+            onError={() => { if (!gdocsFailed) { setGdocsFailed(true); setLoading(true); } else setLoading(false); }}
+          />
+        </div>
+      );
+    }
+
+    // Fallback: try Google Docs viewer for anything else
+    return (
+      <iframe
+        src={gdocsUrl}
+        style={{ flex: 1, border: 'none', background: '#fff' }}
+        title={displayName}
+        allowFullScreen
+        onLoad={() => setLoading(false)}
+      />
+    );
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <div style={{
+        background: '#1e293b', padding: '10px 16px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexShrink: 0, gap: 10,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
+          <span style={{
+            background: badgeColor, color: '#fff', fontWeight: 700,
+            fontSize: 11, padding: '2px 8px', borderRadius: 4, flexShrink: 0,
+          }}>{ext || 'FILE'}</span>
+          <span style={{ color: '#fff', fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {displayName}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <a href={fileUrl} download={displayName} style={{
+            padding: '6px 14px', background: '#334155', color: '#fff',
+            borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+          }}>⬇ Download</a>
+          <a href={fileUrl} target="_blank" rel="noreferrer" style={{
+            padding: '6px 14px', background: '#334155', color: '#fff',
+            borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+          }}>↗ New tab</a>
+          <button onClick={onClose} style={{
+            background: '#ef4444', color: '#fff', border: 'none',
+            borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+          }}>✕ Close</button>
+        </div>
+      </div>
+
+      {/* Loading overlay */}
+      {loading && (
+        <div style={{
+          position: 'absolute', inset: '49px 0 0 0',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          background: '#f8fafc', zIndex: 2,
+        }}>
+          <div style={{
+            width: 48, height: 48, border: '5px solid #e2e8f0',
+            borderTopColor: badgeColor, borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <p style={{ marginTop: 16, color: '#64748b', fontWeight: 600 }}>Loading {displayName}…</p>
+          <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>
+            {fileType === 'office' ? 'Connecting to document viewer…' : ''}
+          </p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
+      {renderContent()}
+    </div>
+  );
+}
+
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };

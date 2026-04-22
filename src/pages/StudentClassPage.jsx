@@ -91,8 +91,7 @@ export default function StudentClassPage() {
   };
 
   const getViewerUrl = (filePath) => {
-    const url = `${UPLOADS_BASE}/uploads/${filePath}`;
-    return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+    return `${UPLOADS_BASE}/uploads/${filePath}`;
   };
 
   const getDueStatus = (due_date) => {
@@ -174,7 +173,7 @@ export default function StudentClassPage() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
                       className="btn btn-secondary btn-sm"
-                      onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(n.file_path), fileUrl: `${UPLOADS_BASE}/uploads/${n.file_path}`, fileName: n.file_name || n.title })}
+                      onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/uploads/${n.file_path}`, fileName: n.file_name || n.title })}
                     >👁 Preview</button>
                     <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} download={n.file_name || true} className="btn btn-primary btn-sm">⬇ Download</a>
                     <button
@@ -219,7 +218,7 @@ export default function StudentClassPage() {
                           <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                             <button
                               className="btn btn-secondary btn-sm"
-                              onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(hw.file_path), fileUrl: `${UPLOADS_BASE}/uploads/${hw.file_path}`, fileName: hw.file_name })}
+                              onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/uploads/${hw.file_path}`, fileName: hw.file_name })}
                             >👁 Preview</button>
                             <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                             <button
@@ -273,7 +272,7 @@ export default function StudentClassPage() {
                           <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
                             <button
                               className="btn btn-secondary btn-sm"
-                              onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(sub.file_path), fileUrl: `${UPLOADS_BASE}/uploads/${sub.file_path}`, fileName: sub.file_name })}
+                              onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/uploads/${sub.file_path}`, fileName: sub.file_name })}
                             >👁 Preview</button>
                             <a href={`${UPLOADS_BASE}/uploads/${sub.file_path}`} download={sub.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                           </div>
@@ -358,7 +357,6 @@ export default function StudentClassPage() {
 
       {previewDoc && (
         <DocPreviewModal
-          viewerUrl={previewDoc.viewerUrl}
           fileUrl={previewDoc.fileUrl}
           fileName={previewDoc.fileName}
           onClose={() => setPreviewDoc(null)}
