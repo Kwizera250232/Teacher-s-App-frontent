@@ -21,7 +21,7 @@ export default function QuizResults() {
     <div className="class-page">
       <header className="dash-header">
         <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>← Back</button>
-        <div className="dash-brand">🎓 EduApp</div>
+        <div className="dash-brand">🎓 UClass</div>
       </header>
       <main className="class-main">
         <h2 style={{ marginBottom: 24 }}>Quiz Results</h2>

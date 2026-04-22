@@ -58,45 +58,45 @@ export default function Register() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-logo">🎓</div>
-        <h2>Create Account</h2>
-        <p className="auth-sub">Join the learning platform</p>
+        <h2>Fungura Konti</h2>
+        <p className="auth-sub">Injira mu rubuga rw'inyigisho</p>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Full Name</label>
-            <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your full name" required />
+            <label>Amazina Yuzuye</label>
+            <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Amazina yawe yuzuye" required />
           </div>
           <div className="form-group">
-            <label>Email</label>
+            <label>Imeyili</label>
             <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" required />
           </div>
           <div className="form-group">
-            <label>Password</label>
-            <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Min 8 characters" minLength={8} required />
+            <label>Ijambo Banga</label>
+            <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Nibura inyuguti 8" minLength={8} required />
           </div>
           <div className="form-group">
-            <label>I am a</label>
+            <label>Ndi</label>
             <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
+              <option value="student">Umunyeshuri</option>
+              <option value="teacher">Umwarimu</option>
             </select>
           </div>
           <div className="form-group">
-            <label>School</label>
+            <label>Ishuri</label>
             <select value={form.school_id} onChange={e => setForm({ ...form, school_id: e.target.value, newSchool: '' })}>
-              <option value="">Select existing school...</option>
+              <option value="">Hitamo ishuri...</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label>Or add new school</label>
-            <input type="text" value={form.newSchool} onChange={e => setForm({ ...form, newSchool: e.target.value, school_id: '' })} placeholder="Type new school name" />
+            <label>Cyangwa ongeraho ishuri rishya</label>
+            <input type="text" value={form.newSchool} onChange={e => setForm({ ...form, newSchool: e.target.value, school_id: '' })} placeholder="Andika izina ry'ishuri rishya" />
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? 'Gutegereza...' : 'Fungura Konti'}
           </button>
         </form>
-        <p className="auth-link">Already have an account? <Link to="/login">Sign In</Link></p>
+        <p className="auth-link">Usanzwe ufite konti? <Link to="/login">Injira</Link></p>
       </div>
     </div>
   );

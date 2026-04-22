@@ -20,7 +20,7 @@ export default function TeacherDashboard() {
   return (
     <div className="dashboard">
       <header className="dash-header">
-        <div className="dash-brand">🎓 EduApp</div>
+        <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
           <span>👋 {user?.name}</span>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
@@ -30,11 +30,11 @@ export default function TeacherDashboard() {
       <main className="dash-main">
         <div className="dash-top">
           <div>
-            <h1>My Classes</h1>
-            <p className="dash-sub">Manage your classes and students</p>
+            <h1>Amadarasa Yanjye</h1>
+            <p className="dash-sub">Gucunga amadarasa n'abanyeshuri bawe</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-            + Create Class
+            + Fungura Ishuri
           </button>
         </div>
 
@@ -43,9 +43,9 @@ export default function TeacherDashboard() {
         {classes.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📚</div>
-            <h3>No classes yet</h3>
-            <p>Create your first class to get started</p>
-            <button className="btn btn-primary" onClick={() => setShowCreate(true)}>Create Class</button>
+            <h3>Nta madarasa nawe</h3>
+            <p>Fungura ishuri ryawe rya mbere utangire</p>
+            <button className="btn btn-primary" onClick={() => setShowCreate(true)}>Fungura Ishuri</button>
           </div>
         ) : (
           <div className="classes-grid">

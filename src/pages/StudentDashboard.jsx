@@ -20,7 +20,7 @@ export default function StudentDashboard() {
   return (
     <div className="dashboard">
       <header className="dash-header">
-        <div className="dash-brand">🎓 EduApp</div>
+        <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
           <span>👋 {user?.name}</span>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
@@ -30,11 +30,11 @@ export default function StudentDashboard() {
       <main className="dash-main">
         <div className="dash-top">
           <div>
-            <h1>My Classes</h1>
-            <p className="dash-sub">Access your learning materials</p>
+            <h1>Amadarasa Yanjye</h1>
+            <p className="dash-sub">Gera ku bikoresho by'inyigisho zawe</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowJoin(true)}>
-            + Join Class
+            + Injira mu Ishuri
           </button>
         </div>
 
@@ -43,9 +43,9 @@ export default function StudentDashboard() {
         {classes.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🎒</div>
-            <h3>No classes yet</h3>
-            <p>Join a class using the code from your teacher</p>
-            <button className="btn btn-primary" onClick={() => setShowJoin(true)}>Join Class</button>
+            <h3>Nta madarasa nawe</h3>
+            <p>Injira mu ishuri ukoresheje kode umwarimu wawe yakuguye</p>
+            <button className="btn btn-primary" onClick={() => setShowJoin(true)}>Injira mu Ishuri</button>
           </div>
         ) : (
           <div className="classes-grid">

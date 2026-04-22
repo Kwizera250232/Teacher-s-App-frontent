@@ -24,16 +24,16 @@ export default function Landing() {
       <div className="landing-hero">
         <div className="landing-brand">
           <span className="landing-logo">🎓</span>
-          <h1>EduApp</h1>
-          <p>The smart platform for teachers and students</p>
+          <h1>UClass</h1>
+          <p>Urubuga rw'inyigisho rw'abarimu n'abanyeshuri</p>
         </div>
 
         <div className="landing-cards">
           <div className="landing-card teacher-card" onClick={() => navigate('/register?role=teacher')}>
             <div className="landing-card-icon">👨‍🏫</div>
-            <h2>I'm a Teacher</h2>
-            <p>Create classes, share notes, assign homework and quizzes to your students.</p>
-            <button className="landing-btn teacher-btn">Create a Class →</button>
+            <h2>Ndi Umwarimu</h2>
+            <p>Fungura amadarasa, sangira inyigisho, ha abanyeshuri imirimo n'ibizamini.</p>
+            <button className="landing-btn teacher-btn">Fungura Ishuri →</button>
           </div>
 
           <div className="landing-divider">
@@ -42,32 +42,32 @@ export default function Landing() {
 
           <div className="landing-card student-card">
             <div className="landing-card-icon">👩‍🎓</div>
-            <h2>I'm a Student</h2>
-            <p>Enter the class code your teacher gave you to join instantly.</p>
+            <h2>Ndi Umunyeshuri</h2>
+            <p>Injiza kode y'ishuri umwarimu wawe yakuguye winjire vuba.</p>
             <form className="landing-code-form" onSubmit={handleJoin}>
               <input
                 type="text"
                 className="landing-code-input"
                 value={code}
                 onChange={e => { setCode(e.target.value.toUpperCase()); setCodeError(''); }}
-                placeholder="Class code (e.g. X7P9Q2)"
+                placeholder="Kode y'ishuri (urugero: X7P9Q2)"
                 maxLength={10}
                 autoComplete="off"
                 spellCheck="false"
               />
               {codeError && <p className="landing-code-error">{codeError}</p>}
-              <button type="submit" className="landing-btn student-btn">Join Class →</button>
+              <button type="submit" className="landing-btn student-btn">Injira mu Ishuri →</button>
             </form>
             <p className="landing-have-account">
-              Have an account?{' '}
-              <button className="landing-link" onClick={() => navigate(code.trim() ? `/join?code=${code.trim().toUpperCase()}` : '/login')}>Log in</button>
+              Usanzwe ufite konti?{' '}
+              <button className="landing-link" onClick={() => navigate(code.trim() ? `/join?code=${code.trim().toUpperCase()}` : '/login')}>Injira</button>
             </p>
           </div>
         </div>
 
         <div className="landing-footer">
-          Already have an account?{' '}
-          <button className="landing-link" onClick={() => navigate('/login')}>Log in</button>
+          Usanzwe ufite konti?{' '}
+          <button className="landing-link" onClick={() => navigate('/login')}>Injira</button>
         </div>
       </div>
     </div>

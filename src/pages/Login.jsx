@@ -43,12 +43,12 @@ export default function Login() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-logo">🎓</div>
-        <h2>Welcome Back</h2>
-        <p className="auth-sub">Sign in to your account</p>
+        <h2>Murakaza Neza</h2>
+        <p className="auth-sub">Injira muri konti yawe</p>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
+            <label>Imeyili</label>
             <input
               type="email"
               value={form.email}
@@ -58,7 +58,7 @@ export default function Login() {
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label>Ijambo Banga</label>
             <input
               type="password"
               value={form.password}
@@ -68,10 +68,10 @@ export default function Login() {
             />
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Gutegereza...' : 'Injira'}
           </button>
         </form>
-        <p className="auth-link">Don't have an account? <Link to="/register">Register</Link></p>
+        <p className="auth-link">Nta konti ufite? <Link to="/register">Iyandikishe</Link></p>
       </div>
     </div>
   );

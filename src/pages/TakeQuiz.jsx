@@ -50,7 +50,7 @@ export default function TakeQuiz() {
       <div className="class-page">
         <header className="dash-header">
           <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>← Back</button>
-          <div className="dash-brand">🎓 EduApp</div>
+          <div className="dash-brand">🎓 UClass</div>
         </header>
         <main className="class-main" style={{ maxWidth: 600 }}>
           <div className="score-card">
@@ -101,7 +101,7 @@ export default function TakeQuiz() {
     <div className="class-page">
       <header className="dash-header">
         <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>← Back</button>
-        <div className="dash-brand">🎓 EduApp</div>
+        <div className="dash-brand">🎓 UClass</div>
       </header>
       <main className="class-main" style={{ maxWidth: 700 }}>
         <h2 style={{ marginBottom: 8 }}>Quiz</h2>

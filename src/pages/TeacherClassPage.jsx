@@ -113,7 +113,7 @@ export default function TeacherClassPage() {
     <div className="class-page">
       <header className="dash-header">
         <button className="btn btn-outline btn-sm" onClick={() => navigate('/teacher/dashboard')}>← Back</button>
-        <div className="dash-brand">🎓 EduApp</div>
+        <div className="dash-brand">🎓 UClass</div>
       </header>
 
       <main className="class-main">

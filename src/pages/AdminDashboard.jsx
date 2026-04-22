@@ -47,7 +47,7 @@ export default function AdminDashboard() {
       <aside className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="admin-sidebar-brand">
           <span className="admin-logo">🎓</span>
-          {sidebarOpen && <span className="admin-brand-text">EduApp Admin</span>}
+          {sidebarOpen && <span className="admin-brand-text">UClass Admin</span>}
         </div>
         <nav className="admin-nav">
           {NAV.map(item => (
