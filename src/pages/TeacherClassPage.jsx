@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateQuizModal from '../components/CreateQuizModal';
+import DocPreviewModal from '../components/DocPreviewModal';
+import ShareModal from '../components/ShareModal';
 import '../pages/Dashboard.css';
 
 const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Discussion', 'Students'];
@@ -27,6 +29,8 @@ export default function TeacherClassPage() {
   const [discussionText, setDiscussionText] = useState('');
   // Submissions viewer: { [hwId]: { open, submissions, gradeForm: { [subId]: { grade, feedback } } } }
   const [submissionsState, setSubmissionsState] = useState({});
+  const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
+  const [shareItem, setShareItem] = useState(null);   // { title, text, url }
 
   useEffect(() => {
     api.get(`/classes/${id}`, token).then(setCls).catch(() => navigate(-1));
@@ -208,7 +212,13 @@ export default function TeacherClassPage() {
                   <p>{a.content}</p>
                   <div className="meta">📢 {new Date(a.created_at).toLocaleString()}</div>
                 </div>
-                <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/announcements/${a.id}`)}>Delete</button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setShareItem({ title: a.content, url: window.location.href })}
+                  >🔗 Share</button>
+                  <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/announcements/${a.id}`)}>Delete</button>
+                </div>
               </div>
             ))}
           </>
@@ -234,8 +244,15 @@ export default function TeacherClassPage() {
                   <h3>📄 {n.title}</h3>
                   {n.file_name && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                      <a href={getViewerUrl(n.file_path)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(n.file_path), fileName: n.file_name })}
+                      >👁 Preview</button>
                       <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} download={n.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setShareItem({ title: n.title, url: `${UPLOADS_BASE}/uploads/${n.file_path}` })}
+                      >🔗 Share</button>
                     </div>
                   )}
                   <div className="meta">{new Date(n.created_at).toLocaleDateString()}</div>
@@ -282,8 +299,15 @@ export default function TeacherClassPage() {
                       )}
                       {hw.file_name && (
                         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                          <a href={getViewerUrl(hw.file_path)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(hw.file_path), fileName: hw.file_name })}
+                          >👁 Preview</button>
                           <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setShareItem({ title: hw.title, url: `${UPLOADS_BASE}/uploads/${hw.file_path}` })}
+                          >🔗 Share</button>
                         </div>
                       )}
                     </div>
@@ -318,7 +342,10 @@ export default function TeacherClassPage() {
                             )}
                             {sub.file_name && (
                               <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-                                <a href={getViewerUrl(sub.file_path)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(sub.file_path), fileName: sub.file_name })}
+                                >👁 Preview</button>
                                 <a href={`${UPLOADS_BASE}/uploads/${sub.file_path}`} download={sub.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                               </div>
                             )}
@@ -472,6 +499,23 @@ export default function TeacherClassPage() {
           editQuiz={editQuiz}
           onClose={() => setEditQuiz(null)}
           onCreated={() => { setEditQuiz(null); loadTab(); showSuccess('Quiz updated!'); }}
+        />
+      )}
+
+      {previewDoc && (
+        <DocPreviewModal
+          viewerUrl={previewDoc.viewerUrl}
+          fileName={previewDoc.fileName}
+          onClose={() => setPreviewDoc(null)}
+        />
+      )}
+
+      {shareItem && (
+        <ShareModal
+          title={shareItem.title}
+          text={shareItem.text}
+          url={shareItem.url}
+          onClose={() => setShareItem(null)}
         />
       )}
     </div>
