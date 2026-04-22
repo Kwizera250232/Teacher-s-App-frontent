@@ -92,9 +92,7 @@ export default function StudentClassPage() {
 
   const getViewerUrl = (filePath) => {
     const url = `${UPLOADS_BASE}/uploads/${filePath}`;
-    const ext = filePath.split('.').pop().toLowerCase();
-    if (['pdf'].includes(ext)) return url;
-    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
   };
 
   const getDueStatus = (due_date) => {
@@ -145,7 +143,7 @@ export default function StudentClassPage() {
                 </div>
                 <button
                   className="btn btn-secondary btn-sm"
-                  onClick={() => setShareItem({ title: a.content, url: window.location.href })}
+                  onClick={() => setShareItem({ title: a.content, text: `Announcement on UClass: ${a.content}`, url: 'https://student.umunsi.com' })}
                 >
                   🔗 Share
                 </button>
@@ -171,7 +169,7 @@ export default function StudentClassPage() {
                     <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} download={n.file_name || true} className="btn btn-primary btn-sm">⬇ Download</a>
                     <button
                       className="btn btn-secondary btn-sm"
-                      onClick={() => setShareItem({ title: n.title, url: `${UPLOADS_BASE}/uploads/${n.file_path}` })}
+                      onClick={() => setShareItem({ title: `📄 ${n.title}`, text: `Check out this note on UClass: ${n.title}`, url: 'https://student.umunsi.com' })}
                     >🔗 Share</button>
                   </div>
                 )}
@@ -207,7 +205,7 @@ export default function StudentClassPage() {
                           <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                           <button
                             className="btn btn-secondary btn-sm"
-                            onClick={() => setShareItem({ title: hw.title, url: `${UPLOADS_BASE}/uploads/${hw.file_path}` })}
+                            onClick={() => setShareItem({ title: `📝 ${hw.title}`, text: `Check out this homework on UClass: ${hw.title}`, url: 'https://student.umunsi.com' })}
                           >🔗 Share</button>
                         </div>
                       )}
