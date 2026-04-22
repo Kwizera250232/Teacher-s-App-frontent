@@ -30,8 +30,8 @@ export default function TeacherDashboard() {
       <main className="dash-main">
         <div className="dash-top">
           <div>
-            <h1>Amadarasa Yanjye</h1>
-            <p className="dash-sub">Gucunga amadarasa n'abanyeshuri bawe</p>
+            <h1>Amashuri yanjye</h1>
+            <p className="dash-sub">Gucunga amashuri n'abanyeshuri bawe</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
             + Fungura Ishuri
