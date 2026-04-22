@@ -158,13 +158,23 @@ export default function StudentClassPage() {
               <div key={n.id} className="item-card">
                 <div className="item-card-body">
                   <h3>📄 {n.title}</h3>
-                  <div className="meta">{new Date(n.created_at).toLocaleDateString()}</div>
+                  {n.file_name && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6,
+                      background: '#f0f2ff', border: '1px solid #c7d2fe', borderRadius: 6,
+                      padding: '3px 10px', fontSize: 12, color: '#4338ca', fontWeight: 600 }}>
+                      <span>📎</span>
+                      <span style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {n.file_name.replace(/^\d+-\d+\./, '')}
+                      </span>
+                    </div>
+                  )}
+                  <div className="meta" style={{ marginTop: 6 }}>{new Date(n.created_at).toLocaleDateString()}</div>
                 </div>
                 {n.file_path && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
                       className="btn btn-secondary btn-sm"
-                      onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(n.file_path), fileName: n.file_name || n.title })}
+                      onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(n.file_path), fileUrl: `${UPLOADS_BASE}/uploads/${n.file_path}`, fileName: n.file_name || n.title })}
                     >👁 Preview</button>
                     <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} download={n.file_name || true} className="btn btn-primary btn-sm">⬇ Download</a>
                     <button
@@ -197,17 +207,27 @@ export default function StudentClassPage() {
                         </div>
                       )}
                       {hw.file_name && (
-                        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(hw.file_path), fileName: hw.file_name })}
-                          >👁 Preview</button>
-                          <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => setShareItem({ title: `📝 ${hw.title}`, text: `Check out this homework on UClass: ${hw.title}`, url: 'https://student.umunsi.com' })}
-                          >🔗 Share</button>
-                        </div>
+                        <>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6,
+                            background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 6,
+                            padding: '3px 10px', fontSize: 12, color: '#c2410c', fontWeight: 600 }}>
+                            <span>📎</span>
+                            <span style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {hw.file_name.replace(/^\d+-\d+\./, '')}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(hw.file_path), fileUrl: `${UPLOADS_BASE}/uploads/${hw.file_path}`, fileName: hw.file_name })}
+                            >👁 Preview</button>
+                            <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => setShareItem({ title: `📝 ${hw.title}`, text: `Check out this homework on UClass: ${hw.title}`, url: 'https://student.umunsi.com' })}
+                            >🔗 Share</button>
+                          </div>
+                        </>
                       )}
                     </div>
                     {/* Submission badge */}
@@ -241,13 +261,23 @@ export default function StudentClassPage() {
                       <strong>Your submission:</strong>
                       {sub.text_response && <p style={{ margin: '4px 0 0' }}>{sub.text_response}</p>}
                       {sub.file_name && (
-                        <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(sub.file_path), fileName: sub.file_name })}
-                          >👁 Preview</button>
-                          <a href={`${UPLOADS_BASE}/uploads/${sub.file_path}`} download={sub.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
-                        </div>
+                        <>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4,
+                            background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6,
+                            padding: '3px 10px', fontSize: 12, color: '#15803d', fontWeight: 600 }}>
+                            <span>📎</span>
+                            <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {sub.file_name.replace(/^\d+-\d+\./, '')}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => setPreviewDoc({ viewerUrl: getViewerUrl(sub.file_path), fileUrl: `${UPLOADS_BASE}/uploads/${sub.file_path}`, fileName: sub.file_name })}
+                            >👁 Preview</button>
+                            <a href={`${UPLOADS_BASE}/uploads/${sub.file_path}`} download={sub.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+                          </div>
+                        </>
                       )}
                       <div style={{ marginTop: 6, color: '#94a3b8', fontSize: 12 }}>
                         Submitted: {new Date(sub.submitted_at).toLocaleString()}
@@ -329,6 +359,7 @@ export default function StudentClassPage() {
       {previewDoc && (
         <DocPreviewModal
           viewerUrl={previewDoc.viewerUrl}
+          fileUrl={previewDoc.fileUrl}
           fileName={previewDoc.fileName}
           onClose={() => setPreviewDoc(null)}
         />
