@@ -24,6 +24,8 @@ export default function TeacherClassPage() {
   const [noteForm, setNoteForm] = useState({ title: '', file: null });
   const [hwForm, setHwForm] = useState({ title: '', description: '', due_date: '', file: null });
   const [discussionText, setDiscussionText] = useState('');
+  // Submissions viewer: { [hwId]: { open, submissions, gradeForm: { [subId]: { grade, feedback } } } }
+  const [submissionsState, setSubmissionsState] = useState({});
 
   useEffect(() => {
     api.get(`/classes/${id}`, token).then(setCls).catch(() => navigate(-1));
@@ -114,6 +116,45 @@ export default function TeacherClassPage() {
     const ext = filePath.split('.').pop().toLowerCase();
     if (['pdf'].includes(ext)) return url;
     return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+  };
+
+  const getDueStatus = (due_date) => {
+    if (!due_date) return null;
+    const due = new Date(due_date);
+    const now = new Date();
+    const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { label: 'Overdue', color: '#ef4444' };
+    if (diffDays === 0) return { label: 'Due today', color: '#f97316' };
+    if (diffDays <= 2) return { label: `Due in ${diffDays} day${diffDays > 1 ? 's' : ''}`, color: '#f59e0b' };
+    return { label: `Due ${due.toLocaleDateString()}`, color: '#64748b' };
+  };
+
+  const loadSubmissions = async (hwId) => {
+    const isOpen = submissionsState[hwId]?.open;
+    if (isOpen) {
+      setSubmissionsState(prev => ({ ...prev, [hwId]: { ...prev[hwId], open: false } }));
+      return;
+    }
+    try {
+      const subs = await api.get(`/classes/${id}/homework/${hwId}/submissions`, token);
+      const gradeForm = {};
+      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '' }; });
+      setSubmissionsState(prev => ({ ...prev, [hwId]: { open: true, submissions: subs, gradeForm } }));
+    } catch (e) { setError(e.message); }
+  };
+
+  const gradeSubmission = async (hwId, subId) => {
+    const gf = submissionsState[hwId]?.gradeForm?.[subId];
+    if (!gf) return;
+    try {
+      await api.put(`/classes/${id}/homework/${hwId}/submissions/${subId}/grade`, { grade: gf.grade, feedback: gf.feedback }, token);
+      showSuccess('Grade saved!');
+      // Refresh submissions
+      const subs = await api.get(`/classes/${id}/homework/${hwId}/submissions`, token);
+      const gradeForm = {};
+      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '' }; });
+      setSubmissionsState(prev => ({ ...prev, [hwId]: { open: true, submissions: subs, gradeForm } }));
+    } catch (e) { setError(e.message); }
   };
 
   return (
@@ -226,22 +267,107 @@ export default function TeacherClassPage() {
               </div>
               <button type="submit" className="btn btn-primary">Create Homework</button>
             </form>
-            {data.map(hw => (
-              <div key={hw.id} className="item-card">
-                <div className="item-card-body">
-                  <h3>📝 {hw.title}</h3>
-                  {hw.description && <p>{hw.description}</p>}
-                  {hw.due_date && <div className="meta">Due: {new Date(hw.due_date).toLocaleDateString()}</div>}
-                  {hw.file_name && (
-                    <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                      <a href={getViewerUrl(hw.file_path)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
-                      <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+            {data.map(hw => {
+              const dueStatus = getDueStatus(hw.due_date);
+              const ss = submissionsState[hw.id];
+              return (
+                <div key={hw.id} className="item-card" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                    <div className="item-card-body" style={{ flex: 1 }}>
+                      <h3>📝 {hw.title}</h3>
+                      {hw.description && <p>{hw.description}</p>}
+                      {dueStatus && (
+                        <div className="meta" style={{ color: dueStatus.color, fontWeight: 600 }}>⏰ {dueStatus.label}</div>
+                      )}
+                      {hw.file_name && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                          <a href={getViewerUrl(hw.file_path)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                          <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                      <button className="btn btn-secondary btn-sm" onClick={() => loadSubmissions(hw.id)}>
+                        {ss?.open ? '▲ Hide' : '👥 Submissions'}
+                      </button>
+                      <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/homework/${hw.id}`)}>Delete</button>
+                    </div>
+                  </div>
+
+                  {/* Submissions panel */}
+                  {ss?.open && (
+                    <div style={{ marginTop: 14, borderTop: '1.5px solid #e8e8e8', paddingTop: 14 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: '#374151', marginBottom: 12 }}>
+                        📋 Submissions ({ss.submissions.length})
+                      </div>
+                      {ss.submissions.length === 0
+                        ? <p style={{ color: '#94a3b8', fontSize: 14 }}>No submissions yet.</p>
+                        : ss.submissions.map(sub => (
+                          <div key={sub.id} style={{ background: '#f8fafc', borderRadius: 10, padding: '14px 16px', marginBottom: 12, border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                              <div style={{ fontWeight: 600, color: '#1e293b' }}>👤 {sub.student_name}</div>
+                              <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                                {new Date(sub.submitted_at).toLocaleString()}
+                              </div>
+                            </div>
+                            {sub.text_response && (
+                              <p style={{ fontSize: 14, color: '#475569', background: '#fff', padding: '8px 12px', borderRadius: 7, border: '1px solid #e2e8f0', marginBottom: 8 }}>
+                                {sub.text_response}
+                              </p>
+                            )}
+                            {sub.file_name && (
+                              <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                                <a href={getViewerUrl(sub.file_path)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                                <a href={`${UPLOADS_BASE}/uploads/${sub.file_path}`} download={sub.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+                              </div>
+                            )}
+                            {/* Grade form */}
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid #e2e8f0', paddingTop: 10 }}>
+                              <div>
+                                <label style={{ fontSize: 12, color: '#64748b', display: 'block', marginBottom: 3 }}>Grade (0–100)</label>
+                                <input
+                                  type="number" min="0" max="100"
+                                  value={ss.gradeForm[sub.id]?.grade ?? ''}
+                                  onChange={e => setSubmissionsState(prev => ({
+                                    ...prev,
+                                    [hw.id]: { ...prev[hw.id], gradeForm: { ...prev[hw.id].gradeForm, [sub.id]: { ...prev[hw.id].gradeForm[sub.id], grade: e.target.value } } }
+                                  }))}
+                                  style={{ width: 80, padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 7, fontSize: 14 }}
+                                />
+                              </div>
+                              <div style={{ flex: 1, minWidth: 140 }}>
+                                <label style={{ fontSize: 12, color: '#64748b', display: 'block', marginBottom: 3 }}>Feedback (optional)</label>
+                                <input
+                                  type="text"
+                                  placeholder="Well done! / Try again..."
+                                  value={ss.gradeForm[sub.id]?.feedback ?? ''}
+                                  onChange={e => setSubmissionsState(prev => ({
+                                    ...prev,
+                                    [hw.id]: { ...prev[hw.id], gradeForm: { ...prev[hw.id].gradeForm, [sub.id]: { ...prev[hw.id].gradeForm[sub.id], feedback: e.target.value } } }
+                                  }))}
+                                  style={{ width: '100%', padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 7, fontSize: 14, boxSizing: 'border-box' }}
+                                />
+                              </div>
+                              <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() => gradeSubmission(hw.id, sub.id)}
+                              >
+                                {sub.grade !== null && sub.grade !== undefined ? '✏️ Update Grade' : '✅ Save Grade'}
+                              </button>
+                            </div>
+                            {sub.grade !== null && sub.grade !== undefined && (
+                              <div style={{ marginTop: 6, fontSize: 13, color: '#166534', fontWeight: 600 }}>
+                                Current grade: {sub.grade}/100 {sub.graded_at && `· Graded ${new Date(sub.graded_at).toLocaleDateString()}`}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      }
                     </div>
                   )}
                 </div>
-                <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/homework/${hw.id}`)}>Delete</button>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
 
