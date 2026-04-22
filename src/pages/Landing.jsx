@@ -1,11 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api';
 import './Landing.css';
 
 export default function Landing() {
   const navigate = useNavigate();
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState('');
+  const [classPreview, setClassPreview] = useState(null);
+
+  useEffect(() => {
+    if (code.trim().length >= 5) {
+      api.get(`/classes/preview/${code.trim().toUpperCase()}`)
+        .then(data => setClassPreview(data))
+        .catch(() => setClassPreview(null));
+    } else {
+      setClassPreview(null);
+    }
+  }, [code]);
 
   const handleJoin = (e) => {
     e.preventDefault();
@@ -55,6 +67,13 @@ export default function Landing() {
                 autoComplete="off"
                 spellCheck="false"
               />
+              {classPreview && (
+                <div className="landing-class-preview">
+                  <strong>🏫 {classPreview.name}</strong>
+                  {classPreview.subject && <span>📖 {classPreview.subject}</span>}
+                  <span>👨‍🏫 Umwarimu: {classPreview.teacher_name}</span>
+                </div>
+              )}
               {codeError && <p className="landing-code-error">{codeError}</p>}
               <button type="submit" className="landing-btn student-btn">Injira mu Ishuri →</button>
             </form>

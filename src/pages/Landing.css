@@ -142,8 +142,8 @@
   font-weight: 700;
   border: 2px solid #a78bfa;
   border-radius: 12px;
-  background: rgba(255,255,255,0.15);
-  color: #fff;
+  background: #f8f7ff;
+  color: #1e293b;
   outline: none;
   box-sizing: border-box;
   text-transform: uppercase;
@@ -153,19 +153,38 @@
   letter-spacing: 1px;
   font-size: 14px;
   font-weight: 400;
-  opacity: 0.7;
+  color: #94a3b8;
+  opacity: 1;
 }
 
 .landing-code-input:focus {
-  border-color: #fff;
-  background: rgba(255,255,255,0.2);
+  border-color: #764ba2;
+  background: #fff;
 }
 
 .landing-code-error {
-  color: #fca5a5;
+  color: #dc2626;
   font-size: 13px;
   margin: 0;
   text-align: center;
+}
+
+.landing-class-preview {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 13px;
+  color: #166534;
+  line-height: 1.7;
+}
+
+.landing-class-preview strong {
+  display: block;
+  font-size: 15px;
+  color: #14532d;
+  margin-bottom: 2px;
 }
 
 .landing-have-account {
