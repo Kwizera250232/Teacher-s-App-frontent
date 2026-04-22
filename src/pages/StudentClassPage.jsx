@@ -46,6 +46,13 @@ export default function StudentClassPage() {
     } catch (e) { setError(e.message); }
   };
 
+  const getViewerUrl = (filePath) => {
+    const url = `${UPLOADS_BASE}/uploads/${filePath}`;
+    const ext = filePath.split('.').pop().toLowerCase();
+    if (['pdf'].includes(ext)) return url;
+    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+  };
+
   return (
     <div className="class-page">
       <header className="dash-header">
@@ -95,7 +102,7 @@ export default function StudentClassPage() {
                 </div>
                 {n.file_path && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <a href={`https://docs.google.com/viewer?url=${encodeURIComponent(`${UPLOADS_BASE}/uploads/${n.file_path}`)}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                    <a href={getViewerUrl(n.file_path)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
                     <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} download={n.file_name || true} className="btn btn-primary btn-sm">⬇ Download</a>
                   </div>
                 )}
@@ -114,7 +121,7 @@ export default function StudentClassPage() {
                   {hw.due_date && <div className="meta">Due: {new Date(hw.due_date).toLocaleDateString()}</div>}
                   {hw.file_name && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                      <a href={`https://docs.google.com/viewer?url=${encodeURIComponent(`${UPLOADS_BASE}/uploads/${hw.file_path}`)}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                      <a href={getViewerUrl(hw.file_path)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
                       <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                     </div>
                   )}
