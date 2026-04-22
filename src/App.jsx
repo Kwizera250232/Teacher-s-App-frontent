@@ -11,6 +11,8 @@ import TakeQuiz from './pages/TakeQuiz';
 import QuizResults from './pages/QuizResults';
 import AdminDashboard from './pages/AdminDashboard';
 import JoinClass from './pages/JoinClass';
+import Footer from './components/Footer';
+import './components/Footer.css';
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -32,37 +34,42 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomeRedirect />} />
-          <Route path="/welcome" element={<Landing />} />
-          <Route path="/join" element={<JoinClass />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <div style={{ flex: 1 }}>
+            <Routes>
+              <Route path="/" element={<HomeRedirect />} />
+              <Route path="/welcome" element={<Landing />} />
+              <Route path="/join" element={<JoinClass />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-          <Route path="/admin" element={
-            <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
-          } />
+              <Route path="/admin" element={
+                <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
+              } />
 
-          <Route path="/teacher/dashboard" element={
-            <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
-          } />
-          <Route path="/teacher/classes/:id" element={
-            <ProtectedRoute role="teacher"><TeacherClassPage /></ProtectedRoute>
-          } />
-          <Route path="/teacher/classes/:classId/quizzes/:quizId/results" element={
-            <ProtectedRoute role="teacher"><QuizResults /></ProtectedRoute>
-          } />
+              <Route path="/teacher/dashboard" element={
+                <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
+              } />
+              <Route path="/teacher/classes/:id" element={
+                <ProtectedRoute role="teacher"><TeacherClassPage /></ProtectedRoute>
+              } />
+              <Route path="/teacher/classes/:classId/quizzes/:quizId/results" element={
+                <ProtectedRoute role="teacher"><QuizResults /></ProtectedRoute>
+              } />
 
-          <Route path="/student/dashboard" element={
-            <ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>
-          } />
-          <Route path="/student/classes/:id" element={
-            <ProtectedRoute role="student"><StudentClassPage /></ProtectedRoute>
-          } />
-          <Route path="/student/classes/:classId/quizzes/:quizId" element={
-            <ProtectedRoute role="student"><TakeQuiz /></ProtectedRoute>
-          } />
-        </Routes>
+              <Route path="/student/dashboard" element={
+                <ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>
+              } />
+              <Route path="/student/classes/:id" element={
+                <ProtectedRoute role="student"><StudentClassPage /></ProtectedRoute>
+              } />
+              <Route path="/student/classes/:classId/quizzes/:quizId" element={
+                <ProtectedRoute role="student"><TakeQuiz /></ProtectedRoute>
+              } />
+            </Routes>
+          </div>
+          <Footer />
+        </div>
       </BrowserRouter>
     </AuthProvider>
   );
