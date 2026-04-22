@@ -18,6 +18,7 @@ export default function TeacherClassPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showQuizModal, setShowQuizModal] = useState(false);
+  const [editQuiz, setEditQuiz] = useState(null);
 
   // Forms
   const [announcementText, setAnnouncementText] = useState('');
@@ -383,9 +384,21 @@ export default function TeacherClassPage() {
                 <div className="item-card-body">
                   <h3>❓ {q.title}</h3>
                   {q.description && <p>{q.description}</p>}
-                  <div className="meta">{new Date(q.created_at).toLocaleDateString()}</div>
+                  <div className="meta" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    <span>{new Date(q.created_at).toLocaleDateString()}</span>
+                    {q.attempt_count > 0
+                      ? <span style={{ color: '#f59e0b', fontWeight: 600 }}>👁 {q.attempt_count} attempt{q.attempt_count > 1 ? 's' : ''} — locked</span>
+                      : <span style={{ color: '#22c55e', fontWeight: 600 }}>✏️ Editable</span>
+                    }
+                  </div>
                 </div>
                 <div className="item-card-actions">
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setEditQuiz(q)}
+                    disabled={q.attempt_count > 0}
+                    title={q.attempt_count > 0 ? 'Cannot edit after students have attempted' : 'Edit quiz questions'}
+                  >Edit</button>
                   <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/teacher/classes/${id}/quizzes/${q.id}/results`)}>Results</button>
                   <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/quizzes/${q.id}`)}>Delete</button>
                 </div>
@@ -450,6 +463,15 @@ export default function TeacherClassPage() {
           classId={id}
           onClose={() => setShowQuizModal(false)}
           onCreated={() => { setShowQuizModal(false); loadTab(); showSuccess('Quiz created!'); }}
+        />
+      )}
+      {editQuiz && (
+        <CreateQuizModal
+          token={token}
+          classId={id}
+          editQuiz={editQuiz}
+          onClose={() => setEditQuiz(null)}
+          onCreated={() => { setEditQuiz(null); loadTab(); showSuccess('Quiz updated!'); }}
         />
       )}
     </div>

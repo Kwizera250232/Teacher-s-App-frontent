@@ -1,14 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../api';
 
 const EMPTY_QUESTION = { question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a' };
 
-export default function CreateQuizModal({ token, classId, onClose, onCreated }) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+export default function CreateQuizModal({ token, classId, onClose, onCreated, editQuiz }) {
+  const isEdit = !!editQuiz;
+  const [title, setTitle] = useState(editQuiz?.title || '');
+  const [description, setDescription] = useState(editQuiz?.description || '');
   const [questions, setQuestions] = useState([{ ...EMPTY_QUESTION }]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingQuestions, setLoadingQuestions] = useState(isEdit);
+
+  // Load existing questions when editing
+  useEffect(() => {
+    if (!isEdit) return;
+    api.get(`/classes/${classId}/quizzes/${editQuiz.id}/questions-edit`, token)
+      .then(qs => {
+        setQuestions(qs.map(q => ({
+          question: q.question,
+          option_a: q.option_a,
+          option_b: q.option_b,
+          option_c: q.option_c || '',
+          option_d: q.option_d || '',
+          correct_answer: q.correct_answer,
+        })));
+      })
+      .catch(e => setError(e.message))
+      .finally(() => setLoadingQuestions(false));
+  }, []);
 
   const addQuestion = () => setQuestions([...questions, { ...EMPTY_QUESTION }]);
 
@@ -34,7 +54,11 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated }) 
     }
     setLoading(true);
     try {
-      await api.post(`/classes/${classId}/quizzes`, { title, description, questions }, token);
+      if (isEdit) {
+        await api.put(`/classes/${classId}/quizzes/${editQuiz.id}`, { title, description, questions }, token);
+      } else {
+        await api.post(`/classes/${classId}/quizzes`, { title, description, questions }, token);
+      }
       onCreated();
     } catch (err) {
       setError(err.message);
@@ -47,11 +71,14 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated }) 
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth: 600, maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
-          <h2>❓ Create Quiz</h2>
+          <h2>{isEdit ? '✏️ Edit Quiz' : '❓ Create Quiz'}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         {error && <div className="alert alert-error">{error}</div>}
-        <form onSubmit={handleSubmit}>
+        {loadingQuestions
+          ? <p style={{ padding: 24, textAlign: 'center' }}>Loading questions...</p>
+          : (
+          <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Quiz Title *</label>
             <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Chapter 1 Quiz" required />
@@ -106,10 +133,16 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated }) 
           <div className="modal-footer">
             <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Creating...' : `Create Quiz (${questions.length} questions)`}
+              {loading
+                ? (isEdit ? 'Saving...' : 'Creating...')
+                : isEdit
+                  ? `Save Changes (${questions.length} questions)`
+                  : `Create Quiz (${questions.length} questions)`
+              }
             </button>
           </div>
-        </form>
+          </form>
+          )}
       </div>
     </div>
   );
