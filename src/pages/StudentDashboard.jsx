@@ -30,8 +30,8 @@ export default function StudentDashboard() {
       <main className="dash-main">
         <div className="dash-top">
           <div>
-            <h1>Amadarasa Yanjye</h1>
-            <p className="dash-sub">Gera ku bikoresho by'inyigisho zawe</p>
+            <h1>My Classes</h1>
+            <p className="dash-sub">Access your learning materials</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowJoin(true)}>
             + Injira mu Ishuri
