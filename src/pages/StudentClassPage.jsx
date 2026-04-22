@@ -94,9 +94,10 @@ export default function StudentClassPage() {
                   <div className="meta">{new Date(n.created_at).toLocaleDateString()}</div>
                 </div>
                 {n.file_path && (
-                  <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-                    Download
-                  </a>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                    <a href={`${UPLOADS_BASE}/uploads/${n.file_path}`} download={n.file_name || true} className="btn btn-primary btn-sm">⬇ Download</a>
+                  </div>
                 )}
               </div>
             ))
@@ -112,9 +113,10 @@ export default function StudentClassPage() {
                   {hw.description && <p>{hw.description}</p>}
                   {hw.due_date && <div className="meta">Due: {new Date(hw.due_date).toLocaleDateString()}</div>}
                   {hw.file_name && (
-                    <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }}>
-                      📎 Download: {hw.file_name}
-                    </a>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                      <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">👁 View</a>
+                      <a href={`${UPLOADS_BASE}/uploads/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+                    </div>
                   )}
                 </div>
               </div>
