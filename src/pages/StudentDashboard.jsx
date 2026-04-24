@@ -83,12 +83,12 @@ export default function StudentDashboard() {
                     <span className="arrow">→</span>
                   </div>
                 </Link>
-                {/* Quick note button */}
+                {/* Summary button — visually separate from card */}
                 <button
                   className="class-card-note-btn"
                   onClick={e => { e.stopPropagation(); setQuickNote({ classId: cls.id, open: true, text: '', saving: false }); }}
                 >
-                  📝 Add Note
+                  📝 Muri make ibyo twize
                 </button>
               </div>
             ))}
@@ -108,12 +108,13 @@ export default function StudentDashboard() {
       {quickNote?.open && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setQuickNote(null)}>
           <div className="modal" style={{ maxWidth: 420 }}>
-            <h3 style={{ marginBottom: 16, fontSize: 18 }}>📝 Noti Nshya Yihuse</h3>
+            <h3 style={{ marginBottom: 4, fontSize: 18 }}>📝 Note zanjye</h3>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 14 }}>Andika inshamake y'isomo mwize uyu munsi</p>
             <textarea
               autoFocus
               rows={5}
               style={{ width: '100%', padding: '10px 14px', border: '2px solid #e0e0e0', borderRadius: 10, fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
-              placeholder="Andika ikintu cyose wifuza..."
+              placeholder="Uyu munsi twize... Ibisanzwe...  Nize..."
               value={quickNote.text}
               onChange={e => setQuickNote(q => ({ ...q, text: e.target.value }))}
               onKeyDown={e => { if (e.ctrlKey && e.key === 'Enter') saveQuickNote(); }}
@@ -126,7 +127,7 @@ export default function StudentDashboard() {
                 disabled={quickNote.saving || !quickNote.text.trim()}
                 onClick={saveQuickNote}
               >
-                {quickNote.saving ? 'Kubika...' : '💾 Bika Noti'}
+                {quickNote.saving ? 'Kubika...' : '💾 Bika Inshamake'}
               </button>
             </div>
           </div>

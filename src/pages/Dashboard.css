@@ -246,31 +246,29 @@ body {
 .discussion-input input { flex: 1; padding: 10px 14px; border: 2px solid #e8e8e8; border-radius: 8px; font-size: 14px; }
 .discussion-input input:focus { border-color: #667eea; outline: none; }
 
-/* Class card wrapper (student dashboard — has note button below) */
+/* Class card wrapper (student dashboard — has summary button below) */
 .class-card-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 8px;
 }
 .class-card-wrap .class-card {
-  border-radius: 12px 12px 0 0;
-  border-bottom: none;
+  border-radius: 12px;
 }
 .class-card-note-btn {
   width: 100%;
-  background: #f0f2ff;
+  background: white;
   color: #667eea;
-  border: 2px solid #e0e4ff;
-  border-top: none;
-  border-radius: 0 0 12px 12px;
+  border: 2px dashed #c7d2fe;
+  border-radius: 10px;
   padding: 9px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   text-align: center;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
-.class-card-note-btn:hover { background: #e0e4ff; }
+.class-card-note-btn:hover { background: #f0f2ff; border-color: #667eea; }
 
 /* Item card button row — wraps and stacks on mobile */
 .item-card-btns {
