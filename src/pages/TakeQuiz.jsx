@@ -117,7 +117,7 @@ export default function TakeQuiz() {
                 disabled={downloading}
                 onClick={handleDownload}
               >
-                {downloading ? '⏳ Gutegereza...' : '⬇ Reba Raporo Yanjye'}
+                {downloading ? '⏳ Gutegereza...' : "⬇ Kora Download y'amanota yanjye"}
               </button>
               <button
                 className="btn btn-outline"
