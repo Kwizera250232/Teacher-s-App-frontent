@@ -11,6 +11,9 @@ import TakeQuiz from './pages/TakeQuiz';
 import QuizResults from './pages/QuizResults';
 import AdminDashboard from './pages/AdminDashboard';
 import JoinClass from './pages/JoinClass';
+import StudentNotes from './pages/StudentNotes';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Footer from './components/Footer';
 import './components/Footer.css';
 
@@ -66,6 +69,12 @@ export default function App() {
               <Route path="/student/classes/:classId/quizzes/:quizId" element={
                 <ProtectedRoute role="student"><TakeQuiz /></ProtectedRoute>
               } />
+              <Route path="/student/notes" element={
+                <ProtectedRoute role="student"><StudentNotes /></ProtectedRoute>
+              } />
+
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Routes>
           </div>
           <Footer />

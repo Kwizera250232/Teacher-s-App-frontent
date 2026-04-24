@@ -4,9 +4,10 @@ import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
+import ClassLeaderboard from '../components/ClassLeaderboard';
 import '../pages/Dashboard.css';
 
-const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Discussion'];
+const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion'];
 
 export default function StudentClassPage() {
   const { id } = useParams();
@@ -33,6 +34,7 @@ export default function StudentClassPage() {
 
   const loadTab = async () => {
     setError('');
+    if (tab === 'Leaderboard') return; // handled by ClassLeaderboard component
     try {
       const map = {
         Announcements: `/classes/${id}/announcements`,
@@ -331,6 +333,10 @@ export default function StudentClassPage() {
                 </button>
               </div>
             ))
+        )}
+
+        {tab === 'Leaderboard' && (
+          <ClassLeaderboard classId={id} />
         )}
 
         {tab === 'Discussion' && (

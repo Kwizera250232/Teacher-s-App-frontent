@@ -71,6 +71,9 @@ export default function Login() {
             {loading ? 'Gutegereza...' : 'Injira'}
           </button>
         </form>
+        <p style={{ textAlign: 'center', marginTop: 10 }}>
+          <Link to="/forgot-password" style={{ color: '#667eea', fontSize: 13 }}>Wibagiwe ijambobanga?</Link>
+        </p>
         <p className="auth-link">Nta konti ufite? <Link to="/register">Iyandikishe</Link></p>
       </div>
     </div>

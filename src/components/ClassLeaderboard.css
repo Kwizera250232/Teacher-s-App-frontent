@@ -1,0 +1,108 @@
+.lb-wrapper { padding: 20px 0; }
+
+.lb-hero {
+  text-align: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 16px;
+  padding: 32px 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 8px 30px rgba(102,126,234,0.3);
+}
+
+.lb-trophy { font-size: 64px; line-height: 1; margin-bottom: 10px; }
+
+.lb-winner-name {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.lb-winner-score {
+  font-size: 18px;
+  opacity: 0.9;
+  margin-bottom: 16px;
+}
+
+.lb-kinyarwanda {
+  background: rgba(255,255,255,0.18);
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.lb-badge-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.lb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 2px solid white;
+  background: rgba(255,255,255,0.2);
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+
+/* Table */
+.lb-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.lb-table thead tr {
+  background: #f5f6fa;
+}
+
+.lb-table th, .lb-table td {
+  padding: 13px 16px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.lb-table th {
+  font-weight: 700;
+  color: #555;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lb-top-row td { font-weight: 700; background: #fffdf0; }
+
+.lb-pct {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.lb-loading, .lb-empty {
+  text-align: center;
+  padding: 40px;
+  color: #aaa;
+  font-size: 15px;
+}

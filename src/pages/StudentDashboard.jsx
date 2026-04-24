@@ -23,6 +23,7 @@ export default function StudentDashboard() {
         <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
           <span>👋 {user?.name}</span>
+          <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>
