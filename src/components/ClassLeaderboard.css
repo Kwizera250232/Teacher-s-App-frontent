@@ -180,5 +180,21 @@
 }
 
 @media (max-width: 600px) {
-  .lb-quiz-cards { grid-template-columns: 1fr 1fr; }
+  .lb-hero { padding: 22px 14px; border-radius: 12px; }
+  .lb-trophy { font-size: 44px; }
+  .lb-winner-name { font-size: 20px; }
+  .lb-winner-score { font-size: 15px; }
+  .lb-kinyarwanda { font-size: 13px; padding: 10px 12px; }
+
+  .lb-quiz-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lb-quiz-card { padding: 10px 12px; }
+  .lb-quiz-card-title { font-size: 11px; }
+  .lb-quiz-name { font-size: 13px; }
+
+  .lb-table th, .lb-table td { padding: 10px 10px; font-size: 12px; }
+  .lb-section-title { font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .lb-quiz-cards { grid-template-columns: 1fr; }
 }
