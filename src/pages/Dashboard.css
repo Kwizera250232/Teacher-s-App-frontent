@@ -122,6 +122,34 @@ body {
 .class-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #888; }
 .arrow { color: #667eea; font-weight: 700; }
 
+/* Top scorers inside class card */
+.class-top-scorers {
+  background: #fffbf0;
+  border: 1px solid #ffe58f;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.top-scorer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.top-scorer-quiz {
+  font-size: 11px;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.top-scorer-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b8860b;
+}
+
 /* Empty state */
 .empty-state { text-align: center; padding: 80px 20px; }
 .empty-icon { font-size: 64px; margin-bottom: 16px; }

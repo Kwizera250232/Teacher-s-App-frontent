@@ -13,14 +13,23 @@ export default function TakeQuiz() {
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [alreadyDone, setAlreadyDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    api.get(`/classes/${classId}/quizzes/${quizId}/questions`, token)
-      .then(setQuestions)
-      .catch(e => setError(e.message));
+    // Load questions and check for existing attempt simultaneously
+    Promise.all([
+      api.get(`/classes/${classId}/quizzes/${quizId}/questions`, token),
+      api.get(`/classes/${classId}/quizzes/${quizId}/my-result`, token).catch(() => null),
+    ]).then(([qs, existing]) => {
+      setQuestions(qs);
+      if (existing && existing.score !== undefined) {
+        setAlreadyDone(true);
+        setResult({ score: existing.score, total: existing.total, results: {} });
+      }
+    }).catch(e => setError(e.message));
   }, []);
 
   const handleAnswer = (questionId, option) => {
@@ -127,36 +136,76 @@ export default function TakeQuiz() {
         <div className="dash-brand">🎓 UClass</div>
       </header>
       <main className="class-main" style={{ maxWidth: 700 }}>
-        <h2 style={{ marginBottom: 8 }}>Quiz</h2>
-        <p style={{ color: '#888', fontSize: 14, marginBottom: 24 }}>{questions.length} questions · Answer all before submitting</p>
 
-        {error && <div className="alert alert-error">{error}</div>}
-
-        {questions.map((q, i) => (
-          <div key={q.id} className="quiz-question">
-            <h3>Q{i + 1}: {q.question}</h3>
-            <div className="quiz-options">
-              {['a', 'b', 'c', 'd'].map(opt => {
-                if (!q[`option_${opt}`]) return null;
-                return (
-                  <label key={opt} className={`quiz-option ${answers[q.id] === opt ? 'selected' : ''}`} onClick={() => handleAnswer(q.id, opt)}>
-                    <strong>{opt.toUpperCase()}.</strong> {q[`option_${opt}`]}
-                  </label>
-                );
-              })}
+        {/* Already submitted — locked screen */}
+        {alreadyDone && result && (() => {
+          const pct = Math.round((result.score / result.total) * 100);
+          return (
+            <div className="score-card">
+              <div style={{ fontSize: 48 }}>🔒</div>
+              <h2>Warasoje iki kizamini</h2>
+              <p style={{ color: '#888', marginBottom: 16 }}>Ntushobora gukora ikizamini inshuro ebyiri.</p>
+              <div className="score-big">{result.score}/{result.total}</div>
+              <div className="score-sub">{pct}%</div>
+              <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                <button
+                  className="btn btn-outline"
+                  style={{ flex: 1 }}
+                  disabled={downloading}
+                  onClick={async () => {
+                    setDownloading(true);
+                    try {
+                      const data = await api.get(`/classes/${classId}/quizzes/${quizId}/my-result`, token);
+                      const safeName = data.student_name.replace(/[^a-z0-9]/gi, '_');
+                      downloadWord(`${data.quiz_title}_${safeName}`, data);
+                    } catch (e) { setError(e.message); }
+                    finally { setDownloading(false); }
+                  }}
+                >
+                  {downloading ? 'Gutegereza...' : '⬇ Download Ibisubizo Byanjye'}
+                </button>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate(-1)}>
+                  Subira mu Ishuri
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })()}
 
-        {questions.length > 0 && (
-          <button
-            className="btn btn-primary btn-full"
-            onClick={handleSubmit}
-            disabled={loading || Object.keys(answers).length < questions.length}
-            style={{ marginTop: 8 }}
-          >
-            {loading ? 'Submitting...' : `Submit Quiz (${Object.keys(answers).length}/${questions.length} answered)`}
-          </button>
+        {!alreadyDone && (
+          <>
+            <h2 style={{ marginBottom: 8 }}>Quiz</h2>
+            <p style={{ color: '#888', fontSize: 14, marginBottom: 24 }}>{questions.length} questions · Answer all before submitting</p>
+
+            {error && <div className="alert alert-error">{error}</div>}
+
+            {questions.map((q, i) => (
+              <div key={q.id} className="quiz-question">
+                <h3>Q{i + 1}: {q.question}</h3>
+                <div className="quiz-options">
+                  {['a', 'b', 'c', 'd'].map(opt => {
+                    if (!q[`option_${opt}`]) return null;
+                    return (
+                      <label key={opt} className={`quiz-option ${answers[q.id] === opt ? 'selected' : ''}`} onClick={() => handleAnswer(q.id, opt)}>
+                        <strong>{opt.toUpperCase()}.</strong> {q[`option_${opt}`]}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {questions.length > 0 && (
+              <button
+                className="btn btn-primary btn-full"
+                onClick={handleSubmit}
+                disabled={loading || Object.keys(answers).length < questions.length}
+                style={{ marginTop: 8 }}
+              >
+                {loading ? 'Submitting...' : `Submit Quiz (${Object.keys(answers).length}/${questions.length} answered)`}
+              </button>
+            )}
+          </>
         )}
       </main>
     </div>

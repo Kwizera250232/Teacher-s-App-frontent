@@ -5,9 +5,10 @@ import { useAuth } from '../context/AuthContext';
 import CreateQuizModal from '../components/CreateQuizModal';
 import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
+import ClassLeaderboard from '../components/ClassLeaderboard';
 import '../pages/Dashboard.css';
 
-const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Discussion', 'Students'];
+const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
 
 export default function TeacherClassPage() {
   const { id } = useParams();
@@ -42,6 +43,7 @@ export default function TeacherClassPage() {
 
   const loadTab = async () => {
     setError('');
+    if (tab === 'Leaderboard') return; // handled by ClassLeaderboard component
     try {
       const endpointMap = {
         Announcements: `/classes/${id}/announcements`,
@@ -459,6 +461,11 @@ export default function TeacherClassPage() {
               </div>
             ))}
           </>
+        )}
+
+        {/* Leaderboard */}
+        {tab === 'Leaderboard' && (
+          <ClassLeaderboard classId={id} />
         )}
 
         {/* Discussion */}

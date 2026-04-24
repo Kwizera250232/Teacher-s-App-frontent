@@ -4,9 +4,9 @@ import { api } from '../api';
 import './ClassLeaderboard.css';
 
 const BADGE_META = {
-  perfect_score: { icon: '💯', label: 'Igisubizo Cyuzuye', color: '#f39c12' },
-  excellence:    { icon: '⭐', label: 'Ubwiza',           color: '#9b59b6' },
-  great_job:     { icon: '🏅', label: 'Akazi Keza',       color: '#27ae60' },
+  perfect_score: { icon: '💯', label: 'Perfect Score',    color: '#f39c12' },
+  excellence:    { icon: '⭐', label: 'Excellence',       color: '#9b59b6' },
+  great_job:     { icon: '🏅', label: 'Great Job',        color: '#27ae60' },
   top_student:   { icon: '🏆', label: 'Umunyeshuri #1',   color: '#e74c3c' },
   keep_going:    { icon: '💪', label: 'Komeza Wihatire',  color: '#3498db' },
 };
@@ -14,13 +14,20 @@ const BADGE_META = {
 export default function ClassLeaderboard({ classId }) {
   const { token } = useAuth();
   const [entries, setEntries] = useState([]);
+  const [perQuiz, setPerQuiz] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!classId) return;
     setLoading(true);
-    api.get(`/classes/${classId}/leaderboard`, token)
-      .then(data => { setEntries(Array.isArray(data) ? data : []); })
+    Promise.all([
+      api.get(`/classes/${classId}/leaderboard`, token),
+      api.get(`/classes/${classId}/top-scorers`, token).catch(() => []),
+    ])
+      .then(([overall, topScorers]) => {
+        setEntries(Array.isArray(overall) ? overall : []);
+        setPerQuiz(Array.isArray(topScorers) ? topScorers : []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [classId]);
@@ -38,6 +45,7 @@ export default function ClassLeaderboard({ classId }) {
 
   return (
     <div className="lb-wrapper">
+      {/* Overall top scorer hero banner */}
       {hasScores && (
         <div className="lb-hero">
           <div className="lb-trophy">🏆</div>
@@ -57,13 +65,39 @@ export default function ClassLeaderboard({ classId }) {
         </div>
       )}
 
+      {/* Per-quiz top scorers */}
+      {perQuiz.length > 0 && (
+        <div className="lb-per-quiz">
+          <h3 className="lb-section-title">🥇 Abambere muri buri Suzuma Bumenyi Ryatanzwe</h3>
+          <div className="lb-quiz-cards">
+            {perQuiz.map(s => (
+              <div key={s.quiz_id} className="lb-quiz-card">
+                <div className="lb-quiz-card-title">📝 {s.quiz_title}</div>
+                <div className="lb-quiz-card-winner">
+                  <span className="lb-quiz-trophy">🏆</span>
+                  <span className="lb-quiz-name">{s.top_student}</span>
+                </div>
+                <div className="lb-quiz-score">
+                  {s.score}/{s.total}
+                  <span className="lb-quiz-pct" style={{ background: pctColor(s.percentage) }}>
+                    {s.percentage}%
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Overall standings table */}
+      <h3 className="lb-section-title" style={{ marginTop: 28 }}>📊 Urutonde Rusanzwe</h3>
       <div className="lb-table-wrap">
         <table className="lb-table">
           <thead>
             <tr>
               <th>#</th>
               <th>Izina</th>
-              <th>Ikizamini</th>
+              <th>Ibizamini</th>
               <th>Amanota Yose</th>
               <th>%</th>
             </tr>

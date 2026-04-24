@@ -31,8 +31,8 @@ export default function StudentDashboard() {
       <main className="dash-main">
         <div className="dash-top">
           <div>
-            <h1>My Classes</h1>
-            <p className="dash-sub">Access your learning materials</p>
+            <h1>Amashuri Yanjye</h1>
+            <p className="dash-sub">Injira mu mashuri yawe</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowJoin(true)}>
             + Injira mu Ishuri
@@ -44,7 +44,7 @@ export default function StudentDashboard() {
         {classes.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🎒</div>
-            <h3>Nta madarasa nawe</h3>
+            <h3>Nta mashuri ufite</h3>
             <p>Injira mu ishuri ukoresheje kode umwarimu wawe yakuguye</p>
             <button className="btn btn-primary" onClick={() => setShowJoin(true)}>Injira mu Ishuri</button>
           </div>

@@ -11,9 +11,9 @@ const NOTE_COLORS = [
 ];
 
 const BADGE_META = {
-  perfect_score: { icon: '💯', label: 'Igisubizo Cyuzuye', color: '#f39c12' },
-  excellence:    { icon: '⭐', label: 'Ubwiza',           color: '#9b59b6' },
-  great_job:     { icon: '🏅', label: 'Akazi Keza',       color: '#27ae60' },
+  perfect_score: { icon: '💯', label: 'Perfect Score',    color: '#f39c12' },
+  excellence:    { icon: '⭐', label: 'Excellence',       color: '#9b59b6' },
+  great_job:     { icon: '🏅', label: 'Great Job',        color: '#27ae60' },
   top_student:   { icon: '🏆', label: 'Umunyeshuri #1',   color: '#e74c3c' },
   keep_going:    { icon: '💪', label: 'Komeza Wihatire',  color: '#3498db' },
 };
