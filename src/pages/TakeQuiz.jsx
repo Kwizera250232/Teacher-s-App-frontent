@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { downloadWord } from '../utils/downloadResult';
 import '../pages/Dashboard.css';
 
 export default function TakeQuiz() {
@@ -14,6 +15,7 @@ export default function TakeQuiz() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     api.get(`/classes/${classId}/quizzes/${quizId}/questions`, token)
@@ -89,9 +91,30 @@ export default function TakeQuiz() {
             })}
           </div>
 
-          <button className="btn btn-primary btn-full" onClick={() => navigate(-1)} style={{ marginTop: 16 }}>
-            Back to Class
-          </button>
+          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+            <button
+              className="btn btn-outline"
+              style={{ flex: 1 }}
+              disabled={downloading}
+              onClick={async () => {
+                setDownloading(true);
+                try {
+                  const data = await api.get(`/classes/${classId}/quizzes/${quizId}/my-result`, token);
+                  const safeName = data.student_name.replace(/[^a-z0-9]/gi, '_');
+                  downloadWord(`${data.quiz_title}_${safeName}`, data);
+                } catch (e) {
+                  setError(e.message);
+                } finally {
+                  setDownloading(false);
+                }
+              }}
+            >
+              {downloading ? 'Generating…' : '⬇ Download My Result'}
+            </button>
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate(-1)}>
+              Back to Class
+            </button>
+          </div>
         </main>
       </div>
     );
