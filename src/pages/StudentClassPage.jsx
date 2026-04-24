@@ -156,7 +156,7 @@ export default function StudentClassPage() {
           data.length === 0
             ? <p style={{ color: '#888', textAlign: 'center', padding: 40 }}>No notes uploaded yet.</p>
             : data.map(n => (
-              <div key={n.id} className="item-card">
+              <div key={n.id} className="item-card item-card-stack">
                 <div className="item-card-body">
                   <h3>📄 {n.title}</h3>
                   {n.file_name && (
@@ -172,7 +172,7 @@ export default function StudentClassPage() {
                   <div className="meta" style={{ marginTop: 6 }}>{new Date(n.created_at).toLocaleDateString()}</div>
                 </div>
                 {n.file_path && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <div className="item-card-btns">
                     <button
                       className="btn btn-secondary btn-sm"
                       onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/uploads/${n.file_path}`, fileName: n.file_name || n.title })}

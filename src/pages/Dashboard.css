@@ -246,8 +246,62 @@ body {
 .discussion-input input { flex: 1; padding: 10px 14px; border: 2px solid #e8e8e8; border-radius: 8px; font-size: 14px; }
 .discussion-input input:focus { border-color: #667eea; outline: none; }
 
+/* Class card wrapper (student dashboard — has note button below) */
+.class-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.class-card-wrap .class-card {
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+}
+.class-card-note-btn {
+  width: 100%;
+  background: #f0f2ff;
+  color: #667eea;
+  border: 2px solid #e0e4ff;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+.class-card-note-btn:hover { background: #e0e4ff; }
+
+/* Item card button row — wraps and stacks on mobile */
+.item-card-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* item-card-stack: on mobile, stack body + buttons vertically */
+.item-card-stack {
+  flex-wrap: wrap;
+}
+.item-card-stack .item-card-btns {
+  width: 100%;
+}
+
 @media (max-width: 600px) {
   .dash-main, .class-main { padding: 16px; }
+  .dash-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+  .dash-user { flex-wrap: wrap; gap: 6px; }
+  .dash-brand { font-size: 18px; }
+
+  .classes-grid { grid-template-columns: 1fr; gap: 14px; }
+
   .class-hero { flex-direction: column; }
-  .tabs { overflow-x: auto; }
+  .tabs { overflow-x: auto; gap: 4px; }
+  .tab { white-space: nowrap; font-size: 13px; padding: 7px 12px; }
+
+  /* Notes/Homework item cards — stack vertically */
+  .item-card { flex-direction: column; align-items: stretch; gap: 12px; }
+  .item-card-btns { flex-direction: row; flex-wrap: wrap; }
+  .item-card-btns .btn { flex: 1; justify-content: center; min-width: 0; font-size: 12px; padding: 7px 8px; }
 }

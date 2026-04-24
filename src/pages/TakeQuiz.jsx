@@ -110,10 +110,10 @@ export default function TakeQuiz() {
             <div style={{ fontSize: 15, color: '#666', marginBottom: 24 }}>{msg}</div>
 
             {/* Action buttons */}
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 4 }}>
               <button
                 className="btn btn-primary"
-                style={{ minWidth: 180 }}
+                style={{ flex: '1 1 160px', minWidth: 0, justifyContent: 'center' }}
                 disabled={downloading}
                 onClick={handleDownload}
               >
@@ -121,14 +121,14 @@ export default function TakeQuiz() {
               </button>
               <button
                 className="btn btn-outline"
-                style={{ minWidth: 180 }}
+                style={{ flex: '1 1 160px', minWidth: 0, justifyContent: 'center' }}
                 onClick={() => setShowReview(r => !r)}
               >
                 {showReview ? '▲ Hisha Ibisubizo' : '📋 Reba Ibisubizo Byanjye'}
               </button>
               <button
                 className="btn btn-secondary"
-                style={{ minWidth: 180 }}
+                style={{ flex: '1 1 140px', minWidth: 0, justifyContent: 'center' }}
                 onClick={() => navigate(-1)}
               >
                 ← Subira mu Ishuri
