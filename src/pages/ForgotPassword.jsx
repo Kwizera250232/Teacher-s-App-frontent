@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api';
+import { api } from '../api';
+
 import './Auth.css';
 
 export default function ForgotPassword() {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import api from '../api';
+import { api } from '../api';
+
 import './Auth.css';
 
 export default function ResetPassword() {
