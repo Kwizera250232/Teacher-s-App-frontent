@@ -9,6 +9,10 @@ async function request(method, endpoint, body, token) {
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Server returned ${res.status} — check that the API URL is correct.`);
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
