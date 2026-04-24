@@ -11,6 +11,7 @@ export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: defaultRole, school_id: '', newSchool: '' });
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
+  const [pending, setPending] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -36,6 +37,11 @@ export default function Register() {
         role: form.role,
         school_id: schoolId || null,
       });
+      // Teacher accounts need admin approval first
+      if (data.pending) {
+        setPending(true);
+        return;
+      }
       login(data.token, data.user);
       if (data.user.role === 'student' && classCode) {
         try {
@@ -58,9 +64,23 @@ export default function Register() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-logo">🎓</div>
-        <h2>Fungura Konti</h2>
-        <p className="auth-sub">Injira mu rubuga rw'inyigisho</p>
-        {error && <div className="alert alert-error">{error}</div>}
+
+        {pending ? (
+          <>
+            <h2>✅ Konti Yoherejwe!</h2>
+            <p className="auth-sub" style={{ marginTop: 12, lineHeight: 1.6 }}>
+              Konti yawe y'umwarimu yoherejwe. <strong>Tegereza ko umuyobozi ayemera</strong> mbere yo kwinjira mu rubuga.
+              Uzabona imeyili iyo uruhushya ruguye.
+            </p>
+            <div style={{ marginTop: 24 }}>
+              <a href="/login" className="btn btn-primary btn-full">Subira ku Kwinjira</a>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2>Fungura Konti</h2>
+            <p className="auth-sub">Injira mu rubuga rw'inyigisho</p>
+            {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Amazina Yuzuye</label>
@@ -97,6 +117,8 @@ export default function Register() {
           </button>
         </form>
         <p className="auth-link">Usanzwe ufite konti? <Link to="/login">Injira</Link></p>
+          </>
+        )}
       </div>
     </div>
   );
