@@ -66,13 +66,16 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
     }
 
     if (fileType === 'pdf') {
+      const src = gdocsFailed ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}` : gdocsUrl;
       return (
         <iframe
-          src={fileUrl}
+          key={src}
+          src={src}
           style={{ flex: 1, border: 'none', background: '#fff' }}
           title={displayName}
           allowFullScreen
           onLoad={() => setLoading(false)}
+          onError={() => { if (!gdocsFailed) { setGdocsFailed(true); setLoading(true); } else setLoading(false); }}
         />
       );
     }
