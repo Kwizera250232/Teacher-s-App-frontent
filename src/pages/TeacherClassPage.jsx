@@ -522,7 +522,11 @@ export default function TeacherClassPage() {
                     </div>
                     <div style={{ fontSize: 11, color: '#374151', textAlign: 'center', lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 2 }}>
                       <span style={{ maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>{s.name.split(' ')[0]}</span>
-                      <VerifiedBadge size={11} />
+                      <VerifiedBadge size={11} info={{ items: [
+                        { icon: '📚', label: 'Class', value: cls?.name },
+                        { icon: '📅', label: 'Joined', value: new Date(s.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
+                        { icon: '👨‍🏫', label: 'Teacher', value: cls?.teacher_name },
+                      ] }} />
                     </div>
                   </div>
                 );
@@ -549,7 +553,11 @@ export default function TeacherClassPage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
                 <strong style={{ fontSize: 18, color: '#1e293b' }}>{selectedStudent.name}</strong>
-                <VerifiedBadge size={16} />
+                <VerifiedBadge size={16} info={{ items: [
+                  { icon: '📚', label: 'Class', value: cls?.name },
+                  { icon: '📅', label: 'Joined', value: new Date(selectedStudent.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
+                  { icon: '👨‍🏫', label: 'Teacher', value: cls?.teacher_name },
+                ] }} />
               </div>
               <p style={{ color: '#64748b', fontSize: 13, marginBottom: '1.25rem' }}>{selectedStudent.email}</p>
               <div style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }}>
