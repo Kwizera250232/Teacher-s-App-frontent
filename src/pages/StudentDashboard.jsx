@@ -11,6 +11,8 @@ export default function StudentDashboard() {
   const [classes, setClasses] = useState([]);
   const [showJoin, setShowJoin] = useState(false);
   const [error, setError] = useState('');
+  const [announcements, setAnnouncements] = useState([]);
+  const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   // Quick note state: { classId, open, text, saving }
   const [quickNote, setQuickNote] = useState(null);
 
@@ -18,7 +20,16 @@ export default function StudentDashboard() {
     api.get('/classes/my', token).then(setClasses).catch(e => setError(e.message));
   };
 
+  const dismissAnnouncement = (id) => {
+    const updated = [...dismissed, id];
+    setDismissed(updated);
+    localStorage.setItem('dismissed_announcements', JSON.stringify(updated));
+  };
+
   useEffect(() => { loadClasses(); }, []);
+  useEffect(() => {
+    api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
+  }, []);
 
   const saveQuickNote = async () => {
     if (!quickNote?.text?.trim()) return;
@@ -59,7 +70,35 @@ export default function StudentDashboard() {
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        {classes.length === 0 ? (
+        {/* Admin Announcements */}
+        {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
+          <div key={a.id} style={{
+            background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
+            border: '1px solid #93c5fd',
+            borderRadius: 12,
+            padding: '1rem 1.25rem',
+            marginBottom: '0.75rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '1rem',
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <span>📢</span>
+                <strong style={{ color: '#1e40af', fontSize: '0.95rem' }}>{a.title}</strong>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>— {a.admin_name}</span>
+              </div>
+              <p style={{ margin: 0, color: '#374151', fontSize: '0.9rem' }}>{a.message}</p>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</span>
+            </div>
+            <button
+              onClick={() => dismissAnnouncement(a.id)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.2rem', padding: 0, lineHeight: 1, flexShrink: 0 }}
+              title="Siba iri tangazo"
+            >✕</button>
+          </div>
+        ))} (
           <div className="empty-state">
             <div className="empty-icon">🎒</div>
             <h3>Nta mashuri ufite</h3>
