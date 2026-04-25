@@ -141,7 +141,10 @@ export default function StudentClassPage() {
               <div key={a.id} className="item-card">
                 <div className="item-card-body">
                   <p>{a.content}</p>
-                  <div className="meta" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📢 {a.teacher_name}<VerifiedBadge size={13} /> · {new Date(a.created_at).toLocaleString()}</div>
+                  <div className="meta" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📢 {a.teacher_name}<VerifiedBadge size={13} info={{ items: [
+                    { icon: '👨‍🏫', label: 'Teacher', value: a.teacher_name },
+                    { icon: '📅', label: 'Posted', value: new Date(a.created_at).toLocaleDateString() },
+                  ] }} /> · {new Date(a.created_at).toLocaleString()}</div>
                 </div>
                 <button
                   className="btn btn-secondary btn-sm"
@@ -346,7 +349,9 @@ export default function StudentClassPage() {
               {data.map(d => (
                 <div key={d.id} className="discussion-msg">
                   <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    {d.author_name}<VerifiedBadge size={13} />
+                    {d.author_name}<VerifiedBadge size={13} info={{ items: [
+                      { icon: '👤', label: 'Role', value: d.author_role },
+                    ] }} />
                     <span className="role-badge">{d.author_role}</span>
                   </div>
                   <div className="body">{d.content}</div>

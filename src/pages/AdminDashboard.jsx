@@ -10,6 +10,7 @@ import AdminContent from '../components/admin/AdminContent';
 import AdminAnnouncements from '../components/admin/AdminAnnouncements';
 import AdminReports from '../components/admin/AdminReports';
 import AdminSettings from '../components/admin/AdminSettings';
+import VerifiedBadge from '../components/VerifiedBadge';
 import './AdminDashboard.css';
 
 const NAV = [
@@ -75,7 +76,10 @@ export default function AdminDashboard() {
           <button className="admin-toggle" onClick={() => setSidebarOpen(o => !o)}>☰</button>
           <h1 className="admin-page-title">{NAV.find(n => n.key === page)?.label}</h1>
           <div className="admin-user-info">
-            <span>👤 {user?.name}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👤 {user?.name}<VerifiedBadge size={14} info={{ items: [
+              { icon: '🔐', label: 'Role', value: 'Admin' },
+              { icon: '📧', label: 'Email', value: user?.email },
+            ] }} /></span>
             <span className="admin-badge">Admin</span>
           </div>
         </header>

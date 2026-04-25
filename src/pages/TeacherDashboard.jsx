@@ -34,7 +34,10 @@ export default function TeacherDashboard() {
       <header className="dash-header">
         <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} /></span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
+            { icon: '👨‍🏫', label: 'Role', value: 'Teacher' },
+            { icon: '📧', label: 'Email', value: user?.email },
+          ] }} /></span>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>

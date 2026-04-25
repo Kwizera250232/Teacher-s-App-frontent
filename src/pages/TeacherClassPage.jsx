@@ -476,8 +476,10 @@ export default function TeacherClassPage() {
             <div className="discussion-list">
               {data.map(d => (
                 <div key={d.id} className={`discussion-msg ${d.author_role === 'teacher' ? 'teacher-msg' : ''}`}>
-                  <div className="author">
-                    {d.author_name}
+                  <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    {d.author_name}<VerifiedBadge size={13} info={{ items: [
+                      { icon: '👤', label: 'Role', value: d.author_role },
+                    ] }} />
                     <span className="role-badge">{d.author_role}</span>
                   </div>
                   <div className="body">{d.content}</div>

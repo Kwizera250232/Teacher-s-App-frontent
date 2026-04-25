@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api';
+import VerifiedBadge from '../VerifiedBadge';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -74,7 +75,10 @@ export default function AdminTeachers({ token }) {
               <tbody>
                 {pending.map(t => (
                   <tr key={t.id} style={{ background: '#fffbeb' }}>
-                    <td><strong>{t.name}</strong></td>
+                    <td><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{t.name}<VerifiedBadge size={13} info={{ items: [
+                      { icon: '📧', label: 'Email', value: t.email },
+                      { icon: '📅', label: 'Joined', value: new Date(t.created_at).toLocaleDateString() },
+                    ] }} /></strong></td>
                     <td>{t.email}</td>
                     <td>{new Date(t.created_at).toLocaleDateString()}</td>
                     <td style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -105,7 +109,10 @@ export default function AdminTeachers({ token }) {
               {approved.length === 0 && <tr><td colSpan={7} className="empty-text">Nta mwarimu ubonetse.</td></tr>}
               {approved.map(t => (
                 <tr key={t.id}>
-                  <td><strong>{t.name}</strong></td>
+                  <td><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{t.name}<VerifiedBadge size={13} info={{ items: [
+                    { icon: '📧', label: 'Email', value: t.email },
+                    { icon: '📅', label: 'Joined', value: new Date(t.created_at).toLocaleDateString() },
+                  ] }} /></strong></td>
                   <td>{t.email}</td>
                   <td>
                     <select

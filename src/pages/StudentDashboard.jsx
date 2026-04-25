@@ -52,7 +52,10 @@ export default function StudentDashboard() {
       <header className="dash-header">
         <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} /></span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
+            { icon: '👩‍🎓', label: 'Role', value: 'Student' },
+            { icon: '📧', label: 'Email', value: user?.email },
+          ] }} /></span>
           <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
@@ -118,7 +121,11 @@ export default function StudentDashboard() {
                     {cls.subject && <span className="subject-tag">{cls.subject}</span>}
                   </div>
                   <div className="class-teacher">
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👨‍🏫 {cls.teacher_name}<VerifiedBadge size={13} /></span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👨‍🏫 {cls.teacher_name}<VerifiedBadge size={13} info={{ items: [
+                      { icon: '📚', label: 'Class', value: cls.name },
+                      { icon: '📖', label: 'Subject', value: cls.subject || '—' },
+                      { icon: '🏷️', label: 'Code', value: cls.class_code },
+                    ] }} /></span>
                   </div>
                   <div className="class-card-footer">
                     <span>Tap to enter</span>

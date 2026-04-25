@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api';
+import VerifiedBadge from '../VerifiedBadge';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -72,7 +73,11 @@ export default function AdminStudents({ token }) {
             {filtered.length === 0 && <tr><td colSpan={7} className="empty-text">No students found.</td></tr>}
             {filtered.map(s => (
               <tr key={s.id}>
-                <td><strong>{s.name}</strong></td>
+                <td><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{s.name}<VerifiedBadge size={13} info={{ items: [
+                  { icon: '📧', label: 'Email', value: s.email },
+                  { icon: '🏣', label: 'School', value: s.school_name || '—' },
+                  { icon: '📅', label: 'Joined', value: new Date(s.created_at).toLocaleDateString() },
+                ] }} /></strong></td>
                 <td>{s.email}</td>
                 <td>{s.school_name || '—'}</td>
                 <td>{s.class_count}</td>
