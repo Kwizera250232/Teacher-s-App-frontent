@@ -74,18 +74,16 @@ function getFileType(ext) {
 export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
   const [loading, setLoading] = useState(true);
   const [textContent, setTextContent] = useState('');
-  const [gdocsFailed, setGdocsFailed] = useState(false);
-
   const displayName = fileName ? fileName.replace(/^\d+-\d+\./, '') : 'Document';
   const rawExt = displayName.includes('.') ? displayName.split('.').pop() : '';
   const ext = rawExt.toUpperCase();
   const fileType = getFileType(rawExt);
   const badgeColor = EXT_COLORS[ext] || '#667eea';
 
-  // Google Docs viewer URL
-  const gdocsUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
-  // Office Online viewer URL (fallback)
-  const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+  // Strip query params for Office Online viewer (needs clean URL)
+  const cleanFileUrl = fileUrl.split('?')[0];
+  // Office Online viewer — works for DOC, DOCX, PPT, PPTX, XLS, XLSX
+  const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(cleanFileUrl)}`;
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -141,36 +139,23 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
     }
 
     if (fileType === 'office') {
-      const src = gdocsFailed ? officeUrl : gdocsUrl;
       return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-          {gdocsFailed && (
-            <div style={{ background: '#fef3c7', color: '#92400e', padding: '6px 16px', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
-              ⚡ Using Microsoft Office Online viewer
-            </div>
-          )}
-          <iframe
-            key={src}
-            src={src}
-            style={{ flex: 1, border: 'none', background: '#fff' }}
-            title={displayName}
-            allowFullScreen
-            onLoad={() => setLoading(false)}
-            onError={() => { if (!gdocsFailed) { setGdocsFailed(true); setLoading(true); } else setLoading(false); }}
-          />
-        </div>
+        <iframe
+          src={officeUrl}
+          style={{ flex: 1, border: 'none', background: '#fff' }}
+          title={displayName}
+          allowFullScreen
+          onLoad={() => setLoading(false)}
+          onError={() => setLoading(false)}
+        />
       );
     }
 
-    // Fallback: try Google Docs viewer for anything else
+    // Fallback for unknown types
     return (
-      <iframe
-        src={gdocsUrl}
-        style={{ flex: 1, border: 'none', background: '#fff' }}
-        title={displayName}
-        allowFullScreen
-        onLoad={() => setLoading(false)}
-      />
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 15 }}>
+        Preview not available for this file type.
+      </div>
     );
   };
 
