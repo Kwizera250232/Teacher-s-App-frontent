@@ -1,4 +1,59 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+// PDF.js canvas renderer — renders each page as a <canvas>, no external viewer
+function PdfCanvasViewer({ fileUrl, onReady, badgeColor }) {
+  const containerRef = useRef(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const pdfjsLib = await import('pdfjs-dist');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+          'pdfjs-dist/build/pdf.worker.mjs',
+          import.meta.url
+        ).toString();
+
+        const pdf = await pdfjsLib.getDocument(fileUrl).promise;
+        if (cancelled) return;
+        onReady && onReady();
+
+        const container = containerRef.current;
+        if (!container) return;
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          if (cancelled) break;
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: window.devicePixelRatio > 1 ? 1.5 : 1.2 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          canvas.style.width = '100%';
+          canvas.style.display = 'block';
+          canvas.style.marginBottom = '8px';
+          canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+          canvas.style.background = '#fff';
+          container.appendChild(canvas);
+          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        }
+      } catch (e) {
+        if (!cancelled) setError('Could not load PDF.');
+        onReady && onReady();
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [fileUrl]);
+
+  if (error) return <div style={{ padding: 24, color: '#ef4444', fontWeight: 600 }}>{error}</div>;
+
+  return (
+    <div
+      ref={containerRef}
+      style={{ flex: 1, overflowY: 'auto', background: '#e2e8f0', padding: '12px 8px' }}
+    />
+  );
+}
 
 const EXT_COLORS = {
   PDF:  '#ef4444',
@@ -67,12 +122,18 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
 
     if (fileType === 'pdf') {
       const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const pdfSrc = isMobile
-        ? `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`
-        : `${fileUrl}#toolbar=0&navpanes=0`;
+      if (isMobile) {
+        return (
+          <PdfCanvasViewer
+            fileUrl={fileUrl}
+            badgeColor={badgeColor}
+            onReady={() => setLoading(false)}
+          />
+        );
+      }
       return (
         <iframe
-          src={pdfSrc}
+          src={`${fileUrl}#toolbar=0&navpanes=0`}
           style={{ flex: 1, border: 'none', background: '#fff' }}
           title={displayName}
           allowFullScreen
