@@ -66,9 +66,13 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
     }
 
     if (fileType === 'pdf') {
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const pdfSrc = isMobile
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`
+        : `${fileUrl}#toolbar=0&navpanes=0`;
       return (
         <iframe
-          src={fileUrl}
+          src={pdfSrc}
           style={{ flex: 1, border: 'none', background: '#fff' }}
           title={displayName}
           allowFullScreen
