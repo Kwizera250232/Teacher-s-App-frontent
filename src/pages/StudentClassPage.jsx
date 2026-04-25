@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
+import VerifiedBadge from '../components/VerifiedBadge';
 import '../pages/Dashboard.css';
 
 const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion'];
@@ -140,7 +141,7 @@ export default function StudentClassPage() {
               <div key={a.id} className="item-card">
                 <div className="item-card-body">
                   <p>{a.content}</p>
-                  <div className="meta">📢 {a.teacher_name} · {new Date(a.created_at).toLocaleString()}</div>
+                  <div className="meta" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📢 {a.teacher_name}<VerifiedBadge size={13} /> · {new Date(a.created_at).toLocaleString()}</div>
                 </div>
                 <button
                   className="btn btn-secondary btn-sm"
@@ -344,8 +345,8 @@ export default function StudentClassPage() {
             <div className="discussion-list">
               {data.map(d => (
                 <div key={d.id} className="discussion-msg">
-                  <div className="author">
-                    {d.author_name}
+                  <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    {d.author_name}<VerifiedBadge size={13} />
                     <span className="role-badge">{d.author_role}</span>
                   </div>
                   <div className="body">{d.content}</div>

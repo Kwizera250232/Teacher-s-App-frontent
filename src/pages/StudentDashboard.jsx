@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import JoinClassModal from '../components/JoinClassModal';
+import VerifiedBadge from '../components/VerifiedBadge';
 import './Dashboard.css';
 
 export default function StudentDashboard() {
@@ -51,7 +52,7 @@ export default function StudentDashboard() {
       <header className="dash-header">
         <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
-          <span>👋 {user?.name}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} /></span>
           <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
@@ -117,7 +118,7 @@ export default function StudentDashboard() {
                     {cls.subject && <span className="subject-tag">{cls.subject}</span>}
                   </div>
                   <div className="class-teacher">
-                    <span>👨‍🏫 {cls.teacher_name}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👨‍🏫 {cls.teacher_name}<VerifiedBadge size={13} /></span>
                   </div>
                   <div className="class-card-footer">
                     <span>Tap to enter</span>

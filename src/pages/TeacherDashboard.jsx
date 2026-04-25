@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateClassModal from '../components/CreateClassModal';
+import VerifiedBadge from '../components/VerifiedBadge';
 import './Dashboard.css';
 
 export default function TeacherDashboard() {
@@ -33,7 +34,7 @@ export default function TeacherDashboard() {
       <header className="dash-header">
         <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
-          <span>👋 {user?.name}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} /></span>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>

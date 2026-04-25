@@ -6,6 +6,7 @@ import CreateQuizModal from '../components/CreateQuizModal';
 import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
+import VerifiedBadge from '../components/VerifiedBadge';
 import '../pages/Dashboard.css';
 
 const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
@@ -506,7 +507,7 @@ export default function TeacherClassPage() {
                 {data.map((s, i) => (
                   <tr key={s.id}>
                     <td>{i + 1}</td>
-                    <td>{s.name}</td>
+                    <td style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{s.name}<VerifiedBadge size={13} /></td>
                     <td>{s.email}</td>
                     <td>{new Date(s.joined_at).toLocaleDateString()}</td>
                   </tr>
