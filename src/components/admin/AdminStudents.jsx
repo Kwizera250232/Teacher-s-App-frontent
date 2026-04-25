@@ -67,7 +67,7 @@ export default function AdminStudents({ token }) {
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
-            <tr><th>Name</th><th>Email</th><th>School</th><th>Classes</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Email</th><th>Phone</th><th>School</th><th>Classes</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && <tr><td colSpan={7} className="empty-text">No students found.</td></tr>}
@@ -75,10 +75,12 @@ export default function AdminStudents({ token }) {
               <tr key={s.id}>
                 <td><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{s.name}<VerifiedBadge size={13} info={{ items: [
                   { icon: '📧', label: 'Email', value: s.email },
+                  { icon: '📞', label: 'Phone', value: s.phone || '—' },
                   { icon: '🏣', label: 'School', value: s.school_name || '—' },
                   { icon: '📅', label: 'Joined', value: new Date(s.created_at).toLocaleDateString() },
                 ] }} /></strong></td>
                 <td>{s.email}</td>
+                <td>{s.phone || <span style={{color:'#94a3b8'}}>—</span>}</td>
                 <td>{s.school_name || '—'}</td>
                 <td>{s.class_count}</td>
                 <td><span className={`badge ${s.is_suspended ? 'badge-red' : 'badge-green'}`}>{s.is_suspended ? 'Suspended' : 'Active'}</span></td>

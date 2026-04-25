@@ -70,16 +70,18 @@ export default function AdminTeachers({ token }) {
           <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
-                <tr><th>Amazina</th><th>Imeyili</th><th>Binjiye</th><th>Actions</th></tr>
+                <tr><th>Amazina</th><th>Imeyili</th><th>Telefoni</th><th>Binjiye</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {pending.map(t => (
                   <tr key={t.id} style={{ background: '#fffbeb' }}>
                     <td><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{t.name}<VerifiedBadge size={13} info={{ items: [
                       { icon: '📧', label: 'Email', value: t.email },
+                      { icon: '�', label: 'Phone', value: t.phone || '—' },
                       { icon: '📅', label: 'Joined', value: new Date(t.created_at).toLocaleDateString() },
                     ] }} /></strong></td>
                     <td>{t.email}</td>
+                    <td>{t.phone || <span style={{color:'#94a3b8'}}>—</span>}</td>
                     <td>{new Date(t.created_at).toLocaleDateString()}</td>
                     <td style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                       <button className="btn-sm btn-success" onClick={() => approve(t.id)}>✅ Emera</button>
@@ -103,7 +105,7 @@ export default function AdminTeachers({ token }) {
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
-              <tr><th>Amazina</th><th>Imeyili</th><th>Ishuri</th><th>Amasomo</th><th>Status</th><th>Binjiye</th><th>Actions</th></tr>
+              <tr><th>Amazina</th><th>Imeyili</th><th>Telefoni</th><th>Ishuri</th><th>Amasomo</th><th>Status</th><th>Binjiye</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {approved.length === 0 && <tr><td colSpan={7} className="empty-text">Nta mwarimu ubonetse.</td></tr>}
@@ -111,9 +113,11 @@ export default function AdminTeachers({ token }) {
                 <tr key={t.id}>
                   <td><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{t.name}<VerifiedBadge size={13} info={{ items: [
                     { icon: '📧', label: 'Email', value: t.email },
+                    { icon: '�', label: 'Phone', value: t.phone || '—' },
                     { icon: '📅', label: 'Joined', value: new Date(t.created_at).toLocaleDateString() },
                   ] }} /></strong></td>
                   <td>{t.email}</td>
+                  <td>{t.phone || <span style={{color:'#94a3b8'}}>—</span>}</td>
                   <td>
                     <select
                       className="admin-input"

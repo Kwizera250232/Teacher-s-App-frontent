@@ -8,7 +8,7 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const defaultRole = searchParams.get('role') === 'teacher' ? 'teacher' : 'student';
   const classCode = searchParams.get('code') || '';
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: defaultRole, school_id: '', newSchool: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: defaultRole, school_id: '', newSchool: '', phone: '' });
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
@@ -36,6 +36,7 @@ export default function Register() {
         password: form.password,
         role: form.role,
         school_id: schoolId || null,
+        phone: form.phone || undefined,
       });
       // Teacher accounts need admin approval first
       if (data.pending) {
@@ -89,6 +90,10 @@ export default function Register() {
           <div className="form-group">
             <label>Imeyili</label>
             <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" required />
+          </div>
+          <div className="form-group">
+            <label>Inomero ya Telefoni <span style={{color:'#94a3b8',fontWeight:400}}>(optional)</span></label>
+            <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+250 7XX XXX XXX" />
           </div>
           <div className="form-group">
             <label>Ijambo Banga</label>
