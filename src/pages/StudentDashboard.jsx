@@ -98,7 +98,9 @@ export default function StudentDashboard() {
               title="Siba iri tangazo"
             >✕</button>
           </div>
-        ))} (
+        ))}
+
+        {classes.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🎒</div>
             <h3>Nta mashuri ufite</h3>
