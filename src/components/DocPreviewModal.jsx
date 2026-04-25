@@ -10,7 +10,8 @@ function PdfCanvasViewer({ fileUrl, onReady, badgeColor }) {
     (async () => {
       try {
         const pdfjsLib = await import('pdfjs-dist');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+        const version = pdfjsLib.version || '5.6.205';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
 
         const pdf = await pdfjsLib.getDocument(fileUrl).promise;
         if (cancelled) return;
@@ -118,23 +119,11 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
     }
 
     if (fileType === 'pdf') {
-      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      if (isMobile) {
-        return (
-          <PdfCanvasViewer
-            fileUrl={fileUrl}
-            badgeColor={badgeColor}
-            onReady={() => setLoading(false)}
-          />
-        );
-      }
       return (
-        <iframe
-          src={`${fileUrl}#toolbar=0&navpanes=0`}
-          style={{ flex: 1, border: 'none', background: '#fff' }}
-          title={displayName}
-          allowFullScreen
-          onLoad={() => setLoading(false)}
+        <PdfCanvasViewer
+          fileUrl={fileUrl}
+          badgeColor={badgeColor}
+          onReady={() => setLoading(false)}
         />
       );
     }
