@@ -255,7 +255,7 @@ export default function TeacherClassPage() {
                     <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                       <button
                         className="btn btn-secondary btn-sm"
-                        onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/uploads/${n.file_path}`, fileName: n.file_name })}
+                        onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/notes/${n.file_path}`, fileName: n.file_name })}
                       >👁 Preview</button>
                       <a href={`${UPLOADS_BASE}/download/notes/${n.file_path}`} download={n.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                       <button
@@ -319,7 +319,7 @@ export default function TeacherClassPage() {
                           <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                             <button
                               className="btn btn-secondary btn-sm"
-                              onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/uploads/${hw.file_path}`, fileName: hw.file_name })}
+                              onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${hw.file_path}`, fileName: hw.file_name })}
                             >👁 Preview</button>
                             <a href={`${UPLOADS_BASE}/download/homework/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                             <button
@@ -372,7 +372,7 @@ export default function TeacherClassPage() {
                                 <div style={{ display: 'flex', gap: 8, marginBottom: 10, marginTop: 6, flexWrap: 'wrap' }}>
                                   <button
                                     className="btn btn-secondary btn-sm"
-                                    onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/uploads/${sub.file_path}`, fileName: sub.file_name })}
+                                    onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.file_path}`, fileName: sub.file_name })}
                                   >👁 Preview</button>
                                   <a href={`${UPLOADS_BASE}/download/homework/${sub.file_path}`} download={sub.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                                 </div>
