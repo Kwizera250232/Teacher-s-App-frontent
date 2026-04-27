@@ -250,25 +250,31 @@ body {
 .class-card-wrap {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .class-card-wrap .class-card {
   border-radius: 12px;
 }
 .class-card-note-btn {
   width: 100%;
-  background: white;
-  color: #667eea;
-  border: 2px dashed #c7d2fe;
-  border-radius: 10px;
-  padding: 9px;
-  font-size: 13px;
-  font-weight: 600;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
   text-align: center;
-  transition: background 0.15s, border-color 0.15s;
+  transition: all 0.2s;
+  letter-spacing: 0.2px;
+  box-shadow: 0 4px 14px rgba(79,70,229,0.35);
 }
-.class-card-note-btn:hover { background: #f0f2ff; border-color: #667eea; }
+.class-card-note-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(79,70,229,0.45);
+  background: linear-gradient(135deg, #4338ca, #6d28d9);
+}
 
 /* Item card button row — wraps and stacks on mobile */
 .item-card-btns {

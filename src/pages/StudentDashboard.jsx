@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import JoinClassModal from '../components/JoinClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
+import UmunsiAiModal from '../components/UmunsiAiModal';
 import './Dashboard.css';
 
 export default function StudentDashboard() {
@@ -16,6 +17,7 @@ export default function StudentDashboard() {
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   // Quick note state: { classId, open, text, saving }
   const [quickNote, setQuickNote] = useState(null);
+  const [aiModal, setAiModal] = useState(null); // { classId, className }
 
   const loadClasses = () => {
     api.get('/classes/my', token).then(setClasses).catch(e => setError(e.message));
@@ -132,12 +134,12 @@ export default function StudentDashboard() {
                     <span className="arrow">→</span>
                   </div>
                 </Link>
-                {/* Summary button — visually separate from card */}
+                {/* AI button */}
                 <button
                   className="class-card-note-btn"
-                  onClick={e => { e.stopPropagation(); setQuickNote({ classId: cls.id, open: true, text: '', saving: false }); }}
+                  onClick={e => { e.stopPropagation(); setAiModal({ classId: cls.id, className: cls.name }); }}
                 >
-                  📝 Muri make ibyo twize
+                  🤖 Baza Umunsi AI
                 </button>
               </div>
             ))}
@@ -181,6 +183,16 @@ export default function StudentDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Baza Umunsi Student AI modal */}
+      {aiModal && (
+        <UmunsiAiModal
+          classId={aiModal.classId}
+          className={aiModal.className}
+          token={token}
+          onClose={() => setAiModal(null)}
+        />
       )}
     </div>
   );
