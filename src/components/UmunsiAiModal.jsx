@@ -2,13 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 
-export default function UmunsiAiModal({ classId, className, token, onClose }) {
+export default function UmunsiAiModal({ classId, className, token, onClose, isTeacher = false }) {
   const navigate = useNavigate();
+  const greeting = isTeacher
+    ? `Muraho Mwarimu! Ndi Baza Umunsi Teacher AI 🤖\n\nNshobora gufasha:\n• Gusobanura amasomo n'ibitabo bya curriculum ya Rwanda\n• Gufasha gutegura homework na gusobanura abanyeshuri\n• Gukora ibibazo by'ikizamini\n\nBaza ikibazo cyangwa wandike homework kugira ngo ngusobanurire uko uyigisha!\n\nSubiza mu Kinyarwanda cyangwa English.`
+    : `Muraho! Ndi Baza Umunsi Student AI 🤖\n\nNshobora gufasha mu bibazo bijyanye n'amasomo mwigwa muri ${className}.\n\nNibaze ikibazo!\n\nSubiza mu Kinyarwanda cyangwa English.`;
   const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: `Muraho! Ndi Baza Umunsi Student AI 🤖\n\nNshobora gufasha mu bibazo bijyanye n'amasomo mwigwa muri ${className}.\n\nNibaze ikibazo!\n\nSubiza mu Kinyarwanda cyangwa English.`,
-    },
+    { role: 'assistant', content: greeting },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -128,7 +128,7 @@ export default function UmunsiAiModal({ classId, className, token, onClose }) {
               }}>🤖</div>
               <div>
                 <div style={{ color:'#fff', fontWeight:800, fontSize:17, letterSpacing:0.3, lineHeight:1.2 }}>
-                  Baza Umunsi Student AI
+                  {isTeacher ? 'Baza Umunsi Teacher AI' : 'Baza Umunsi Student AI'}
                 </div>
                 <div style={{ color:'rgba(255,255,255,0.78)', fontSize:12.5, marginTop:3, display:'flex', alignItems:'center', gap:5 }}>
                   <span style={{ width:7, height:7, borderRadius:'50%', background:'#4ade80', display:'inline-block' }} />
@@ -200,8 +200,8 @@ export default function UmunsiAiModal({ classId, className, token, onClose }) {
                 </div>
               </div>
 
-              {/* Send to Note button — only on AI replies (not the greeting) */}
-              {msg.role === 'assistant' && i > 0 && (
+              {/* Send to Note button — only for students on AI replies (not the greeting) */}
+              {msg.role === 'assistant' && i > 0 && !isTeacher && (
                 <div style={{ paddingLeft:44, marginTop:6 }}>
                   <button
                     className="ai-note-pill"
@@ -252,8 +252,8 @@ export default function UmunsiAiModal({ classId, className, token, onClose }) {
           <div ref={bottomRef} />
         </div>
 
-        {/* ── NOTE PANEL ── */}
-        {notePanel && (
+        {/* ── NOTE PANEL (students only) ── */}
+        {notePanel && !isTeacher && (
           <div style={{
             borderTop:'2px solid #ede9fe',
             padding:'16px 20px',

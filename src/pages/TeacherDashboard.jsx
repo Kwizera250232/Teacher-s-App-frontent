@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateClassModal from '../components/CreateClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
+import UmunsiAiModal from '../components/UmunsiAiModal';
 import './Dashboard.css';
 
 export default function TeacherDashboard() {
@@ -13,6 +14,7 @@ export default function TeacherDashboard() {
   const [error, setError] = useState('');
   const [announcements, setAnnouncements] = useState([]);
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
+  const [aiModal, setAiModal] = useState(null); // { classId, className }
 
   const dismissAnnouncement = (id) => {
     const updated = [...dismissed, id];
@@ -95,20 +97,29 @@ export default function TeacherDashboard() {
         ) : (
           <div className="classes-grid">
             {classes.map(cls => (
-              <Link key={cls.id} to={`/teacher/classes/${cls.id}`} className="class-card">
-                <div className="class-card-header">
-                  <h3>{cls.name}</h3>
-                  {cls.subject && <span className="subject-tag">{cls.subject}</span>}
-                </div>
-                <div className="class-code-display">
-                  <span className="code-label">Class Code</span>
-                  <span className="code-value">{cls.class_code}</span>
-                </div>
-                <div className="class-card-footer">
-                  <span>👥 {cls.student_count} students</span>
-                  <span className="arrow">→</span>
-                </div>
-              </Link>
+              <div key={cls.id} className="class-card-wrap">
+                <Link to={`/teacher/classes/${cls.id}`} className="class-card">
+                  <div className="class-card-header">
+                    <h3>{cls.name}</h3>
+                    {cls.subject && <span className="subject-tag">{cls.subject}</span>}
+                  </div>
+                  <div className="class-code-display">
+                    <span className="code-label">Class Code</span>
+                    <span className="code-value">{cls.class_code}</span>
+                  </div>
+                  <div className="class-card-footer">
+                    <span>👥 {cls.student_count} students</span>
+                    <span className="arrow">→</span>
+                  </div>
+                </Link>
+                {/* AI button for teacher */}
+                <button
+                  className="class-card-note-btn"
+                  onClick={() => setAiModal({ classId: cls.id, className: cls.name })}
+                >
+                  🤖 Baza Umunsi AI
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -119,6 +130,16 @@ export default function TeacherDashboard() {
           token={token}
           onClose={() => setShowCreate(false)}
           onCreated={() => { setShowCreate(false); loadClasses(); }}
+        />
+      )}
+
+      {aiModal && (
+        <UmunsiAiModal
+          classId={aiModal.classId}
+          className={aiModal.className}
+          token={token}
+          isTeacher={true}
+          onClose={() => setAiModal(null)}
         />
       )}
     </div>
