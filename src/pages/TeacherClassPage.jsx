@@ -29,6 +29,8 @@ export default function TeacherClassPage() {
   const [noteForm, setNoteForm] = useState({ title: '', file: null });
   const [hwForm, setHwForm] = useState({ title: '', description: '', due_date: '', file: null });
   const [discussionText, setDiscussionText] = useState('');
+  const [expandedComments, setExpandedComments] = useState({});
+  const [commentText, setCommentText] = useState({});
   // Submissions viewer: { [hwId]: { open, submissions, gradeForm: { [subId]: { grade, feedback } } } }
   const [submissionsState, setSubmissionsState] = useState({});
   const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
@@ -110,6 +112,37 @@ export default function TeacherClassPage() {
       setDiscussionText('');
       loadTab();
     } catch (e) { setError(e.message); }
+  };
+
+  const toggleLike = async (discussionId) => {
+    try {
+      const res = await api.post(`/classes/discussions/${discussionId}/like`, {}, token);
+      setData(prev => prev.map(d =>
+        d.id === discussionId ? { ...d, like_count: res.like_count, liked_by_me: res.liked } : d
+      ));
+    } catch {/* ignore */}
+  };
+
+  const toggleComments = async (discussionId) => {
+    if (expandedComments[discussionId] !== undefined) {
+      setExpandedComments(prev => { const n = { ...prev }; delete n[discussionId]; return n; });
+      return;
+    }
+    try {
+      const comments = await api.get(`/classes/discussions/${discussionId}/comments`, token);
+      setExpandedComments(prev => ({ ...prev, [discussionId]: comments }));
+    } catch {/* ignore */}
+  };
+
+  const postComment = async (e, discussionId) => {
+    e.preventDefault();
+    const text = commentText[discussionId]?.trim();
+    if (!text) return;
+    try {
+      const comment = await api.post(`/classes/discussions/${discussionId}/comments`, { content: text }, token);
+      setExpandedComments(prev => ({ ...prev, [discussionId]: [...(prev[discussionId] || []), comment] }));
+      setCommentText(prev => ({ ...prev, [discussionId]: '' }));
+    } catch {/* ignore */}
   };
 
   const deleteItem = async (endpoint) => {
@@ -484,6 +517,40 @@ export default function TeacherClassPage() {
                   </div>
                   <div className="body">{d.content}</div>
                   <div className="time">{new Date(d.created_at).toLocaleString()}</div>
+
+                  <div className="disc-actions">
+                    <button
+                      className={`disc-action-btn ${d.liked_by_me ? 'liked' : ''}`}
+                      onClick={() => toggleLike(d.id)}
+                    >
+                      {d.liked_by_me ? '❤️' : '🤍'} {parseInt(d.like_count) || 0}
+                    </button>
+                    <button className="disc-action-btn" onClick={() => toggleComments(d.id)}>
+                      💬 {expandedComments[d.id] !== undefined ? 'Hide' : 'Comments'}
+                    </button>
+                  </div>
+
+                  {expandedComments[d.id] !== undefined && (
+                    <div className="disc-comments">
+                      {expandedComments[d.id].length === 0 && <p style={{ color: '#aaa', fontSize: 13 }}>No comments yet.</p>}
+                      {expandedComments[d.id].map(c => (
+                        <div key={c.id} className="disc-comment">
+                          <span className="disc-comment-author">{c.author_name}</span>
+                          <span className="disc-comment-role">{c.author_role}</span>
+                          <p>{c.content}</p>
+                          <span className="disc-comment-time">{new Date(c.created_at).toLocaleString()}</span>
+                        </div>
+                      ))}
+                      <form className="disc-comment-form" onSubmit={e => postComment(e, d.id)}>
+                        <input
+                          placeholder="Write a comment..."
+                          value={commentText[d.id] || ''}
+                          onChange={e => setCommentText(prev => ({ ...prev, [d.id]: e.target.value }))}
+                        />
+                        <button type="submit" className="btn btn-primary btn-sm">Reply</button>
+                      </form>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

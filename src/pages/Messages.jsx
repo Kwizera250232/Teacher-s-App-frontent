@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { api, UPLOADS_BASE } from '../api';
+import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Messages.css';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
+
+const EMOJI_LIST = [
+  '😀','😂','😍','🥰','😎','🤔','😊','😅','🥹','😭','😤','🤩','😢','😡','🤗',
+  '👍','👎','👏','🙌','🤝','🙏','💪','🫶','❤️','🧡','💛','💚','💙','💜','🖤',
+  '🎉','🎊','🏆','🌟','⭐','✅','❌','⚠️','📚','✏️','🎓','📖','🏫','💡','🔥',
+  '😴','😷','🤒','🤓','👀','💀','👻','🐱','🐶','🦁','🌈','⚽','🏀','🎮','🎵',
+];
 
 export default function Messages() {
   const { user, token } = useAuth();
@@ -16,12 +23,16 @@ export default function Messages() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [inbox, setInbox] = useState([]);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [imgFile, setImgFile] = useState(null);
+  const [imgPreview, setImgPreview] = useState('');
   const bottomRef = useRef();
+  const fileRef = useRef();
+  const emojiRef = useRef();
 
   useEffect(() => {
     api.get('/profile/contacts/list', token).then(setContacts).catch(() => {});
     api.get('/messages/inbox', token).then(setInbox).catch(() => {});
-    // Open specific contact from query param
     const uid = searchParams.get('to');
     if (uid) setActiveId(parseInt(uid));
   }, [token]);
@@ -38,14 +49,49 @@ export default function Messages() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [thread]);
 
+  // Close emoji panel on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target)) setShowEmoji(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const pickEmoji = (e) => {
+    setText(t => t + e);
+    setShowEmoji(false);
+  };
+
+  const handleImgChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImgFile(file);
+    setImgPreview(URL.createObjectURL(file));
+  };
+
+  const clearImg = () => { setImgFile(null); setImgPreview(''); fileRef.current && (fileRef.current.value = ''); };
+
   const send = async (e) => {
     e.preventDefault();
-    if (!text.trim() || !activeId) return;
+    if (!activeId || (sending) || (!text.trim() && !imgFile)) return;
     setSending(true);
     try {
-      const msg = await api.post('/messages', { receiver_id: activeId, content: text.trim() }, token);
-      setThread(t => [...t, { ...msg, sender_name: user?.name }]);
+      let imagePath = null;
+      if (imgFile) {
+        const fd = new FormData();
+        fd.append('image', imgFile);
+        fd.append('receiver_id', activeId);
+        const res = await uploadFile('/messages/image', fd, token);
+        imagePath = res.image_path;
+        setThread(t => [...t, { ...res.message, sender_name: user?.name }]);
+      }
+      if (text.trim()) {
+        const msg = await api.post('/messages', { receiver_id: activeId, content: text.trim() }, token);
+        setThread(t => [...t, { ...msg, sender_name: user?.name }]);
+      }
       setText('');
+      clearImg();
     } catch {/* ignore */}
     setSending(false);
   };
@@ -104,7 +150,15 @@ export default function Messages() {
               {thread.map(m => (
                 <div key={m.id} className={`msg-bubble-wrap ${m.sender_id === user?.id ? 'mine' : 'theirs'}`}>
                   <div className="msg-bubble">
-                    <p>{m.content}</p>
+                    {m.image_path && (
+                      <img
+                        src={`${UPLOADS_BASE}${m.image_path}`}
+                        alt="shared"
+                        className="msg-img"
+                        onClick={() => window.open(`${UPLOADS_BASE}${m.image_path}`, '_blank')}
+                      />
+                    )}
+                    {m.content && <p>{m.content}</p>}
                     <span className="msg-time">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 </div>
@@ -112,7 +166,26 @@ export default function Messages() {
               <div ref={bottomRef} />
             </div>
 
+            {imgPreview && (
+              <div className="msg-img-preview">
+                <img src={imgPreview} alt="preview" />
+                <button className="msg-img-clear" onClick={clearImg}>✕</button>
+              </div>
+            )}
+
             <form className="msg-input-row" onSubmit={send}>
+              <div className="msg-emoji-wrap" ref={emojiRef}>
+                <button type="button" className="msg-icon-btn" onClick={() => setShowEmoji(s => !s)} title="Emoji">😊</button>
+                {showEmoji && (
+                  <div className="emoji-panel">
+                    {EMOJI_LIST.map(e => (
+                      <button key={e} type="button" className="emoji-btn" onClick={() => pickEmoji(e)}>{e}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button type="button" className="msg-icon-btn" onClick={() => fileRef.current?.click()} title="Send image">🖼</button>
+              <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleImgChange} />
               <input
                 value={text}
                 onChange={e => setText(e.target.value)}
@@ -120,7 +193,7 @@ export default function Messages() {
                 disabled={sending}
                 autoFocus
               />
-              <button type="submit" className="msg-send-btn" disabled={sending || !text.trim()}>
+              <button type="submit" className="msg-send-btn" disabled={sending || (!text.trim() && !imgFile)}>
                 ➤
               </button>
             </form>
