@@ -230,7 +230,7 @@ export default function Profile() {
             <div className="umunsimedia-inner">
               <div className="umunsimedia-text">
                 <span className="umunsimedia-tagline">Want to increase your writing knowledge?</span>
-                <span className="umunsimedia-cta">Visit Umunsimedia.com †’</span>
+                <span className="umunsimedia-cta">Visit Umunsimedia.com →</span>
               </div>
             </div>
           </a>
