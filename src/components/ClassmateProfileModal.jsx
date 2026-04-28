@@ -65,7 +65,7 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
 
         {!loading && !subscribed && (
           <div style={{ padding:'48px 24px 36px',textAlign:'center' }}>
-            <img src={avatarSrc} alt={person.name} style={{ width:88,height:88,borderRadius:'50%',objectFit:'cover',border:'4px solid #fff',boxShadow:'0 4px 18px rgba(0,0,0,0.15)',marginBottom:14 }} />
+            <img src={avatarSrc} alt={person.name} onError={(e)=>{e.target.onerror=null;e.target.src=DEFAULT_AVATAR;}} style={{ width:88,height:88,borderRadius:'50%',objectFit:'cover',border:'4px solid #fff',boxShadow:'0 4px 18px rgba(0,0,0,0.15)',marginBottom:14 }} />
             <div style={{ fontSize:20,fontWeight:800,color:'#1e293b',marginBottom:6 }}>{person.name}</div>
             <span style={{ display:'inline-block',padding:'3px 14px',borderRadius:20,fontSize:12,fontWeight:700,textTransform:'capitalize',background:person.role==='teacher'?'#d1fae5':'#e0e7ff',color:person.role==='teacher'?'#065f46':'#3730a3',marginBottom:20 }}>{person.role}</span>
             <div style={{ background:'#fef9ec',border:'1.5px solid #fde68a',borderRadius:14,padding:'16px 20px',marginBottom:24,fontSize:14,color:'#92400e',lineHeight:1.6 }}>
@@ -81,7 +81,7 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
         {!loading && subscribed && (
           <>
             <div style={{ textAlign:'center',padding:'36px 24px 20px',background:'linear-gradient(160deg,rgba(102,126,234,0.06) 0%,rgba(118,75,162,0.06) 100%)',borderBottom:'1px solid #f1f5f9' }}>
-              <img src={avatarSrc} alt={person.name} style={{ width:96,height:96,borderRadius:'50%',objectFit:'cover',border:'4px solid #fff',boxShadow:'0 4px 18px rgba(0,0,0,0.15)',marginBottom:12 }} />
+              <img src={avatarSrc} alt={person.name} onError={(e)=>{e.target.onerror=null;e.target.src=DEFAULT_AVATAR;}} style={{ width:96,height:96,borderRadius:'50%',objectFit:'cover',border:'4px solid #fff',boxShadow:'0 4px 18px rgba(0,0,0,0.15)',marginBottom:12 }} />
               <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,flexWrap:'wrap',marginBottom:6 }}>
                 <span style={{ fontSize:20,fontWeight:800,color:'#1e293b' }}>{person.name}</span>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="12" fill="#1d9bf0"/><path d="M6.5 12.5l3.5 3.5 7.5-8" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/></svg>

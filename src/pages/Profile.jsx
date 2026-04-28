@@ -127,10 +127,11 @@ export default function Profile() {
           {/* Avatar + change photo */}
           <div className="profile-view-avatar-wrap">
             <img
+              key={avatarUrl}
               src={avatarUrl || DEFAULT_AVATAR}
               alt="avatar"
               className="profile-view-avatar"
-              onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_AVATAR; }}
+              onError={() => setAvatarUrl('')}
             />
             <button type="button" className="avatar-edit-btn-overlay" onClick={() => fileRef.current?.click()}>
               📷
@@ -250,8 +251,9 @@ export default function Profile() {
             src={avatarUrl || DEFAULT_AVATAR}
             alt="avatar"
             className="profile-avatar"
+            key={avatarUrl}
             onClick={() => fileRef.current?.click()}
-            onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_AVATAR; }}
+            onError={() => setAvatarUrl('')}
           />
           <button type="button" className="avatar-edit-btn" onClick={() => fileRef.current?.click()}>
             📷 Change Photo
