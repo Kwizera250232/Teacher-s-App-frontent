@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { UPLOADS_BASE, api } from '../api';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,6 +22,13 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
   const [subCount, setSubCount] = useState(person.subscriber_count || 0);
   const [subLoading, setSubLoading] = useState(false);
 
+  // Prevent the tap that opened the modal from also closing it via backdrop
+  const readyRef = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { readyRef.current = true; }, 80);
+    return () => clearTimeout(t);
+  }, []);
+
   async function toggleSubscribe() {
     if (subLoading) return;
     setSubLoading(true);
@@ -38,7 +45,7 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
 
   const modal = (
     <div
-      onClick={e => e.target === e.currentTarget && onClose()}
+      onClick={e => readyRef.current && e.target === e.currentTarget && onClose()}
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(0,0,0,0.6)',
@@ -64,7 +71,7 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
           width: 34, height: 34, fontSize: 16, cursor: 'pointer',
           color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 10,
-        }}>œ•</button>
+        }}>×</button>
 
         {/* Hero section */}
         <div style={{

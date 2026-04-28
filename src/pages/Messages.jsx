@@ -31,14 +31,14 @@ export default function Messages() {
   const bottomRef = useRef();
   const fileRef = useRef();
   const emojiRef = useRef();
+  const inboxDataRef = useRef({});
 
   useEffect(() => {
     Promise.all([
       api.get('/profile/contacts/list', token),
       api.get('/messages/inbox', token),
     ]).then(([contactList, inboxList]) => {
-      setInbox(inboxList);
-      // Merge inbox senders not already in contacts so unread messages are always reachable
+      setInbox(inboxList);      inboxDataRef.current = Object.fromEntries(inboxList.map(m => [m.sender_id, m]));      // Merge inbox senders not already in contacts so unread messages are always reachable
       const existingIds = new Set(contactList.map(c => c.id));
       const extra = inboxList
         .filter(m => !existingIds.has(m.sender_id))
@@ -115,6 +115,10 @@ export default function Messages() {
 
   const activeContact = contacts.find(c => c.id === activeId);
   const unreadMap = Object.fromEntries(inbox.map(m => [m.sender_id, true]));
+  const contactsWithMsg = contacts
+    .filter(c => inboxDataRef.current[c.id])
+    .sort((a, b) => new Date(inboxDataRef.current[b.id]?.created_at || 0) - new Date(inboxDataRef.current[a.id]?.created_at || 0));
+  const contactsNoMsg = contacts.filter(c => !inboxDataRef.current[c.id]);
 
   return (
     <div className="msg-page">
@@ -124,7 +128,39 @@ export default function Messages() {
           <span>💬 Messages</span>
         </div>
         {contacts.length === 0 && <div className="msg-empty">No contacts yet. Join a class first.</div>}
-        {contacts.map(c => (
+
+        {contactsWithMsg.length > 0 && <div className="msg-section-label">💬 Messages</div>}
+        {contactsWithMsg.map(c => {
+          const msgData = inboxDataRef.current[c.id];
+          const isUnread = !!unreadMap[c.id];
+          return (
+            <div
+              key={c.id}
+              className={`msg-contact ${activeId === c.id ? 'active' : ''}${isUnread ? ' unread' : ''}`}
+              onClick={() => { setActiveId(c.id); setMobilePanel('chat'); }}
+            >
+              <div className="msg-contact-avatar-wrap">
+                <img src={c.avatar_path ? `${UPLOADS_BASE}${c.avatar_path}` : DEFAULT_AVATAR} alt="" className="msg-contact-avatar" />
+                {isUnread && <span className="msg-unread-dot" />}
+              </div>
+              <div className="msg-contact-info">
+                <span className="msg-contact-name">
+                  {c.name}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginLeft: 3, verticalAlign: 'middle' }}>
+                    <circle cx="12" cy="12" r="12" fill="#1d9bf0"/>
+                    <path d="M6.5 12.5l3.5 3.5 7.5-8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+                {msgData?.content && (
+                  <span className="msg-preview">{msgData.content.length > 38 ? msgData.content.slice(0, 38) + '…' : msgData.content}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {contactsNoMsg.length > 0 && <div className="msg-section-label">👥 Classmates</div>}
+        {contactsNoMsg.map(c => (
           <div
             key={c.id}
             className={`msg-contact ${activeId === c.id ? 'active' : ''}`}
@@ -132,7 +168,6 @@ export default function Messages() {
           >
             <div className="msg-contact-avatar-wrap">
               <img src={c.avatar_path ? `${UPLOADS_BASE}${c.avatar_path}` : DEFAULT_AVATAR} alt="" className="msg-contact-avatar" />
-              {unreadMap[c.id] && <span className="msg-unread-dot" />}
             </div>
             <div className="msg-contact-info">
               <span className="msg-contact-name">
