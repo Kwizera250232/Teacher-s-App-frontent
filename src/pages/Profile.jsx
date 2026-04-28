@@ -1,4 +1,4 @@
-
+﻿
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
@@ -30,7 +30,7 @@ function TagInput({ label, values, onChange, placeholder }) {
         {values.map((v, i) => (
           <span key={i} className="tag">
             {v}
-            <button type="button" onClick={() => onChange(values.filter((_, j) => j !== i))}>×</button>
+            <button type="button" onClick={() => onChange(values.filter((_, j) => j !== i))}>Ã—</button>
           </span>
         ))}
       </div>
@@ -46,6 +46,7 @@ export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [editMode, setEditMode] = useState(false);
 
   // form fields
   const [phone, setPhone] = useState('');
@@ -104,6 +105,7 @@ export default function Profile() {
         dreams, favorite_lessons: favLessons, hobbies, fears,
       }, token);
       setMsg('Profile saved successfully!');
+      setEditMode(false);
     } catch (err) {
       setMsg(err.message);
     } finally {
@@ -111,11 +113,138 @@ export default function Profile() {
     }
   };
 
+  // â”€â”€ View Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (!editMode) {
+    return (
+      <div className="profile-page">
+        <div className="profile-header">
+          <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>â† Back</button>
+          <h1>My Profile</h1>
+          <button className="btn btn-primary btn-sm" onClick={() => setEditMode(true)}>âœï¸ Edit</button>
+        </div>
+
+        <div className="profile-view-card">
+          {/* Avatar + change photo */}
+          <div className="profile-view-avatar-wrap">
+            <img
+              src={avatarUrl || DEFAULT_AVATAR}
+              alt="avatar"
+              className="profile-view-avatar"
+            />
+            <button type="button" className="avatar-edit-btn-overlay" onClick={() => fileRef.current?.click()}>
+              ðŸ“·
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
+          </div>
+
+          {/* Name + role + badge */}
+          <div className="profile-view-name-row">
+            <span className="profile-name">{user?.name}</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="12" fill="#1d9bf0"/>
+              <path d="M6.5 12.5l3.5 3.5 7.5-8" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="profile-role-badge">{user?.role}</span>
+          </div>
+          <div className="profile-email">âœ‰ï¸ {user?.email}</div>
+
+          {/* Stats */}
+          <div className="profile-stats-bar">
+            <div className="profile-stat">
+              <strong>{subscriberCount}</strong>
+              <span>Subscribers</span>
+            </div>
+            <div className="profile-stat-divider" />
+            <div className="profile-stat">
+              <strong>{followingCount}</strong>
+              <span>Following</span>
+            </div>
+          </div>
+
+          {/* Personal info */}
+          {(phone || address || schools.length > 0) && (
+            <div className="profile-view-section">
+              <div className="profile-view-section-title">ðŸ“‹ Personal Info</div>
+              {phone && <div className="profile-view-row"><span>ðŸ“ž</span><span>{phone}</span></div>}
+              {address && <div className="profile-view-row"><span>ðŸ </span><span>{address}</span></div>}
+              {schools.length > 0 && (
+                <div className="profile-view-row">
+                  <span>ðŸ«</span>
+                  <div className="profile-view-tags">
+                    {schools.map((s, i) => <span key={i} className="profile-view-tag">{s}</span>)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* About me */}
+          {(dreams || favLessons.length > 0 || hobbies.length > 0 || fears) && (
+            <div className="profile-view-section">
+              <div className="profile-view-section-title">âœ¨ About Me</div>
+              {dreams && (
+                <div className="profile-view-block">
+                  <div className="profile-view-label">ðŸŒŸ Dreams</div>
+                  <p className="profile-view-text">{dreams}</p>
+                </div>
+              )}
+              {favLessons.length > 0 && (
+                <div className="profile-view-block">
+                  <div className="profile-view-label">ðŸ“š Favorite Lessons</div>
+                  <div className="profile-view-tags">
+                    {favLessons.map((l, i) => <span key={i} className="profile-view-tag">{l}</span>)}
+                  </div>
+                </div>
+              )}
+              {hobbies.length > 0 && (
+                <div className="profile-view-block">
+                  <div className="profile-view-label">ðŸŽ¯ Hobbies</div>
+                  <div className="profile-view-tags">
+                    {hobbies.map((h, i) => <span key={i} className="profile-view-tag">{h}</span>)}
+                  </div>
+                </div>
+              )}
+              {fears && (
+                <div className="profile-view-block">
+                  <div className="profile-view-label">ðŸ˜° What I Fear</div>
+                  <p className="profile-view-text">{fears}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!profile && <p style={{ textAlign: 'center', color: '#aaa', padding: '20px 0' }}>Loading profile...</p>}
+          {profile && !phone && !dreams && schools.length === 0 && (
+            <div className="profile-view-empty">
+              <p>Your profile is empty.</p>
+              <button className="btn btn-primary" onClick={() => setEditMode(true)}>âœï¸ Fill your profile</button>
+            </div>
+          )}
+
+          {msg && <div className={`profile-msg ${msg.includes('success') || msg.includes('updated') ? 'success' : 'error'}`}>{msg}</div>}
+        </div>
+
+        {/* Umunsimedia promo */}
+        <div className="umunsimedia-promo">
+          <a href="https://umunsimedia.com" target="_blank" rel="noreferrer" className="umunsimedia-link">
+            <div className="umunsimedia-inner">
+              <div className="umunsimedia-text">
+                <span className="umunsimedia-tagline">Want to increase your writing knowledge?</span>
+                <span className="umunsimedia-cta">Visit Umunsimedia.com â†’</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // â”€â”€ Edit Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div className="profile-page">
       <div className="profile-header">
-        <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>← Back</button>
-        <h1>My Profile</h1>
+        <button className="btn btn-outline btn-sm" onClick={() => setEditMode(false)}>â† Cancel</button>
+        <h1>Edit Profile</h1>
       </div>
 
       <form className="profile-form" onSubmit={handleSave}>
@@ -128,93 +257,69 @@ export default function Profile() {
             onClick={() => fileRef.current?.click()}
           />
           <button type="button" className="avatar-edit-btn" onClick={() => fileRef.current?.click()}>
-            📷 Change Photo
+            ðŸ“· Change Photo
           </button>
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
-        </div>
-
-        {/* Subscriber / Following stats */}
-        <div className="profile-stats-bar">
-          <div className="profile-stat">
-            <strong>{subscriberCount}</strong>
-            <span>Subscribers</span>
-          </div>
-          <div className="profile-stat-divider" />
-          <div className="profile-stat">
-            <strong>{followingCount}</strong>
-            <span>Following</span>
-          </div>
         </div>
 
         <div className="profile-name-row">
           <span className="profile-name">{user?.name}</span>
           <span className="profile-role-badge">{user?.role}</span>
         </div>
-        <div className="profile-email">✉️ {user?.email}</div>
+        <div className="profile-email">âœ‰ï¸ {user?.email}</div>
 
-        <div className="profile-section-title">📋 Personal Info</div>
+        <div className="profile-section-title">ðŸ“‹ Personal Info</div>
 
         <div className="form-group">
-          <label>📞 Phone Number</label>
+          <label>ðŸ“ž Phone Number</label>
           <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+250 7XX XXX XXX" />
         </div>
 
         <div className="form-group">
-          <label>🏠 Home Address</label>
+          <label>ðŸ  Home Address</label>
           <input value={address} onChange={e => setAddress(e.target.value)} placeholder="District, Sector..." />
         </div>
 
         <TagInput
-          label="🏫 Schools (add all your schools)"
+          label="ðŸ« Schools (add all your schools)"
           values={schools}
           onChange={setSchools}
           placeholder="Type school name and press Enter or Add"
         />
 
-        <div className="profile-section-title">✨ About Me</div>
+        <div className="profile-section-title">âœ¨ About Me</div>
 
         <div className="form-group">
-          <label>🌟 My Dreams</label>
+          <label>ðŸŒŸ My Dreams</label>
           <textarea value={dreams} onChange={e => setDreams(e.target.value)} placeholder="What do you want to become..." rows={3} />
         </div>
 
         <TagInput
-          label="📚 Favorite Lessons"
+          label="ðŸ“š Favorite Lessons"
           values={favLessons}
           onChange={setFavLessons}
           placeholder="e.g. Mathematics"
         />
 
         <TagInput
-          label="🎯 Hobbies (at least 2)"
+          label="ðŸŽ¯ Hobbies (at least 2)"
           values={hobbies}
           onChange={setHobbies}
           placeholder="e.g. Reading, Football..."
         />
 
         <div className="form-group">
-          <label>😰 What I Fear About</label>
+          <label>ðŸ˜° What I Fear About</label>
           <textarea value={fears} onChange={e => setFears(e.target.value)} placeholder="Something you struggle with or are afraid of..." rows={3} />
         </div>
 
         {msg && <div className={`profile-msg ${msg.includes('success') || msg.includes('updated') ? 'success' : 'error'}`}>{msg}</div>}
 
         <button type="submit" className="btn btn-primary btn-full" disabled={saving}>
-          {saving ? 'Saving...' : '💾 Save Profile'}
+          {saving ? 'Saving...' : 'ðŸ’¾ Save Profile'}
         </button>
       </form>
-
-      {/* Umunsimedia promo */}
-      <div className="umunsimedia-promo">
-        <a href="https://umunsimedia.com" target="_blank" rel="noreferrer" className="umunsimedia-link">
-          <div className="umunsimedia-inner">
-            <div className="umunsimedia-text">
-              <span className="umunsimedia-tagline">Want to increase your writing knowledge?</span>
-              <span className="umunsimedia-cta">Visit Umunsimedia.com →</span>
-            </div>
-          </div>
-        </a>
-      </div>
     </div>
   );
+
 }

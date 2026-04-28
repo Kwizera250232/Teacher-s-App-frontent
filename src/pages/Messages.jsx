@@ -41,10 +41,15 @@ export default function Messages() {
 
   useEffect(() => {
     if (!activeId) return;
-    api.get(`/messages/thread/${activeId}`, token).then(msgs => {
-      setThread(msgs);
-      setInbox(prev => prev.filter(m => m.sender_id !== activeId));
-    }).catch(() => {});
+    const load = () => {
+      api.get(`/messages/thread/${activeId}`, token).then(msgs => {
+        setThread(msgs);
+        setInbox(prev => prev.filter(m => m.sender_id !== activeId));
+      }).catch(() => {});
+    };
+    load();
+    const interval = setInterval(load, 4000);
+    return () => clearInterval(interval);
   }, [activeId, token]);
 
   useEffect(() => {
@@ -206,7 +211,8 @@ export default function Messages() {
                 onChange={e => setText(e.target.value)}
                 placeholder="Type a message..."
                 disabled={sending}
-                autoFocus
+                enterKeyHint="send"
+                inputMode="text"
               />
               <button type="submit" className="msg-send-btn" disabled={sending || (!text.trim() && !imgFile)}>
                 ➤

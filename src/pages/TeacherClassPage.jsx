@@ -577,7 +577,9 @@ export default function TeacherClassPage() {
                   <div className="classmate-info">
                     <div className="classmate-name">
                       {s.name}
-                      <span className="cm-static-badge" title="Verified">✓</span>
+                      <VerifiedBadge size={15} info={{ items: [
+                        { icon: s.role === 'teacher' ? '👨‍🏫' : '👩‍🎓', label: 'Role', value: s.role },
+                      ] }} onViewProfile={() => setSelectedStudent(s)} />
                     </div>
                     <span className={`cm-role-badge ${s.role}`}>{s.role}</span>
                   </div>
