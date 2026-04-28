@@ -70,7 +70,7 @@ export default function TeacherClassPage() {
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
 
   const removeStudent = async (studentId, studentName) => {
-    if (!window.confirm(`Remove ${studentName} from this class?`)) return;
+    if (!window.confirm(`Delete ${studentName}'s account permanently? They will be removed from all classes and can re-register with the same email.`)) return;
     try {
       await api.delete(`/classes/${id}/students/${studentId}`, token);
       setData(prev => prev.filter(s => s.id !== studentId));
