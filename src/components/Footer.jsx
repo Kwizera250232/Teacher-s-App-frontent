@@ -45,6 +45,11 @@ export default function Footer() {
         <img src={umunsiLogo} alt="Umunsi.com" className="footer-powered-logo" />
         <span>Powered by <a href="https://umunsi.com" target="_blank" rel="noreferrer">Umunsi.com</a></span>
       </div>
-    </footer>
+      <div className="footer-umunsimedia">
+        <a href="https://umunsimedia.com" target="_blank" rel="noreferrer" className="footer-umunsimedia-link">
+          <img src="/umunsimedia-logo.jpg" alt="Umunsimedia" className="footer-umunsimedia-logo" />
+          <span>Want to increase your writing knowledge? Visit <strong>Umunsimedia.com</strong></span>
+        </a>
+      </div>    </footer>
   );
 }

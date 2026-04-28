@@ -140,3 +140,30 @@
   font-size: 18px;
   line-height: 1;
 }
+
+.footer-umunsimedia {
+  border-top: 1px solid #2a2a3e;
+  padding: 14px 24px;
+  background: #111122;
+}
+.footer-umunsimedia-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  max-width: 900px;
+  margin: 0 auto;
+  color: #f59e0b;
+  font-size: 13px;
+  transition: opacity 0.2s;
+}
+.footer-umunsimedia-link:hover { opacity: 0.85; }
+.footer-umunsimedia-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f59e0b;
+  flex-shrink: 0;
+}
+.footer-umunsimedia-link strong { color: #fbbf24; }

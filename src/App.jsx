@@ -14,6 +14,8 @@ import JoinClass from './pages/JoinClass';
 import StudentNotes from './pages/StudentNotes';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import Profile from './pages/Profile';
+import Messages from './pages/Messages';
 import Footer from './components/Footer';
 import { InstallProvider } from './components/InstallPrompt';
 import './components/Footer.css';
@@ -77,6 +79,13 @@ export default function App() {
 
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+
+                <Route path="/profile" element={
+                  <ProtectedRoute><Profile /></ProtectedRoute>
+                } />
+                <Route path="/messages" element={
+                  <ProtectedRoute><Messages /></ProtectedRoute>
+                } />
               </Routes>
             </div>
             <Footer />

@@ -18,6 +18,7 @@ export default function StudentDashboard() {
   // Quick note state: { classId, open, text, saving }
   const [quickNote, setQuickNote] = useState(null);
   const [aiModal, setAiModal] = useState(null); // { classId, className }
+  const [unread, setUnread] = useState(0);
 
   const loadClasses = () => {
     api.get('/classes/my', token).then(setClasses).catch(e => setError(e.message));
@@ -32,6 +33,9 @@ export default function StudentDashboard() {
   useEffect(() => { loadClasses(); }, []);
   useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
+  }, []);
+  useEffect(() => {
+    api.get('/messages/unread-count', token).then(r => setUnread(r.count)).catch(() => {});
   }, []);
 
   const saveQuickNote = async () => {
@@ -59,6 +63,10 @@ export default function StudentDashboard() {
             { icon: '📧', label: 'Email', value: user?.email },
           ] }} /></span>
           <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
+          <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
+            💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
+          </Link>
+          <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>

@@ -15,6 +15,7 @@ export default function TeacherDashboard() {
   const [announcements, setAnnouncements] = useState([]);
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   const [aiModal, setAiModal] = useState(null); // { classId, className }
+  const [unread, setUnread] = useState(0);
 
   const dismissAnnouncement = (id) => {
     const updated = [...dismissed, id];
@@ -30,6 +31,9 @@ export default function TeacherDashboard() {
   useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
   }, []);
+  useEffect(() => {
+    api.get('/messages/unread-count', token).then(r => setUnread(r.count)).catch(() => {});
+  }, []);
 
   return (
     <div className="dashboard">
@@ -40,6 +44,10 @@ export default function TeacherDashboard() {
             { icon: '👨‍🏫', label: 'Role', value: 'Teacher' },
             { icon: '📧', label: 'Email', value: user?.email },
           ] }} /></span>
+          <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
+            💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
+          </Link>
+          <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>
