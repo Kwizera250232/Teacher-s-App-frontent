@@ -120,7 +120,13 @@ export default function Messages() {
               {unreadMap[c.id] && <span className="msg-unread-dot" />}
             </div>
             <div className="msg-contact-info">
-              <span className="msg-contact-name">{c.name}</span>
+              <span className="msg-contact-name">
+                {c.name}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginLeft: 3, verticalAlign: 'middle' }}>
+                  <circle cx="12" cy="12" r="12" fill="#1d9bf0"/>
+                  <path d="M6.5 12.5l3.5 3.5 7.5-8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
               <span className="msg-contact-role">{c.role}</span>
             </div>
           </div>
@@ -143,7 +149,13 @@ export default function Messages() {
                 className="msg-chat-avatar"
               />
               <div>
-                <div className="msg-chat-name">{activeContact?.name}</div>
+                <div className="msg-chat-name">
+                  {activeContact?.name}
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginLeft: 4, verticalAlign: 'middle' }}>
+                    <circle cx="12" cy="12" r="12" fill="#1d9bf0"/>
+                    <path d="M6.5 12.5l3.5 3.5 7.5-8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
                 <div className="msg-chat-role">{activeContact?.role}</div>
               </div>
             </div>

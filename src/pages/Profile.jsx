@@ -56,6 +56,8 @@ export default function Profile() {
   const [hobbies, setHobbies] = useState([]);
   const [fears, setFears] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [subscriberCount, setSubscriberCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
     api.get('/profile/me', token).then(p => {
@@ -68,6 +70,8 @@ export default function Profile() {
       setHobbies(tryParse(p.hobbies, []));
       setFears(p.fears || '');
       setAvatarUrl(p.avatar_path ? `${UPLOADS_BASE}${p.avatar_path}` : '');
+      setSubscriberCount(p.subscriber_count || 0);
+      setFollowingCount(p.following_count || 0);
     }).catch(() => {});
   }, [token]);
 
@@ -127,6 +131,19 @@ export default function Profile() {
             📷 Change Photo
           </button>
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
+        </div>
+
+        {/* Subscriber / Following stats */}
+        <div className="profile-stats-bar">
+          <div className="profile-stat">
+            <strong>{subscriberCount}</strong>
+            <span>Subscribers</span>
+          </div>
+          <div className="profile-stat-divider" />
+          <div className="profile-stat">
+            <strong>{followingCount}</strong>
+            <span>Following</span>
+          </div>
         </div>
 
         <div className="profile-name-row">
