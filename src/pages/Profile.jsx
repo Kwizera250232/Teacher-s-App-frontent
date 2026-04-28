@@ -1,4 +1,4 @@
-﻿
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
@@ -113,14 +113,14 @@ export default function Profile() {
     }
   };
 
-  // â”€â”€ View Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ”€”€ View Mode ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
   if (!editMode) {
     return (
       <div className="profile-page">
         <div className="profile-header">
-          <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>â† Back</button>
+          <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>† Back</button>
           <h1>My Profile</h1>
-          <button className="btn btn-primary btn-sm" onClick={() => setEditMode(true)}>âœï¸ Edit</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setEditMode(true)}>œï¸ Edit</button>
         </div>
 
         <div className="profile-view-card">
@@ -132,7 +132,7 @@ export default function Profile() {
               className="profile-view-avatar"
             />
             <button type="button" className="avatar-edit-btn-overlay" onClick={() => fileRef.current?.click()}>
-              ðŸ“·
+              📷
             </button>
             <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
           </div>
@@ -146,7 +146,7 @@ export default function Profile() {
             </svg>
             <span className="profile-role-badge">{user?.role}</span>
           </div>
-          <div className="profile-email">âœ‰ï¸ {user?.email}</div>
+          <div className="profile-email">œ‰ï¸ {user?.email}</div>
 
           {/* Stats */}
           <div className="profile-stats-bar">
@@ -164,12 +164,12 @@ export default function Profile() {
           {/* Personal info */}
           {(phone || address || schools.length > 0) && (
             <div className="profile-view-section">
-              <div className="profile-view-section-title">ðŸ“‹ Personal Info</div>
-              {phone && <div className="profile-view-row"><span>ðŸ“ž</span><span>{phone}</span></div>}
-              {address && <div className="profile-view-row"><span>ðŸ </span><span>{address}</span></div>}
+              <div className="profile-view-section-title">📋 Personal Info</div>
+              {phone && <div className="profile-view-row"><span>📞</span><span>{phone}</span></div>}
+              {address && <div className="profile-view-row"><span>🏠</span><span>{address}</span></div>}
               {schools.length > 0 && (
                 <div className="profile-view-row">
-                  <span>ðŸ«</span>
+                  <span>🏫</span>
                   <div className="profile-view-tags">
                     {schools.map((s, i) => <span key={i} className="profile-view-tag">{s}</span>)}
                   </div>
@@ -181,16 +181,16 @@ export default function Profile() {
           {/* About me */}
           {(dreams || favLessons.length > 0 || hobbies.length > 0 || fears) && (
             <div className="profile-view-section">
-              <div className="profile-view-section-title">âœ¨ About Me</div>
+              <div className="profile-view-section-title">✨ About Me</div>
               {dreams && (
                 <div className="profile-view-block">
-                  <div className="profile-view-label">ðŸŒŸ Dreams</div>
+                  <div className="profile-view-label">🌟 Dreams</div>
                   <p className="profile-view-text">{dreams}</p>
                 </div>
               )}
               {favLessons.length > 0 && (
                 <div className="profile-view-block">
-                  <div className="profile-view-label">ðŸ“š Favorite Lessons</div>
+                  <div className="profile-view-label">📚 Favorite Lessons</div>
                   <div className="profile-view-tags">
                     {favLessons.map((l, i) => <span key={i} className="profile-view-tag">{l}</span>)}
                   </div>
@@ -198,7 +198,7 @@ export default function Profile() {
               )}
               {hobbies.length > 0 && (
                 <div className="profile-view-block">
-                  <div className="profile-view-label">ðŸŽ¯ Hobbies</div>
+                  <div className="profile-view-label">🎯 Hobbies</div>
                   <div className="profile-view-tags">
                     {hobbies.map((h, i) => <span key={i} className="profile-view-tag">{h}</span>)}
                   </div>
@@ -206,7 +206,7 @@ export default function Profile() {
               )}
               {fears && (
                 <div className="profile-view-block">
-                  <div className="profile-view-label">ðŸ˜° What I Fear</div>
+                  <div className="profile-view-label">😰 What I Fear</div>
                   <p className="profile-view-text">{fears}</p>
                 </div>
               )}
@@ -217,7 +217,7 @@ export default function Profile() {
           {profile && !phone && !dreams && schools.length === 0 && (
             <div className="profile-view-empty">
               <p>Your profile is empty.</p>
-              <button className="btn btn-primary" onClick={() => setEditMode(true)}>âœï¸ Fill your profile</button>
+              <button className="btn btn-primary" onClick={() => setEditMode(true)}>œï¸ Fill your profile</button>
             </div>
           )}
 
@@ -230,7 +230,7 @@ export default function Profile() {
             <div className="umunsimedia-inner">
               <div className="umunsimedia-text">
                 <span className="umunsimedia-tagline">Want to increase your writing knowledge?</span>
-                <span className="umunsimedia-cta">Visit Umunsimedia.com â†’</span>
+                <span className="umunsimedia-cta">Visit Umunsimedia.com †’</span>
               </div>
             </div>
           </a>
@@ -239,11 +239,11 @@ export default function Profile() {
     );
   }
 
-  // â”€â”€ Edit Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ”€”€ Edit Mode ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
   return (
     <div className="profile-page">
       <div className="profile-header">
-        <button className="btn btn-outline btn-sm" onClick={() => setEditMode(false)}>â† Cancel</button>
+        <button className="btn btn-outline btn-sm" onClick={() => setEditMode(false)}>† Cancel</button>
         <h1>Edit Profile</h1>
       </div>
 
@@ -257,7 +257,7 @@ export default function Profile() {
             onClick={() => fileRef.current?.click()}
           />
           <button type="button" className="avatar-edit-btn" onClick={() => fileRef.current?.click()}>
-            ðŸ“· Change Photo
+            📷 Change Photo
           </button>
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleAvatarChange} />
         </div>
@@ -266,57 +266,57 @@ export default function Profile() {
           <span className="profile-name">{user?.name}</span>
           <span className="profile-role-badge">{user?.role}</span>
         </div>
-        <div className="profile-email">âœ‰ï¸ {user?.email}</div>
+        <div className="profile-email">œ‰ï¸ {user?.email}</div>
 
-        <div className="profile-section-title">ðŸ“‹ Personal Info</div>
+        <div className="profile-section-title">📋 Personal Info</div>
 
         <div className="form-group">
-          <label>ðŸ“ž Phone Number</label>
+          <label>📞 Phone Number</label>
           <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+250 7XX XXX XXX" />
         </div>
 
         <div className="form-group">
-          <label>ðŸ  Home Address</label>
+          <label>🏠 Home Address</label>
           <input value={address} onChange={e => setAddress(e.target.value)} placeholder="District, Sector..." />
         </div>
 
         <TagInput
-          label="ðŸ« Schools (add all your schools)"
+          label="🏫 Schools (add all your schools)"
           values={schools}
           onChange={setSchools}
           placeholder="Type school name and press Enter or Add"
         />
 
-        <div className="profile-section-title">âœ¨ About Me</div>
+        <div className="profile-section-title">✨ About Me</div>
 
         <div className="form-group">
-          <label>ðŸŒŸ My Dreams</label>
+          <label>🌟 My Dreams</label>
           <textarea value={dreams} onChange={e => setDreams(e.target.value)} placeholder="What do you want to become..." rows={3} />
         </div>
 
         <TagInput
-          label="ðŸ“š Favorite Lessons"
+          label="📚 Favorite Lessons"
           values={favLessons}
           onChange={setFavLessons}
           placeholder="e.g. Mathematics"
         />
 
         <TagInput
-          label="ðŸŽ¯ Hobbies (at least 2)"
+          label="🎯 Hobbies (at least 2)"
           values={hobbies}
           onChange={setHobbies}
           placeholder="e.g. Reading, Football..."
         />
 
         <div className="form-group">
-          <label>ðŸ˜° What I Fear About</label>
+          <label>😰 What I Fear About</label>
           <textarea value={fears} onChange={e => setFears(e.target.value)} placeholder="Something you struggle with or are afraid of..." rows={3} />
         </div>
 
         {msg && <div className={`profile-msg ${msg.includes('success') || msg.includes('updated') ? 'success' : 'error'}`}>{msg}</div>}
 
         <button type="submit" className="btn btn-primary btn-full" disabled={saving}>
-          {saving ? 'Saving...' : 'ðŸ’¾ Save Profile'}
+          {saving ? 'Saving...' : '💾 Save Profile'}
         </button>
       </form>
     </div>
