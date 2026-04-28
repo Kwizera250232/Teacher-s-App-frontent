@@ -1,7 +1,10 @@
 import umunsiLogo from '../assets/umunsi-logo.jpg';
 import umunsimediaLogo from '../assets/umunsimedia-logo.jpg';
+import { useInstallPrompt } from './InstallPrompt';
 
 export default function Footer() {
+  const { canInstall, triggerInstall } = useInstallPrompt();
+
   return (
     <footer className="app-footer">
       <div className="footer-inner">
@@ -22,6 +25,13 @@ export default function Footer() {
               <span>U-Class</span>
             </div>
           </div>
+
+          {canInstall && (
+            <button className="footer-install-btn" onClick={triggerInstall}>
+              <span className="footer-install-icon">🎓</span>
+              <span>Install UClass App</span>
+            </button>
+          )}
         </div>
 
         <div className="footer-contact">

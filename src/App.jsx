@@ -15,7 +15,7 @@ import StudentNotes from './pages/StudentNotes';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Footer from './components/Footer';
-import InstallPrompt from './components/InstallPrompt';
+import { InstallProvider } from './components/InstallPrompt';
 import './components/Footer.css';
 
 function ProtectedRoute({ children, role }) {
@@ -37,51 +37,52 @@ function HomeRedirect() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-          <div style={{ flex: 1 }}>
-            <Routes>
-              <Route path="/" element={<HomeRedirect />} />
-              <Route path="/welcome" element={<Landing />} />
-              <Route path="/join" element={<JoinClass />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+      <InstallProvider>
+        <BrowserRouter>
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <div style={{ flex: 1 }}>
+              <Routes>
+                <Route path="/" element={<HomeRedirect />} />
+                <Route path="/welcome" element={<Landing />} />
+                <Route path="/join" element={<JoinClass />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
 
-              <Route path="/admin" element={
-                <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
-              } />
+                <Route path="/admin" element={
+                  <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
+                } />
 
-              <Route path="/teacher/dashboard" element={
-                <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
-              } />
-              <Route path="/teacher/classes/:id" element={
-                <ProtectedRoute role="teacher"><TeacherClassPage /></ProtectedRoute>
-              } />
-              <Route path="/teacher/classes/:classId/quizzes/:quizId/results" element={
-                <ProtectedRoute role="teacher"><QuizResults /></ProtectedRoute>
-              } />
+                <Route path="/teacher/dashboard" element={
+                  <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
+                } />
+                <Route path="/teacher/classes/:id" element={
+                  <ProtectedRoute role="teacher"><TeacherClassPage /></ProtectedRoute>
+                } />
+                <Route path="/teacher/classes/:classId/quizzes/:quizId/results" element={
+                  <ProtectedRoute role="teacher"><QuizResults /></ProtectedRoute>
+                } />
 
-              <Route path="/student/dashboard" element={
-                <ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>
-              } />
-              <Route path="/student/classes/:id" element={
-                <ProtectedRoute role="student"><StudentClassPage /></ProtectedRoute>
-              } />
-              <Route path="/student/classes/:classId/quizzes/:quizId" element={
-                <ProtectedRoute role="student"><TakeQuiz /></ProtectedRoute>
-              } />
-              <Route path="/student/notes" element={
-                <ProtectedRoute role="student"><StudentNotes /></ProtectedRoute>
-              } />
+                <Route path="/student/dashboard" element={
+                  <ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>
+                } />
+                <Route path="/student/classes/:id" element={
+                  <ProtectedRoute role="student"><StudentClassPage /></ProtectedRoute>
+                } />
+                <Route path="/student/classes/:classId/quizzes/:quizId" element={
+                  <ProtectedRoute role="student"><TakeQuiz /></ProtectedRoute>
+                } />
+                <Route path="/student/notes" element={
+                  <ProtectedRoute role="student"><StudentNotes /></ProtectedRoute>
+                } />
 
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-            </Routes>
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+              </Routes>
+            </div>
+            <Footer />
           </div>
-          <Footer />
-        </div>
-        <InstallPrompt />
-      </BrowserRouter>
+        </BrowserRouter>
+      </InstallProvider>
     </AuthProvider>
   );
 }

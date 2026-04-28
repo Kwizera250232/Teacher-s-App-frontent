@@ -113,3 +113,30 @@
 .footer-powered a:hover {
   text-decoration: underline;
 }
+
+.footer-install-btn {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  letter-spacing: 0.3px;
+}
+
+.footer-install-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.footer-install-icon {
+  font-size: 18px;
+  line-height: 1;
+}
