@@ -35,6 +35,13 @@ export default function InstallPrompt() {
     const { outcome } = await prompt.userChoice;
     if (outcome === 'accepted') {
       localStorage.setItem(STORAGE_KEY, '1');
+      // Record installation on server
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      fetch(`${apiBase}/pwa/install`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_agent: navigator.userAgent }),
+      }).catch(() => {});
     }
     setVisible(false);
   };

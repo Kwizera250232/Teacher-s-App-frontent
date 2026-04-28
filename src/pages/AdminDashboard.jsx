@@ -98,6 +98,7 @@ export default function AdminDashboard() {
                   { label: 'Classes', value: stats?.classes, icon: '📚', color: '#f59e0b' },
                   { label: 'Quizzes', value: stats?.quizzes, icon: '📝', color: '#ef4444' },
                   { label: 'Homework', value: stats?.homework, icon: '📋', color: '#8b5cf6' },
+                  { label: 'Installations', value: stats?.installations, icon: '📲', color: '#14b8a6' },
                 ].map(s => (
                   <div key={s.label} className="stat-card" style={{ '--accent': s.color }}>
                     <div className="stat-icon">{s.icon}</div>
