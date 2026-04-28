@@ -33,8 +33,18 @@ export default function Messages() {
   const emojiRef = useRef();
 
   useEffect(() => {
-    api.get('/profile/contacts/list', token).then(setContacts).catch(() => {});
-    api.get('/messages/inbox', token).then(setInbox).catch(() => {});
+    Promise.all([
+      api.get('/profile/contacts/list', token),
+      api.get('/messages/inbox', token),
+    ]).then(([contactList, inboxList]) => {
+      setInbox(inboxList);
+      // Merge inbox senders not already in contacts so unread messages are always reachable
+      const existingIds = new Set(contactList.map(c => c.id));
+      const extra = inboxList
+        .filter(m => !existingIds.has(m.sender_id))
+        .map(m => ({ id: m.sender_id, name: m.sender_name, role: m.sender_role, avatar_path: m.avatar_path }));
+      setContacts([...contactList, ...extra]);
+    }).catch(() => {});
     const uid = searchParams.get('to');
     if (uid) { setActiveId(parseInt(uid)); setMobilePanel('chat'); }
   }, [token]);

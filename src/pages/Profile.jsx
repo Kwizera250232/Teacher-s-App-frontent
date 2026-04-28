@@ -118,9 +118,9 @@ export default function Profile() {
     return (
       <div className="profile-page">
         <div className="profile-header">
-          <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>† Back</button>
+          <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>← Back</button>
           <h1>My Profile</h1>
-          <button className="btn btn-primary btn-sm" onClick={() => setEditMode(true)}>œï¸ Edit</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setEditMode(true)}>✏️ Edit</button>
         </div>
 
         <div className="profile-view-card">
@@ -146,7 +146,7 @@ export default function Profile() {
             </svg>
             <span className="profile-role-badge">{user?.role}</span>
           </div>
-          <div className="profile-email">œ‰ï¸ {user?.email}</div>
+          <div className="profile-email">✉️ {user?.email}</div>
 
           {/* Stats */}
           <div className="profile-stats-bar">
@@ -217,7 +217,7 @@ export default function Profile() {
           {profile && !phone && !dreams && schools.length === 0 && (
             <div className="profile-view-empty">
               <p>Your profile is empty.</p>
-              <button className="btn btn-primary" onClick={() => setEditMode(true)}>œï¸ Fill your profile</button>
+              <button className="btn btn-primary" onClick={() => setEditMode(true)}>✏️ Fill your profile</button>
             </div>
           )}
 
@@ -243,7 +243,7 @@ export default function Profile() {
   return (
     <div className="profile-page">
       <div className="profile-header">
-        <button className="btn btn-outline btn-sm" onClick={() => setEditMode(false)}>† Cancel</button>
+        <button className="btn btn-outline btn-sm" onClick={() => setEditMode(false)}>← Cancel</button>
         <h1>Edit Profile</h1>
       </div>
 
@@ -266,7 +266,7 @@ export default function Profile() {
           <span className="profile-name">{user?.name}</span>
           <span className="profile-role-badge">{user?.role}</span>
         </div>
-        <div className="profile-email">œ‰ï¸ {user?.email}</div>
+        <div className="profile-email">✉️ {user?.email}</div>
 
         <div className="profile-section-title">📋 Personal Info</div>
 
