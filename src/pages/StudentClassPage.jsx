@@ -392,7 +392,10 @@ export default function StudentClassPage() {
               {data.map(d => (
                 <div key={d.id} className="discussion-msg">
                   <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    {d.author_name}<VerifiedBadge size={13} info={{ items: [
+                    <span
+                      style={{ cursor: d.user_id !== user?.id ? 'pointer' : 'default', color: d.user_id !== user?.id ? '#667eea' : 'inherit', fontWeight: 700 }}
+                      onClick={() => d.user_id !== user?.id && setSelectedPerson({ id: d.user_id, name: d.author_name, role: d.author_role })}
+                    >{d.author_name}</span><VerifiedBadge size={13} info={{ items: [
                       { icon: '👤', label: 'Role', value: d.author_role },
                     ] }} />
                     <span className="role-badge">{d.author_role}</span>
@@ -424,7 +427,11 @@ export default function StudentClassPage() {
                       )}
                       {expandedComments[d.id].map(c => (
                         <div key={c.id} className="disc-comment">
-                          <span className="disc-comment-author">{c.author_name}</span>
+                          <span
+                            className="disc-comment-author"
+                            style={{ cursor: c.user_id !== user?.id ? 'pointer' : 'default', color: c.user_id !== user?.id ? '#667eea' : 'inherit' }}
+                            onClick={() => c.user_id !== user?.id && setSelectedPerson({ id: c.user_id, name: c.author_name, role: c.author_role })}
+                          >{c.author_name}</span>
                           <span className="disc-comment-role">{c.author_role}</span>
                           <p>{c.content}</p>
                           <span className="disc-comment-time">{new Date(c.created_at).toLocaleString()}</span>

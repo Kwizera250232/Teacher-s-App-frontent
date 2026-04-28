@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
+import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import './Messages.css';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
@@ -28,6 +29,7 @@ export default function Messages() {
   const [imgPreview, setImgPreview] = useState('');
   // Mobile: which panel is visible — 'list' or 'chat'
   const [mobilePanel, setMobilePanel] = useState('list');
+  const [profilePerson, setProfilePerson] = useState(null);
   const bottomRef = useRef();
   const fileRef = useRef();
   const emojiRef = useRef();
@@ -121,6 +123,7 @@ export default function Messages() {
   const contactsNoMsg = contacts.filter(c => !inboxDataRef.current[c.id]);
 
   return (
+    <>
     <div className="msg-page">
       <div className={`msg-sidebar ${mobilePanel === 'chat' ? 'msg-sidebar-hidden' : ''}`}>
         <div className="msg-sidebar-header">
@@ -144,7 +147,11 @@ export default function Messages() {
                 {isUnread && <span className="msg-unread-dot" />}
               </div>
               <div className="msg-contact-info">
-                <span className="msg-contact-name">
+                <span
+                  className="msg-contact-name"
+                  onClick={(e) => { e.stopPropagation(); setProfilePerson(c); }}
+                  style={{ cursor: 'pointer' }}
+                >
                   {c.name}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginLeft: 3, verticalAlign: 'middle' }}>
                     <circle cx="12" cy="12" r="12" fill="#1d9bf0"/>
@@ -170,7 +177,11 @@ export default function Messages() {
               <img src={c.avatar_path ? `${UPLOADS_BASE}${c.avatar_path}` : DEFAULT_AVATAR} alt="" className="msg-contact-avatar" />
             </div>
             <div className="msg-contact-info">
-              <span className="msg-contact-name">
+              <span
+                className="msg-contact-name"
+                onClick={(e) => { e.stopPropagation(); setProfilePerson(c); }}
+                style={{ cursor: 'pointer' }}
+              >
                 {c.name}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginLeft: 3, verticalAlign: 'middle' }}>
                   <circle cx="12" cy="12" r="12" fill="#1d9bf0"/>
@@ -267,5 +278,13 @@ export default function Messages() {
         )}
       </div>
     </div>
+    {profilePerson && (
+      <ClassmateProfileModal
+        person={profilePerson}
+        onClose={() => setProfilePerson(null)}
+        onMessage={(uid) => { setProfilePerson(null); setActiveId(uid); setMobilePanel('chat'); }}
+      />
+    )}
+    </>
   );
 }

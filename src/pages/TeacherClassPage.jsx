@@ -14,7 +14,7 @@ const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'D
 
 export default function TeacherClassPage() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [cls, setCls] = useState(null);
   const [tab, setTab] = useState('Announcements');
@@ -511,7 +511,10 @@ export default function TeacherClassPage() {
               {data.map(d => (
                 <div key={d.id} className={`discussion-msg ${d.author_role === 'teacher' ? 'teacher-msg' : ''}`}>
                   <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    {d.author_name}<VerifiedBadge size={13} info={{ items: [
+                    <span
+                      style={{ cursor: d.user_id !== user?.id ? 'pointer' : 'default', color: d.user_id !== user?.id ? '#667eea' : 'inherit', fontWeight: 700 }}
+                      onClick={() => d.user_id !== user?.id && setSelectedStudent({ id: d.user_id, name: d.author_name, role: d.author_role })}
+                    >{d.author_name}</span><VerifiedBadge size={13} info={{ items: [
                       { icon: '👤', label: 'Role', value: d.author_role },
                     ] }} />
                     <span className="role-badge">{d.author_role}</span>
@@ -536,7 +539,11 @@ export default function TeacherClassPage() {
                       {expandedComments[d.id].length === 0 && <p style={{ color: '#aaa', fontSize: 13 }}>No comments yet.</p>}
                       {expandedComments[d.id].map(c => (
                         <div key={c.id} className="disc-comment">
-                          <span className="disc-comment-author">{c.author_name}</span>
+                          <span
+                            className="disc-comment-author"
+                            style={{ cursor: c.user_id !== user?.id ? 'pointer' : 'default', color: c.user_id !== user?.id ? '#667eea' : 'inherit' }}
+                            onClick={() => c.user_id !== user?.id && setSelectedStudent({ id: c.user_id, name: c.author_name, role: c.author_role })}
+                          >{c.author_name}</span>
                           <span className="disc-comment-role">{c.author_role}</span>
                           <p>{c.content}</p>
                           <span className="disc-comment-time">{new Date(c.created_at).toLocaleString()}</span>

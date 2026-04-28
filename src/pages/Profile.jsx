@@ -70,7 +70,7 @@ export default function Profile() {
       setFavLessons(tryParse(p.favorite_lessons, []));
       setHobbies(tryParse(p.hobbies, []));
       setFears(p.fears || '');
-      setAvatarUrl(p.avatar_path ? `${UPLOADS_BASE}${p.avatar_path}` : '');
+      setAvatarUrl(p.avatar_path ? `${UPLOADS_BASE}${p.avatar_path}?v=${Date.now()}` : '');
       setSubscriberCount(p.subscriber_count || 0);
       setFollowingCount(p.following_count || 0);
     }).catch(() => {});
@@ -87,7 +87,7 @@ export default function Profile() {
     fd.append('avatar', file);
     try {
       const res = await uploadFile('/profile/me/avatar', fd, token);
-      setAvatarUrl(`${UPLOADS_BASE}${res.avatar_path}`);
+      setAvatarUrl(`${UPLOADS_BASE}${res.avatar_path}?v=${Date.now()}`);
       setMsg('Profile picture updated!');
     } catch (err) {
       setMsg(err.message);
@@ -130,6 +130,7 @@ export default function Profile() {
               src={avatarUrl || DEFAULT_AVATAR}
               alt="avatar"
               className="profile-view-avatar"
+              onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_AVATAR; }}
             />
             <button type="button" className="avatar-edit-btn-overlay" onClick={() => fileRef.current?.click()}>
               📷
@@ -153,11 +154,6 @@ export default function Profile() {
             <div className="profile-stat">
               <strong>{subscriberCount}</strong>
               <span>Subscribers</span>
-            </div>
-            <div className="profile-stat-divider" />
-            <div className="profile-stat">
-              <strong>{followingCount}</strong>
-              <span>Following</span>
             </div>
           </div>
 
@@ -255,6 +251,7 @@ export default function Profile() {
             alt="avatar"
             className="profile-avatar"
             onClick={() => fileRef.current?.click()}
+            onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_AVATAR; }}
           />
           <button type="button" className="avatar-edit-btn" onClick={() => fileRef.current?.click()}>
             📷 Change Photo
