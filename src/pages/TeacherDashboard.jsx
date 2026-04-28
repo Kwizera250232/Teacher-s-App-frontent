@@ -125,7 +125,7 @@ export default function TeacherDashboard() {
                   className="class-card-note-btn"
                   onClick={() => setAiModal({ classId: cls.id, className: cls.name })}
                 >
-                  🤖 Baza Umunsi AI
+                  🎓 Baza Umunsi AI
                 </button>
               </div>
             ))}

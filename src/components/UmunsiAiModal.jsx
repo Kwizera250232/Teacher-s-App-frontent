@@ -5,8 +5,8 @@ import { api } from '../api';
 export default function UmunsiAiModal({ classId, className, token, onClose, isTeacher = false }) {
   const navigate = useNavigate();
   const greeting = isTeacher
-    ? `Muraho Mwarimu! Ndi Baza Umunsi Teacher AI 🤖\n\nNshobora gufasha:\n• Gusobanura amasomo n'ibitabo bya curriculum ya Rwanda\n• Gufasha gutegura homework na gusobanura abanyeshuri\n• Gukora ibibazo by'ikizamini\n\nBaza ikibazo cyangwa wandike homework kugira ngo ngusobanurire uko uyigisha!\n\nSubiza mu Kinyarwanda cyangwa English.`
-    : `Muraho! Ndi Baza Umunsi Student AI 🤖\n\nNshobora gufasha mu bibazo bijyanye n'amasomo mwigwa muri ${className}.\n\nNibaze ikibazo!\n\nSubiza mu Kinyarwanda cyangwa English.`;
+    ? `Muraho Mwarimu! Ndi Baza Umunsi Teacher AI 🎓\n\nNshobora gufasha:\n• Gusobanura amasomo n'ibitabo bya curriculum ya Rwanda\n• Gufasha gutegura homework na gusobanura abanyeshuri\n• Gukora ibibazo by'ikizamini\n\nBaza ikibazo cyangwa wandike homework kugira ngo ngusobanurire uko uyigisha!\n\nSubiza mu Kinyarwanda cyangwa English.`
+    : `Muraho! Ndi Baza Umunsi Student AI 🎓\n\nNshobora gufasha mu bibazo bijyanye n'amasomo mwigwa muri ${className}.\n\nNibaze ikibazo!\n\nSubiza mu Kinyarwanda cyangwa English.`;
   const [messages, setMessages] = useState([
     { role: 'assistant', content: greeting },
   ]);
@@ -125,7 +125,7 @@ export default function UmunsiAiModal({ classId, className, token, onClose, isTe
                 display:'flex', alignItems:'center', justifyContent:'center',
                 fontSize:28,
                 boxShadow:'0 4px 16px rgba(0,0,0,0.25)',
-              }}>🤖</div>
+              }}>🎓</div>
               <div>
                 <div style={{ color:'#fff', fontWeight:800, fontSize:17, letterSpacing:0.3, lineHeight:1.2 }}>
                   {isTeacher ? 'Baza Umunsi Teacher AI' : 'Baza Umunsi Student AI'}
@@ -180,7 +180,7 @@ export default function UmunsiAiModal({ classId, className, token, onClose, isTe
                     display:'flex', alignItems:'center', justifyContent:'center',
                     fontSize:16, flexShrink:0,
                     boxShadow:'0 2px 8px rgba(124,58,237,0.2)',
-                  }}>🤖</div>
+                  }}>🎓</div>
                 )}
                 <div style={{
                   maxWidth:'74%',
@@ -225,7 +225,7 @@ export default function UmunsiAiModal({ classId, className, token, onClose, isTe
                 width:34, height:34, borderRadius:'50%',
                 background:'linear-gradient(135deg,#ede9fe,#ddd6fe)',
                 display:'flex', alignItems:'center', justifyContent:'center', fontSize:16,
-              }}>🤖</div>
+              }}>🎓</div>
               <div style={{
                 background:'#fff', borderRadius:'22px 22px 22px 6px',
                 padding:'13px 20px', display:'flex', gap:6, alignItems:'center',

@@ -37,6 +37,8 @@ export default function TeacherClassPage() {
   const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
+  const [addEmail, setAddEmail] = useState('');
+  const [addLoading, setAddLoading] = useState(false);
 
   useEffect(() => {
     api.get(`/classes/${id}`, token).then(setCls).catch(() => navigate(-1));
@@ -66,6 +68,28 @@ export default function TeacherClassPage() {
   };
 
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
+
+  const removeStudent = async (studentId, studentName) => {
+    if (!window.confirm(`Remove ${studentName} from this class?`)) return;
+    try {
+      await api.delete(`/classes/${id}/students/${studentId}`, token);
+      setData(prev => prev.filter(s => s.id !== studentId));
+      showSuccess(`${studentName} removed.`);
+    } catch (e) { setError(e.message); }
+  };
+
+  const addStudent = async (e) => {
+    e.preventDefault();
+    if (!addEmail.trim()) return;
+    setAddLoading(true);
+    try {
+      await api.post(`/classes/${id}/students`, { email: addEmail.trim() }, token);
+      setAddEmail('');
+      loadTab();
+      showSuccess('Student added successfully!');
+    } catch (e) { setError(e.message); }
+    finally { setAddLoading(false); }
+  };
 
   const postAnnouncement = async (e) => {
     e.preventDefault();
@@ -571,29 +595,54 @@ export default function TeacherClassPage() {
 
         {/* Students */}
         {tab === 'Students' && (
-          <div className="classmate-grid">
-            {data.length === 0 && <p style={{ color: '#aaa', textAlign: 'center', width: '100%' }}>No students yet.</p>}
-            {data.map(s => {
-              const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-              return (
-                <div key={s.id} className="classmate-card" onClick={() => setSelectedStudent(s)}>
-                  {s.avatar_path
-                    ? <img src={`${UPLOADS_BASE}${s.avatar_path}`} alt={s.name} className="classmate-avatar" />
-                    : <div className="classmate-initials">{initials}</div>
-                  }
-                  <div className="classmate-info">
-                    <div className="classmate-name">
-                      {s.name}
-                      <VerifiedBadge size={15} info={{ items: [
-                        { icon: s.role === 'teacher' ? '👨‍🏫' : '👩‍🎓', label: 'Role', value: s.role },
-                      ] }} onViewProfile={() => setSelectedStudent(s)} />
+          <>
+            {/* Add student form */}
+            <form onSubmit={addStudent} style={{ display: 'flex', gap: 10, marginBottom: 20, background: 'white', padding: '14px 16px', borderRadius: 10, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+              <input
+                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+                type="email"
+                placeholder="Add student by email..."
+                value={addEmail}
+                onChange={e => setAddEmail(e.target.value)}
+                required
+              />
+              <button type="submit" className="btn btn-primary" disabled={addLoading}>
+                {addLoading ? 'Adding...' : '+ Add Student'}
+              </button>
+            </form>
+
+            <div className="classmate-grid">
+              {data.length === 0 && <p style={{ color: '#aaa', textAlign: 'center', width: '100%' }}>No students yet.</p>}
+              {data.map(s => {
+                const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                return (
+                  <div key={s.id} className="classmate-card" style={{ position: 'relative' }} onClick={() => setSelectedStudent(s)}>
+                    {s.avatar_path
+                      ? <img src={`${UPLOADS_BASE}${s.avatar_path}`} alt={s.name} className="classmate-avatar" />
+                      : <div className="classmate-initials">{initials}</div>
+                    }
+                    <div className="classmate-info">
+                      <div className="classmate-name">
+                        {s.name}
+                        <VerifiedBadge size={15} info={{ items: [
+                          { icon: s.role === 'teacher' ? '👨‍🏫' : '👩‍🎓', label: 'Role', value: s.role },
+                        ] }} onViewProfile={() => setSelectedStudent(s)} />
+                      </div>
+                      <span className={`cm-role-badge ${s.role}`}>{s.role}</span>
                     </div>
-                    <span className={`cm-role-badge ${s.role}`}>{s.role}</span>
+                    {s.role === 'student' && (
+                      <button
+                        className="btn btn-danger btn-sm"
+                        style={{ position: 'absolute', top: 8, right: 8, padding: '2px 8px', fontSize: 12 }}
+                        onClick={e => { e.stopPropagation(); removeStudent(s.id, s.name); }}
+                        title="Remove from class"
+                      >✕ Remove</button>
+                    )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {selectedStudent && (

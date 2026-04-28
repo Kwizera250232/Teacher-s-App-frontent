@@ -147,7 +147,7 @@ export default function StudentDashboard() {
                   className="class-card-note-btn"
                   onClick={e => { e.stopPropagation(); setAiModal({ classId: cls.id, className: cls.name }); }}
                 >
-                  🤖 Baza Umunsi AI
+                  🎓 Baza Umunsi AI
                 </button>
               </div>
             ))}

@@ -23,7 +23,7 @@ const NAV = [
   { key: 'content', label: 'Content', icon: '📝' },
   { key: 'announcements', label: 'Announcements', icon: '📢' },
   { key: 'reports', label: 'Reports', icon: '💬' },
-  { key: 'textbooks', label: 'AI Textbooks', icon: '🤖' },
+  { key: 'textbooks', label: 'AI Textbooks', icon: '🎓' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 

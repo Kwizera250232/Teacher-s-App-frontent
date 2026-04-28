@@ -79,7 +79,7 @@ export default function AdminTextbooks({ token }) {
   return (
     <div className="admin-card">
       <div className="admin-section-header">
-        <h2 className="admin-section-title">🤖 Baza Umunsi Student AI — Ibitabo</h2>
+        <h2 className="admin-section-title">🎓 Baza Umunsi Student AI — Ibitabo</h2>
         <button className="btn btn-primary btn-sm" onClick={() => setShowForm(s => !s)}>
           {showForm ? '✕ Funga' : '+ Shyiraho Igitabo'}
         </button>
