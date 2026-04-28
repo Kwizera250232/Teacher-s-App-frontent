@@ -7,6 +7,7 @@ import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
+import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import '../pages/Dashboard.css';
 
 const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
@@ -55,7 +56,7 @@ export default function TeacherClassPage() {
         Homework: `/classes/${id}/homework`,
         Quizzes: `/classes/${id}/quizzes`,
         Discussion: `/classes/${id}/discussions`,
-        Students: `/classes/${id}/students`,
+        Students: `/classes/${id}/classmates`,
       };
       const res = await api.get(endpointMap[tab], token);
       setData(res);
@@ -563,98 +564,35 @@ export default function TeacherClassPage() {
 
         {/* Students */}
         {tab === 'Students' && (
-          <div style={{ padding: '1.5rem 0' }}>
-            {data.length === 0 && <p style={{ padding: 20, textAlign: 'center', color: '#888' }}>No students yet.</p>}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'flex-start' }}>
-              {data.map(s => {
-                const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-                const colors = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
-                const bg = colors[s.id % colors.length];
-                return (
-                  <div
-                    key={s.id}
-                    onClick={() => setSelectedStudent(s)}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', width: 70 }}
-                  >
-                    <div style={{
-                      width: 52, height: 52, borderRadius: '50%', background: bg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'white', fontWeight: 700, fontSize: 18,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      border: '2.5px solid white',
-                      transition: 'transform 0.15s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform='scale(1.1)'}
-                    onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
-                    >
-                      {initials}
+          <div className="classmate-grid">
+            {data.length === 0 && <p style={{ color: '#aaa', textAlign: 'center', width: '100%' }}>No students yet.</p>}
+            {data.map(s => {
+              const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+              return (
+                <div key={s.id} className="classmate-card" onClick={() => setSelectedStudent(s)}>
+                  {s.avatar_path
+                    ? <img src={`${UPLOADS_BASE}${s.avatar_path}`} alt={s.name} className="classmate-avatar" />
+                    : <div className="classmate-initials">{initials}</div>
+                  }
+                  <div className="classmate-info">
+                    <div className="classmate-name">
+                      {s.name}
+                      <VerifiedBadge size={14} info={{ items: [{ icon: '👤', label: 'Role', value: s.role }] }} />
                     </div>
-                    <div style={{ fontSize: 11, color: '#374151', textAlign: 'center', lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <span style={{ maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>{s.name.split(' ')[0]}</span>
-                      <VerifiedBadge size={11} info={{ items: [
-                        { icon: '📚', label: 'Class', value: cls?.name },
-                        { icon: '📅', label: 'Joined', value: new Date(s.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
-                        { icon: '👨‍🏫', label: 'Teacher', value: cls?.teacher_name },
-                      ] }} />
-                    </div>
+                    <span className={`cm-role-badge ${s.role}`}>{s.role}</span>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {/* Student profile popup */}
         {selectedStudent && (
-          <div
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={e => e.target === e.currentTarget && setSelectedStudent(null)}
-          >
-            <div style={{ background: 'white', borderRadius: 20, padding: '2rem', minWidth: 280, maxWidth: 340, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', textAlign: 'center' }}>
-              <div style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'][selectedStudent.id % 8],
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'white', fontWeight: 700, fontSize: 26, margin: '0 auto 1rem',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
-              }}>
-                {selectedStudent.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
-                <strong style={{ fontSize: 18, color: '#1e293b' }}>{selectedStudent.name}</strong>
-                <VerifiedBadge size={16} info={{ items: [
-                  { icon: '📚', label: 'Class', value: cls?.name },
-                  { icon: '📅', label: 'Joined', value: new Date(selectedStudent.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
-                  { icon: '👨‍🏫', label: 'Teacher', value: cls?.teacher_name },
-                ] }} />
-              </div>
-              <p style={{ color: '#64748b', fontSize: 13, marginBottom: '1.25rem' }}>{selectedStudent.email}</p>
-              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>📚</span>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Ishuri</div>
-                    <div style={{ fontSize: 14, color: '#1e293b', fontWeight: 500 }}>{cls?.name || '—'}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>🏫</span>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Ikigo</div>
-                    <div style={{ fontSize: 14, color: '#1e293b', fontWeight: 500 }}>{selectedStudent.school_name || 'Ntabwo byasohotse'}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>📅</span>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Yinjiriye</div>
-                    <div style={{ fontSize: 14, color: '#1e293b', fontWeight: 500 }}>{new Date(selectedStudent.joined_at).toLocaleDateString('fr-RW', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => setSelectedStudent(null)} style={{ marginTop: '1.25rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '0.6rem 2rem', cursor: 'pointer', fontWeight: 600 }}>Funga</button>
-            </div>
-          </div>
+          <ClassmateProfileModal
+            person={selectedStudent}
+            onClose={() => setSelectedStudent(null)}
+            onMessage={(uid) => { setSelectedStudent(null); navigate('/messages', { state: { toUserId: uid } }); }}
+          />
         )}
       </main>
 

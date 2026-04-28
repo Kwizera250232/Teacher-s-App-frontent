@@ -6,9 +6,10 @@ import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
+import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import '../pages/Dashboard.css';
 
-const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion'];
+const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Classmates'];
 
 export default function StudentClassPage() {
   const { id } = useParams();
@@ -24,8 +25,10 @@ export default function StudentClassPage() {
   const [commentText, setCommentText] = useState({});             // { [discussionId]: string }
   // Submission state: { [hwId]: { submitting, form, mySubmission } }
   const [subState, setSubState] = useState({});
-  const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
-  const [shareItem, setShareItem] = useState(null);   // { title, text, url }
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [shareItem, setShareItem] = useState(null);
+  const [classmates, setClassmates] = useState([]);
+  const [selectedPerson, setSelectedPerson] = useState(null);
 
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
 
@@ -37,7 +40,14 @@ export default function StudentClassPage() {
 
   const loadTab = async () => {
     setError('');
-    if (tab === 'Leaderboard') return; // handled by ClassLeaderboard component
+    if (tab === 'Leaderboard') return;
+    if (tab === 'Classmates') {
+      try {
+        const res = await api.get(`/classes/${id}/classmates`, token);
+        setClassmates(res);
+      } catch {/* ignore */}
+      return;
+    }
     try {
       const map = {
         Announcements: `/classes/${id}/announcements`,
@@ -439,7 +449,39 @@ export default function StudentClassPage() {
             </form>
           </>
         )}
+
+        {tab === 'Classmates' && (
+          <div className="classmate-grid">
+            {classmates.length === 0 && <p style={{ color: '#aaa', textAlign: 'center' }}>No classmates yet.</p>}
+            {classmates.map(p => {
+              const initials = p.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+              return (
+                <div key={p.id} className="classmate-card" onClick={() => setSelectedPerson(p)}>
+                  {p.avatar_path
+                    ? <img src={`${UPLOADS_BASE}${p.avatar_path}`} alt={p.name} className="classmate-avatar" />
+                    : <div className="classmate-initials">{initials}</div>
+                  }
+                  <div className="classmate-info">
+                    <div className="classmate-name">
+                      {p.name}
+                      <VerifiedBadge size={14} info={{ items: [{ icon: '👤', label: 'Role', value: p.role }] }} />
+                    </div>
+                    <span className={`cm-role-badge ${p.role}`}>{p.role}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </main>
+
+      {selectedPerson && (
+        <ClassmateProfileModal
+          person={selectedPerson}
+          onClose={() => setSelectedPerson(null)}
+          onMessage={(uid) => { setSelectedPerson(null); navigate('/messages', { state: { toUserId: uid } }); }}
+        />
+      )}
 
       {previewDoc && (
         <DocPreviewModal
