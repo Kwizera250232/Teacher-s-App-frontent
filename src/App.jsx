@@ -15,6 +15,7 @@ import StudentNotes from './pages/StudentNotes';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Footer from './components/Footer';
+import InstallPrompt from './components/InstallPrompt';
 import './components/Footer.css';
 
 function ProtectedRoute({ children, role }) {
@@ -79,6 +80,7 @@ export default function App() {
           </div>
           <Footer />
         </div>
+        <InstallPrompt />
       </BrowserRouter>
     </AuthProvider>
   );
