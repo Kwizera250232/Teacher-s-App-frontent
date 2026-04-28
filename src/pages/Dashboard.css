@@ -446,6 +446,22 @@ body {
 .cm-role-badge.student { background: #e0e7ff; color: #3730a3; }
 .cm-role-badge.teacher { background: #d1fae5; color: #065f46; }
 
+/* Static verified checkmark (no popup, safe for card clicks) */
+.cm-static-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1d9bf0;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 /* ── Classmate Profile Modal ─────────────────────── */
 .cm-modal-overlay {
   position: fixed; inset: 0;

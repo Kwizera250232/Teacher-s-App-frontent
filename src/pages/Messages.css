@@ -262,7 +262,33 @@
 
 /* Mobile */
 @media (max-width: 600px) {
-  .msg-sidebar { width: 72px; }
-  .msg-contact-info { display: none; }
-  .msg-sidebar-header span { display: none; }
+  .msg-page { position: relative; overflow: hidden; }
+  .msg-sidebar {
+    position: absolute; inset: 0; width: 100%;
+    z-index: 2; transition: transform .25s ease;
+  }
+  .msg-sidebar-hidden { transform: translateX(-100%); pointer-events: none; }
+  .msg-chat {
+    position: absolute; inset: 0; width: 100%;
+    z-index: 1; transition: transform .25s ease;
+  }
+  .msg-chat-hidden { transform: translateX(100%); pointer-events: none; }
+  .msg-contact-info { display: flex; }
+  .msg-sidebar-header span { display: inline; }
+  .msg-back-btn { display: flex; }
+}
+
+.msg-back-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 4px;
 }

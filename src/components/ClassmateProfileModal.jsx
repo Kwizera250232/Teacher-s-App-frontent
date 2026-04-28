@@ -24,7 +24,10 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
             ? <img src={`${UPLOADS_BASE}${person.avatar_path}`} alt={person.name} className="cm-modal-avatar" />
             : <div className="cm-modal-initials" style={{ background: bg }}>{initials}</div>
           }
-          <div className="cm-modal-name">{person.name}</div>
+          <div className="cm-modal-name">
+          {person.name}
+          <span className="cm-static-badge" title="Verified">✓</span>
+        </div>
           <span className={`cm-role-badge ${person.role}`}>{person.role}</span>
           {person.email && <div className="cm-modal-email">✉️ {person.email}</div>}
         </div>

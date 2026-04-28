@@ -26,6 +26,8 @@ export default function Messages() {
   const [showEmoji, setShowEmoji] = useState(false);
   const [imgFile, setImgFile] = useState(null);
   const [imgPreview, setImgPreview] = useState('');
+  // Mobile: which panel is visible — 'list' or 'chat'
+  const [mobilePanel, setMobilePanel] = useState('list');
   const bottomRef = useRef();
   const fileRef = useRef();
   const emojiRef = useRef();
@@ -34,7 +36,7 @@ export default function Messages() {
     api.get('/profile/contacts/list', token).then(setContacts).catch(() => {});
     api.get('/messages/inbox', token).then(setInbox).catch(() => {});
     const uid = searchParams.get('to');
-    if (uid) setActiveId(parseInt(uid));
+    if (uid) { setActiveId(parseInt(uid)); setMobilePanel('chat'); }
   }, [token]);
 
   useEffect(() => {
@@ -101,7 +103,7 @@ export default function Messages() {
 
   return (
     <div className="msg-page">
-      <div className="msg-sidebar">
+      <div className={`msg-sidebar ${mobilePanel === 'chat' ? 'msg-sidebar-hidden' : ''}`}>
         <div className="msg-sidebar-header">
           <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>←</button>
           <span>💬 Messages</span>
@@ -111,7 +113,7 @@ export default function Messages() {
           <div
             key={c.id}
             className={`msg-contact ${activeId === c.id ? 'active' : ''}`}
-            onClick={() => setActiveId(c.id)}
+            onClick={() => { setActiveId(c.id); setMobilePanel('chat'); }}
           >
             <div className="msg-contact-avatar-wrap">
               <img src={c.avatar_path ? `${UPLOADS_BASE}${c.avatar_path}` : DEFAULT_AVATAR} alt="" className="msg-contact-avatar" />
@@ -125,7 +127,7 @@ export default function Messages() {
         ))}
       </div>
 
-      <div className="msg-chat">
+      <div className={`msg-chat ${mobilePanel === 'list' ? 'msg-chat-hidden' : ''}`}>
         {!activeId ? (
           <div className="msg-no-chat">
             <div className="msg-no-chat-icon">💬</div>
@@ -134,6 +136,7 @@ export default function Messages() {
         ) : (
           <>
             <div className="msg-chat-header">
+              <button className="msg-back-btn" onClick={() => setMobilePanel('list')}>←</button>
               <img
                 src={activeContact?.avatar_path ? `${UPLOADS_BASE}${activeContact.avatar_path}` : DEFAULT_AVATAR}
                 alt=""

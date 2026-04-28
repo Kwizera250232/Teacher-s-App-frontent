@@ -464,7 +464,7 @@ export default function StudentClassPage() {
                   <div className="classmate-info">
                     <div className="classmate-name">
                       {p.name}
-                      <VerifiedBadge size={14} info={{ items: [{ icon: '👤', label: 'Role', value: p.role }] }} />
+                      <span className="cm-static-badge" title="Verified">✓</span>
                     </div>
                     <span className={`cm-role-badge ${p.role}`}>{p.role}</span>
                   </div>
@@ -479,7 +479,7 @@ export default function StudentClassPage() {
         <ClassmateProfileModal
           person={selectedPerson}
           onClose={() => setSelectedPerson(null)}
-          onMessage={(uid) => { setSelectedPerson(null); navigate('/messages', { state: { toUserId: uid } }); }}
+          onMessage={(uid) => { setSelectedPerson(null); navigate(`/messages?to=${uid}`); }}
         />
       )}
 
