@@ -121,6 +121,10 @@ export default function StudentClassPage() {
       setError('Please write a response or attach a file.');
       return;
     }
+    if (st?.form?.text && st.form.text.trim().length < 200) {
+      setError(`Written response must be at least 200 characters. ${200 - st.form.text.trim().length} more needed.`);
+      return;
+    }
     setSubState(prev => ({ ...prev, [hwId]: { ...prev[hwId], submitting: true } }));
     setError('');
     try {
@@ -300,6 +304,11 @@ export default function StudentClassPage() {
                     <div style={{ margin: '12px 0 0', padding: '12px 16px', background: '#f0fdf4', borderRadius: 8, borderLeft: '4px solid #22c55e' }}>
                       <div style={{ fontWeight: 700, color: '#166534', marginBottom: 4 }}>Grade: {sub.grade}/100</div>
                       {sub.feedback && <div style={{ color: '#374151', fontSize: 14 }}>💬 Feedback: {sub.feedback}</div>}
+                      {sub.teacher_answer && (
+                        <div style={{ marginTop: 8, color: '#1e40af', fontSize: 14, background: '#eff6ff', padding: '8px 12px', borderRadius: 6, borderLeft: '3px solid #3b82f6' }}>
+                          📖 <strong>Model Answer:</strong> {sub.teacher_answer}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -345,8 +354,13 @@ export default function StudentClassPage() {
                         value={st.form.text}
                         onChange={e => setSubState(prev => ({ ...prev, [hw.id]: { ...prev[hw.id], form: { ...prev[hw.id].form, text: e.target.value } } }))}
                         rows={3}
-                        style={{ width: '100%', padding: '8px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '8px 12px', border: `1.5px solid ${st.form.text && st.form.text.length < 200 ? '#e11d48' : '#e2e8f0'}`, borderRadius: 8, fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
                       />
+                      {st.form.text.length > 0 && (
+                        <div style={{ fontSize: 12, marginTop: 3, color: st.form.text.length < 200 ? '#e11d48' : '#16a34a', fontWeight: 500 }}>
+                          {st.form.text.length} characters{st.form.text.length < 200 ? ` — ${200 - st.form.text.length} more needed (min 200)` : ' ✓'}
+                        </div>
+                      )}
                     </div>
                     <div className="form-group" style={{ marginBottom: 12 }}>
                       <input

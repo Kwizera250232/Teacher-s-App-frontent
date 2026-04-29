@@ -39,6 +39,11 @@ export default function TakeQuiz() {
     setAnswers({ ...answers, [questionId]: option });
   };
 
+  const handleTextAnswer = (questionId, value) => {
+    if (submitted) return;
+    setAnswers({ ...answers, [questionId]: value });
+  };
+
   const handleSubmit = async () => {
     if (Object.keys(answers).length < questions.length) {
       setError('Please answer all questions before submitting.');
@@ -144,7 +149,9 @@ export default function TakeQuiz() {
               <h3 style={{ marginBottom: 16, fontSize: 16, fontWeight: 700 }}>
                 📋 Ibisubizo Byanjye ({prevResult.score}/{prevResult.total})
               </h3>
-              {prevResult.detailed.map((q, i) => (
+              {prevResult.detailed.map((q, i) => {
+                const qtype = q.question_type || 'multiple_choice';
+                return (
                 <div key={i} style={{
                   background: 'white', borderRadius: 12, padding: '16px 18px',
                   marginBottom: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
@@ -154,28 +161,63 @@ export default function TakeQuiz() {
                     <strong style={{ fontSize: 14 }}>Q{q.number}: {q.question}</strong>
                     <span style={{ fontSize: 18 }}>{q.is_correct ? '✅' : '❌'}</span>
                   </div>
-                  {['a', 'b', 'c', 'd'].map(opt => {
+                  {/* MC / True-False options */}
+                  {(qtype === 'multiple_choice' || qtype === 'true_false') && ['a', 'b', 'c', 'd'].map(opt => {
                     const text = q[`option_${opt}`];
                     if (!text) return null;
                     const isCorrect = q.correct_answer === opt;
                     const isGiven = q.student_answer === opt;
-                    let bg = 'transparent';
-                    let border = '#eee';
+                    let bg = 'transparent', border = '#eee';
                     if (isCorrect) { bg = '#f0fff4'; border = '#27ae60'; }
                     else if (isGiven && !isCorrect) { bg = '#fff0f0'; border = '#e74c3c'; }
                     return (
-                      <div key={opt} style={{
-                        padding: '7px 12px', borderRadius: 7, background: bg,
-                        border: `1px solid ${border}`, marginBottom: 4, fontSize: 13,
-                      }}>
+                      <div key={opt} style={{ padding: '7px 12px', borderRadius: 7, background: bg, border: `1px solid ${border}`, marginBottom: 4, fontSize: 13 }}>
                         <strong>{opt.toUpperCase()}.</strong> {text}
-                        {isCorrect && <span style={{ float: 'right', color: '#27ae60', fontWeight: 700 }}>✓ Igisubizo</span>}
-                        {isGiven && !isCorrect && <span style={{ float: 'right', color: '#e74c3c', fontWeight: 700 }}>✗ Wasubije</span>}
+                        {isCorrect && <span style={{ float: 'right', color: '#27ae60', fontWeight: 700 }}>✓ Correct</span>}
+                        {isGiven && !isCorrect && <span style={{ float: 'right', color: '#e74c3c', fontWeight: 700 }}>✗ Your answer</span>}
                       </div>
                     );
                   })}
+                  {/* Fill in Blank */}
+                  {qtype === 'fill_blank' && (
+                    <div style={{ fontSize: 13, marginTop: 6 }}>
+                      <div style={{ padding: '7px 12px', borderRadius: 7, background: q.is_correct ? '#f0fff4' : '#fff0f0', border: `1px solid ${q.is_correct ? '#27ae60' : '#e74c3c'}`, marginBottom: 4 }}>
+                        Your answer: <strong>{q.student_answer}</strong>
+                      </div>
+                      {!q.is_correct && (
+                        <div style={{ padding: '7px 12px', borderRadius: 7, background: '#f0fff4', border: '1px solid #27ae60' }}>
+                          Correct answer: <strong>{q.correct_answer}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Matching */}
+                  {qtype === 'matching' && (() => {
+                    let pairs = []; try { pairs = JSON.parse(q.passage || '[]'); } catch {}
+                    const studentParts = (q.student_answer || '').split('|');
+                    return (
+                      <div style={{ fontSize: 13, marginTop: 6 }}>
+                        {pairs.map((pair, pi) => {
+                          const given = (studentParts[pi] || '').trim();
+                          const correct = pair.right.trim();
+                          const ok = given.toLowerCase() === correct.toLowerCase();
+                          return (
+                            <div key={pi} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ flex: 1, padding: '6px 10px', background: '#f1f5f9', borderRadius: 6, fontWeight: 600 }}>{pair.left}</span>
+                              <span style={{ color: ok ? '#27ae60' : '#e74c3c', fontWeight: 700, fontSize: 16 }}>{ok ? '✓' : '✗'}</span>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ padding: '6px 10px', borderRadius: 6, background: ok ? '#f0fff4' : '#fff0f0', border: `1px solid ${ok ? '#27ae60' : '#e74c3c'}` }}>Your: <strong>{given || '—'}</strong></div>
+                                {!ok && <div style={{ padding: '6px 10px', borderRadius: 6, background: '#f0fff4', border: '1px solid #27ae60', marginTop: 3 }}>Correct: <strong>{correct}</strong></div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </main>
@@ -203,11 +245,16 @@ export default function TakeQuiz() {
             <h3 style={{ marginBottom: 16 }}>Review Answers</h3>
             {questions.map((q, i) => {
               const qResult = result.results[q.id];
+              const qtype = q.question_type || 'multiple_choice';
               return (
                 <div key={q.id} style={{ background: 'white', borderRadius: 10, padding: 16, marginBottom: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-                  <strong style={{ fontSize: 14 }}>Q{i + 1}: {q.question}</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <strong style={{ fontSize: 14 }}>Q{i + 1}: {q.question}</strong>
+                    <span>{qResult?.is_correct ? '✅' : '❌'}</span>
+                  </div>
                   <div style={{ marginTop: 8, fontSize: 13 }}>
-                    {['a', 'b', 'c', 'd'].map(opt => {
+                    {/* MC / True-False */}
+                    {(qtype === 'multiple_choice' || qtype === 'true_false') && ['a', 'b', 'c', 'd'].map(opt => {
                       if (!q[`option_${opt}`]) return null;
                       const isCorrect = qResult?.correct === opt;
                       const isGiven = qResult?.given === opt;
@@ -222,6 +269,34 @@ export default function TakeQuiz() {
                         </div>
                       );
                     })}
+                    {/* Fill in blank */}
+                    {qtype === 'fill_blank' && (
+                      <>
+                        <div style={{ padding: '6px 10px', borderRadius: 6, marginBottom: 4, background: qResult?.is_correct ? '#f0fff4' : '#fff0f0', border: `1px solid ${qResult?.is_correct ? '#27ae60' : '#e74c3c'}` }}>
+                          Your answer: <strong>{qResult?.given || '—'}</strong> {qResult?.is_correct ? '✅' : '❌'}
+                        </div>
+                        {!qResult?.is_correct && <div style={{ padding: '6px 10px', borderRadius: 6, background: '#f0fff4', border: '1px solid #27ae60' }}>Correct: <strong>{qResult?.correct}</strong></div>}
+                      </>
+                    )}
+                    {/* Matching */}
+                    {qtype === 'matching' && (() => {
+                      let pairs = []; try { pairs = JSON.parse(q.passage || '[]'); } catch {}
+                      const studentParts = (qResult?.given || '').split('|');
+                      return pairs.map((pair, pi) => {
+                        const given = (studentParts[pi] || '').trim();
+                        const ok = given.toLowerCase() === pair.right.trim().toLowerCase();
+                        return (
+                          <div key={pi} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 5 }}>
+                            <span style={{ flex: 1, padding: '5px 9px', background: '#f1f5f9', borderRadius: 5, fontWeight: 600 }}>{pair.left}</span>
+                            <span style={{ color: ok ? '#27ae60' : '#e74c3c', fontWeight: 700 }}>{ok ? '✓' : '✗'}</span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ padding: '5px 9px', borderRadius: 5, background: ok ? '#f0fff4' : '#fff0f0', border: `1px solid ${ok ? '#27ae60' : '#e74c3c'}` }}>You: <strong>{given || '—'}</strong></div>
+                              {!ok && <div style={{ padding: '5px 9px', borderRadius: 5, background: '#f0fff4', border: '1px solid #27ae60', marginTop: 3 }}>Correct: <strong>{pair.right}</strong></div>}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               );
@@ -272,21 +347,97 @@ export default function TakeQuiz() {
 
             {error && <div className="alert alert-error">{error}</div>}
 
-            {questions.map((q, i) => (
+            {questions.map((q, i) => {
+              const qtype = q.question_type || 'multiple_choice';
+              let matchingPairs = [];
+              if (qtype === 'matching') {
+                try { matchingPairs = JSON.parse(q.passage || '[]'); } catch {}
+              }
+              const currentAnswer = answers[q.id] || '';
+              const matchingAnswers = qtype === 'matching' ? currentAnswer.split('|') : [];
+
+              return (
               <div key={q.id} className="quiz-question">
+                {q.passage && qtype !== 'matching' && (
+                  <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: '12px 16px', marginBottom: 14, fontSize: 14, color: '#1e293b', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                    <strong style={{ fontSize: 12, color: '#0369a1', display: 'block', marginBottom: 6 }}>📄 Reading Passage</strong>
+                    {q.passage}
+                  </div>
+                )}
                 <h3>Q{i + 1}: {q.question}</h3>
-                <div className="quiz-options">
-                  {['a', 'b', 'c', 'd'].map(opt => {
-                    if (!q[`option_${opt}`]) return null;
-                    return (
-                      <label key={opt} className={`quiz-option ${answers[q.id] === opt ? 'selected' : ''}`} onClick={() => handleAnswer(q.id, opt)}>
-                        <strong>{opt.toUpperCase()}.</strong> {q[`option_${opt}`]}
+
+                {/* Multiple choice */}
+                {qtype === 'multiple_choice' && (
+                  <div className="quiz-options">
+                    {['a', 'b', 'c', 'd'].map(opt => {
+                      if (!q[`option_${opt}`]) return null;
+                      return (
+                        <label key={opt} className={`quiz-option ${currentAnswer === opt ? 'selected' : ''}`} onClick={() => handleAnswer(q.id, opt)}>
+                          <strong>{opt.toUpperCase()}.</strong> {q[`option_${opt}`]}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* True / False */}
+                {qtype === 'true_false' && (
+                  <div className="quiz-options">
+                    {[{ val: 'a', label: '✓ True' }, { val: 'b', label: '✗ False' }].map(({ val, label }) => (
+                      <label key={val} className={`quiz-option ${currentAnswer === val ? 'selected' : ''}`} onClick={() => handleAnswer(q.id, val)}
+                        style={{ fontSize: 15, fontWeight: 600 }}>
+                        {label}
                       </label>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Fill in blank */}
+                {qtype === 'fill_blank' && (
+                  <div style={{ marginTop: 12 }}>
+                    <input
+                      type="text"
+                      value={currentAnswer}
+                      onChange={e => handleTextAnswer(q.id, e.target.value)}
+                      placeholder="Type your answer here…"
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', border: `2px solid ${currentAnswer ? '#2563eb' : '#e2e8f0'}`, borderRadius: 9, fontSize: 15, outline: 'none', fontFamily: 'inherit' }}
+                    />
+                    <small style={{ color: '#94a3b8', fontSize: 12, marginTop: 4, display: 'block' }}>Type your answer exactly (not case-sensitive)</small>
+                  </div>
+                )}
+
+                {/* Matching */}
+                {qtype === 'matching' && matchingPairs.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <p style={{ fontSize: 13, color: '#64748b', marginBottom: 10 }}>Match each item on the left to the correct item on the right. Type the matching right-side answer for each.</p>
+                    {matchingPairs.map((pair, pi) => {
+                      const currentVal = matchingAnswers[pi] || '';
+                      return (
+                        <div key={pi} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+                          <div style={{ flex: 1, padding: '9px 14px', background: '#f1f5f9', borderRadius: 8, fontWeight: 600, fontSize: 14 }}>
+                            {pair.left}
+                          </div>
+                          <span style={{ color: '#2563eb', fontWeight: 700, fontSize: 18 }}>→</span>
+                          <input
+                            type="text"
+                            value={currentVal}
+                            onChange={e => {
+                              const parts = (answers[q.id] || '').split('|');
+                              while (parts.length <= pi) parts.push('');
+                              parts[pi] = e.target.value;
+                              handleTextAnswer(q.id, parts.join('|'));
+                            }}
+                            placeholder={`Match for "${pair.left}"…`}
+                            style={{ flex: 1, padding: '9px 14px', border: `2px solid ${currentVal ? '#2563eb' : '#e2e8f0'}`, borderRadius: 8, fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
 
             {questions.length > 0 && (
               <button

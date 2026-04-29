@@ -18,6 +18,16 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
   const [subscribed, setSubscribed] = useState(!!person.i_subscribed);
   const [subCount, setSubCount] = useState(person.subscriber_count || 0);
   const [subLoading, setSubLoading] = useState(false);
+  const [shares, setShares] = useState([]);
+  const [sharesLoading, setSharesLoading] = useState(false);
+
+  function loadShares() {
+    setSharesLoading(true);
+    api.get(`/student-shares/user/${person.id}`, token)
+      .then(setShares)
+      .catch(() => setShares([]))
+      .finally(() => setSharesLoading(false));
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -26,6 +36,7 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
         setProfileData(data);
         setSubscribed(!!data.i_subscribed);
         setSubCount(data.subscriber_count || 0);
+        if (data.i_subscribed) loadShares();
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -41,6 +52,9 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
       if (res.subscribed) {
         const full = await api.get(`/profile/${person.id}`, token);
         setProfileData(full);
+        loadShares();
+      } else {
+        setShares([]);
       }
     } catch (e) { console.error('Subscribe error:', e); }
     finally { setSubLoading(false); }
@@ -125,6 +139,52 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
               {!(p.dreams || favLessons.length > 0 || hobbies.length > 0 || p.phone || schools.length > 0) && (
                 <p style={{ textAlign:'center',color:'#aaa',padding:'24px 0',fontSize:14 }}>This person hasn't filled their profile yet.</p>
               )}
+
+              {/* Written Compositions */}
+              <div style={{ padding:'16px 0' }}>
+                <div style={{ fontSize:11,fontWeight:800,textTransform:'uppercase',letterSpacing:'.6px',color:'#667eea',marginBottom:12 }}>✍️ Written Compositions</div>
+                {sharesLoading && <p style={{ fontSize:13,color:'#94a3b8',textAlign:'center',padding:'12px 0' }}>Loading…</p>}
+                {!sharesLoading && shares.length === 0 && (
+                  <p style={{ fontSize:13,color:'#94a3b8',textAlign:'center',padding:'12px 0' }}>No compositions published yet.</p>
+                )}
+                {!sharesLoading && shares.map(s => {
+                  const CATS = { lesson: { emoji:'📚',color:'#2563eb',bg:'#dbeafe',label:'Lesson' }, dream: { emoji:'🌟',color:'#7c3aed',bg:'#ede9fe',label:'Dream' }, motivation: { emoji:'🔥',color:'#ea580c',bg:'#ffedd5',label:'Motivation' } };
+                  const cat = CATS[s.type] || CATS.lesson;
+                  const lines = s.content.split('\n');
+                  const postTitle = lines[0]?.replace('📌 ', '') || '';
+                  const sections = [];
+                  let cur = null, buf = [];
+                  for (const l of lines.slice(1)) {
+                    if (l === '📖 Introduction' || l === '📝 Body' || l === '🏁 Conclusion') {
+                      if (cur) sections.push({ label: cur, text: buf.join('\n').trim() });
+                      cur = l; buf = [];
+                    } else { buf.push(l); }
+                  }
+                  if (cur) sections.push({ label: cur, text: buf.join('\n').trim() });
+                  return (
+                    <div key={s.id} style={{ background:'#f8fafc',borderRadius:12,padding:'14px 16px',marginBottom:12,borderLeft:`4px solid ${cat.color}` }}>
+                      <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:8 }}>
+                        <span style={{ background:cat.bg,color:cat.color,borderRadius:20,padding:'2px 10px',fontSize:11,fontWeight:700 }}>{cat.emoji} {cat.label}</span>
+                        <span style={{ fontSize:11,color:'#94a3b8' }}>{(() => { const d=(Date.now()-new Date(s.created_at))/1000; if(d<60) return 'just now'; if(d<3600) return `${Math.floor(d/60)}m ago`; if(d<86400) return `${Math.floor(d/3600)}h ago`; return new Date(s.created_at).toLocaleDateString(); })()}</span>
+                      </div>
+                      <div style={{ fontWeight:700,fontSize:15,color:'#1e293b',marginBottom:10 }}>{postTitle}</div>
+                      {sections.map((sec, si) => (
+                        <div key={si} style={{ marginBottom:8 }}>
+                          <div style={{ fontSize:11,fontWeight:700,color:'#64748b',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:3 }}>{sec.label.replace(/^[^ ]+ /,'')}</div>
+                          <p style={{ margin:0,fontSize:13,color:'#374151',lineHeight:1.6,whiteSpace:'pre-wrap' }}>{sec.text}</p>
+                        </div>
+                      ))}
+                      {(s.school || s.class_name || s.teacher_name) && (
+                        <div style={{ display:'flex',flexWrap:'wrap',gap:6,marginTop:8 }}>
+                          {s.school && <span style={{ fontSize:11,color:'#64748b' }}>🏫 {s.school}</span>}
+                          {s.class_name && <span style={{ fontSize:11,color:'#64748b' }}>🎓 {s.class_name}</span>}
+                          {s.teacher_name && <span style={{ fontSize:11,color:'#64748b' }}>👨‍🏫 {s.teacher_name}</span>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div style={{ display:'flex',flexDirection:'column',gap:10,padding:'16px 20px 32px',borderTop:'1px solid #f1f5f9' }}>

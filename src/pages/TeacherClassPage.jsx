@@ -202,7 +202,7 @@ export default function TeacherClassPage() {
     try {
       const subs = await api.get(`/classes/${id}/homework/${hwId}/submissions`, token);
       const gradeForm = {};
-      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '' }; });
+      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '', teacher_answer: s.teacher_answer ?? '' }; });
       setSubmissionsState(prev => ({ ...prev, [hwId]: { open: true, submissions: subs, gradeForm } }));
     } catch (e) { setError(e.message); }
   };
@@ -211,12 +211,12 @@ export default function TeacherClassPage() {
     const gf = submissionsState[hwId]?.gradeForm?.[subId];
     if (!gf) return;
     try {
-      await api.put(`/classes/${id}/homework/${hwId}/submissions/${subId}/grade`, { grade: gf.grade, feedback: gf.feedback }, token);
+      await api.put(`/classes/${id}/homework/${hwId}/submissions/${subId}/grade`, { grade: gf.grade, feedback: gf.feedback, teacher_answer: gf.teacher_answer }, token);
       showSuccess('Grade saved!');
       // Refresh submissions
       const subs = await api.get(`/classes/${id}/homework/${hwId}/submissions`, token);
       const gradeForm = {};
-      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '' }; });
+      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '', teacher_answer: s.teacher_answer ?? '' }; });
       setSubmissionsState(prev => ({ ...prev, [hwId]: { open: true, submissions: subs, gradeForm } }));
     } catch (e) { setError(e.message); }
   };
@@ -465,6 +465,19 @@ export default function TeacherClassPage() {
                                   style={{ width: '100%', padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 7, fontSize: 14, boxSizing: 'border-box' }}
                                 />
                               </div>
+                              <div style={{ flex: '0 0 100%' }}>
+                                <label style={{ fontSize: 12, color: '#64748b', display: 'block', marginBottom: 3 }}>📖 Model Answer (optional — visible to student after grading)</label>
+                                <textarea
+                                  placeholder="Write the correct answer so the student can learn from it..."
+                                  value={ss.gradeForm[sub.id]?.teacher_answer ?? ''}
+                                  onChange={e => setSubmissionsState(prev => ({
+                                    ...prev,
+                                    [hw.id]: { ...prev[hw.id], gradeForm: { ...prev[hw.id].gradeForm, [sub.id]: { ...prev[hw.id].gradeForm[sub.id], teacher_answer: e.target.value } } }
+                                  }))}
+                                  rows={2}
+                                  style={{ width: '100%', padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 7, fontSize: 14, boxSizing: 'border-box', resize: 'vertical' }}
+                                />
+                              </div>
                               <button
                                 className="btn btn-primary btn-sm"
                                 onClick={() => gradeSubmission(hw.id, sub.id)}
@@ -614,9 +627,9 @@ export default function TeacherClassPage() {
             <div className="classmate-grid">
               {data.length === 0 && <p style={{ color: '#aaa', textAlign: 'center', width: '100%' }}>No students yet.</p>}
               {data.map(s => {
-                const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                const initials = (s.name || '?').split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
                 return (
-                  <div key={s.id} className="classmate-card" style={{ position: 'relative' }} onClick={() => setSelectedStudent(s)}>
+                  <div key={s.id} className="classmate-card classmate-card--teacher" style={{ position: 'relative' }} onClick={() => setSelectedStudent(s)}>
                     {s.avatar_path
                       ? <img src={`${UPLOADS_BASE}${s.avatar_path}`} alt={s.name} className="classmate-avatar" />
                       : <div className="classmate-initials">{initials}</div>
@@ -632,11 +645,10 @@ export default function TeacherClassPage() {
                     </div>
                     {s.role === 'student' && (
                       <button
-                        className="btn btn-danger btn-sm"
-                        style={{ position: 'absolute', top: 8, right: 8, padding: '2px 8px', fontSize: 12 }}
+                        className="student-remove-btn"
                         onClick={e => { e.stopPropagation(); removeStudent(s.id, s.name); }}
-                        title="Remove from class"
-                      >✕ Remove</button>
+                        title="Remove student"
+                      >✕</button>
                     )}
                   </div>
                 );

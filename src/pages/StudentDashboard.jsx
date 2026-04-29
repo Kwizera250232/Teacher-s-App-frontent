@@ -7,6 +7,7 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import UmunsiAiModal from '../components/UmunsiAiModal';
 import './Dashboard.css';
 
+
 export default function StudentDashboard() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
@@ -202,6 +203,8 @@ export default function StudentDashboard() {
           onClose={() => setAiModal(null)}
         />
       )}
+
+
     </div>
   );
 }

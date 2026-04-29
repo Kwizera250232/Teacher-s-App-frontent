@@ -103,13 +103,13 @@ export default function ClassLeaderboard({ classId }) {
             </tr>
           </thead>
           <tbody>
-            {entries.map((e, i) => (
-              <tr key={e.student_id} className={i === 0 && hasScores ? 'lb-top-row' : ''}>
+            {entries.map((e) => (
+              <tr key={e.student_id} className={e.rank === 1 && hasScores ? 'lb-top-row' : ''}>
                 <td>
-                  {i === 0 && hasScores ? '🥇' :
-                   i === 1 ? '🥈' :
-                   i === 2 ? '🥉' :
-                   i + 1}
+                  {e.rank === 1 && hasScores ? '🥇' :
+                   e.rank === 2 ? '🥈' :
+                   e.rank === 3 ? '🥉' :
+                   e.rank}
                 </td>
                 <td>{e.student_name}</td>
                 <td>{e.quizzes_taken}</td>

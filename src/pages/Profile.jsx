@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Profile.css';
+import StudentShareFeed from '../components/StudentShareFeed';
+import '../components/StudentShareFeed.css';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
 
@@ -220,6 +222,19 @@ export default function Profile() {
 
           {msg && <div className={`profile-msg ${msg.includes('success') || msg.includes('updated') ? 'success' : 'error'}`}>{msg}</div>}
         </div>
+
+        {/* Share feed – students only */}
+        {user?.role === 'student' && (
+          <div className="profile-share-section">
+            <h2 style={{ textAlign: 'center', fontWeight: 700, fontSize: 22, marginBottom: 6, color: '#2563eb' }}>
+              📚 Share Your Knowledge with Classmates
+            </h2>
+            <p style={{ textAlign: 'center', color: '#64748b', marginBottom: 20, fontSize: 15 }}>
+              Teach what you know, share what you learned, inspire others. Only your subscribers can see your posts.
+            </p>
+            <StudentShareFeed token={token} />
+          </div>
+        )}
 
         {/* Umunsimedia promo */}
         <div className="umunsimedia-promo">

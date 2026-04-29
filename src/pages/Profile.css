@@ -286,6 +286,15 @@
 .profile-msg.success { background: #d1fae5; color: #065f46; }
 .profile-msg.error   { background: #fee2e2; color: #991b1b; }
 
+/* Share section on profile */
+.profile-share-section {
+  margin: 32px 0 8px;
+  padding: 24px 16px;
+  background: #f8fafc;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+}
+
 /* Umunsimedia promo */
 .umunsimedia-promo {
   margin-top: 32px;
