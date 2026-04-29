@@ -36,15 +36,14 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
         setProfileData(data);
         setSubscribed(!!data.i_subscribed);
         setSubCount(data.subscriber_count || 0);
+        // Load compositions for subscribed viewers and teachers (teachers can always view)
+        if (data.i_subscribed || user?.role === 'teacher') {
+          loadShares();
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [person.id]);
-
-  // Load shares whenever subscribed becomes true (also handles initial mount if already subscribed)
-  useEffect(() => {
-    if (subscribed) loadShares();
-  }, [subscribed]);
 
   async function toggleSubscribe() {
     if (subLoading) return;
@@ -56,7 +55,7 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
       if (res.subscribed) {
         const full = await api.get(`/profile/${person.id}`, token);
         setProfileData(full);
-        // loadShares() is triggered automatically by the subscribed useEffect
+        loadShares();
       } else {
         setShares([]);
       }
