@@ -36,13 +36,13 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
         setProfileData(data);
         setSubscribed(!!data.i_subscribed);
         setSubCount(data.subscriber_count || 0);
-        // Load compositions for subscribed viewers and teachers (teachers can always view)
-        if (data.i_subscribed || user?.role === 'teacher') {
-          loadShares();
-        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    // Load shares independently — backend enforces access control.
+    // Must NOT be inside the profile .then() because if profile fetch fails,
+    // loadShares would never be called even though person.i_subscribed is true.
+    loadShares();
   }, [person.id]);
 
   async function toggleSubscribe() {
