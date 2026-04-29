@@ -12,7 +12,7 @@ function tryParse(val, fallback) {
 const COLORS = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
 
 export default function ClassmateProfileModal({ person, onClose, onMessage }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [subscribed, setSubscribed] = useState(!!person.i_subscribed);
@@ -36,7 +36,7 @@ export default function ClassmateProfileModal({ person, onClose, onMessage }) {
         setProfileData(data);
         setSubscribed(!!data.i_subscribed);
         setSubCount(data.subscriber_count || 0);
-        if (data.i_subscribed) loadShares();
+        if (data.i_subscribed || user?.role === 'teacher') loadShares();
       })
       .catch(() => {})
       .finally(() => setLoading(false));
