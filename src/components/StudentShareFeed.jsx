@@ -116,6 +116,45 @@ export default function StudentShareFeed({ token }) {
     <div className="sf-feed">
 
       <div className="sf-composer" style={{ borderTop: `4px solid ${selCat ? selCat.color : '#0891b2'}` }}>
+        {/* Composition Criteria Card */}
+        <div style={{
+          background: 'linear-gradient(135deg,#fefce8,#fef9c3)',
+          border: '1.5px solid #fcd34d',
+          borderRadius: 12,
+          padding: '12px 16px',
+          marginBottom: 14,
+        }}>
+          <div style={{ fontWeight: 800, fontSize: 14, color: '#92400e', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            🏆 Composition Scoring Criteria (100 pts)
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {[
+              { pts: '20', label: '5Ws in Introduction', desc: 'Who, What, Where, When, Why' },
+              { pts: '15', label: 'Title Match', desc: 'Title must match body content' },
+              { pts: '20', label: '≥ 5 Paragraphs', desc: 'Full composition needs 5+ paragraphs' },
+              { pts: '20', label: 'Introduction + Conclusion', desc: 'Must have clear background & conclusion' },
+              { pts: '25', label: 'Grammar', desc: 'Good grammar throughout' },
+            ].map(c => (
+              <div key={c.pts} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  background: '#f59e0b', color: '#fff', borderRadius: 20,
+                  padding: '2px 8px', fontSize: 11, fontWeight: 800, flexShrink: 0,
+                }}>{c.pts}pts</span>
+                <span style={{ fontSize: 13, color: '#1e293b', fontWeight: 600 }}>{c.label}</span>
+                <span style={{ fontSize: 12, color: '#64748b' }}>— {c.desc}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{
+            marginTop: 10, padding: '6px 10px',
+            background: '#ecfdf5', borderRadius: 8, border: '1px solid #6ee7b7',
+            fontSize: 12, color: '#065f46', fontWeight: 700,
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            🎁 Write ≥ 500 words &amp; score highest this term → WIN TERM NOTEBOOKS!
+          </div>
+        </div>
+
         <div className="sf-comp-rules">
           <span style={{ color: selCat ? selCat.color : '#0891b2' }}>✍️ Write Your Composition</span>
           <ul>

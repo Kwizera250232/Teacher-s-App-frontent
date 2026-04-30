@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import './Profile.css';
 import StudentShareFeed from '../components/StudentShareFeed';
 import '../components/StudentShareFeed.css';
+import DeanAiModal from '../components/DeanAiModal';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
 
@@ -61,6 +62,7 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [showDean, setShowDean] = useState(false);
 
   useEffect(() => {
     api.get('/profile/me', token).then(p => {
@@ -152,6 +154,20 @@ export default function Profile() {
           </div>
           <div className="profile-email">✉️ {user?.email}</div>
 
+          {/* Ask Dean button */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <button
+              onClick={() => setShowDean(true)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
+                color: '#fff', border: 'none', borderRadius: 30,
+                padding: '10px 22px', fontSize: 14, fontWeight: 700,
+                cursor: 'pointer', boxShadow: '0 4px 16px rgba(79,70,229,0.35)',
+              }}
+            >🤖 Ask Dean — App Help</button>
+          </div>
+
           {/* Stats */}
           <div className="profile-stats-bar">
             <div className="profile-stat">
@@ -235,6 +251,8 @@ export default function Profile() {
             <StudentShareFeed token={token} />
           </div>
         )}
+
+        {showDean && <DeanAiModal token={token} onClose={() => setShowDean(false)} />}
 
         {/* Umunsimedia promo */}
         <div className="umunsimedia-promo">
