@@ -15,6 +15,8 @@ export default function ClassLeaderboard({ classId }) {
   const { token } = useAuth();
   const [entries, setEntries] = useState([]);
   const [perQuiz, setPerQuiz] = useState([]);
+  const [compositionEntries, setCompositionEntries] = useState([]);
+  const [compositionWinner, setCompositionWinner] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,10 +25,13 @@ export default function ClassLeaderboard({ classId }) {
     Promise.all([
       api.get(`/classes/${classId}/leaderboard`, token),
       api.get(`/classes/${classId}/top-scorers`, token).catch(() => []),
+      api.get(`/classes/${classId}/composition-leaderboard`, token).catch(() => ({ entries: [], winner: null })),
     ])
-      .then(([overall, topScorers]) => {
+      .then(([overall, topScorers, compositions]) => {
         setEntries(Array.isArray(overall) ? overall : []);
         setPerQuiz(Array.isArray(topScorers) ? topScorers : []);
+        setCompositionEntries(Array.isArray(compositions?.entries) ? compositions.entries : []);
+        setCompositionWinner(compositions?.winner || null);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -124,6 +129,61 @@ export default function ClassLeaderboard({ classId }) {
           </tbody>
         </table>
       </div>
+
+      {/* Termly composition leaderboard */}
+      <h3 className="lb-section-title" style={{ marginTop: 28 }}>✍️ Termly Composition Leaderboard (3 Months)</h3>
+
+      {compositionWinner && (
+        <div className="lb-comp-winner-card">
+          <div className="lb-comp-winner-top">🏆 Composition Winner</div>
+          <div className="lb-comp-winner-name">{compositionWinner.student_name}</div>
+          <div className="lb-comp-winner-meta">
+            “{compositionWinner.composition_title}” • Score {compositionWinner.score}/100 • {compositionWinner.word_count} words
+          </div>
+          <div className="lb-comp-winner-reward">
+            {compositionWinner.reward_eligible ? '🎁 Reward: Term Notebooks' : '⚠️ Reward locked: at least 500 words needed'}
+          </div>
+        </div>
+      )}
+
+      {compositionEntries.length > 0 ? (
+        <div className="lb-table-wrap" style={{ marginTop: 10 }}>
+          <table className="lb-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Student</th>
+                <th>Title</th>
+                <th>Score</th>
+                <th>Words</th>
+                <th>Paragraphs</th>
+                <th>Reward</th>
+              </tr>
+            </thead>
+            <tbody>
+              {compositionEntries.map((c) => (
+                <tr key={c.student_id} className={c.rank === 1 ? 'lb-top-row' : ''}>
+                  <td>{c.rank}</td>
+                  <td>{c.student_name}</td>
+                  <td>{c.composition_title}</td>
+                  <td>{c.score}/100</td>
+                  <td>{c.word_count}</td>
+                  <td>{c.paragraph_count}</td>
+                  <td>
+                    <span className={`lb-reward-pill ${c.reward_eligible ? 'lb-reward-on' : 'lb-reward-off'}`}>
+                      {c.reward_eligible ? 'Eligible' : 'Not yet'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="lb-empty" style={{ paddingTop: 14 }}>
+          No compositions found in this term yet.
+        </div>
+      )}
     </div>
   );
 }

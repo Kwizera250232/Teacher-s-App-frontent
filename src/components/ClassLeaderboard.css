@@ -107,6 +107,62 @@
   font-size: 15px;
 }
 
+.lb-comp-winner-card {
+  margin-top: 10px;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #fff;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.28);
+}
+
+.lb-comp-winner-top {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.9;
+}
+
+.lb-comp-winner-name {
+  font-size: 24px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.lb-comp-winner-meta {
+  margin-top: 4px;
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.lb-comp-winner-reward {
+  margin-top: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  display: inline-block;
+  padding: 6px 12px;
+}
+
+.lb-reward-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lb-reward-on {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.lb-reward-off {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 /* Section title */
 .lb-section-title {
   font-size: 15px;
@@ -193,6 +249,8 @@
 
   .lb-table th, .lb-table td { padding: 10px 10px; font-size: 12px; }
   .lb-section-title { font-size: 13px; }
+  .lb-comp-winner-name { font-size: 18px; }
+  .lb-comp-winner-meta { font-size: 12px; }
 }
 
 @media (max-width: 380px) {
