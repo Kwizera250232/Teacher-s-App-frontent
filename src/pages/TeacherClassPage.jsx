@@ -58,7 +58,7 @@ export default function TeacherClassPage() {
         Homework: `/classes/${id}/homework`,
         Quizzes: `/classes/${id}/quizzes`,
         Discussion: `/classes/${id}/discussions`,
-        Students: `/classes/${id}/classmates`,
+        Students: `/classes/${id}/students`,
       };
       const res = await api.get(endpointMap[tab], token);
       setData(res);
