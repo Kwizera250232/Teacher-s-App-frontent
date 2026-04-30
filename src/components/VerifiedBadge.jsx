@@ -9,7 +9,7 @@ function BadgeSvg({ sz }) {
   );
 }
 
-export default function VerifiedBadge({ size = 16, info = null }) {
+export default function VerifiedBadge({ size = 16, info = null, onViewProfile = null }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
@@ -88,6 +88,21 @@ export default function VerifiedBadge({ size = 16, info = null }) {
               </div>
             </div>
           ))}
+
+          {onViewProfile && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onViewProfile(); }}
+              style={{
+                marginTop: 10, width: '100%', padding: '9px 0',
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: '#fff', border: 'none', borderRadius: 10,
+                fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              👤 View Profile &amp; Subscribe
+            </button>
+          )}
         </div>
       )}
     </span>

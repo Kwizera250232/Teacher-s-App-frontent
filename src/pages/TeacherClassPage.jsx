@@ -7,13 +7,14 @@ import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
+import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import '../pages/Dashboard.css';
 
 const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
 
 export default function TeacherClassPage() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [cls, setCls] = useState(null);
   const [tab, setTab] = useState('Announcements');
@@ -29,11 +30,15 @@ export default function TeacherClassPage() {
   const [noteForm, setNoteForm] = useState({ title: '', file: null });
   const [hwForm, setHwForm] = useState({ title: '', description: '', due_date: '', file: null });
   const [discussionText, setDiscussionText] = useState('');
+  const [expandedComments, setExpandedComments] = useState({});
+  const [commentText, setCommentText] = useState({});
   // Submissions viewer: { [hwId]: { open, submissions, gradeForm: { [subId]: { grade, feedback } } } }
   const [submissionsState, setSubmissionsState] = useState({});
   const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
+  const [addEmail, setAddEmail] = useState('');
+  const [addLoading, setAddLoading] = useState(false);
 
   useEffect(() => {
     api.get(`/classes/${id}`, token).then(setCls).catch(() => navigate(-1));
@@ -53,7 +58,7 @@ export default function TeacherClassPage() {
         Homework: `/classes/${id}/homework`,
         Quizzes: `/classes/${id}/quizzes`,
         Discussion: `/classes/${id}/discussions`,
-        Students: `/classes/${id}/students`,
+        Students: `/classes/${id}/classmates`,
       };
       const res = await api.get(endpointMap[tab], token);
       setData(res);
@@ -63,6 +68,28 @@ export default function TeacherClassPage() {
   };
 
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
+
+  const removeStudent = async (studentId, studentName) => {
+    if (!window.confirm(`Delete ${studentName}'s account permanently? They will be removed from all classes and can re-register with the same email.`)) return;
+    try {
+      await api.delete(`/classes/${id}/students/${studentId}`, token);
+      setData(prev => prev.filter(s => s.id !== studentId));
+      showSuccess(`${studentName} removed.`);
+    } catch (e) { setError(e.message); }
+  };
+
+  const addStudent = async (e) => {
+    e.preventDefault();
+    if (!addEmail.trim()) return;
+    setAddLoading(true);
+    try {
+      await api.post(`/classes/${id}/students`, { email: addEmail.trim() }, token);
+      setAddEmail('');
+      loadTab();
+      showSuccess('Student added successfully!');
+    } catch (e) { setError(e.message); }
+    finally { setAddLoading(false); }
+  };
 
   const postAnnouncement = async (e) => {
     e.preventDefault();
@@ -112,6 +139,37 @@ export default function TeacherClassPage() {
     } catch (e) { setError(e.message); }
   };
 
+  const toggleLike = async (discussionId) => {
+    try {
+      const res = await api.post(`/classes/discussions/${discussionId}/like`, {}, token);
+      setData(prev => prev.map(d =>
+        d.id === discussionId ? { ...d, like_count: res.like_count, liked_by_me: res.liked } : d
+      ));
+    } catch {/* ignore */}
+  };
+
+  const toggleComments = async (discussionId) => {
+    if (expandedComments[discussionId] !== undefined) {
+      setExpandedComments(prev => { const n = { ...prev }; delete n[discussionId]; return n; });
+      return;
+    }
+    try {
+      const comments = await api.get(`/classes/discussions/${discussionId}/comments`, token);
+      setExpandedComments(prev => ({ ...prev, [discussionId]: comments }));
+    } catch {/* ignore */}
+  };
+
+  const postComment = async (e, discussionId) => {
+    e.preventDefault();
+    const text = commentText[discussionId]?.trim();
+    if (!text) return;
+    try {
+      const comment = await api.post(`/classes/discussions/${discussionId}/comments`, { content: text }, token);
+      setExpandedComments(prev => ({ ...prev, [discussionId]: [...(prev[discussionId] || []), comment] }));
+      setCommentText(prev => ({ ...prev, [discussionId]: '' }));
+    } catch {/* ignore */}
+  };
+
   const deleteItem = async (endpoint) => {
     if (!window.confirm('Delete this item?')) return;
     try {
@@ -144,7 +202,7 @@ export default function TeacherClassPage() {
     try {
       const subs = await api.get(`/classes/${id}/homework/${hwId}/submissions`, token);
       const gradeForm = {};
-      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '' }; });
+      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '', teacher_answer: s.teacher_answer ?? '' }; });
       setSubmissionsState(prev => ({ ...prev, [hwId]: { open: true, submissions: subs, gradeForm } }));
     } catch (e) { setError(e.message); }
   };
@@ -153,12 +211,12 @@ export default function TeacherClassPage() {
     const gf = submissionsState[hwId]?.gradeForm?.[subId];
     if (!gf) return;
     try {
-      await api.put(`/classes/${id}/homework/${hwId}/submissions/${subId}/grade`, { grade: gf.grade, feedback: gf.feedback }, token);
+      await api.put(`/classes/${id}/homework/${hwId}/submissions/${subId}/grade`, { grade: gf.grade, feedback: gf.feedback, teacher_answer: gf.teacher_answer }, token);
       showSuccess('Grade saved!');
       // Refresh submissions
       const subs = await api.get(`/classes/${id}/homework/${hwId}/submissions`, token);
       const gradeForm = {};
-      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '' }; });
+      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '', teacher_answer: s.teacher_answer ?? '' }; });
       setSubmissionsState(prev => ({ ...prev, [hwId]: { open: true, submissions: subs, gradeForm } }));
     } catch (e) { setError(e.message); }
   };
@@ -407,6 +465,19 @@ export default function TeacherClassPage() {
                                   style={{ width: '100%', padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 7, fontSize: 14, boxSizing: 'border-box' }}
                                 />
                               </div>
+                              <div style={{ flex: '0 0 100%' }}>
+                                <label style={{ fontSize: 12, color: '#64748b', display: 'block', marginBottom: 3 }}>📖 Model Answer (optional — visible to student after grading)</label>
+                                <textarea
+                                  placeholder="Write the correct answer so the student can learn from it..."
+                                  value={ss.gradeForm[sub.id]?.teacher_answer ?? ''}
+                                  onChange={e => setSubmissionsState(prev => ({
+                                    ...prev,
+                                    [hw.id]: { ...prev[hw.id], gradeForm: { ...prev[hw.id].gradeForm, [sub.id]: { ...prev[hw.id].gradeForm[sub.id], teacher_answer: e.target.value } } }
+                                  }))}
+                                  rows={2}
+                                  style={{ width: '100%', padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 7, fontSize: 14, boxSizing: 'border-box', resize: 'vertical' }}
+                                />
+                              </div>
                               <button
                                 className="btn btn-primary btn-sm"
                                 onClick={() => gradeSubmission(hw.id, sub.id)}
@@ -477,13 +548,54 @@ export default function TeacherClassPage() {
               {data.map(d => (
                 <div key={d.id} className={`discussion-msg ${d.author_role === 'teacher' ? 'teacher-msg' : ''}`}>
                   <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    {d.author_name}<VerifiedBadge size={13} info={{ items: [
+                    <span
+                      style={{ cursor: d.user_id !== user?.id ? 'pointer' : 'default', color: d.user_id !== user?.id ? '#667eea' : 'inherit', fontWeight: 700 }}
+                      onClick={() => d.user_id !== user?.id && setSelectedStudent({ id: d.user_id, name: d.author_name, role: d.author_role })}
+                    >{d.author_name}</span><VerifiedBadge size={13} info={{ items: [
                       { icon: '👤', label: 'Role', value: d.author_role },
                     ] }} />
                     <span className="role-badge">{d.author_role}</span>
                   </div>
                   <div className="body">{d.content}</div>
                   <div className="time">{new Date(d.created_at).toLocaleString()}</div>
+
+                  <div className="disc-actions">
+                    <button
+                      className={`disc-action-btn ${d.liked_by_me ? 'liked' : ''}`}
+                      onClick={() => toggleLike(d.id)}
+                    >
+                      {d.liked_by_me ? '❤️' : '🤍'} {parseInt(d.like_count) || 0}
+                    </button>
+                    <button className="disc-action-btn" onClick={() => toggleComments(d.id)}>
+                      💬 {expandedComments[d.id] !== undefined ? 'Hide' : 'Comments'}
+                    </button>
+                  </div>
+
+                  {expandedComments[d.id] !== undefined && (
+                    <div className="disc-comments">
+                      {expandedComments[d.id].length === 0 && <p style={{ color: '#aaa', fontSize: 13 }}>No comments yet.</p>}
+                      {expandedComments[d.id].map(c => (
+                        <div key={c.id} className="disc-comment">
+                          <span
+                            className="disc-comment-author"
+                            style={{ cursor: c.user_id !== user?.id ? 'pointer' : 'default', color: c.user_id !== user?.id ? '#667eea' : 'inherit' }}
+                            onClick={() => c.user_id !== user?.id && setSelectedStudent({ id: c.user_id, name: c.author_name, role: c.author_role })}
+                          >{c.author_name}</span>
+                          <span className="disc-comment-role">{c.author_role}</span>
+                          <p>{c.content}</p>
+                          <span className="disc-comment-time">{new Date(c.created_at).toLocaleString()}</span>
+                        </div>
+                      ))}
+                      <form className="disc-comment-form" onSubmit={e => postComment(e, d.id)}>
+                        <input
+                          placeholder="Write a comment..."
+                          value={commentText[d.id] || ''}
+                          onChange={e => setCommentText(prev => ({ ...prev, [d.id]: e.target.value }))}
+                        />
+                        <button type="submit" className="btn btn-primary btn-sm">Reply</button>
+                      </form>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -496,98 +608,61 @@ export default function TeacherClassPage() {
 
         {/* Students */}
         {tab === 'Students' && (
-          <div style={{ padding: '1.5rem 0' }}>
-            {data.length === 0 && <p style={{ padding: 20, textAlign: 'center', color: '#888' }}>No students yet.</p>}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'flex-start' }}>
+          <>
+            {/* Add student form */}
+            <form onSubmit={addStudent} style={{ display: 'flex', gap: 10, marginBottom: 20, background: 'white', padding: '14px 16px', borderRadius: 10, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+              <input
+                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+                type="email"
+                placeholder="Add student by email..."
+                value={addEmail}
+                onChange={e => setAddEmail(e.target.value)}
+                required
+              />
+              <button type="submit" className="btn btn-primary" disabled={addLoading}>
+                {addLoading ? 'Adding...' : '+ Add Student'}
+              </button>
+            </form>
+
+            <div className="classmate-grid">
+              {data.length === 0 && <p style={{ color: '#aaa', textAlign: 'center', width: '100%' }}>No students yet.</p>}
               {data.map(s => {
-                const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-                const colors = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
-                const bg = colors[s.id % colors.length];
+                const initials = (s.name || '?').split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
                 return (
-                  <div
-                    key={s.id}
-                    onClick={() => setSelectedStudent(s)}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', width: 70 }}
-                  >
-                    <div style={{
-                      width: 52, height: 52, borderRadius: '50%', background: bg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'white', fontWeight: 700, fontSize: 18,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      border: '2.5px solid white',
-                      transition: 'transform 0.15s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform='scale(1.1)'}
-                    onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
-                    >
-                      {initials}
+                  <div key={s.id} className="classmate-card classmate-card--teacher" style={{ position: 'relative' }} onClick={() => setSelectedStudent(s)}>
+                    {s.avatar_path
+                      ? <img src={`${UPLOADS_BASE}${s.avatar_path}`} alt={s.name} className="classmate-avatar" />
+                      : <div className="classmate-initials">{initials}</div>
+                    }
+                    <div className="classmate-info">
+                      <div className="classmate-name">
+                        {s.name}
+                        <VerifiedBadge size={15} info={{ items: [
+                          { icon: s.role === 'teacher' ? '👨‍🏫' : '👩‍🎓', label: 'Role', value: s.role },
+                        ] }} onViewProfile={() => setSelectedStudent(s)} />
+                      </div>
+                      <span className={`cm-role-badge ${s.role}`}>{s.role}</span>
                     </div>
-                    <div style={{ fontSize: 11, color: '#374151', textAlign: 'center', lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <span style={{ maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>{s.name.split(' ')[0]}</span>
-                      <VerifiedBadge size={11} info={{ items: [
-                        { icon: '📚', label: 'Class', value: cls?.name },
-                        { icon: '📅', label: 'Joined', value: new Date(s.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
-                        { icon: '👨‍🏫', label: 'Teacher', value: cls?.teacher_name },
-                      ] }} />
-                    </div>
+                    {s.role === 'student' && (
+                      <button
+                        className="student-remove-btn"
+                        onClick={e => { e.stopPropagation(); removeStudent(s.id, s.name); }}
+                        title="Remove student"
+                      >✕</button>
+                    )}
                   </div>
                 );
               })}
             </div>
-          </div>
+          </>
         )}
 
-        {/* Student profile popup */}
         {selectedStudent && (
-          <div
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={e => e.target === e.currentTarget && setSelectedStudent(null)}
-          >
-            <div style={{ background: 'white', borderRadius: 20, padding: '2rem', minWidth: 280, maxWidth: 340, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', textAlign: 'center' }}>
-              <div style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'][selectedStudent.id % 8],
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'white', fontWeight: 700, fontSize: 26, margin: '0 auto 1rem',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
-              }}>
-                {selectedStudent.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
-                <strong style={{ fontSize: 18, color: '#1e293b' }}>{selectedStudent.name}</strong>
-                <VerifiedBadge size={16} info={{ items: [
-                  { icon: '📚', label: 'Class', value: cls?.name },
-                  { icon: '📅', label: 'Joined', value: new Date(selectedStudent.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
-                  { icon: '👨‍🏫', label: 'Teacher', value: cls?.teacher_name },
-                ] }} />
-              </div>
-              <p style={{ color: '#64748b', fontSize: 13, marginBottom: '1.25rem' }}>{selectedStudent.email}</p>
-              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>📚</span>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Ishuri</div>
-                    <div style={{ fontSize: 14, color: '#1e293b', fontWeight: 500 }}>{cls?.name || '—'}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>🏫</span>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Ikigo</div>
-                    <div style={{ fontSize: 14, color: '#1e293b', fontWeight: 500 }}>{selectedStudent.school_name || 'Ntabwo byasohotse'}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>📅</span>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Yinjiriye</div>
-                    <div style={{ fontSize: 14, color: '#1e293b', fontWeight: 500 }}>{new Date(selectedStudent.joined_at).toLocaleDateString('fr-RW', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => setSelectedStudent(null)} style={{ marginTop: '1.25rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '0.6rem 2rem', cursor: 'pointer', fontWeight: 600 }}>Funga</button>
-            </div>
-          </div>
+          <ClassmateProfileModal
+            person={selectedStudent}
+            onClose={() => setSelectedStudent(null)}
+            onMessage={(uid) => { setSelectedStudent(null); navigate(`/messages?to=${uid}`); }}
+          />
         )}
       </main>
 
