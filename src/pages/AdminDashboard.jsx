@@ -10,7 +10,6 @@ import AdminContent from '../components/admin/AdminContent';
 import AdminAnnouncements from '../components/admin/AdminAnnouncements';
 import AdminReports from '../components/admin/AdminReports';
 import AdminSettings from '../components/admin/AdminSettings';
-import AdminTextbooks from '../components/admin/AdminTextbooks';
 import VerifiedBadge from '../components/VerifiedBadge';
 import './AdminDashboard.css';
 
@@ -23,7 +22,6 @@ const NAV = [
   { key: 'content', label: 'Content', icon: '📝' },
   { key: 'announcements', label: 'Announcements', icon: '📢' },
   { key: 'reports', label: 'Reports', icon: '💬' },
-  { key: 'textbooks', label: 'AI Textbooks', icon: '🎓' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -98,7 +96,6 @@ export default function AdminDashboard() {
                   { label: 'Classes', value: stats?.classes, icon: '📚', color: '#f59e0b' },
                   { label: 'Quizzes', value: stats?.quizzes, icon: '📝', color: '#ef4444' },
                   { label: 'Homework', value: stats?.homework, icon: '📋', color: '#8b5cf6' },
-                  { label: 'Installations', value: stats?.installations, icon: '📲', color: '#14b8a6' },
                 ].map(s => (
                   <div key={s.label} className="stat-card" style={{ '--accent': s.color }}>
                     <div className="stat-icon">{s.icon}</div>
@@ -142,7 +139,6 @@ export default function AdminDashboard() {
           {page === 'content' && <AdminContent token={token} />}
           {page === 'announcements' && <AdminAnnouncements token={token} />}
           {page === 'reports' && <AdminReports token={token} />}
-          {page === 'textbooks' && <AdminTextbooks token={token} />}
           {page === 'settings' && <AdminSettings token={token} />}
         </div>
       </div>

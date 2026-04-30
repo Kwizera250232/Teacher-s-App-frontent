@@ -6,10 +6,9 @@ import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
-import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import '../pages/Dashboard.css';
 
-const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Classmates'];
+const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion'];
 
 export default function StudentClassPage() {
   const { id } = useParams();
@@ -21,14 +20,10 @@ export default function StudentClassPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [discussionText, setDiscussionText] = useState('');
-  const [expandedComments, setExpandedComments] = useState({});   // { [discussionId]: comments[] | null }
-  const [commentText, setCommentText] = useState({});             // { [discussionId]: string }
   // Submission state: { [hwId]: { submitting, form, mySubmission } }
   const [subState, setSubState] = useState({});
-  const [previewDoc, setPreviewDoc] = useState(null);
-  const [shareItem, setShareItem] = useState(null);
-  const [classmates, setClassmates] = useState([]);
-  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
+  const [shareItem, setShareItem] = useState(null);   // { title, text, url }
 
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
 
@@ -40,14 +35,7 @@ export default function StudentClassPage() {
 
   const loadTab = async () => {
     setError('');
-    if (tab === 'Leaderboard') return;
-    if (tab === 'Classmates') {
-      try {
-        const res = await api.get(`/classes/${id}/classmates`, token);
-        setClassmates(res);
-      } catch {/* ignore */}
-      return;
-    }
+    if (tab === 'Leaderboard') return; // handled by ClassLeaderboard component
     try {
       const map = {
         Announcements: `/classes/${id}/announcements`,
@@ -83,46 +71,11 @@ export default function StudentClassPage() {
     } catch (e) { setError(e.message); }
   };
 
-  const toggleLike = async (discussionId) => {
-    try {
-      const res = await api.post(`/classes/discussions/${discussionId}/like`, {}, token);
-      setData(prev => prev.map(d =>
-        d.id === discussionId ? { ...d, like_count: res.like_count, liked_by_me: res.liked } : d
-      ));
-    } catch {/* ignore */}
-  };
-
-  const toggleComments = async (discussionId) => {
-    if (expandedComments[discussionId] !== undefined) {
-      setExpandedComments(prev => { const n = { ...prev }; delete n[discussionId]; return n; });
-      return;
-    }
-    try {
-      const comments = await api.get(`/classes/discussions/${discussionId}/comments`, token);
-      setExpandedComments(prev => ({ ...prev, [discussionId]: comments }));
-    } catch {/* ignore */}
-  };
-
-  const postComment = async (e, discussionId) => {
-    e.preventDefault();
-    const text = commentText[discussionId]?.trim();
-    if (!text) return;
-    try {
-      const comment = await api.post(`/classes/discussions/${discussionId}/comments`, { content: text }, token);
-      setExpandedComments(prev => ({ ...prev, [discussionId]: [...(prev[discussionId] || []), comment] }));
-      setCommentText(prev => ({ ...prev, [discussionId]: '' }));
-    } catch {/* ignore */}
-  };
-
   const submitHomework = async (e, hwId) => {
     e.preventDefault();
     const st = subState[hwId];
     if (!st?.form?.text && !st?.form?.file) {
       setError('Please write a response or attach a file.');
-      return;
-    }
-    if (st?.form?.text && st.form.text.trim().length < 200) {
-      setError(`Written response must be at least 200 characters. ${200 - st.form.text.trim().length} more needed.`);
       return;
     }
     setSubState(prev => ({ ...prev, [hwId]: { ...prev[hwId], submitting: true } }));
@@ -304,11 +257,6 @@ export default function StudentClassPage() {
                     <div style={{ margin: '12px 0 0', padding: '12px 16px', background: '#f0fdf4', borderRadius: 8, borderLeft: '4px solid #22c55e' }}>
                       <div style={{ fontWeight: 700, color: '#166534', marginBottom: 4 }}>Grade: {sub.grade}/100</div>
                       {sub.feedback && <div style={{ color: '#374151', fontSize: 14 }}>💬 Feedback: {sub.feedback}</div>}
-                      {sub.teacher_answer && (
-                        <div style={{ marginTop: 8, color: '#1e40af', fontSize: 14, background: '#eff6ff', padding: '8px 12px', borderRadius: 6, borderLeft: '3px solid #3b82f6' }}>
-                          📖 <strong>Model Answer:</strong> {sub.teacher_answer}
-                        </div>
-                      )}
                     </div>
                   )}
 
@@ -354,13 +302,8 @@ export default function StudentClassPage() {
                         value={st.form.text}
                         onChange={e => setSubState(prev => ({ ...prev, [hw.id]: { ...prev[hw.id], form: { ...prev[hw.id].form, text: e.target.value } } }))}
                         rows={3}
-                        style={{ width: '100%', padding: '8px 12px', border: `1.5px solid ${st.form.text && st.form.text.length < 200 ? '#e11d48' : '#e2e8f0'}`, borderRadius: 8, fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '8px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
                       />
-                      {st.form.text.length > 0 && (
-                        <div style={{ fontSize: 12, marginTop: 3, color: st.form.text.length < 200 ? '#e11d48' : '#16a34a', fontWeight: 500 }}>
-                          {st.form.text.length} characters{st.form.text.length < 200 ? ` — ${200 - st.form.text.length} more needed (min 200)` : ' ✓'}
-                        </div>
-                      )}
                     </div>
                     <div className="form-group" style={{ marginBottom: 12 }}>
                       <input
@@ -406,61 +349,13 @@ export default function StudentClassPage() {
               {data.map(d => (
                 <div key={d.id} className="discussion-msg">
                   <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <span
-                      style={{ cursor: d.user_id !== user?.id ? 'pointer' : 'default', color: d.user_id !== user?.id ? '#667eea' : 'inherit', fontWeight: 700 }}
-                      onClick={() => d.user_id !== user?.id && setSelectedPerson({ id: d.user_id, name: d.author_name, role: d.author_role })}
-                    >{d.author_name}</span><VerifiedBadge size={13} info={{ items: [
+                    {d.author_name}<VerifiedBadge size={13} info={{ items: [
                       { icon: '👤', label: 'Role', value: d.author_role },
                     ] }} />
                     <span className="role-badge">{d.author_role}</span>
                   </div>
                   <div className="body">{d.content}</div>
                   <div className="time">{new Date(d.created_at).toLocaleString()}</div>
-
-                  {/* Like & comment bar */}
-                  <div className="disc-actions">
-                    <button
-                      className={`disc-action-btn ${d.liked_by_me ? 'liked' : ''}`}
-                      onClick={() => toggleLike(d.id)}
-                    >
-                      {d.liked_by_me ? '❤️' : '🤍'} {parseInt(d.like_count) || 0}
-                    </button>
-                    <button
-                      className="disc-action-btn"
-                      onClick={() => toggleComments(d.id)}
-                    >
-                      💬 {expandedComments[d.id] !== undefined ? 'Hide' : 'Comments'}
-                    </button>
-                  </div>
-
-                  {/* Comments panel */}
-                  {expandedComments[d.id] !== undefined && (
-                    <div className="disc-comments">
-                      {expandedComments[d.id].length === 0 && (
-                        <p style={{ color: '#aaa', fontSize: 13 }}>No comments yet.</p>
-                      )}
-                      {expandedComments[d.id].map(c => (
-                        <div key={c.id} className="disc-comment">
-                          <span
-                            className="disc-comment-author"
-                            style={{ cursor: c.user_id !== user?.id ? 'pointer' : 'default', color: c.user_id !== user?.id ? '#667eea' : 'inherit' }}
-                            onClick={() => c.user_id !== user?.id && setSelectedPerson({ id: c.user_id, name: c.author_name, role: c.author_role })}
-                          >{c.author_name}</span>
-                          <span className="disc-comment-role">{c.author_role}</span>
-                          <p>{c.content}</p>
-                          <span className="disc-comment-time">{new Date(c.created_at).toLocaleString()}</span>
-                        </div>
-                      ))}
-                      <form className="disc-comment-form" onSubmit={e => postComment(e, d.id)}>
-                        <input
-                          placeholder="Write a comment..."
-                          value={commentText[d.id] || ''}
-                          onChange={e => setCommentText(prev => ({ ...prev, [d.id]: e.target.value }))}
-                        />
-                        <button type="submit" className="btn btn-primary btn-sm">Reply</button>
-                      </form>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -470,41 +365,7 @@ export default function StudentClassPage() {
             </form>
           </>
         )}
-
-        {tab === 'Classmates' && (
-          <div className="classmate-grid">
-            {classmates.length === 0 && <p style={{ color: '#aaa', textAlign: 'center' }}>No classmates yet.</p>}
-            {classmates.map(p => {
-              const initials = p.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-              return (
-                <div key={p.id} className="classmate-card" onClick={() => setSelectedPerson(p)}>
-                  {p.avatar_path
-                    ? <img src={`${UPLOADS_BASE}${p.avatar_path}`} alt={p.name} className="classmate-avatar" />
-                    : <div className="classmate-initials">{initials}</div>
-                  }
-                  <div className="classmate-info">
-                    <div className="classmate-name">
-                      {p.name}
-                      <VerifiedBadge size={15} info={{ items: [
-                        { icon: p.role === 'teacher' ? '👨‍🏫' : '👩‍🎓', label: 'Role', value: p.role },
-                      ] }} onViewProfile={() => setSelectedPerson(p)} />
-                    </div>
-                    <span className={`cm-role-badge ${p.role}`}>{p.role}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </main>
-
-      {selectedPerson && (
-        <ClassmateProfileModal
-          person={selectedPerson}
-          onClose={() => setSelectedPerson(null)}
-          onMessage={(uid) => { setSelectedPerson(null); navigate(`/messages?to=${uid}`); }}
-        />
-      )}
 
       {previewDoc && (
         <DocPreviewModal

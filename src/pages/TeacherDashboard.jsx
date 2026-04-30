@@ -4,7 +4,6 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateClassModal from '../components/CreateClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
-import UmunsiAiModal from '../components/UmunsiAiModal';
 import './Dashboard.css';
 
 export default function TeacherDashboard() {
@@ -14,8 +13,6 @@ export default function TeacherDashboard() {
   const [error, setError] = useState('');
   const [announcements, setAnnouncements] = useState([]);
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
-  const [aiModal, setAiModal] = useState(null); // { classId, className }
-  const [unread, setUnread] = useState(0);
 
   const dismissAnnouncement = (id) => {
     const updated = [...dismissed, id];
@@ -31,9 +28,6 @@ export default function TeacherDashboard() {
   useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
   }, []);
-  useEffect(() => {
-    api.get('/messages/unread-count', token).then(r => setUnread(r.count)).catch(() => {});
-  }, []);
 
   return (
     <div className="dashboard">
@@ -44,10 +38,6 @@ export default function TeacherDashboard() {
             { icon: '👨‍🏫', label: 'Role', value: 'Teacher' },
             { icon: '📧', label: 'Email', value: user?.email },
           ] }} /></span>
-          <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
-            💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
-          </Link>
-          <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>
@@ -105,29 +95,20 @@ export default function TeacherDashboard() {
         ) : (
           <div className="classes-grid">
             {classes.map(cls => (
-              <div key={cls.id} className="class-card-wrap">
-                <Link to={`/teacher/classes/${cls.id}`} className="class-card">
-                  <div className="class-card-header">
-                    <h3>{cls.name}</h3>
-                    {cls.subject && <span className="subject-tag">{cls.subject}</span>}
-                  </div>
-                  <div className="class-code-display">
-                    <span className="code-label">Class Code</span>
-                    <span className="code-value">{cls.class_code}</span>
-                  </div>
-                  <div className="class-card-footer">
-                    <span>👥 {cls.student_count} students</span>
-                    <span className="arrow">→</span>
-                  </div>
-                </Link>
-                {/* AI button for teacher */}
-                <button
-                  className="class-card-note-btn"
-                  onClick={() => setAiModal({ classId: cls.id, className: cls.name })}
-                >
-                  🎓 Baza Umunsi AI
-                </button>
-              </div>
+              <Link key={cls.id} to={`/teacher/classes/${cls.id}`} className="class-card">
+                <div className="class-card-header">
+                  <h3>{cls.name}</h3>
+                  {cls.subject && <span className="subject-tag">{cls.subject}</span>}
+                </div>
+                <div className="class-code-display">
+                  <span className="code-label">Class Code</span>
+                  <span className="code-value">{cls.class_code}</span>
+                </div>
+                <div className="class-card-footer">
+                  <span>👥 {cls.student_count} students</span>
+                  <span className="arrow">→</span>
+                </div>
+              </Link>
             ))}
           </div>
         )}
@@ -138,16 +119,6 @@ export default function TeacherDashboard() {
           token={token}
           onClose={() => setShowCreate(false)}
           onCreated={() => { setShowCreate(false); loadClasses(); }}
-        />
-      )}
-
-      {aiModal && (
-        <UmunsiAiModal
-          classId={aiModal.classId}
-          className={aiModal.className}
-          token={token}
-          isTeacher={true}
-          onClose={() => setAiModal(null)}
         />
       )}
     </div>
