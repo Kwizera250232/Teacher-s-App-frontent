@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import JoinClassModal from '../components/JoinClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
@@ -37,6 +37,7 @@ export default function StudentDashboard() {
   const [showJoin, setShowJoin] = useState(false);
   const [error, setError] = useState('');
   const [announcements, setAnnouncements] = useState([]);
+  const [teacherAnnouncements, setTeacherAnnouncements] = useState([]);
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   // Quick note state: { classId, open, text, saving }
   const [quickNote, setQuickNote] = useState(null);
@@ -62,6 +63,9 @@ export default function StudentDashboard() {
   useEffect(() => { loadClasses(); }, []);
   useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
+  }, []);
+  useEffect(() => {
+    api.get('/classes/my-announcements', token).then(setTeacherAnnouncements).catch(() => {});
   }, []);
   useEffect(() => {
     api.get('/messages/unread-count', token).then(r => setUnread(r.count)).catch(() => {});
@@ -140,36 +144,6 @@ export default function StudentDashboard() {
           </button>
         </div>
 
-        {/* Admin Announcements */}
-        {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
-          <div key={a.id} style={{
-            background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
-            border: '1px solid #93c5fd',
-            borderRadius: 12,
-            padding: '1rem 1.25rem',
-            marginBottom: '0.75rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '1rem',
-          }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span>📢</span>
-                <strong style={{ color: '#1e40af', fontSize: '0.95rem' }}>{a.title}</strong>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>— {a.admin_name}</span>
-              </div>
-              <p style={{ margin: 0, color: '#374151', fontSize: '0.9rem' }}>{a.message}</p>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</span>
-            </div>
-            <button
-              onClick={() => dismissAnnouncement(a.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.2rem', padding: 0, lineHeight: 1, flexShrink: 0 }}
-              title="Siba iri tangazo"
-            >✕</button>
-          </div>
-        ))}
-
         {classes.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🎒</div>
@@ -209,6 +183,75 @@ export default function StudentDashboard() {
             ))}
           </div>
         )}
+
+        {/* Bottom Announcement Space (non-intrusive) */}
+        <section style={{ marginTop: '2.2rem', paddingTop: '1.2rem', borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ marginBottom: 12 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b' }}>📣 Updates & Announcements</h2>
+            <p style={{ marginTop: 4, color: '#64748b', fontSize: 13 }}>
+              This area is kept at the bottom so class lessons stay focused.
+            </p>
+          </div>
+
+          {teacherAnnouncements.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>From Teachers</div>
+              {teacherAnnouncements.map(a => (
+                <div key={`t-${a.id}-${a.class_id}`} style={{
+                  background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+                  padding: '0.9rem 1rem', marginBottom: 10,
+                }}>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 5 }}>
+                    👨‍🏫 {a.teacher_name} • 🎓 {a.class_name}
+                  </div>
+                  {a.content && <p style={{ margin: 0, color: '#334155', fontSize: 14 }}>{a.content}</p>}
+                  {a.image_path && (
+                    <img
+                      src={`${UPLOADS_BASE}${a.image_path}`}
+                      alt={a.image_name || 'announcement image'}
+                      style={{ marginTop: 10, width: '100%', maxWidth: 520, borderRadius: 10, border: '1px solid #e2e8f0' }}
+                    />
+                  )}
+                  <div style={{ marginTop: 6, fontSize: 11, color: '#94a3b8' }}>{new Date(a.created_at).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {announcements.filter(a => !dismissed.includes(a.id)).length > 0 && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>From Platform Admin</div>
+              {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
+                <div key={`a-${a.id}`} style={{
+                  background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
+                  border: '1px solid #93c5fd',
+                  borderRadius: 12,
+                  padding: '0.95rem 1.1rem',
+                  marginBottom: '0.75rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '1rem',
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      <span>📢</span>
+                      <strong style={{ color: '#1e40af', fontSize: '0.95rem' }}>{a.title}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>— {a.admin_name}</span>
+                    </div>
+                    <p style={{ margin: 0, color: '#374151', fontSize: '0.9rem' }}>{a.message}</p>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <button
+                    onClick={() => dismissAnnouncement(a.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.2rem', padding: 0, lineHeight: 1, flexShrink: 0 }}
+                    title="Siba iri tangazo"
+                  >✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
 
       {showJoin && (

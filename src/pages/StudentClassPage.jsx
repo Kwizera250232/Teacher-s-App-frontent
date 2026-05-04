@@ -187,7 +187,16 @@ export default function StudentClassPage() {
             : data.map(a => (
               <div key={a.id} className="item-card">
                 <div className="item-card-body">
-                  <p>{a.content}</p>
+                  {a.content && <p>{a.content}</p>}
+                  {a.image_path && (
+                    <div style={{ marginTop: 10 }}>
+                      <img
+                        src={`${UPLOADS_BASE}${a.image_path}`}
+                        alt={a.image_name || 'announcement image'}
+                        style={{ width: '100%', maxWidth: 420, borderRadius: 10, border: '1px solid #e2e8f0' }}
+                      />
+                    </div>
+                  )}
                   <div className="meta" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📢 {a.teacher_name}<VerifiedBadge size={13} info={{ items: [
                     { icon: '👨‍🏫', label: 'Teacher', value: a.teacher_name },
                     { icon: '📅', label: 'Posted', value: new Date(a.created_at).toLocaleDateString() },
@@ -195,7 +204,7 @@ export default function StudentClassPage() {
                 </div>
                 <button
                   className="btn btn-secondary btn-sm"
-                  onClick={() => setShareItem({ title: a.content, text: `Announcement on UClass: ${a.content}`, url: 'https://student.umunsi.com' })}
+                  onClick={() => setShareItem({ title: a.content || 'Class Announcement', text: `Announcement on UClass: ${a.content || 'See class update'}`, url: 'https://student.umunsi.com' })}
                 >
                   🔗 Share
                 </button>

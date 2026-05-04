@@ -6,23 +6,41 @@ import './Auth.css';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [step, setStep] = useState(1); // 1: enter email, 2: show code
+  const [newPassword, setNewPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [step, setStep] = useState(1); // 1: enter email, 2: set new password
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
     try {
-      const data = await api.post('/auth/forgot-password', { email });
-      if (data.token) {
-        setCode(data.token);
-        setStep(2);
-      } else {
-        setError('Imeyili idahari mu sisitemu.');
-      }
+      await api.post('/auth/check-email', { email });
+      setStep(2);
+    } catch (err) {
+      setError(err.message || 'Hari ikibazo. Ongera ugerageze.');
+    }
+    setLoading(false);
+  }
+
+  async function handleResetDirect(e) {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    if (newPassword !== confirm) {
+      return setError('Ijambobanga rishya ntirihuye. Ongera ugerageze.');
+    }
+    if (newPassword.length < 8) {
+      return setError('Ijambobanga rigomba kuba nibura inyuguti 8 kandi ririmo imibare.');
+    }
+    setLoading(true);
+    try {
+      await api.post('/auth/reset-password-direct', { email, newPassword });
+      setSuccess('Ijambobanga ryahinduwe neza. Injira ukoresheje rishya.');
     } catch (err) {
       setError(err.message || 'Hari ikibazo. Ongera ugerageze.');
     }
@@ -38,7 +56,7 @@ export default function ForgotPassword() {
         {step === 1 && (
           <>
             <p style={{ textAlign: 'center', color: '#666', marginBottom: 20, fontSize: 14 }}>
-              Injiza imeyili yawe kugira ngo ubone kode yo gusubiza ijambobanga.
+              Injiza imeyili wakoresheje gukora konti. Niba ibonetse, uhite ushyiraho ijambobanga rishya.
             </p>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -53,33 +71,47 @@ export default function ForgotPassword() {
               </div>
               {error && <div className="alert alert-error">{error}</div>}
               <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-                {loading ? 'Gutegereza...' : 'Ohereza Kode'}
+                {loading ? 'Gutegereza...' : 'Komeza'}
               </button>
             </form>
           </>
         )}
 
         {step === 2 && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 48, margin: '10px 0' }}>📩</div>
-            <p style={{ color: '#333', marginBottom: 8, fontSize: 15 }}>Kode yawe yo gusubiza ijambobanga ni:</p>
-            <div style={{
-              fontSize: 38, fontWeight: 800, letterSpacing: 8,
-              color: '#667eea', background: '#f0f4ff',
-              padding: '16px 24px', borderRadius: 12, margin: '10px 0 20px'
-            }}>
-              {code}
-            </div>
-            <p style={{ color: '#888', fontSize: 12, marginBottom: 20 }}>
-              Kode iramara iminota 15. Yandike kode hanyuma ujye ku rupapuro rwo gusubiza ijambobanga.
+          <form onSubmit={handleResetDirect}>
+            <p style={{ textAlign: 'center', color: '#666', marginBottom: 16, fontSize: 14 }}>
+              Imeri yemejwe. Shyiramo ijambobanga rishya.
             </p>
-            <Link
-              to={`/reset-password?email=${encodeURIComponent(email)}`}
-              className="btn btn-primary btn-full"
-            >
-              Injira Gusubiza Ijambobanga →
-            </Link>
-          </div>
+            <div className="form-group">
+              <label>Imeyili</label>
+              <input type="email" value={email} readOnly />
+            </div>
+            <div className="form-group">
+              <label>Ijambobanga Rishya</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="Nibura inyuguti 8"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Ongera Ijambobanga</label>
+              <input
+                type="password"
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                placeholder="Subiramo ijambobanga"
+                required
+              />
+            </div>
+            {error && <div className="alert alert-error">{error}</div>}
+            {success && <div className="alert alert-success">{success}</div>}
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+              {loading ? 'Gutegereza...' : 'Hindura Ijambobanga'}
+            </button>
+          </form>
         )}
 
         <div style={{ textAlign: 'center', marginTop: 20 }}>

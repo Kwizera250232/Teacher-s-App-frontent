@@ -9,7 +9,6 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     email: params.get('email') || '',
-    token: '',
     newPassword: '',
     confirm: '',
   });
@@ -28,14 +27,13 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      await api.post('/auth/reset-password', {
+      await api.post('/auth/reset-password-direct', {
         email: form.email,
-        token: form.token,
         newPassword: form.newPassword,
       });
       setDone(true);
     } catch (err) {
-      setError(err.message || 'Kode si yo cyangwa irangiye.');
+      setError(err.message || 'Ntibyakunze guhindura ijambobanga.');
     }
     setLoading(false);
   }
@@ -70,23 +68,12 @@ export default function ResetPassword() {
             />
           </div>
           <div className="form-group">
-            <label>Kode (uhabwa nyuma yo gusaba)</label>
-            <input
-              type="text"
-              value={form.token}
-              onChange={e => setForm(f => ({ ...f, token: e.target.value.trim() }))}
-              placeholder="123456"
-              maxLength={6}
-              required
-            />
-          </div>
-          <div className="form-group">
             <label>Ijambobanga Rishya</label>
             <input
               type="password"
               value={form.newPassword}
               onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
-              placeholder="Nibura inyuguti 6"
+              placeholder="Nibura inyuguti 8"
               required
             />
           </div>
@@ -106,7 +93,7 @@ export default function ResetPassword() {
           </button>
         </form>
         <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <Link to="/forgot-password" style={{ color: '#667eea', fontSize: 13 }}>← Subira guhabwa kode</Link>
+          <Link to="/forgot-password" style={{ color: '#667eea', fontSize: 13 }}>← Subira ku rupapuro rwo guhindura ijambobanga</Link>
         </div>
       </div>
     </div>

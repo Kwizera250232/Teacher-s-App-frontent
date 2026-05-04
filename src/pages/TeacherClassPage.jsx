@@ -27,6 +27,7 @@ export default function TeacherClassPage() {
 
   // Forms
   const [announcementText, setAnnouncementText] = useState('');
+  const [announcementImage, setAnnouncementImage] = useState(null);
   const [noteForm, setNoteForm] = useState({ title: '', file: null });
   const [hwForm, setHwForm] = useState({ title: '', description: '', due_date: '', file: null });
   const [discussionText, setDiscussionText] = useState('');
@@ -94,8 +95,12 @@ export default function TeacherClassPage() {
   const postAnnouncement = async (e) => {
     e.preventDefault();
     try {
-      await api.post(`/classes/${id}/announcements`, { content: announcementText }, token);
+      const fd = new FormData();
+      if (announcementText.trim()) fd.append('content', announcementText.trim());
+      if (announcementImage) fd.append('image', announcementImage);
+      await uploadFile(`/classes/${id}/announcements`, fd, token);
       setAnnouncementText('');
+      setAnnouncementImage(null);
       loadTab();
       showSuccess('Announcement posted!');
     } catch (e) { setError(e.message); }
@@ -254,27 +259,39 @@ export default function TeacherClassPage() {
         {/* Announcements */}
         {tab === 'Announcements' && (
           <>
-            <form onSubmit={postAnnouncement} style={{ marginBottom: 24, display: 'flex', gap: 10 }}>
-              <input
+            <form onSubmit={postAnnouncement} style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <textarea
                 className="form-group"
-                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, minHeight: 84 }}
                 placeholder="Write an announcement..."
                 value={announcementText}
                 onChange={e => setAnnouncementText(e.target.value)}
-                required
               />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <input type="file" accept="image/*" onChange={e => setAnnouncementImage(e.target.files?.[0] || null)} />
+                {announcementImage && <span style={{ fontSize: 12, color: '#475569' }}>🖼 {announcementImage.name}</span>}
+              </div>
               <button type="submit" className="btn btn-primary">Post</button>
             </form>
             {data.map(a => (
               <div key={a.id} className="item-card">
                 <div className="item-card-body">
-                  <p>{a.content}</p>
+                  {a.content && <p>{a.content}</p>}
+                  {a.image_path && (
+                    <div style={{ marginTop: 10 }}>
+                      <img
+                        src={`${UPLOADS_BASE}${a.image_path}`}
+                        alt={a.image_name || 'announcement image'}
+                        style={{ width: '100%', maxWidth: 420, borderRadius: 10, border: '1px solid #e2e8f0' }}
+                      />
+                    </div>
+                  )}
                   <div className="meta">📢 {new Date(a.created_at).toLocaleString()}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     className="btn btn-secondary btn-sm"
-                    onClick={() => setShareItem({ title: a.content, text: `Announcement on UClass: ${a.content}`, url: 'https://student.umunsi.com' })}
+                    onClick={() => setShareItem({ title: a.content || 'Class Announcement', text: `Announcement on UClass: ${a.content || 'See class update'}`, url: 'https://student.umunsi.com' })}
                   >🔗 Share</button>
                   <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/announcements/${a.id}`)}>Delete</button>
                 </div>
