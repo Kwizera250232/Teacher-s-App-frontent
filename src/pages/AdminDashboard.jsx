@@ -28,12 +28,19 @@ const NAV = [
 ];
 
 export default function AdminDashboard() {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, startImpersonation } = useAuth();
   const navigate = useNavigate();
   const [page, setPage] = useState('dashboard');
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showViewAs, setShowViewAs] = useState(false);
+  const [teachers, setTeachers] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [impError, setImpError] = useState('');
+  const [impLoading, setImpLoading] = useState(false);
 
   useEffect(() => {
     if (page === 'dashboard') {
@@ -41,6 +48,37 @@ export default function AdminDashboard() {
       api.get('/admin/activity', token).then(setActivity).catch(() => {});
     }
   }, [page, token]);
+
+  const openViewAs = async () => {
+    setShowViewAs(true);
+    setImpError('');
+    if (teachers.length > 0 || students.length > 0) return;
+    try {
+      const [teacherData, studentData] = await Promise.all([
+        api.get('/admin/teachers', token),
+        api.get('/admin/students', token),
+      ]);
+      setTeachers(Array.isArray(teacherData) ? teacherData : []);
+      setStudents(Array.isArray(studentData) ? studentData : []);
+    } catch (e) {
+      setImpError(e.message || 'Failed to load users.');
+    }
+  };
+
+  const viewAs = async (userId) => {
+    if (!userId) return;
+    setImpLoading(true);
+    setImpError('');
+    try {
+      const res = await api.post('/admin/impersonate', { user_id: Number(userId) }, token);
+      startImpersonation(res.token, res.user);
+      navigate(res.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+    } catch (e) {
+      setImpError(e.message || 'Failed to switch account view.');
+    } finally {
+      setImpLoading(false);
+    }
+  };
 
   const maxCount = activity.length ? Math.max(...activity.map(d => parseInt(d.count))) : 1;
 
@@ -78,6 +116,7 @@ export default function AdminDashboard() {
           <button className="admin-toggle" onClick={() => setSidebarOpen(o => !o)}>☰</button>
           <h1 className="admin-page-title">{NAV.find(n => n.key === page)?.label}</h1>
           <div className="admin-user-info">
+            <button className="btn btn-secondary btn-sm" onClick={openViewAs}>👁 View As</button>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👤 {user?.name}<VerifiedBadge size={14} info={{ items: [
               { icon: '🔐', label: 'Role', value: 'Admin' },
               { icon: '📧', label: 'Email', value: user?.email },
@@ -146,6 +185,49 @@ export default function AdminDashboard() {
           {page === 'settings' && <AdminSettings token={token} />}
         </div>
       </div>
+
+      {showViewAs && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowViewAs(false)}>
+          <div className="modal" style={{ maxWidth: 520 }}>
+            <h3 style={{ marginBottom: 12 }}>👁 View Account As</h3>
+            <p style={{ color: '#64748b', fontSize: 13, marginBottom: 16 }}>
+              Choose a teacher or student account to open their dashboard using your admin session.
+            </p>
+
+            <div className="form-group">
+              <label>Teacher Account</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select value={selectedTeacher} onChange={e => setSelectedTeacher(e.target.value)}>
+                  <option value="">Select teacher...</option>
+                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name} ({t.email})</option>)}
+                </select>
+                <button className="btn btn-primary btn-sm" disabled={!selectedTeacher || impLoading} onClick={() => viewAs(selectedTeacher)}>
+                  {impLoading ? 'Opening...' : 'Open'}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Student Account</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)}>
+                  <option value="">Select student...</option>
+                  {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.email})</option>)}
+                </select>
+                <button className="btn btn-primary btn-sm" disabled={!selectedStudent || impLoading} onClick={() => viewAs(selectedStudent)}>
+                  {impLoading ? 'Opening...' : 'Open'}
+                </button>
+              </div>
+            </div>
+
+            {impError && <div className="alert alert-error" style={{ marginTop: 8 }}>{impError}</div>}
+
+            <div style={{ marginTop: 14, textAlign: 'right' }}>
+              <button className="btn btn-outline btn-sm" onClick={() => setShowViewAs(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

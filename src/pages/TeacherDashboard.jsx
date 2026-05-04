@@ -8,7 +8,7 @@ import UmunsiAiModal from '../components/UmunsiAiModal';
 import './Dashboard.css';
 
 export default function TeacherDashboard() {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
   const [classes, setClasses] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [error, setError] = useState('');
@@ -44,6 +44,9 @@ export default function TeacherDashboard() {
             { icon: '👨‍🏫', label: 'Role', value: 'Teacher' },
             { icon: '📧', label: 'Email', value: user?.email },
           ] }} /></span>
+          {isImpersonating && (
+            <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
+          )}
           <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
             💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
           </Link>
