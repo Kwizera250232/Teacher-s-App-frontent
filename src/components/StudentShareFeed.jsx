@@ -278,6 +278,20 @@ export default function StudentShareFeed({ token }) {
                   <span className="sf-post-name">{s.student_name}</span>
                   <div className="sf-post-sub">
                     <span className="sf-post-badge" style={{ background: c.bg, color: c.color }}>{c.emoji} {c.label}</span>
+                    {isOwn && (
+                      <span
+                        style={{
+                          background: s.status === 'approved' ? '#dcfce7' : s.status === 'declined' ? '#fee2e2' : '#fef3c7',
+                          color: s.status === 'approved' ? '#166534' : s.status === 'declined' ? '#991b1b' : '#92400e',
+                          borderRadius: 12,
+                          padding: '1px 8px',
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {s.status === 'approved' ? 'Approved' : s.status === 'declined' ? 'Declined' : 'Pending review'}
+                      </span>
+                    )}
                     <span className="sf-post-time">· {timeAgo(s.created_at)}</span>
                   </div>
                   {(s.school || s.class_name || s.teacher_name) && (
@@ -302,6 +316,11 @@ export default function StudentShareFeed({ token }) {
                   </div>
                 ))}
               </div>
+              {isOwn && s.status === 'declined' && s.review_note && (
+                <div style={{ marginTop: 8, background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+                  ❌ Declined by admin: {s.review_note}
+                </div>
+              )}
               <div className="sf-post-foot">
                 <button className={`sf-like-btn${s.liked_by_me ? ' sf-like-btn--on' : ''}`}
                   disabled={liking === s.id} onClick={() => handleLike(s.id)}>

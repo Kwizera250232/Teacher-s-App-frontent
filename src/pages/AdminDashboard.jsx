@@ -11,6 +11,7 @@ import AdminAnnouncements from '../components/admin/AdminAnnouncements';
 import AdminReports from '../components/admin/AdminReports';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminTextbooks from '../components/admin/AdminTextbooks';
+import AdminStudentArticles from '../components/admin/AdminStudentArticles';
 import VerifiedBadge from '../components/VerifiedBadge';
 import './AdminDashboard.css';
 
@@ -22,6 +23,7 @@ const NAV = [
   { key: 'classes', label: 'Classes', icon: '📚' },
   { key: 'content', label: 'Content', icon: '📝' },
   { key: 'announcements', label: 'Announcements', icon: '📢' },
+  { key: 'articles', label: 'Articles', icon: '🧾' },
   { key: 'reports', label: 'Reports', icon: '💬' },
   { key: 'textbooks', label: 'AI Textbooks', icon: '🎓' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
@@ -41,6 +43,7 @@ export default function AdminDashboard() {
   const [selectedStudent, setSelectedStudent] = useState('');
   const [impError, setImpError] = useState('');
   const [impLoading, setImpLoading] = useState(false);
+  const [pendingArticles, setPendingArticles] = useState(0);
 
   useEffect(() => {
     if (page === 'dashboard') {
@@ -48,6 +51,12 @@ export default function AdminDashboard() {
       api.get('/admin/activity', token).then(setActivity).catch(() => {});
     }
   }, [page, token]);
+
+  useEffect(() => {
+    api.get('/admin/student-shares/pending-count', token)
+      .then(r => setPendingArticles(Number(r?.count || 0)))
+      .catch(() => setPendingArticles(0));
+  }, [token, page]);
 
   const openViewAs = async () => {
     setShowViewAs(true);
@@ -98,7 +107,16 @@ export default function AdminDashboard() {
               onClick={() => setPage(item.key)}
             >
               <span className="admin-nav-icon">{item.icon}</span>
-              {sidebarOpen && <span className="admin-nav-label">{item.label}</span>}
+              {sidebarOpen && (
+                <span className="admin-nav-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  {item.label}
+                  {item.key === 'articles' && pendingArticles > 0 && (
+                    <span style={{ background: '#ef4444', color: '#fff', borderRadius: 20, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
+                      {pendingArticles}
+                    </span>
+                  )}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -180,6 +198,7 @@ export default function AdminDashboard() {
           {page === 'classes' && <AdminClasses token={token} />}
           {page === 'content' && <AdminContent token={token} />}
           {page === 'announcements' && <AdminAnnouncements token={token} />}
+          {page === 'articles' && <AdminStudentArticles token={token} />}
           {page === 'reports' && <AdminReports token={token} />}
           {page === 'textbooks' && <AdminTextbooks token={token} />}
           {page === 'settings' && <AdminSettings token={token} />}
