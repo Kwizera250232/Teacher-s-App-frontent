@@ -10,8 +10,22 @@ export default function AdminStudents({ token }) {
   const [resetId, setResetId] = useState(null);
   const [newPwd, setNewPwd] = useState('');
   const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const load = () => api.get('/admin/students', token).then(setStudents).catch(() => {});
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await api.get('/admin/students', token);
+      setStudents(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setError(e.message || 'Failed to load students.');
+      setStudents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => { load(); }, []);
 
   const toggle = async (s) => {
@@ -41,19 +55,24 @@ export default function AdminStudents({ token }) {
     else setMsg(data.error);
   };
 
+  const q = search.toLowerCase();
   const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.email.toLowerCase().includes(search.toLowerCase())
+    (s.name || '').toLowerCase().includes(q) ||
+    (s.email || '').toLowerCase().includes(q)
   );
 
   return (
     <div className="admin-card">
       <div className="admin-section-header">
         <h2 className="admin-section-title">👩‍🎓 Students ({students.length})</h2>
-        <input className="admin-input" style={{ maxWidth: 240 }} placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input className="admin-input" style={{ maxWidth: 240 }} placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
+          <button className="btn-sm btn-outline" onClick={load} disabled={loading}>{loading ? '...' : '↺'}</button>
+        </div>
       </div>
 
       {msg && <div style={{ marginBottom: '1rem', color: '#16a34a', fontSize: '0.875rem' }}>{msg}</div>}
+      {error && <div className="alert alert-error" style={{ marginBottom: '1rem' }}>{error}</div>}
 
       {resetId && (
         <div className="admin-form-row" style={{ background: '#f8fafc', padding: '1rem', borderRadius: 12, marginBottom: '1rem' }}>
@@ -70,7 +89,8 @@ export default function AdminStudents({ token }) {
             <tr><th>Name</th><th>Email</th><th>Phone</th><th>School</th><th>Classes</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {filtered.length === 0 && <tr><td colSpan={7} className="empty-text">No students found.</td></tr>}
+            {loading && <tr><td colSpan={8} className="empty-text">Loading...</td></tr>}
+            {!loading && filtered.length === 0 && <tr><td colSpan={8} className="empty-text">No students found.</td></tr>}
             {filtered.map(s => (
               <tr key={s.id}>
                 <td><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{s.name}<VerifiedBadge size={13} info={{ items: [
