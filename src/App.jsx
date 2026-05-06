@@ -19,15 +19,18 @@ import Profile from './pages/Profile';
 import Messages from './pages/Messages';
 import TermsConditions from './pages/TermsConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import SchoolBoard from './pages/SchoolBoard';
+import NurseryBoard from './pages/NurseryBoard';
 import Footer from './components/Footer';
 import { InstallProvider } from './components/InstallPrompt';
 import './components/Footer.css';
 
-function ProtectedRoute({ children, role }) {
+function ProtectedRoute({ children, role, roles }) {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (role && user.role !== role) return <Navigate to="/" replace />;
+  if (Array.isArray(roles) && roles.length > 0 && !roles.includes(user.role)) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -55,6 +58,9 @@ export default function App() {
 
                 <Route path="/admin" element={
                   <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
+                } />
+                <Route path="/school-board" element={
+                  <ProtectedRoute roles={['admin', 'teacher']}><SchoolBoard /></ProtectedRoute>
                 } />
 
                 <Route path="/teacher/dashboard" element={
@@ -87,6 +93,7 @@ export default function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/terms" element={<TermsConditions />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/nursery-board" element={<NurseryBoard />} />
 
                 <Route path="/profile" element={
                   <ProtectedRoute><Profile /></ProtectedRoute>

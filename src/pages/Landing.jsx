@@ -320,6 +320,12 @@ export default function Landing() {
               >
                 Join a Class
               </button>
+              <button
+                onClick={() => navigate('/nursery-board')}
+                className="rounded-full border border-amber-300 bg-amber-100 px-6 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-200"
+              >
+                Open Nursery Board
+              </button>
             </div>
             <div className="mt-5 max-w-md rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700">Student Join Class</p>
@@ -412,6 +418,40 @@ export default function Landing() {
               alt="Teacher and students doing practical class projects"
               className="h-full min-h-64 w-full rounded-2xl object-cover"
             />
+          </div>
+        </section>
+
+        <section className="mt-16 animate-fade-up rounded-3xl bg-white p-6 shadow-xl shadow-sky-100 ring-1 ring-sky-100 md:p-10" style={{ animationDelay: '260ms' }}>
+          <div className="grid gap-6 md:grid-cols-2 md:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-sky-700">School-Level Leadership</p>
+              <h2 className="font-heading mt-2 text-3xl font-black text-slate-900">School Board Dashboard for academic control</h2>
+              <p className="mt-3 text-slate-600">
+                View all school teachers, class-by-class work, notes, homework, quizzes, and CAT marks in one secure dashboard.
+              </p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={() => navigate('/school-board')}
+                  className="rounded-full bg-sky-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-700"
+                >
+                  Open School Board
+                </button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:text-sky-700"
+                >
+                  Login to continue
+                </button>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-indigo-50 p-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-xl bg-white p-3 ring-1 ring-sky-100"><strong>Teachers</strong><p className="mt-1 text-slate-600">Track activity and approval status.</p></div>
+                <div className="rounded-xl bg-white p-3 ring-1 ring-sky-100"><strong>Classes</strong><p className="mt-1 text-slate-600">Monitor outcomes per class.</p></div>
+                <div className="rounded-xl bg-white p-3 ring-1 ring-sky-100"><strong>Homework & Notes</strong><p className="mt-1 text-slate-600">Ensure regular content publishing.</p></div>
+                <div className="rounded-xl bg-white p-3 ring-1 ring-sky-100"><strong>CAT Marks</strong><p className="mt-1 text-slate-600">Identify support needs early.</p></div>
+              </div>
+            </div>
           </div>
         </section>
 
