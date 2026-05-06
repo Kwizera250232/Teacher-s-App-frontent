@@ -8,6 +8,7 @@ export default function Login() {
   const [searchParams] = useSearchParams();
   const classCode = searchParams.get('code') || '';
   const [form, setForm] = useState({ email: '', password: '' });
+  const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -59,13 +60,30 @@ export default function Login() {
           </div>
           <div className="form-group">
             <label>Ijambo Banga</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
-              placeholder="••••••••"
-              required
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPwd ? 'text' : 'password'}
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                placeholder="••••••••"
+                required
+                style={{ paddingRight: 44 }}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPwd(v => !v)}
+                style={{
+                  position: 'absolute', right: 10, top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none', border: 'none',
+                  cursor: 'pointer', fontSize: 18, padding: 2, color: '#888',
+                }}
+                aria-label={showPwd ? 'Hisha ijambobanga' : 'Erekana ijambobanga'}
+              >
+                {showPwd ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'Gutegereza...' : 'Injira'}
