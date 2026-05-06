@@ -185,7 +185,7 @@ export default function StudentClassPage() {
           data.length === 0
             ? <p style={{ color: '#888', textAlign: 'center', padding: 40 }}>No announcements yet.</p>
             : data.map(a => (
-              <div key={a.id} className="item-card">
+              <div key={a.id} className="item-card item-card-stack">
                 <div className="item-card-body">
                   {a.content && <p>{a.content}</p>}
                   {a.image_path && (
@@ -202,12 +202,14 @@ export default function StudentClassPage() {
                     { icon: '📅', label: 'Posted', value: new Date(a.created_at).toLocaleDateString() },
                   ] }} /> · {new Date(a.created_at).toLocaleString()}</div>
                 </div>
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setShareItem({ title: a.content || 'Class Announcement', text: `Announcement on UClass: ${a.content || 'See class update'}`, url: 'https://student.umunsi.com' })}
-                >
-                  🔗 Share
-                </button>
+                <div className="item-card-btns">
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setShareItem({ title: a.content || 'Class Announcement', text: `Announcement on UClass: ${a.content || 'See class update'}`, url: 'https://student.umunsi.com' })}
+                  >
+                    🔗 Share
+                  </button>
+                </div>
               </div>
             ))
         )}
@@ -392,15 +394,17 @@ export default function StudentClassPage() {
           data.length === 0
             ? <p style={{ color: '#888', textAlign: 'center', padding: 40 }}>No quizzes yet.</p>
             : data.map(q => (
-              <div key={q.id} className="item-card">
+              <div key={q.id} className="item-card item-card-stack">
                 <div className="item-card-body">
                   <h3>❓ {q.title}</h3>
                   {q.description && <p>{q.description}</p>}
                   <div className="meta">{new Date(q.created_at).toLocaleDateString()}</div>
                 </div>
-                <button className="btn btn-primary btn-sm" onClick={() => navigate(`/student/classes/${id}/quizzes/${q.id}`)}>
-                  Take Quiz
-                </button>
+                <div className="item-card-btns">
+                  <button className="btn btn-primary btn-sm" onClick={() => navigate(`/student/classes/${id}/quizzes/${q.id}`)}>
+                    Take Quiz
+                  </button>
+                </div>
               </div>
             ))
         )}

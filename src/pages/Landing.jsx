@@ -13,7 +13,7 @@ export default function Landing() {
   const [deanMessages, setDeanMessages] = useState([
     {
       role: 'assistant',
-          content: "Hello! I'm Dean 🎓 of student.umunsi.com — what can I help you today?\n\nI can tell you about:\n• How students join a class\n• Quizzes & auto grading\n• Homework & notes\n• What teachers can do\n• How parents stay connected"
+      content: "Hello! I'm Dean 🎓 of student.umunsi.com — what can I help you today?\n\nI can explain:\n• Student and teacher login/signup\n• Join class with code\n• Quizzes, homework, and notes\n• Parent benefits and support\n• Full app overview (student, teacher, admin)"
     }
   ]);
 
@@ -28,26 +28,53 @@ export default function Landing() {
 
   const getDeanReply = (question) => {
     const q = question.toLowerCase();
+    const hasAny = (...terms) => terms.some((term) => q.includes(term));
 
-    if (q.includes('join') && q.includes('class')) {
-      return 'Students tap Join Class, enter a 6-character class code, create or login to a student account, then they are added directly to the class.';
+    if (hasAny('login', 'log in', 'sign in', 'signin', 'signup', 'sign up', 'register', 'account')) {
+      if (hasAny('student')) {
+        return 'For Student account:\n1. Open student.umunsi.com and tap Sign in or Join a Class.\n2. If new, choose student signup and create name, email, password.\n3. If already registered, sign in with email and password.\n4. After login, use class code to join and start learning.';
+      }
+      if (hasAny('teacher')) {
+        return 'For Teacher account:\n1. Open student.umunsi.com and choose Start as Teacher / Sign up.\n2. Create account details and school profile.\n3. After login, create class, get class code, and share with students.\n4. Use dashboard for notes, homework, quizzes, and progress tracking.';
+      }
+      return 'Login / Signup guide:\n• Students: create account or sign in, then join class with code.\n• Teachers: create teacher account, then create class and share code.\n• Returning users: tap Sign in and use your registered email + password.';
     }
-    if (q.includes('quiz')) {
-      return 'Teachers create quizzes with correct answers and timers. Students do quizzes on phone, and scores are auto graded instantly.';
+
+    if (hasAny('join class', 'class code', 'join', 'code')) {
+      return 'How to join a class:\n1. Tap Join Class.\n2. Enter the 6-character class code from your teacher.\n3. Sign up or login as a student.\n4. You are added instantly and can access announcements, notes, homework, quizzes, and discussion.';
     }
-    if (q.includes('homework')) {
-      return 'Teachers post homework with due dates. Students submit work, and parents can track pending and completed tasks.';
+    if (hasAny('quiz', 'quizzes', 'auto grade', 'auto graded', 'score', 'test')) {
+      return 'Quiz system:\n• Teachers create quizzes with questions, options, answers, and time limits.\n• Students take quizzes on phone or desktop.\n• The app auto grades objective questions instantly.\n• Results appear fast for both teacher and student.';
     }
-    if (q.includes('notes')) {
-      return 'Teachers can create notes and upload learning materials. Students open and download notes any time from class tabs.';
+    if (hasAny('homework', 'assignment', 'due')) {
+      return 'Homework workflow:\n• Teachers post homework with due date and instructions.\n• Students view and submit their work.\n• Teachers review and grade submissions.\n• Parents can monitor pending and completed homework at home.';
     }
-    if (q.includes('parent')) {
-      return 'Parents get better visibility on progress and can support children at home through homework tracking and teacher updates.';
+    if (hasAny('notes', 'lesson notes', 'materials', 'download')) {
+      return 'Notes and materials:\n• Teachers create notes and upload learning files.\n• Students open and download notes anytime from class tabs.\n• This helps revision at school and at home.';
     }
-    if (q.includes('teacher')) {
-      return 'Teachers can create classes, share class code, post announcements, create notes, assign homework, run quizzes, and review results in one place.';
+    if (hasAny('parent', 'parents', 'home support', 'benefit')) {
+      return 'Parent benefits:\n• See child progress and activity updates.\n• Follow homework and quiz performance.\n• Receive teacher communication and guidance.\n• Support children to learn better at home.';
     }
-    return 'UClass helps students join class, do quizzes, submit homework, get notes, and interact with teachers and classmates. Ask about any feature and I will explain it step-by-step.';
+    if (hasAny('teacher', 'teach', 'class management')) {
+      return 'Teacher features:\n• Create classes and share class code.\n• Post announcements and lesson notes.\n• Assign and grade homework.\n• Create quizzes and view results.\n• Track student progress in one dashboard.';
+    }
+    if (hasAny('student', 'learn', 'classmate', 'discussion')) {
+      return 'Student features:\n• Join class with code.\n• Do quizzes and receive quick feedback.\n• Submit homework and get notes.\n• Interact with teachers and classmates about lessons and activities.\n• Follow class updates from one place.';
+    }
+
+    if (hasAny('admin', 'school', 'manage users')) {
+      return 'Admin overview:\n• Manage schools, teachers, students, and classes.\n• Monitor platform usage and reports.\n• Support quality learning at school level.';
+    }
+
+    if (hasAny('install', 'app', 'phone', 'pwa')) {
+      return 'You can install UClass on phone like an app:\n1. Open student.umunsi.com in browser.\n2. Tap Install / Add to Home Screen when prompted.\n3. Launch UClass directly from your phone home screen.';
+    }
+
+    if (hasAny('everything', 'overview', 'all features', 'about', 'what can', 'platform')) {
+      return 'UClass full overview:\n• Students: join class, do quizzes, submit homework, get notes, and discuss lessons.\n• Teachers: create classes, notes, homework, quizzes, announcements, and track results.\n• Parents: follow child progress and support learning at home.\n• Admins: manage schools, users, and platform settings.\n\nIf you want, ask me one area and I will explain it step-by-step.';
+    }
+
+    return 'Great question. I can explain login/signup, class joining, quizzes, homework, notes, parent benefits, teacher tools, and full app overview. Try asking: "How does student signup work?" or "Explain all teacher features."';
   };
 
   const askDean = () => {
@@ -130,7 +157,7 @@ export default function Landing() {
               animation: 'deanFadeIn 0.4s ease both',
             }}
           >
-            Ask Dean AI ✨
+            Ask Dean AI · Chat ✨
           </div>
         )}
 
@@ -221,7 +248,7 @@ export default function Landing() {
           {/* Quick prompts */}
           {deanMessages.length === 1 && (
             <div style={{ padding: '0 12px 6px', display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-              {['How do students join?', 'How do quizzes work?', 'What can teachers do?', 'What can parents see?'].map((q) => (
+              {['How does student signup work?', 'How does teacher signup work?', 'How do quizzes and homework work?', 'Give me full app overview'].map((q) => (
                 <button key={q} onClick={() => { setDeanInput(q); setTimeout(() => deanInputRef.current?.focus(), 30); }} style={{ background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 16, padding: '4px 10px', fontSize: 11, color: '#4f46e5', cursor: 'pointer', fontWeight: 600 }}>{q}</button>
               ))}
             </div>
@@ -509,22 +536,6 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="mt-16 animate-fade-up rounded-3xl bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white shadow-xl shadow-indigo-200 md:p-8" style={{ animationDelay: '430ms' }}>
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-indigo-200">Dean AI</p>
-              <h2 className="font-heading mt-1 text-2xl font-black sm:text-3xl">Have questions? Ask Dean AI 🤖</h2>
-              <p className="mt-2 max-w-xl text-indigo-100">Dean AI is always available — tap the floating button in the corner to ask about classes, quizzes, homework, teachers, and parent features anytime.</p>
-            </div>
-            <button
-              onClick={openDean}
-              className="flex-shrink-0 rounded-full bg-white px-6 py-3 text-sm font-bold text-indigo-700 shadow-lg transition hover:bg-indigo-50"
-            >
-              Chat with Dean ➤
-            </button>
           </div>
         </section>
 

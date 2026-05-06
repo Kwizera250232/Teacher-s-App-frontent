@@ -61,9 +61,12 @@ export default function TeacherDashboard() {
             <h1>Amashuri yanjye</h1>
             <p className="dash-sub">Gucunga amashuri n'abanyeshuri bawe</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-            + Fungura Ishuri
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Link to="/teacher/cat-marks" className="btn btn-secondary">🧮 Record CAT Marks</Link>
+            <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
+              + Fungura Ishuri
+            </button>
+          </div>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}

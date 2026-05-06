@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherClassPage from './pages/TeacherClassPage';
+import RecordCatMarks from './pages/RecordCatMarks';
 import StudentClassPage from './pages/StudentClassPage';
 import TakeQuiz from './pages/TakeQuiz';
 import QuizResults from './pages/QuizResults';
@@ -16,6 +17,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import Messages from './pages/Messages';
+import TermsConditions from './pages/TermsConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import Footer from './components/Footer';
 import { InstallProvider } from './components/InstallPrompt';
 import './components/Footer.css';
@@ -60,6 +63,9 @@ export default function App() {
                 <Route path="/teacher/classes/:id" element={
                   <ProtectedRoute role="teacher"><TeacherClassPage /></ProtectedRoute>
                 } />
+                <Route path="/teacher/cat-marks" element={
+                  <ProtectedRoute role="teacher"><RecordCatMarks /></ProtectedRoute>
+                } />
                 <Route path="/teacher/classes/:classId/quizzes/:quizId/results" element={
                   <ProtectedRoute role="teacher"><QuizResults /></ProtectedRoute>
                 } />
@@ -79,6 +85,8 @@ export default function App() {
 
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/terms" element={<TermsConditions />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
 
                 <Route path="/profile" element={
                   <ProtectedRoute><Profile /></ProtectedRoute>

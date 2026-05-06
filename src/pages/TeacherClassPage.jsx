@@ -274,7 +274,7 @@ export default function TeacherClassPage() {
               <button type="submit" className="btn btn-primary">Post</button>
             </form>
             {data.map(a => (
-              <div key={a.id} className="item-card">
+              <div key={a.id} className="item-card item-card-stack">
                 <div className="item-card-body">
                   {a.content && <p>{a.content}</p>}
                   {a.image_path && (
@@ -288,7 +288,7 @@ export default function TeacherClassPage() {
                   )}
                   <div className="meta">📢 {new Date(a.created_at).toLocaleString()}</div>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div className="item-card-btns">
                   <button
                     className="btn btn-secondary btn-sm"
                     onClick={() => setShareItem({ title: a.content || 'Class Announcement', text: `Announcement on UClass: ${a.content || 'See class update'}`, url: 'https://student.umunsi.com' })}
@@ -315,7 +315,7 @@ export default function TeacherClassPage() {
               <button type="submit" className="btn btn-primary">Upload Note</button>
             </form>
             {data.map(n => (
-              <div key={n.id} className="item-card">
+              <div key={n.id} className="item-card item-card-stack">
                 <div className="item-card-body">
                   <h3>📄 {n.title}</h3>
                   {n.file_name && (
@@ -343,7 +343,9 @@ export default function TeacherClassPage() {
                   )}
                   <div className="meta" style={{ marginTop: 6 }}>{new Date(n.created_at).toLocaleDateString()}</div>
                 </div>
-                <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/notes/${n.id}`)}>Delete</button>
+                <div className="item-card-btns">
+                  <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/notes/${n.id}`)}>Delete</button>
+                </div>
               </div>
             ))}
           </>
@@ -526,7 +528,7 @@ export default function TeacherClassPage() {
               <button className="btn btn-primary" onClick={() => setShowQuizModal(true)}>+ Create Quiz</button>
             </div>
             {data.map(q => (
-              <div key={q.id} className="item-card">
+              <div key={q.id} className="item-card item-card-stack">
                 <div className="item-card-body">
                   <h3>❓ {q.title}</h3>
                   {q.description && <p>{q.description}</p>}
@@ -627,7 +629,7 @@ export default function TeacherClassPage() {
         {tab === 'Students' && (
           <>
             {/* Add student form */}
-            <form onSubmit={addStudent} style={{ display: 'flex', gap: 10, marginBottom: 20, background: 'white', padding: '14px 16px', borderRadius: 10, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+            <form onSubmit={addStudent} className="responsive-inline-form">
               <input
                 style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
                 type="email"

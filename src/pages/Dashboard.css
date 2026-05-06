@@ -370,6 +370,16 @@ body {
   width: 100%;
 }
 
+.responsive-inline-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  background: white;
+  padding: 14px 16px;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
 @media (max-width: 600px) {
   .dash-main, .class-main { padding: 16px; }
   .dash-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
@@ -379,6 +389,8 @@ body {
   .classes-grid { grid-template-columns: 1fr; gap: 14px; }
 
   .class-hero { flex-direction: column; }
+  .class-hero-code .code-big,
+  .code-value { letter-spacing: 1.2px; font-size: 20px; }
   .tabs { overflow-x: auto; gap: 4px; }
   .tab { white-space: nowrap; font-size: 13px; padding: 7px 12px; }
 
@@ -386,6 +398,23 @@ body {
   .item-card { flex-direction: column; align-items: stretch; gap: 12px; }
   .item-card-btns { flex-direction: row; flex-wrap: wrap; }
   .item-card-btns .btn { flex: 1; justify-content: center; min-width: 0; font-size: 12px; padding: 7px 8px; }
+  .item-card-actions { width: 100%; flex-wrap: wrap; }
+  .item-card-actions .btn { flex: 1; justify-content: center; min-width: 0; }
+
+  .section-header { flex-wrap: wrap; gap: 10px; }
+
+  .discussion-input { flex-direction: column; }
+  .discussion-input .btn { width: 100%; justify-content: center; }
+  .disc-comment-form { flex-direction: column; }
+  .disc-comment-form .btn { width: 100%; justify-content: center; }
+
+  .responsive-inline-form { flex-direction: column; }
+  .responsive-inline-form .btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 768px) {
+  .dash-top h1 { font-size: 24px; }
+  .item-card-body p { overflow-wrap: anywhere; }
 }
 
 /* ── Classmate Cards ───────────────────────────── */
