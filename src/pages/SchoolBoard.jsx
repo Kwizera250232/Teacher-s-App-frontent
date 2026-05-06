@@ -14,14 +14,12 @@ function StatCard({ label, value, tone }) {
 }
 
 export default function SchoolBoard() {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [schools, setSchools] = useState([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     let active = true;
@@ -29,25 +27,17 @@ export default function SchoolBoard() {
     async function load() {
       try {
         setError('');
-        if (isAdmin) {
-          const schoolRows = await api.get('/admin/schools', token);
-          if (!active) return;
-          setSchools(schoolRows || []);
-          if (!schoolRows?.length) {
-            setLoading(false);
-            setError('No schools found. Create at least one school first.');
-            return;
-          }
-          const firstSchoolId = String(schoolRows[0].id);
-          setSelectedSchoolId(firstSchoolId);
-          const board = await api.get(`/admin/my-school-board?school_id=${firstSchoolId}`, token);
-          if (!active) return;
-          setData(board);
+        const schoolRows = await api.get('/admin/schools', token);
+        if (!active) return;
+        setSchools(schoolRows || []);
+        if (!schoolRows?.length) {
           setLoading(false);
+          setError('No schools found. Create at least one school first.');
           return;
         }
-
-        const board = await api.get('/admin/my-school-board', token);
+        const firstSchoolId = String(schoolRows[0].id);
+        setSelectedSchoolId(firstSchoolId);
+        const board = await api.get(`/admin/my-school-board?school_id=${firstSchoolId}`, token);
         if (!active) return;
         setData(board);
         setLoading(false);
@@ -62,7 +52,7 @@ export default function SchoolBoard() {
     return () => {
       active = false;
     };
-  }, [isAdmin, token]);
+  }, [token]);
 
   const onSchoolChange = async (nextId) => {
     setSelectedSchoolId(nextId);
@@ -101,14 +91,12 @@ export default function SchoolBoard() {
           <p className="muted">Manage teachers, class work, notes, homework, quizzes, and CAT marks in one board.</p>
         </div>
         <div className="school-board-actions">
-          <Link to={isAdmin ? '/admin' : '/teacher/dashboard'} className="btn btn-outline">Back</Link>
-          {isAdmin && (
-            <select value={selectedSchoolId} onChange={(e) => onSchoolChange(e.target.value)}>
-              {schools.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          )}
+          <Link to="/admin" className="btn btn-outline">Back</Link>
+          <select value={selectedSchoolId} onChange={(e) => onSchoolChange(e.target.value)}>
+            {schools.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
         </div>
       </header>
 
@@ -117,6 +105,17 @@ export default function SchoolBoard() {
 
       {!loading && !error && data && (
         <>
+          <section className="school-hero">
+            <div>
+              <p className="hero-tag">Welcome Message</p>
+              <h2>{school?.welcome_message || `Murakaza neza kuri ${school?.name || 'iri shuri'}!`}</h2>
+            </div>
+            <div className="hero-code-wrap">
+              <span>School Code</span>
+              <strong>{school?.code || 'PENDING'}</strong>
+            </div>
+          </section>
+
           <section className="school-stats-grid">
             {statCards.map((card) => (
               <StatCard key={card.label} {...card} />
@@ -126,8 +125,14 @@ export default function SchoolBoard() {
           <section className="school-card split">
             <div>
               <h2>School Details</h2>
-              <p><strong>Location:</strong> {school?.location || 'Not set'}</p>
-              <p><strong>Head Teacher Code:</strong> {school?.code || 'Not configured'}</p>
+              <p><strong>District:</strong> {school?.district || 'Not set'}</p>
+              <p><strong>Sector:</strong> {school?.sector || 'Not set'}</p>
+              <p><strong>Cell:</strong> {school?.cell || 'Not set'}</p>
+              <p><strong>Village:</strong> {school?.village || 'Not set'}</p>
+              <p><strong>Number of Students:</strong> {school?.student_count ?? summary.students ?? 0}</p>
+              <p><strong>Head Teacher:</strong> {school?.head_teacher_name || 'Not set'}</p>
+              <p><strong>Head Teacher Phone:</strong> {school?.head_teacher_phone || 'Not set'}</p>
+              <p><strong>School Email (HT):</strong> {school?.head_teacher_email || 'Not set'}</p>
             </div>
             <div>
               <h2>Quality Goals</h2>

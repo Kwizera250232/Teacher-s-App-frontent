@@ -1,7 +1,10 @@
 .school-board-page {
   min-height: 100vh;
   padding: 1.25rem;
-  background: radial-gradient(circle at 20% 0%, #f0f7ff 0%, #f8fbff 40%, #ffffff 100%);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.2), transparent 30%),
+    radial-gradient(circle at 88% 0%, rgba(16, 185, 129, 0.16), transparent 25%),
+    linear-gradient(180deg, #f7fcff 0%, #ffffff 35%, #f8fafc 100%);
 }
 
 .school-board-header {
@@ -30,6 +33,60 @@
 .school-board-header .muted {
   margin: 0;
   color: #475569;
+}
+
+.school-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid #bae6fd;
+  background: linear-gradient(135deg, #ecfeff 0%, #f0fdfa 50%, #eff6ff 100%);
+  box-shadow: 0 12px 30px rgba(14, 116, 144, 0.1);
+}
+
+.school-hero .hero-tag {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #0369a1;
+  font-weight: 700;
+  font-size: 0.73rem;
+}
+
+.school-hero h2 {
+  margin: 0.35rem 0 0;
+  font-size: 1.2rem;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.hero-code-wrap {
+  text-align: center;
+  border-radius: 14px;
+  border: 1px solid #22d3ee;
+  background: #ffffff;
+  padding: 0.65rem 0.9rem;
+  min-width: 160px;
+}
+
+.hero-code-wrap span {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0e7490;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.hero-code-wrap strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.35rem;
+  letter-spacing: 0.12em;
+  color: #0f172a;
 }
 
 .school-board-actions {
@@ -87,6 +144,7 @@
   border-radius: 16px;
   padding: 1rem;
   margin-bottom: 1rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
 }
 
 .school-card.error {
@@ -139,6 +197,10 @@
 @media (max-width: 720px) {
   .school-board-page {
     padding: 0.8rem;
+  }
+
+  .school-hero {
+    grid-template-columns: 1fr;
   }
 
   .school-board-header {

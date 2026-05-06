@@ -8,10 +8,29 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const defaultRole = searchParams.get('role') === 'teacher' ? 'teacher' : 'student';
   const classCode = searchParams.get('code') || '';
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: defaultRole, school_id: '', newSchool: '', phone: '' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: defaultRole,
+    school_id: '',
+    phone: '',
+    school_name: '',
+    district: '',
+    sector: '',
+    cell: '',
+    village: '',
+    student_count: '',
+    head_teacher_name: '',
+    head_teacher_phone: '',
+    head_teacher_email: '',
+  });
+  const [createSchoolProfile, setCreateSchoolProfile] = useState(defaultRole === 'teacher');
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  const [schoolWelcome, setSchoolWelcome] = useState('');
+  const [schoolCode, setSchoolCode] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -25,19 +44,50 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      let schoolId = form.school_id;
-      if (form.newSchool.trim()) {
-        const school = await api.post('/auth/schools', { name: form.newSchool.trim() });
-        schoolId = school.id;
+      if (form.role === 'teacher' && createSchoolProfile) {
+        const requiredSchoolFields = [
+          form.school_name,
+          form.district,
+          form.sector,
+          form.cell,
+          form.village,
+          form.head_teacher_name,
+          form.head_teacher_phone,
+          form.head_teacher_email,
+        ];
+        if (requiredSchoolFields.some((v) => !String(v || '').trim())) {
+          throw new Error('Complete all school onboarding fields for teacher signup.');
+        }
       }
-      const data = await api.post('/auth/register', {
+
+      const payload = {
         name: form.name,
         email: form.email,
         password: form.password,
         role: form.role,
-        school_id: schoolId || null,
+        school_id: form.school_id || null,
         phone: form.phone || undefined,
-      });
+      };
+
+      if (form.role === 'teacher' && createSchoolProfile) {
+        payload.school_profile = {
+          name: form.school_name,
+          district: form.district,
+          sector: form.sector,
+          cell: form.cell,
+          village: form.village,
+          student_count: form.student_count || 0,
+          head_teacher_name: form.head_teacher_name,
+          head_teacher_phone: form.head_teacher_phone,
+          head_teacher_email: form.head_teacher_email,
+        };
+      }
+
+      const data = await api.post('/auth/register', payload);
+
+      setSchoolWelcome(data.school_welcome_message || '');
+      setSchoolCode(data.school_code || '');
+
       // Teacher accounts need admin approval first
       if (data.pending) {
         setPending(true);
@@ -73,6 +123,13 @@ export default function Register() {
               Konti yawe y'umwarimu yoherejwe. <strong>Tegereza ko umuyobozi ayemera</strong> mbere yo kwinjira mu rubuga.
               Uzabona imeyili iyo uruhushya ruguye.
             </p>
+            {schoolCode && (
+              <div className="auth-school-welcome">
+                <p className="welcome-label">School Code</p>
+                <h3>{schoolCode}</h3>
+                {schoolWelcome && <p>{schoolWelcome}</p>}
+              </div>
+            )}
             <div style={{ marginTop: 24 }}>
               <a href="/login" className="btn btn-primary btn-full">Subira ku Kwinjira</a>
             </div>
@@ -101,22 +158,80 @@ export default function Register() {
           </div>
           <div className="form-group">
             <label>Ndi</label>
-            <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+            <select value={form.role} onChange={e => {
+              const nextRole = e.target.value;
+              setForm({ ...form, role: nextRole });
+              if (nextRole === 'teacher') setCreateSchoolProfile(true);
+            }}>
               <option value="student">Umunyeshuri</option>
               <option value="teacher">Umwarimu</option>
             </select>
           </div>
           <div className="form-group">
             <label>Ishuri</label>
-            <select value={form.school_id} onChange={e => setForm({ ...form, school_id: e.target.value, newSchool: '' })}>
+            <select value={form.school_id} onChange={e => setForm({ ...form, school_id: e.target.value })} disabled={form.role === 'teacher' && createSchoolProfile}>
               <option value="">Hitamo ishuri...</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
-          <div className="form-group">
-            <label>Cyangwa ongeraho ishuri rishya</label>
-            <input type="text" value={form.newSchool} onChange={e => setForm({ ...form, newSchool: e.target.value, school_id: '' })} placeholder="Andika izina ry'ishuri rishya" />
-          </div>
+
+          {form.role === 'teacher' && (
+            <div className="register-school-panel">
+              <div className="register-school-header">
+                <h3>🏫 School Onboarding</h3>
+                <label className="toggle-wrap">
+                  <input
+                    type="checkbox"
+                    checked={createSchoolProfile}
+                    onChange={(e) => setCreateSchoolProfile(e.target.checked)}
+                  />
+                  <span>Create full school profile</span>
+                </label>
+              </div>
+
+              {createSchoolProfile && (
+                <div className="register-school-grid">
+                  <div className="form-group">
+                    <label>Name of School</label>
+                    <input type="text" value={form.school_name} onChange={e => setForm({ ...form, school_name: e.target.value, school_id: '' })} placeholder="e.g. GS Nyamirambo" required={createSchoolProfile} />
+                  </div>
+                  <div className="form-group">
+                    <label>District</label>
+                    <input type="text" value={form.district} onChange={e => setForm({ ...form, district: e.target.value })} placeholder="District" required={createSchoolProfile} />
+                  </div>
+                  <div className="form-group">
+                    <label>Sector</label>
+                    <input type="text" value={form.sector} onChange={e => setForm({ ...form, sector: e.target.value })} placeholder="Sector" required={createSchoolProfile} />
+                  </div>
+                  <div className="form-group">
+                    <label>Cell</label>
+                    <input type="text" value={form.cell} onChange={e => setForm({ ...form, cell: e.target.value })} placeholder="Cell" required={createSchoolProfile} />
+                  </div>
+                  <div className="form-group">
+                    <label>Village</label>
+                    <input type="text" value={form.village} onChange={e => setForm({ ...form, village: e.target.value })} placeholder="Village" required={createSchoolProfile} />
+                  </div>
+                  <div className="form-group">
+                    <label>Number of Students</label>
+                    <input type="number" min="0" value={form.student_count} onChange={e => setForm({ ...form, student_count: e.target.value })} placeholder="e.g. 540" required={createSchoolProfile} />
+                  </div>
+                  <div className="form-group">
+                    <label>Name of Head Teacher</label>
+                    <input type="text" value={form.head_teacher_name} onChange={e => setForm({ ...form, head_teacher_name: e.target.value })} placeholder="Head Teacher Name" required={createSchoolProfile} />
+                  </div>
+                  <div className="form-group">
+                    <label>Head Teacher Telephone</label>
+                    <input type="tel" value={form.head_teacher_phone} onChange={e => setForm({ ...form, head_teacher_phone: e.target.value })} placeholder="+250 7XX XXX XXX" required={createSchoolProfile} />
+                  </div>
+                  <div className="form-group">
+                    <label>School Email (HT Email)</label>
+                    <input type="email" value={form.head_teacher_email} onChange={e => setForm({ ...form, head_teacher_email: e.target.value })} placeholder="headteacher@school.rw" required={createSchoolProfile} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'Gutegereza...' : 'Fungura Konti'}
           </button>

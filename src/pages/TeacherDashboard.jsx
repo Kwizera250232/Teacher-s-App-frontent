@@ -62,7 +62,6 @@ export default function TeacherDashboard() {
             <p className="dash-sub">Gucunga amashuri n'abanyeshuri bawe</p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link to="/school-board" className="btn btn-secondary">🏫 School Board</Link>
             <Link to="/teacher/cat-marks" className="btn btn-secondary">🧮 Record CAT Marks</Link>
             <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
               + Fungura Ishuri
