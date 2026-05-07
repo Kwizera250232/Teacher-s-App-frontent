@@ -6,7 +6,7 @@ import './Auth.css';
 
 export default function Register() {
   const [searchParams] = useSearchParams();
-  const defaultRole = searchParams.get('role') === 'teacher' ? 'teacher' : 'student';
+  const defaultRole = ['teacher', 'head_teacher'].includes(searchParams.get('role')) ? searchParams.get('role') : 'student';
   const classCode = searchParams.get('code') || '';
   const [form, setForm] = useState({
     name: '',
@@ -25,7 +25,7 @@ export default function Register() {
     head_teacher_phone: '',
     head_teacher_email: '',
   });
-  const [createSchoolProfile, setCreateSchoolProfile] = useState(defaultRole === 'teacher');
+  const [createSchoolProfile, setCreateSchoolProfile] = useState(defaultRole === 'teacher' || defaultRole === 'head_teacher');
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
@@ -44,14 +44,14 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      if (form.role === 'teacher' && createSchoolProfile) {
+    if ((form.role === 'teacher' || form.role === 'head_teacher') && createSchoolProfile) {
         const requiredSchoolFields = [
           form.school_name,
           form.district,
           form.sector,
           form.cell,
           form.village,
-          form.head_teacher_name,
+          if ((form.role === 'teacher' || form.role === 'head_teacher') && createSchoolProfile) {
           form.head_teacher_phone,
           form.head_teacher_email,
         ];
@@ -72,7 +72,7 @@ export default function Register() {
       if (form.role === 'teacher' && createSchoolProfile) {
         payload.school_profile = {
           name: form.school_name,
-          district: form.district,
+      if ((form.role === 'teacher' || form.role === 'head_teacher') && createSchoolProfile) {
           sector: form.sector,
           cell: form.cell,
           village: form.village,
@@ -102,7 +102,11 @@ export default function Register() {
           navigate('/student/dashboard');
         }
       } else {
-        navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+        if (data.user.role === 'head_teacher') {
+          navigate('/school-board');
+        } else {
+          navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+        }
       }
     } catch (err) {
       setError(err.message);
@@ -161,21 +165,23 @@ export default function Register() {
             <select value={form.role} onChange={e => {
               const nextRole = e.target.value;
               setForm({ ...form, role: nextRole });
-              if (nextRole === 'teacher') setCreateSchoolProfile(true);
+                if (nextRole === 'teacher' || nextRole === 'head_teacher') setCreateSchoolProfile(true);
+                else setCreateSchoolProfile(false);
             }}>
               <option value="student">Umunyeshuri</option>
               <option value="teacher">Umwarimu</option>
+                <option value="head_teacher">Ndi umuyobozi w'ishuri</option>
             </select>
           </div>
           <div className="form-group">
             <label>Ishuri</label>
-            <select value={form.school_id} onChange={e => setForm({ ...form, school_id: e.target.value })} disabled={form.role === 'teacher' && createSchoolProfile}>
+            <select value={form.school_id} onChange={e => setForm({ ...form, school_id: e.target.value })} disabled={(form.role === 'teacher' || form.role === 'head_teacher') && createSchoolProfile}>
               <option value="">Hitamo ishuri...</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
 
-          {form.role === 'teacher' && (
+          {(form.role === 'teacher' || form.role === 'head_teacher') && (
             <div className="register-school-panel">
               <div className="register-school-header">
                 <h3>🏫 School Onboarding</h3>

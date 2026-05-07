@@ -39,7 +39,8 @@ function HomeRedirect() {
   if (loading) return null;
   if (!user) return <Navigate to="/welcome" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
-  return <Navigate to={user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'} replace />;
+    if (user.role === 'head_teacher') return <Navigate to="/school-board" replace />;
+    return <Navigate to={user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'} replace />;
 }
 
 export default function App() {
@@ -60,7 +61,7 @@ export default function App() {
                   <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
                 } />
                 <Route path="/school-board" element={
-                  <ProtectedRoute role="admin"><SchoolBoard /></ProtectedRoute>
+                  <ProtectedRoute roles={['admin', 'head_teacher']}><SchoolBoard /></ProtectedRoute>
                 } />
 
                 <Route path="/teacher/dashboard" element={
