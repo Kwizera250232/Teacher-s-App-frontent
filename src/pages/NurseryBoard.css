@@ -41,6 +41,29 @@
   gap: 0.6rem;
 }
 
+.nursery-challenge {
+  margin-top: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #fdba74;
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  background: linear-gradient(90deg, #fff7ed, #fffbeb);
+  color: #7c2d12;
+}
+
+.nursery-challenge button {
+  border: 1px solid #fb923c;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-weight: 700;
+  color: #9a3412;
+  cursor: pointer;
+}
+
 .nursery-tools {
   margin-top: 1rem;
   padding: 0.9rem;
@@ -90,7 +113,20 @@
   line-height: 1;
 }
 
+.tool-group select {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.35rem 0.55rem;
+  background: #fff;
+}
+
+.trace-controls {
+  border-top: 1px dashed #fdba74;
+  padding-top: 0.6rem;
+}
+
 .nursery-canvas-wrap {
+  position: relative;
   margin-top: 1rem;
   border-radius: 18px;
   border: 2px dashed #fb923c;
@@ -108,6 +144,20 @@
     linear-gradient(90deg, transparent 24px, rgba(148, 163, 184, 0.12) 25px);
   background-size: 25px 25px;
   touch-action: none;
+}
+
+.trace-overlay {
+  position: absolute;
+  inset: 0.5rem;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  font-size: clamp(3.5rem, 12vw, 8.5rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: rgba(30, 64, 175, 0.18);
+  text-transform: uppercase;
+  text-shadow: 0 0 1px rgba(30, 64, 175, 0.25);
 }
 
 .nursery-ideas {
@@ -146,6 +196,39 @@
   font-size: 0.9rem;
 }
 
+.nursery-meta-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.9rem;
+}
+
+.meta-card {
+  border-radius: 16px;
+  padding: 0.95rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.meta-card h3 {
+  margin: 0 0 0.4rem;
+}
+
+.meta-card p {
+  margin: 0.35rem 0;
+  color: #374151;
+}
+
+.meta-card.parent {
+  background: linear-gradient(180deg, #ecfeff, #f8fafc);
+  border-color: #99f6e4;
+}
+
+.meta-card.teacher {
+  background: linear-gradient(180deg, #fff7ed, #f8fafc);
+  border-color: #fdba74;
+}
+
 @media (max-width: 700px) {
   .nursery-page {
     padding: 0.75rem;
@@ -158,5 +241,10 @@
   .nursery-actions .btn {
     flex: 1;
     text-align: center;
+  }
+
+  .nursery-challenge {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
