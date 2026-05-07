@@ -43,15 +43,13 @@ export default function RecordCatMarks() {
       const n = Number(v);
       if (!Number.isFinite(n)) return null;
       if (n < 0) return 0;
-      if (n > 10) return 10;
       return Math.round(n * 100) / 100;
     });
     const total = cleanCats.reduce((sum, v) => sum + (v == null ? 0 : v), 0);
-    const percentage = (total / 100) * 100;
     return {
       cats: cleanCats,
       total: Math.round(total * 100) / 100,
-      percentage: Math.round(percentage * 100) / 100,
+      percentage: 0,
     };
   };
 
@@ -65,8 +63,7 @@ export default function RecordCatMarks() {
       setLessonTitle(res.sheet?.lesson_title || '');
       setLessonTopic(res.sheet?.lesson_topic || '');
       setRows((res.rows || []).map((r) => {
-        const cats = Array.isArray(r.cats) ? r.cats.slice(0, 10) : [];
-        while (cats.length < 10) cats.push(null);
+        const cats = Array.isArray(r.cats) ? r.cats : [];
         return { ...r, cats, total: r.total ?? 0, percentage: r.percentage ?? 0 };
       }));
     } catch (e) {
@@ -205,7 +202,7 @@ export default function RecordCatMarks() {
                 <tr>
                   <th>#</th>
                   <th>Student</th>
-                  {Array.from({ length: 10 }, (_, i) => <th key={i}>Quiz {i + 1}</th>)}
+                  {rows[0]?.cats && Array.from({ length: rows[0].cats.length }, (_, i) => <th key={i}>Mark {i + 1}</th>)}
                   <th>Total</th>
                   <th>%</th>
                 </tr>
@@ -215,13 +212,13 @@ export default function RecordCatMarks() {
                   <tr key={r.student_id}>
                     <td>{r.number || idx + 1}</td>
                     <td style={{ minWidth: 180, fontWeight: 600 }}>{r.student_name}</td>
-                    {Array.from({ length: 10 }, (_, c) => (
+                    {r.cats.map((cat, c) => (
                       <td key={c}>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
-                          value={toInputValue(r.cats[c])}
+                          value={toInputValue(cat)}
                           onChange={(e) => updateCat(idx, c, e.target.value)}
                           style={{ width: 70, padding: '6px 8px', border: '1px solid #e2e8f0', borderRadius: 8 }}
                         />
