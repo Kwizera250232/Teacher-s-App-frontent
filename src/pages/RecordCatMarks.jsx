@@ -220,7 +220,6 @@ export default function RecordCatMarks() {
                         <input
                           type="number"
                           min="0"
-                          max="10"
                           step="0.01"
                           value={toInputValue(r.cats[c])}
                           onChange={(e) => updateCat(idx, c, e.target.value)}
