@@ -4,8 +4,8 @@ import './NurseryBoard.css';
 
 const COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#111827'];
 const STICKER_PACKS = {
-  classic: ['⭐', '🌈', '🦋', '🚗', '🍎', '🐘', '🏀', '🎈'],
-  rwanda: ['🦍', '🦓', '🚌', '🏫', '🌋', '☀️', '🧺', '🇷🇼'],
+  classic: ['⭐', '�🇼', '🦋', '🚗', '🍎', '🐘', '🏀', '🎈'],
+  rwanda: ['🦍', '🦓', '🚌', '🏫', '🌋', '🏟️', '🏛️', '🇷🇼'],
 };
 
 const TRACE_SETS = {
@@ -180,6 +180,8 @@ export default function NurseryBoard() {
     const utterance = new SpeechSynthesisUtterance(currentTrace);
     utterance.lang = language === 'rw' ? 'rw-RW' : 'en-US';
     utterance.rate = 0.8;
+    utterance.volume = 1;
+    utterance.pitch = 1.2;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   };
