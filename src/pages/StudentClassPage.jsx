@@ -234,7 +234,7 @@ export default function StudentClassPage() {
                   <div className="meta" style={{ marginTop: 6 }}>{new Date(n.created_at).toLocaleDateString()}</div>
                 </div>
                 {n.file_path && (
-                  <div className="item-card-btns">
+                  <div className="doc-actions">
                     <button
                       className="btn btn-secondary btn-sm"
                       onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/notes/${n.file_path}?inline=1`, fileName: n.file_name || n.title })}

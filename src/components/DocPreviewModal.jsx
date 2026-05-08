@@ -19,6 +19,7 @@ function PdfCanvasViewer({ fileUrl, onReady, badgeColor }) {
 
         const container = containerRef.current;
         if (!container) return;
+        container.innerHTML = '';
 
         for (let i = 1; i <= pdf.numPages; i++) {
           if (cancelled) break;
@@ -48,7 +49,7 @@ function PdfCanvasViewer({ fileUrl, onReady, badgeColor }) {
   return (
     <div
       ref={containerRef}
-      style={{ flex: 1, overflowY: 'auto', background: '#e2e8f0', padding: '12px 8px' }}
+      style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', background: '#e2e8f0', padding: '12px 8px', overscrollBehavior: 'contain' }}
     />
   );
 }
@@ -74,6 +75,7 @@ function getFileType(ext) {
 export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
   const [loading, setLoading] = useState(true);
   const [textContent, setTextContent] = useState('');
+  const isNarrow = typeof window !== 'undefined' && window.innerWidth <= 760;
   const displayName = fileName ? fileName.replace(/^\d+-\d+\./, '') : 'Document';
   const rawExt = displayName.includes('.') ? displayName.split('.').pop() : '';
   const ext = rawExt.toUpperCase();
@@ -91,6 +93,15 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Keep preview stable by locking background page scroll while modal is open.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
   // Fetch text files
   useEffect(() => {
     if (fileType === 'text') {
@@ -104,7 +115,7 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
   const renderContent = () => {
     if (fileType === 'image') {
       return (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', overflow: 'auto', padding: 16 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', overflow: 'auto', overflowX: 'hidden', padding: 16, overscrollBehavior: 'contain' }}>
           <img
             src={fileUrl}
             alt={displayName}
@@ -132,6 +143,7 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
           flex: 1, overflow: 'auto', padding: 24, margin: 0,
           background: '#0f172a', color: '#e2e8f0', fontSize: 14,
           lineHeight: 1.7, fontFamily: 'Consolas, monospace', whiteSpace: 'pre-wrap',
+          overflowX: 'hidden', overscrollBehavior: 'contain',
         }}>
           {textContent}
         </pre>
@@ -142,7 +154,7 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
       return (
         <iframe
           src={officeUrl}
-          style={{ flex: 1, border: 'none', background: '#fff' }}
+          style={{ flex: 1, border: 'none', background: '#fff', width: '100%', minWidth: 0 }}
           title={displayName}
           allowFullScreen
           onLoad={() => setLoading(false)}
@@ -160,14 +172,14 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1000, display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1000, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overscrollBehavior: 'contain' }}>
       {/* Header */}
       <div style={{
         background: '#1e293b', padding: '10px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexShrink: 0, gap: 10, minWidth: 0,
+        flexShrink: 0, gap: 10, minWidth: 0, flexWrap: isNarrow ? 'wrap' : 'nowrap',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden', minWidth: 0, flex: '1 1 auto' }}>
           <span style={{
             background: badgeColor, color: '#fff', fontWeight: 700,
             fontSize: 11, padding: '2px 8px', borderRadius: 4, flexShrink: 0,
@@ -176,18 +188,21 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
             {displayName}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0, minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, minWidth: 0, flexWrap: 'wrap', width: isNarrow ? '100%' : 'auto' }}>
           <a href={fileUrl} download={displayName} style={{
             padding: '6px 14px', background: '#334155', color: '#fff',
             borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+            textAlign: 'center', whiteSpace: 'nowrap', flex: isNarrow ? 1 : 'none',
           }}>⬇ Download</a>
           <a href={fileUrl} target="_blank" rel="noreferrer" style={{
             padding: '6px 14px', background: '#334155', color: '#fff',
             borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+            textAlign: 'center', whiteSpace: 'nowrap', flex: isNarrow ? 1 : 'none',
           }}>↗ New tab</a>
           <button onClick={onClose} style={{
             background: '#ef4444', color: '#fff', border: 'none',
             borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+            whiteSpace: 'nowrap', flex: isNarrow ? 1 : 'none',
           }}>✕ Close</button>
         </div>
       </div>
