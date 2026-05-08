@@ -6,6 +6,7 @@ export default function AdminSchools({ token }) {
   const [form, setForm] = useState({ name: '', location: '', code: '', email_domain: '' });
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
 
   const load = () => api.get('/admin/schools', token).then(setSchools).catch(e => setError(e.message));
   useEffect(() => { load(); }, []);
@@ -39,6 +40,13 @@ export default function AdminSchools({ token }) {
 
   const edit = (s) => { setEditing(s.id); setForm({ name: s.name, location: s.location || '', code: s.code || '', email_domain: s.email_domain || '' }); };
 
+  const copyCode = (id, code) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
   return (
     <div className="admin-card">
       <div className="admin-section-header">
@@ -57,14 +65,13 @@ export default function AdminSchools({ token }) {
       </div>
 
       <p style={{ color: '#475569', fontSize: '0.875rem', marginTop: '-0.25rem', marginBottom: '1rem' }}>
-        Generated student logins can use this domain, for example <strong>kwizera@brightschool.edu</strong>.
-        For Gmail or other external platforms, the domain must also be connected to a real mail service.
+        After adding a school, give the <strong>School Code</strong> to the Head Teacher. The HT will use it to sign up and share it with their teachers.
       </p>
 
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
-            <tr><th>#</th><th>Name</th><th>Location</th><th>Code</th><th>Email Domain</th><th>Users</th><th>Created</th><th>Actions</th></tr>
+            <tr><th>#</th><th>Name</th><th>Location</th><th>School Code</th><th>Email Domain</th><th>Users</th><th>Created</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {schools.length === 0 && <tr><td colSpan={8} className="empty-text">No schools yet.</td></tr>}
@@ -73,7 +80,23 @@ export default function AdminSchools({ token }) {
                 <td>{i + 1}</td>
                 <td><strong>{s.name}</strong></td>
                 <td>{s.location || '—'}</td>
-                <td>{s.code ? <span className="badge badge-blue">{s.code}</span> : '—'}</td>
+                <td>
+                  {s.code ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1rem', letterSpacing: '0.1em', color: '#1d4ed8', background: '#eff6ff', padding: '2px 8px', borderRadius: 6, border: '1px solid #bfdbfe' }}>
+                        {s.code}
+                      </span>
+                      <button
+                        className="btn-sm btn-outline"
+                        title="Copy code"
+                        onClick={() => copyCode(s.id, s.code)}
+                        style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                      >
+                        {copiedId === s.id ? '✅ Copied' : '📋 Copy'}
+                      </button>
+                    </div>
+                  ) : '—'}
+                </td>
                 <td>{s.email_domain || '—'}</td>
                 <td>{s.user_count}</td>
                 <td>{new Date(s.created_at).toLocaleDateString()}</td>

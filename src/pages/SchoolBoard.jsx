@@ -41,6 +41,7 @@ export default function SchoolBoard() {
   const [provisionError, setProvisionError] = useState('');
   const [provisionLoading, setProvisionLoading] = useState(false);
   const [delegatingId, setDelegatingId] = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
   const isHeadTeacher = user?.role === 'head_teacher';
 
   useEffect(() => {
@@ -188,6 +189,22 @@ export default function SchoolBoard() {
       setProvisionError(e.message || 'Failed to update School IT authority.');
     } finally {
       setDelegatingId(null);
+    }
+  };
+
+  const approveTeacher = async (teacher, approve) => {
+    setProvisionError('');
+    setProvisionMsg('');
+    try {
+      setApprovingId(teacher.id);
+      await api.put(`/admin/school/teachers/${teacher.id}/approve`, { approve }, token);
+      setProvisionMsg(`${teacher.name} has been ${approve ? 'approved' : 'rejected'}.`);
+      const board = await api.get('/admin/my-school-board', token);
+      setData(board);
+    } catch (e) {
+      setProvisionError(e.message || 'Failed to update teacher status.');
+    } finally {
+      setApprovingId(null);
     }
   };
 
@@ -371,6 +388,58 @@ export default function SchoolBoard() {
               </button>
             </div>
           </section>
+
+          {data.pending_teachers && data.pending_teachers.length > 0 && (
+            <section className="school-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+              <h2>⏳ Pending Teacher Approvals ({data.pending_teachers.length})</h2>
+              <p style={{ color: '#92400e', fontSize: '0.875rem', marginBottom: 12 }}>
+                These teachers signed up with the school code and are waiting for your approval.
+              </p>
+              {provisionMsg && <p style={{ color: '#16a34a' }}>{provisionMsg}</p>}
+              {provisionError && <p style={{ color: '#dc2626' }}>{provisionError}</p>}
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Signed Up</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.pending_teachers.map((t) => (
+                      <tr key={t.id}>
+                        <td>{t.name}</td>
+                        <td>{t.email}</td>
+                        <td>{new Date(t.created_at).toLocaleDateString()}</td>
+                        <td style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                            disabled={approvingId === t.id}
+                            onClick={() => approveTeacher(t, true)}
+                          >
+                            {approvingId === t.id ? '...' : '✅ Approve'}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{ padding: '4px 12px', fontSize: '0.8rem', color: '#dc2626', borderColor: '#dc2626' }}
+                            disabled={approvingId === t.id}
+                            onClick={() => approveTeacher(t, false)}
+                          >
+                            {approvingId === t.id ? '...' : '❌ Reject'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           <section className="school-card">
             <h2>Teachers Activity</h2>
