@@ -4,6 +4,25 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
+const BLOCKED_PUBLIC_EMAIL_DOMAINS = new Set([
+  'gmail.com',
+  'yahoo.com',
+  'ymail.com',
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'icloud.com',
+  'aol.com',
+  'proton.me',
+  'protonmail.com',
+]);
+
+function emailDomain(email) {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!normalized.includes('@')) return '';
+  return normalized.split('@').pop();
+}
+
 export default function Register() {
   const [searchParams] = useSearchParams();
   const searchRole = searchParams.get('role');
@@ -50,6 +69,13 @@ export default function Register() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    const domain = emailDomain(form.email);
+    if (BLOCKED_PUBLIC_EMAIL_DOMAINS.has(domain)) {
+      setError("Koresha imeyili y'ishuri gusa (nka @brightschool.edu). Gmail, Yahoo n'izindi ntizemerewe. Hamagara School IT niba ubikeneye.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const needsSchoolProfile =
@@ -156,9 +182,6 @@ export default function Register() {
           <>
             <h2>Fungura Konti</h2>
             <p className="auth-sub">Injira mu rubuga rw'inyigisho</p>
-            <div className="alert alert-info" style={{ marginBottom: 14 }}>
-              Koresha imeyili y'ishuri gusa (urugero: izina@brightschool.edu). Niba udafite imeyili y'ishuri, hamagara School IT.
-            </div>
             {error && <div className="alert alert-error">{error}</div>}
 
             <form onSubmit={handleSubmit}>

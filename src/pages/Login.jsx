@@ -4,6 +4,25 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
+const BLOCKED_PUBLIC_EMAIL_DOMAINS = new Set([
+  'gmail.com',
+  'yahoo.com',
+  'ymail.com',
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'icloud.com',
+  'aol.com',
+  'proton.me',
+  'protonmail.com',
+]);
+
+function emailDomain(email) {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!normalized.includes('@')) return '';
+  return normalized.split('@').pop();
+}
+
 export default function Login() {
   const [searchParams] = useSearchParams();
   const classCode = searchParams.get('code') || '';
@@ -18,6 +37,14 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    const domain = emailDomain(form.email);
+    if (BLOCKED_PUBLIC_EMAIL_DOMAINS.has(domain)) {
+      setError("Koresha imeyili y'ishuri gusa (nka @brightschool.edu). Gmail, Yahoo n'izindi ntizemerewe. Hamagara School IT niba ubikeneye.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const data = await api.post('/auth/login', form);
       login(data.token, data.user);
@@ -48,9 +75,6 @@ export default function Login() {
         <div className="auth-logo">🎓</div>
         <h2>Murakaza Neza</h2>
         <p className="auth-sub">Injira muri konti yawe</p>
-        <div className="alert alert-info" style={{ marginBottom: 14 }}>
-          Koresha imeyili y'ishuri gusa (nka @brightschool.edu). Gmail, Yahoo n'izindi ntizemerewe. Hamagara School IT niba ubikeneye.
-        </div>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">

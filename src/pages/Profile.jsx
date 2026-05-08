@@ -201,6 +201,44 @@ export default function Profile() {
           </div>
           <div className="profile-email">✉️ {user?.email}</div>
 
+          <div className="profile-view-section">
+            <div className="profile-view-section-title">🔐 Change Login Email</div>
+            <form onSubmit={changeLoginEmail} style={{ width: '100%' }}>
+              <div className="form-group" style={{ marginBottom: 10 }}>
+                <label>School Email Username (optional)</label>
+                <input
+                  value={emailLocalPart}
+                  onChange={e => setEmailLocalPart(e.target.value)}
+                  placeholder="e.g. john.mugisha"
+                />
+                <small style={{ color: '#64748b' }}>
+                  Username only: username@{schoolDomain || 'school-domain'}
+                </small>
+              </div>
+              <div className="form-group" style={{ marginBottom: 10 }}>
+                <label>Or Enter Full New Login Email</label>
+                <input
+                  type="email"
+                  value={newLoginEmail}
+                  onChange={e => setNewLoginEmail(e.target.value)}
+                  placeholder={schoolDomain ? `you@${schoolDomain}` : 'you@school.edu'}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 10 }}>
+                <label>Current Password (required)</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password"
+                />
+              </div>
+              <button type="submit" className="btn btn-outline btn-full" disabled={emailLoading}>
+                {emailLoading ? 'Updating Email...' : 'Update Login Email'}
+              </button>
+            </form>
+          </div>
+
           {/* Ask Dean button */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
             <button
