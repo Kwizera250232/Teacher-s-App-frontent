@@ -84,8 +84,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-start;
+  align-items: stretch;
   min-width: 0;
+  width: 100%;
+  max-width: 620px;
 }
 
 .dash-user-row {
@@ -98,18 +100,21 @@ body {
 .dash-user-row-top {
   flex-wrap: nowrap;
   width: 100%;
+  justify-content: space-between;
 }
 
 .dash-user-name {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-width: 140px;
-  max-width: calc(100% - 150px);
+  min-width: 0;
+  max-width: 100%;
   flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .dash-user-row-top > .btn,
@@ -123,29 +128,8 @@ body {
   justify-content: center;
 }
 
-.dash-user-row-top {
+.dash-user-row-bottom {
   flex-wrap: nowrap;
-  width: 100%;
-}
-
-.dash-user-name-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.dash-user-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 600;
-  font-size: 15px;
-  min-width: 0;
-  flex: 1 1 auto;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Classes grid */
@@ -476,22 +460,9 @@ body {
   .dash-user { flex-wrap: wrap; gap: 6px; width: 100%; justify-content: space-between; align-items: flex-start; }
   .dash-brand { font-size: 18px; }
 
-  .dash-user-layout {
-    width: 100%;
-  }
-
   .dash-user-row {
     width: 100%;
     gap: 8px;
-  }
-
-  .dash-user-row-top {
-    justify-content: space-between;
-  }
-
-  .dash-user-name {
-    min-width: 0;
-    max-width: 100%;
   }
 
   .dash-user-row-top > .btn,
@@ -507,6 +478,11 @@ body {
   .dash-user-row-bottom .btn,
   .dash-user-row-bottom a.btn {
     flex: 1;
+    min-width: 0;
+  }
+
+  .teacher-cat-btn {
+    display: none;
   }
 
   .classes-grid { grid-template-columns: 1fr; gap: 14px; }

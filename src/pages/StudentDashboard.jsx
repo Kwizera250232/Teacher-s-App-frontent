@@ -116,11 +116,11 @@ export default function StudentDashboard() {
                 <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
                   💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
                 </Link>
+              </div>
+              <div className="dash-user-row dash-user-row-bottom">
                 {isImpersonating && (
                   <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
                 )}
-              </div>
-              <div className="dash-user-row dash-user-row-bottom">
                 <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
                 <button className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
               </div>
