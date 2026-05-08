@@ -42,7 +42,7 @@ function TagInput({ label, values, onChange, placeholder }) {
 }
 
 export default function Profile() {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef();
 
@@ -63,6 +63,10 @@ export default function Profile() {
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [showDean, setShowDean] = useState(false);
+  const [emailLocalPart, setEmailLocalPart] = useState('');
+  const [newLoginEmail, setNewLoginEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
 
   useEffect(() => {
     api.get('/profile/me', token).then(p => {
@@ -114,6 +118,49 @@ export default function Profile() {
       setMsg(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const schoolDomain = (() => {
+    const email = String(profile?.email || user?.email || '').toLowerCase();
+    const at = email.indexOf('@');
+    return at > -1 ? email.slice(at + 1) : '';
+  })();
+
+  const changeLoginEmail = async (e) => {
+    e.preventDefault();
+    setMsg('');
+
+    if (!currentPassword.trim()) {
+      setMsg('Current password is required to change login email.');
+      return;
+    }
+    if (!newLoginEmail.trim() && !emailLocalPart.trim()) {
+      setMsg('Provide new login email or email username.');
+      return;
+    }
+
+    try {
+      setEmailLoading(true);
+      const result = await api.put('/profile/me/login-email', {
+        current_password: currentPassword,
+        new_email: newLoginEmail.trim(),
+        email_local_part: emailLocalPart.trim(),
+      }, token);
+
+      if (result?.user) {
+        updateUser(result.user);
+        setProfile((p) => ({ ...(p || {}), email: result.user.email }));
+      }
+
+      setCurrentPassword('');
+      setNewLoginEmail('');
+      setEmailLocalPart('');
+      setMsg(result?.message || 'Login email updated successfully.');
+    } catch (err) {
+      setMsg(err.message || 'Failed to update login email.');
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -299,6 +346,44 @@ export default function Profile() {
           <span className="profile-role-badge">{user?.role}</span>
         </div>
         <div className="profile-email">✉️ {user?.email}</div>
+
+        <div className="profile-section-title">🔐 Change Login Email</div>
+
+        <div className="form-group">
+          <label>School Email Username (optional)</label>
+          <input
+            value={emailLocalPart}
+            onChange={e => setEmailLocalPart(e.target.value)}
+            placeholder="e.g. john.mugisha"
+          />
+          <small style={{ color: '#64748b' }}>
+            If you enter username only, system builds: username@{schoolDomain || 'school-domain'}
+          </small>
+        </div>
+
+        <div className="form-group">
+          <label>Or Enter Full New Login Email</label>
+          <input
+            type="email"
+            value={newLoginEmail}
+            onChange={e => setNewLoginEmail(e.target.value)}
+            placeholder={schoolDomain ? `you@${schoolDomain}` : 'you@school.edu'}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Current Password (required)</label>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={e => setCurrentPassword(e.target.value)}
+            placeholder="Enter current password"
+          />
+        </div>
+
+        <button type="button" className="btn btn-outline btn-full" onClick={changeLoginEmail} disabled={emailLoading}>
+          {emailLoading ? 'Updating Email...' : 'Update Login Email'}
+        </button>
 
         <div className="profile-section-title">📋 Personal Info</div>
 

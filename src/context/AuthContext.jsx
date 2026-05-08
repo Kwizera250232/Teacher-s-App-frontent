@@ -44,6 +44,12 @@ export function AuthProvider({ children }) {
     setIsImpersonating(false);
   };
 
+  const updateUser = (nextUser) => {
+    if (!nextUser) return;
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    setUser(nextUser);
+  };
+
   const startImpersonation = (nextToken, nextUser) => {
     if (!nextToken || !nextUser) return;
     if (!isImpersonating && user?.role === 'admin' && token) {
@@ -76,7 +82,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading, isImpersonating, startImpersonation, stopImpersonation }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, loading, isImpersonating, startImpersonation, stopImpersonation }}>
       {children}
     </AuthContext.Provider>
   );
