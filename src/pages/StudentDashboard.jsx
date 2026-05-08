@@ -121,7 +121,6 @@ export default function StudentDashboard() {
               </Link>
             </div>
             <div className="dash-user-row dash-user-row-bottom">
-              <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 My Notes</Link>
               <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
               <button className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
             </div>
@@ -144,6 +143,7 @@ export default function StudentDashboard() {
 
         {/* My Compositions quick-access */}
         <div style={{ margin: '0 0 1.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Link to="/student/notes" className="btn btn-secondary">📝 My Notes</Link>
           <button
             className="btn btn-primary"
             style={{ background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', gap: 8 }}
