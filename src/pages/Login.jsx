@@ -30,6 +30,8 @@ export default function Login() {
         }
       } else if (data.user.role === 'admin') {
         navigate('/admin');
+      } else if (data.user.role === 'head_teacher') {
+        navigate('/school-board');
       } else {
         navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
       }
@@ -46,6 +48,9 @@ export default function Login() {
         <div className="auth-logo">🎓</div>
         <h2>Murakaza Neza</h2>
         <p className="auth-sub">Injira muri konti yawe</p>
+        <div className="alert alert-info" style={{ marginBottom: 14 }}>
+          Koresha imeyili y'ishuri gusa (nka @brightschool.edu). Gmail, Yahoo n'izindi ntizemerewe. Hamagara School IT niba ubikeneye.
+        </div>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -54,7 +59,7 @@ export default function Login() {
               type="email"
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
-              placeholder="you@example.com"
+              placeholder="you@brightschool.edu"
               required
             />
           </div>
@@ -91,6 +96,11 @@ export default function Login() {
         </form>
         <p style={{ textAlign: 'center', marginTop: 10 }}>
           <Link to="/forgot-password" style={{ color: '#667eea', fontSize: 13 }}>Wibagiwe ijambobanga?</Link>
+        </p>
+        <p style={{ textAlign: 'center', marginTop: 8 }}>
+          <Link to="/register?role=head_teacher" style={{ color: '#0ea5e9', fontSize: 13, fontWeight: 700 }}>
+            Sign up as Head Teacher
+          </Link>
         </p>
         <p className="auth-link">Nta konti ufite? <Link to="/register">Iyandikishe</Link></p>
       </div>

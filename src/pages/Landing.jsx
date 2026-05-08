@@ -307,10 +307,10 @@ export default function Landing() {
                 Open School Dashboard
               </button>
               <button
-                onClick={() => navigate('/register?role=teacher')}
+                onClick={() => navigate('/register?role=head_teacher')}
                 className="rounded-full border border-emerald-300 bg-white px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
               >
-                Create School Signup
+                Sign up as Head Teacher
               </button>
             </div>
           </div>
@@ -335,10 +335,10 @@ export default function Landing() {
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => navigate('/register?role=teacher')}
+                onClick={() => navigate('/login')}
                 className="rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 hover:bg-indigo-700"
               >
-                Start as Teacher
+                Teacher Login
               </button>
               <button
                 onClick={() => navigate('/join')}
@@ -435,10 +435,10 @@ export default function Landing() {
                   Open Nursery Board
                 </button>
                 <button
-                  onClick={() => navigate('/register?role=teacher')}
+                  onClick={() => navigate('/login')}
                   className="rounded-full border border-amber-300 bg-white px-6 py-3 text-sm font-semibold text-amber-700 transition hover:bg-amber-50"
                 >
-                  Start Nursery Class
+                  Teacher Login
                 </button>
               </div>
             </div>
@@ -467,10 +467,10 @@ export default function Landing() {
               <li>Simple class code enrollment and progress analytics</li>
             </ul>
             <button
-              onClick={() => navigate('/register?role=teacher')}
+              onClick={() => navigate('/login')}
               className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
             >
-              Create Teacher Account
+              Teacher Login
             </button>
           </div>
           <div className="rounded-2xl bg-white/10 p-4 ring-1 ring-white/20">
@@ -496,6 +496,12 @@ export default function Landing() {
                   className="rounded-full bg-sky-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-700"
                 >
                   Open School Board
+                </button>
+                <button
+                  onClick={() => navigate('/register?role=head_teacher')}
+                  className="rounded-full border border-sky-300 bg-white px-6 py-3 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
+                >
+                  Sign up as Head Teacher
                 </button>
                 <button
                   onClick={() => navigate('/login')}
@@ -680,10 +686,10 @@ export default function Landing() {
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <button
-              onClick={() => navigate('/register?role=teacher')}
+              onClick={() => navigate('/login')}
               className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
             >
-              Get Started Free
+              Teacher Login
             </button>
             <button
               onClick={() => navigate('/login')}

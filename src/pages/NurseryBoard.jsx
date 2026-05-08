@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../api';
 import './NurseryBoard.css';
 
 const COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#111827'];
@@ -22,8 +23,38 @@ const CHALLENGES = [
   'Draw your classroom and teacher',
 ];
 
+const DEFAULT_NURSERY_AUDIO_LESSONS = [
+  {
+    id: 'abc-song',
+    title: 'Alphabet Song',
+    src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+  },
+  {
+    id: 'counting-song',
+    title: 'Counting Song',
+    src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+  },
+];
+
+const DEFAULT_NURSERY_VIDEO_LESSONS = [
+  {
+    id: 'colors-video',
+    title: 'Colors Practice',
+    src: 'https://www.w3schools.com/html/mov_bbb.mp4',
+  },
+  {
+    id: 'shapes-video',
+    title: 'Shapes Practice',
+    src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+  },
+];
+
 export default function NurseryBoard() {
   const canvasRef = useRef(null);
+  const audioRefs = useRef({});
+  const videoRefs = useRef({});
+  const cameraVideoRef = useRef(null);
+  const cameraStreamRef = useRef(null);
   const [drawing, setDrawing] = useState(false);
   const [tool, setTool] = useState('pen');
   const [language, setLanguage] = useState('en');
@@ -35,6 +66,13 @@ export default function NurseryBoard() {
   const [traceIndex, setTraceIndex] = useState(0);
   const [challenge, setChallenge] = useState(CHALLENGES[0]);
   const [savedCount, setSavedCount] = useState(0);
+  const [mediaVolume, setMediaVolume] = useState(0.9);
+  const [typingText, setTypingText] = useState('');
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const [audioLessons, setAudioLessons] = useState(DEFAULT_NURSERY_AUDIO_LESSONS);
+  const [videoLessons, setVideoLessons] = useState(DEFAULT_NURSERY_VIDEO_LESSONS);
+  const [nextMediaChangeAt, setNextMediaChangeAt] = useState('');
 
   const t = useMemo(() => {
     if (language === 'rw') {
@@ -60,6 +98,18 @@ export default function NurseryBoard() {
         parentTitle: 'Ku Babyeyi',
         teacherTitle: 'Ku Barimu',
         saved: 'Ibikorwa wabitse',
+        mediaTitle: 'Kwiga ukoresheje Video na Audio',
+        mediaHint: 'Koresha volume hejuru cyangwa hasi. Byashyizwe kuri volume yo hejuru kugira ngo umwana yumve neza.',
+        mediaAuto: 'Ibi bihinduka buri minsi 3 byikora.',
+        mediaVolume: 'Ijwi',
+        volumeHigh: 'Hejuru',
+        volumeMid: 'Hagati',
+        volumeLow: 'Hasi',
+        volumeMute: 'Mute',
+        typingTitle: 'Kwitoza Kwandika',
+        typingHint: 'Andika amagambo yoroshye. Camera yo mu mfuruka ihora yaka kugira ngo umwana yibone.',
+        typingPlaceholder: 'Andika hano... urugero: Mama',
+        cameraNoAccess: 'Ntitwabashije gufungura camera. Emera uruhushya rwa camera.',
       };
     }
     return {
@@ -84,6 +134,18 @@ export default function NurseryBoard() {
       parentTitle: 'Parent Corner',
       teacherTitle: 'Teacher Corner',
       saved: 'Saved artworks',
+      mediaTitle: 'Video & Audio Learning',
+      mediaHint: 'Use the loudness controls below. Playback starts with high volume so learners can hear clearly.',
+      mediaAuto: 'These rotate automatically every 3 days.',
+      mediaVolume: 'Volume',
+      volumeHigh: 'High',
+      volumeMid: 'Mid',
+      volumeLow: 'Low',
+      volumeMute: 'Mute',
+      typingTitle: 'Typing Practice',
+      typingHint: 'Type easy words. The fun corner camera stays on so learners can see themselves.',
+      typingPlaceholder: 'Type here... e.g. Mama',
+      cameraNoAccess: 'Could not access camera. Please allow camera permission.',
     };
   }, [language]);
 
@@ -115,6 +177,44 @@ export default function NurseryBoard() {
   useEffect(() => {
     setSticker(STICKER_PACKS[stickerPack][0]);
   }, [stickerPack]);
+
+  useEffect(() => {
+    Object.values(audioRefs.current).forEach((el) => {
+      if (el) el.volume = mediaVolume;
+    });
+    Object.values(videoRefs.current).forEach((el) => {
+      if (el) el.volume = mediaVolume;
+    });
+  }, [mediaVolume]);
+
+  useEffect(() => {
+    let active = true;
+    api.get('/admin/nursery-media/public')
+      .then((res) => {
+        if (!active) return;
+        if (Array.isArray(res.audio_lessons) && res.audio_lessons.length > 0) {
+          setAudioLessons(res.audio_lessons);
+        }
+        if (Array.isArray(res.video_lessons) && res.video_lessons.length > 0) {
+          setVideoLessons(res.video_lessons);
+        }
+        if (res.next_change_at) setNextMediaChangeAt(res.next_change_at);
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+        cameraStreamRef.current = null;
+      }
+    };
+  }, []);
 
   const getPoint = (e) => {
     const canvas = canvasRef.current;
@@ -190,6 +290,54 @@ export default function NurseryBoard() {
     const pick = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
     setChallenge(pick);
   };
+
+  const setAllMediaVolume = (next) => {
+    const clamped = Math.max(0, Math.min(1, next));
+    setMediaVolume(clamped);
+  };
+
+  const startCamera = async () => {
+    if (cameraStreamRef.current) {
+      if (cameraVideoRef.current) cameraVideoRef.current.srcObject = cameraStreamRef.current;
+      setCameraEnabled(true);
+      setCameraError('');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      cameraStreamRef.current = stream;
+      if (cameraVideoRef.current) cameraVideoRef.current.srcObject = stream;
+      setCameraEnabled(true);
+      setCameraError('');
+    } catch {
+      setCameraEnabled(false);
+      setCameraError(t.cameraNoAccess);
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    }
+    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
+    setCameraEnabled(false);
+  };
+
+  useEffect(() => {
+    startCamera();
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (cameraEnabled && cameraStreamRef.current && cameraVideoRef.current) {
+      cameraVideoRef.current.srcObject = cameraStreamRef.current;
+    }
+  }, [cameraEnabled]);
+
+  const showCornerCam = cameraEnabled;
 
   return (
     <div className="nursery-page">
@@ -282,6 +430,29 @@ export default function NurseryBoard() {
           onTouchMove={move}
           onTouchEnd={stop}
         />
+        {showCornerCam && (
+          <div className="typing-cam-float" aria-live="polite">
+            <div className="typing-cam-header">
+              <span>Star Learner Cam</span>
+              <span>😄</span>
+            </div>
+            <video ref={cameraVideoRef} autoPlay playsInline muted />
+          </div>
+        )}
+      </section>
+
+      <section className="nursery-typing">
+        <h2>{t.typingTitle}</h2>
+        <p>{t.typingHint}</p>
+        <div className="typing-row">
+          <input
+            type="text"
+            value={typingText}
+            placeholder={t.typingPlaceholder}
+            onChange={(e) => setTypingText(e.target.value)}
+          />
+        </div>
+        {cameraError && <p className="typing-cam-error">{cameraError}</p>}
       </section>
 
       <section className="nursery-ideas">
@@ -290,6 +461,64 @@ export default function NurseryBoard() {
           <article><h3>Letter Practice</h3><p>Trace A, B, C and your own name using colorful pens.</p></article>
           <article><h3>Family Art</h3><p>Draw your mum, dad, or home and add stickers.</p></article>
           <article><h3>Number Time</h3><p>Write numbers 1-10 and decorate with stars.</p></article>
+        </div>
+      </section>
+
+      <section className="nursery-media">
+        <div className="nursery-media-top">
+          <div>
+            <h2>{t.mediaTitle}</h2>
+            <p>{t.mediaHint}</p>
+            <p className="nursery-media-rotation-note">
+              {t.mediaAuto}
+              {nextMediaChangeAt ? ` Next change: ${new Date(nextMediaChangeAt).toLocaleString()}` : ''}
+            </p>
+          </div>
+          <div className="media-volume">
+            <label>{t.mediaVolume}: {Math.round(mediaVolume * 100)}%</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={mediaVolume}
+              onChange={(e) => setAllMediaVolume(Number(e.target.value))}
+            />
+            <div className="media-volume-buttons">
+              <button onClick={() => setAllMediaVolume(1)}>{t.volumeHigh}</button>
+              <button onClick={() => setAllMediaVolume(0.7)}>{t.volumeMid}</button>
+              <button onClick={() => setAllMediaVolume(0.4)}>{t.volumeLow}</button>
+              <button onClick={() => setAllMediaVolume(0)}>{t.volumeMute}</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="media-grid">
+          {audioLessons.map((lesson) => (
+            <article key={lesson.id} className="media-card">
+              <h3>{lesson.title}</h3>
+              <audio
+                controls
+                preload="metadata"
+                ref={(el) => { audioRefs.current[lesson.id] = el; }}
+                onPlay={(e) => { e.currentTarget.volume = mediaVolume; }}
+                src={lesson.src}
+              />
+            </article>
+          ))}
+
+          {videoLessons.map((lesson) => (
+            <article key={lesson.id} className="media-card">
+              <h3>{lesson.title}</h3>
+              <video
+                controls
+                preload="metadata"
+                ref={(el) => { videoRefs.current[lesson.id] = el; }}
+                onPlay={(e) => { e.currentTarget.volume = mediaVolume; }}
+                src={lesson.src}
+              />
+            </article>
+          ))}
         </div>
       </section>
 

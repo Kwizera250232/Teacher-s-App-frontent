@@ -14,12 +14,34 @@ function StatCard({ label, value, tone }) {
 }
 
 export default function SchoolBoard() {
-  const { token } = useAuth();
+  const { token, user, logout } = useAuth();
   const [schools, setSchools] = useState([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [provisionForm, setProvisionForm] = useState({
+    name: '',
+    email_local_part: '',
+    email: '',
+    password: '',
+    phone: '',
+    auto_generate_email: true,
+  });
+  const [teacherForm, setTeacherForm] = useState({
+    name: '',
+    email_local_part: '',
+    email: '',
+    password: '',
+    phone: '',
+    auto_generate_email: true,
+    is_school_it: false,
+  });
+  const [provisionMsg, setProvisionMsg] = useState('');
+  const [provisionError, setProvisionError] = useState('');
+  const [provisionLoading, setProvisionLoading] = useState(false);
+  const [delegatingId, setDelegatingId] = useState(null);
+  const isHeadTeacher = user?.role === 'head_teacher';
 
   useEffect(() => {
     let active = true;
@@ -27,20 +49,19 @@ export default function SchoolBoard() {
     async function load() {
       try {
         setError('');
-        const schoolRows = await api.get('/admin/schools', token);
-        if (!active) return;
-        setSchools(schoolRows || []);
-        if (!schoolRows?.length) {
+        if (isHeadTeacher) {
+          const board = await api.get('/admin/my-school-board', token);
+          if (!active) return;
+          const ownSchoolId = String(board?.school?.id || '');
+          setSchools(board?.school ? [board.school] : []);
+          setSelectedSchoolId(ownSchoolId);
+          setData(board);
           setLoading(false);
-          setError('No schools found. Create at least one school first.');
           return;
         }
-        const firstSchoolId = String(schoolRows[0].id);
-        setSelectedSchoolId(firstSchoolId);
-        const board = await api.get(`/admin/my-school-board?school_id=${firstSchoolId}`, token);
-        if (!active) return;
-        setData(board);
+
         setLoading(false);
+        setError('School Dashboard is restricted to Head Teachers only.');
       } catch (e) {
         if (!active) return;
         setError(e.message || 'Failed to load school board.');
@@ -52,9 +73,10 @@ export default function SchoolBoard() {
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [isHeadTeacher, token]);
 
   const onSchoolChange = async (nextId) => {
+    if (isHeadTeacher) return;
     setSelectedSchoolId(nextId);
     setLoading(true);
     setError('');
@@ -82,6 +104,93 @@ export default function SchoolBoard() {
     { label: 'Avg CAT %', value: `${summary.average_cat_percentage ?? 0}%`, tone: 't8' },
   ]), [summary]);
 
+  const createStudentProvision = async () => {
+    setProvisionError('');
+    setProvisionMsg('');
+    if (!provisionForm.name.trim()) {
+      setProvisionError('Student full name is required.');
+      return;
+    }
+
+    try {
+      setProvisionLoading(true);
+      const result = await api.post('/admin/school/students', {
+        name: provisionForm.name.trim(),
+        email_local_part: provisionForm.email_local_part.trim(),
+        email: provisionForm.auto_generate_email ? '' : provisionForm.email.trim(),
+        auto_generate_email: provisionForm.auto_generate_email,
+        password: provisionForm.password.trim(),
+        phone: provisionForm.phone.trim(),
+      }, token);
+
+      setProvisionMsg(`Student created: ${result?.student?.name} (${result?.credentials?.email})`);
+      setProvisionForm((f) => ({ ...f, name: '', email_local_part: '', email: '', password: '', phone: '' }));
+      const board = await api.get('/admin/my-school-board', token);
+      setData(board);
+    } catch (e) {
+      setProvisionError(e.message || 'Failed to create student account.');
+    } finally {
+      setProvisionLoading(false);
+    }
+  };
+
+  const createTeacherProvision = async () => {
+    setProvisionError('');
+    setProvisionMsg('');
+    if (!teacherForm.name.trim()) {
+      setProvisionError('Teacher full name is required.');
+      return;
+    }
+
+    try {
+      setProvisionLoading(true);
+      const result = await api.post('/admin/school/teachers', {
+        name: teacherForm.name.trim(),
+        email_local_part: teacherForm.email_local_part.trim(),
+        email: teacherForm.auto_generate_email ? '' : teacherForm.email.trim(),
+        auto_generate_email: teacherForm.auto_generate_email,
+        password: teacherForm.password.trim(),
+        phone: teacherForm.phone.trim(),
+        is_school_it: teacherForm.is_school_it,
+      }, token);
+
+      setProvisionMsg(`Teacher created: ${result?.teacher?.name} (${result?.credentials?.email})`);
+      setTeacherForm((f) => ({
+        ...f,
+        name: '',
+        email_local_part: '',
+        email: '',
+        password: '',
+        phone: '',
+        is_school_it: false,
+      }));
+      const board = await api.get('/admin/my-school-board', token);
+      setData(board);
+    } catch (e) {
+      setProvisionError(e.message || 'Failed to create teacher account.');
+    } finally {
+      setProvisionLoading(false);
+    }
+  };
+
+  const toggleSchoolIT = async (teacher) => {
+    setProvisionError('');
+    setProvisionMsg('');
+    try {
+      setDelegatingId(teacher.id);
+      const updated = await api.put(`/admin/school/teachers/${teacher.id}/school-it`, {
+        enabled: !teacher.is_school_it,
+      }, token);
+      setProvisionMsg(`${updated.name} is now ${updated.is_school_it ? 'authorized' : 'removed'} as School IT.`);
+      const board = await api.get('/admin/my-school-board', token);
+      setData(board);
+    } catch (e) {
+      setProvisionError(e.message || 'Failed to update School IT authority.');
+    } finally {
+      setDelegatingId(null);
+    }
+  };
+
   return (
     <div className="school-board-page">
       <header className="school-board-header">
@@ -91,17 +200,27 @@ export default function SchoolBoard() {
           <p className="muted">Manage teachers, class work, notes, homework, quizzes, and CAT marks in one board.</p>
         </div>
         <div className="school-board-actions">
-          <Link to="/admin" className="btn btn-outline">Back</Link>
-          <select value={selectedSchoolId} onChange={(e) => onSchoolChange(e.target.value)}>
-            {schools.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
+          {!isHeadTeacher && <Link to="/admin" className="btn btn-outline">Back</Link>}
+          {isHeadTeacher && <Link to="/welcome" className="btn btn-outline">Home</Link>}
+          {!isHeadTeacher && (
+            <select value={selectedSchoolId} onChange={(e) => onSchoolChange(e.target.value)}>
+              {schools.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          )}
+          <button type="button" className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>
 
       {loading && <div className="school-card">Loading school analytics...</div>}
       {error && <div className="school-card error">{error}</div>}
+
+      {!isHeadTeacher && !loading && (
+        <div style={{ marginTop: 12 }}>
+          <Link to="/welcome" className="btn btn-outline">Go Home</Link>
+        </div>
+      )}
 
       {!loading && !error && data && (
         <>
@@ -133,6 +252,7 @@ export default function SchoolBoard() {
               <p><strong>Head Teacher:</strong> {school?.head_teacher_name || 'Not set'}</p>
               <p><strong>Head Teacher Phone:</strong> {school?.head_teacher_phone || 'Not set'}</p>
               <p><strong>School Email (HT):</strong> {school?.head_teacher_email || 'Not set'}</p>
+              <p><strong>Student Email Domain:</strong> {school?.email_domain || 'Auto generated from school name'}</p>
             </div>
             <div>
               <h2>Quality Goals</h2>
@@ -141,6 +261,114 @@ export default function SchoolBoard() {
                 <li>Every class should track CAT marks for performance visibility.</li>
                 <li>Monitor low-performing classes using CAT average percentages.</li>
               </ul>
+            </div>
+          </section>
+
+          <section className="school-card">
+            <h2>Create Student Account (Head Teacher / School IT)</h2>
+            {provisionMsg && <p style={{ color: '#16a34a' }}>{provisionMsg}</p>}
+            {provisionError && <p style={{ color: '#dc2626' }}>{provisionError}</p>}
+            <div className="admin-form-row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+              <input
+                className="admin-input"
+                placeholder="Student full name"
+                value={provisionForm.name}
+                onChange={(e) => setProvisionForm((f) => ({ ...f, name: e.target.value }))}
+              />
+              <input
+                className="admin-input"
+                placeholder="Email username (before @domain)"
+                value={provisionForm.email_local_part}
+                onChange={(e) => setProvisionForm((f) => ({ ...f, email_local_part: e.target.value }))}
+              />
+              <input
+                className="admin-input"
+                placeholder="Phone (optional)"
+                value={provisionForm.phone}
+                onChange={(e) => setProvisionForm((f) => ({ ...f, phone: e.target.value }))}
+              />
+              <input
+                className="admin-input"
+                placeholder="Password (optional, auto if empty)"
+                value={provisionForm.password}
+                onChange={(e) => setProvisionForm((f) => ({ ...f, password: e.target.value }))}
+              />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={provisionForm.auto_generate_email}
+                  onChange={(e) => setProvisionForm((f) => ({ ...f, auto_generate_email: e.target.checked }))}
+                />
+                Auto-generate school email
+              </label>
+              {!provisionForm.auto_generate_email && (
+                <input
+                  className="admin-input"
+                  placeholder={`Manual email (must end with @${school?.email_domain || 'school.edu'})`}
+                  value={provisionForm.email}
+                  onChange={(e) => setProvisionForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              )}
+              <button type="button" className="btn btn-primary" onClick={createStudentProvision} disabled={provisionLoading}>
+                {provisionLoading ? 'Creating...' : 'Create Student'}
+              </button>
+            </div>
+          </section>
+
+          <section className="school-card">
+            <h2>Create Teacher Account (Head Teacher)</h2>
+            <div className="admin-form-row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+              <input
+                className="admin-input"
+                placeholder="Teacher full name"
+                value={teacherForm.name}
+                onChange={(e) => setTeacherForm((f) => ({ ...f, name: e.target.value }))}
+              />
+              <input
+                className="admin-input"
+                placeholder="Email username (before @domain)"
+                value={teacherForm.email_local_part}
+                onChange={(e) => setTeacherForm((f) => ({ ...f, email_local_part: e.target.value }))}
+              />
+              <input
+                className="admin-input"
+                placeholder="Phone (optional)"
+                value={teacherForm.phone}
+                onChange={(e) => setTeacherForm((f) => ({ ...f, phone: e.target.value }))}
+              />
+              <input
+                className="admin-input"
+                placeholder="Password (optional, auto if empty)"
+                value={teacherForm.password}
+                onChange={(e) => setTeacherForm((f) => ({ ...f, password: e.target.value }))}
+              />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={teacherForm.auto_generate_email}
+                  onChange={(e) => setTeacherForm((f) => ({ ...f, auto_generate_email: e.target.checked }))}
+                />
+                Auto-generate school email
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={teacherForm.is_school_it}
+                  onChange={(e) => setTeacherForm((f) => ({ ...f, is_school_it: e.target.checked }))}
+                />
+                Grant School IT authority
+              </label>
+              {!teacherForm.auto_generate_email && (
+                <input
+                  className="admin-input"
+                  placeholder={`Manual email (must end with @${school?.email_domain || 'school.edu'})`}
+                  value={teacherForm.email}
+                  onChange={(e) => setTeacherForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              )}
+              <button type="button" className="btn btn-primary" onClick={createTeacherProvision} disabled={provisionLoading}>
+                {provisionLoading ? 'Creating...' : 'Create Teacher'}
+              </button>
             </div>
           </section>
 
@@ -157,12 +385,13 @@ export default function SchoolBoard() {
                     <th>Homework</th>
                     <th>Quizzes</th>
                     <th>CAT Sheets</th>
+                    <th>School IT</th>
                     <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.teachers.length === 0 && (
-                    <tr><td colSpan={8}>No teachers found.</td></tr>
+                    <tr><td colSpan={9}>No teachers found.</td></tr>
                   )}
                   {data.teachers.map((t) => (
                     <tr key={t.id}>
@@ -173,6 +402,16 @@ export default function SchoolBoard() {
                       <td>{t.homework_count}</td>
                       <td>{t.quizzes_count}</td>
                       <td>{t.cat_sheets_count}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          onClick={() => toggleSchoolIT(t)}
+                          disabled={delegatingId === t.id}
+                        >
+                          {delegatingId === t.id ? 'Saving...' : t.is_school_it ? 'Revoke School IT' : 'Grant School IT'}
+                        </button>
+                      </td>
                       <td>
                         {t.is_suspended ? 'Suspended' : t.is_approved ? 'Active' : 'Pending'}
                       </td>

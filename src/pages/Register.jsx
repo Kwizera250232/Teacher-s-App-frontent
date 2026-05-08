@@ -7,7 +7,7 @@ import './Auth.css';
 export default function Register() {
   const [searchParams] = useSearchParams();
   const searchRole = searchParams.get('role');
-  const defaultRole = ['teacher', 'head_teacher'].includes(searchRole) ? searchRole : 'student';
+  const defaultRole = ['head_teacher'].includes(searchRole) ? searchRole : 'student';
   const classCode = searchParams.get('code') || '';
 
   const [form, setForm] = useState({
@@ -26,10 +26,11 @@ export default function Register() {
     head_teacher_name: '',
     head_teacher_phone: '',
     head_teacher_email: '',
+    email_domain: '',
   });
 
   const [createSchoolProfile, setCreateSchoolProfile] = useState(
-    defaultRole === 'teacher' || defaultRole === 'head_teacher'
+    defaultRole === 'head_teacher'
   );
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
@@ -52,7 +53,7 @@ export default function Register() {
 
     try {
       const needsSchoolProfile =
-        (form.role === 'teacher' || form.role === 'head_teacher') && createSchoolProfile;
+        form.role === 'head_teacher' && createSchoolProfile;
 
       if (needsSchoolProfile) {
         const requiredSchoolFields = [
@@ -91,6 +92,7 @@ export default function Register() {
           head_teacher_name: form.head_teacher_name,
           head_teacher_phone: form.head_teacher_phone,
           head_teacher_email: form.head_teacher_email,
+          email_domain: form.email_domain,
         };
       }
 
@@ -154,6 +156,9 @@ export default function Register() {
           <>
             <h2>Fungura Konti</h2>
             <p className="auth-sub">Injira mu rubuga rw'inyigisho</p>
+            <div className="alert alert-info" style={{ marginBottom: 14 }}>
+              Koresha imeyili y'ishuri gusa (urugero: izina@brightschool.edu). Niba udafite imeyili y'ishuri, hamagara School IT.
+            </div>
             {error && <div className="alert alert-error">{error}</div>}
 
             <form onSubmit={handleSubmit}>
@@ -174,7 +179,7 @@ export default function Register() {
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="you@example.com"
+                  placeholder="you@brightschool.edu"
                   required
                 />
               </div>
@@ -210,7 +215,7 @@ export default function Register() {
                   onChange={(e) => {
                     const nextRole = e.target.value;
                     setForm({ ...form, role: nextRole });
-                    if (nextRole === 'teacher' || nextRole === 'head_teacher') {
+                    if (nextRole === 'head_teacher') {
                       setCreateSchoolProfile(true);
                     } else {
                       setCreateSchoolProfile(false);
@@ -218,7 +223,6 @@ export default function Register() {
                   }}
                 >
                   <option value="student">Umunyeshuri</option>
-                  <option value="teacher">Umwarimu</option>
                   <option value="head_teacher">Ndi umuyobozi w'ishuri</option>
                 </select>
               </div>
@@ -228,7 +232,7 @@ export default function Register() {
                 <select
                   value={form.school_id}
                   onChange={(e) => setForm({ ...form, school_id: e.target.value })}
-                  disabled={(form.role === 'teacher' || form.role === 'head_teacher') && createSchoolProfile}
+                  disabled={form.role === 'head_teacher' && createSchoolProfile}
                 >
                   <option value="">Hitamo ishuri...</option>
                   {schools.map((s) => (
@@ -239,7 +243,7 @@ export default function Register() {
                 </select>
               </div>
 
-              {(form.role === 'teacher' || form.role === 'head_teacher') && (
+              {form.role === 'head_teacher' && (
                 <div className="register-school-panel">
                   <div className="register-school-header">
                     <h3>🏫 School Onboarding</h3>
@@ -354,6 +358,16 @@ export default function Register() {
                           onChange={(e) => setForm({ ...form, head_teacher_email: e.target.value })}
                           placeholder="headteacher@school.rw"
                           required={createSchoolProfile}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>School Email Domain</label>
+                        <input
+                          type="text"
+                          value={form.email_domain}
+                          onChange={(e) => setForm({ ...form, email_domain: e.target.value })}
+                          placeholder="brightschool.edu"
                         />
                       </div>
                     </div>

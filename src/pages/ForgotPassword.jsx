@@ -48,6 +48,7 @@ export default function ForgotPassword() {
       login(data.token, data.user);
       // 3. Navigate immediately — no extra screen
       if (data.user.role === 'admin') navigate('/admin');
+      else if (data.user.role === 'head_teacher') navigate('/school-board');
       else if (data.user.role === 'teacher') navigate('/teacher/dashboard');
       else navigate('/student/dashboard');
     } catch (err) {

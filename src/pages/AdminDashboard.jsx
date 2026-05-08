@@ -12,6 +12,7 @@ import AdminReports from '../components/admin/AdminReports';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminTextbooks from '../components/admin/AdminTextbooks';
 import AdminStudentArticles from '../components/admin/AdminStudentArticles';
+import AdminNurseryMedia from '../components/admin/AdminNurseryMedia';
 import VerifiedBadge from '../components/VerifiedBadge';
 import './AdminDashboard.css';
 
@@ -26,6 +27,7 @@ const NAV = [
   { key: 'articles', label: 'Articles', icon: '🧾' },
   { key: 'reports', label: 'Reports', icon: '💬' },
   { key: 'textbooks', label: 'AI Textbooks', icon: '🎓' },
+  { key: 'nursery-media', label: 'Nursery Media', icon: '🎵' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -134,7 +136,6 @@ export default function AdminDashboard() {
           <button className="admin-toggle" onClick={() => setSidebarOpen(o => !o)}>☰</button>
           <h1 className="admin-page-title">{NAV.find(n => n.key === page)?.label}</h1>
           <div className="admin-user-info">
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate('/school-board')}>🏫 School Board</button>
             <button className="btn btn-secondary btn-sm" onClick={openViewAs}>👁 View As</button>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👤 {user?.name}<VerifiedBadge size={14} info={{ items: [
               { icon: '🔐', label: 'Role', value: 'Admin' },
@@ -202,6 +203,7 @@ export default function AdminDashboard() {
           {page === 'articles' && <AdminStudentArticles token={token} />}
           {page === 'reports' && <AdminReports token={token} />}
           {page === 'textbooks' && <AdminTextbooks token={token} />}
+          {page === 'nursery-media' && <AdminNurseryMedia token={token} />}
           {page === 'settings' && <AdminSettings token={token} />}
         </div>
       </div>

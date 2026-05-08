@@ -3,7 +3,7 @@ import { api } from '../../api';
 
 export default function AdminSchools({ token }) {
   const [schools, setSchools] = useState([]);
-  const [form, setForm] = useState({ name: '', location: '', code: '' });
+  const [form, setForm] = useState({ name: '', location: '', code: '', email_domain: '' });
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState('');
 
@@ -22,7 +22,7 @@ export default function AdminSchools({ token }) {
           body: JSON.stringify(form),
         });
       }
-      setForm({ name: '', location: '', code: '' });
+      setForm({ name: '', location: '', code: '', email_domain: '' });
       setEditing(null);
       setError('');
       load();
@@ -37,7 +37,7 @@ export default function AdminSchools({ token }) {
     load();
   };
 
-  const edit = (s) => { setEditing(s.id); setForm({ name: s.name, location: s.location || '', code: s.code || '' }); };
+  const edit = (s) => { setEditing(s.id); setForm({ name: s.name, location: s.location || '', code: s.code || '', email_domain: s.email_domain || '' }); };
 
   return (
     <div className="admin-card">
@@ -51,23 +51,30 @@ export default function AdminSchools({ token }) {
         <input className="admin-input" placeholder="School Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
         <input className="admin-input" placeholder="Location" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
         <input className="admin-input" placeholder="Code (optional)" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} />
+        <input className="admin-input" placeholder="Email domain e.g. brightschool.edu" value={form.email_domain} onChange={e => setForm(f => ({ ...f, email_domain: e.target.value }))} />
         <button className="btn-sm btn-primary" onClick={save}>{editing ? 'Update' : '+ Add School'}</button>
-        {editing && <button className="btn-sm btn-outline" onClick={() => { setEditing(null); setForm({ name: '', location: '', code: '' }); }}>Cancel</button>}
+        {editing && <button className="btn-sm btn-outline" onClick={() => { setEditing(null); setForm({ name: '', location: '', code: '', email_domain: '' }); }}>Cancel</button>}
       </div>
+
+      <p style={{ color: '#475569', fontSize: '0.875rem', marginTop: '-0.25rem', marginBottom: '1rem' }}>
+        Generated student logins can use this domain, for example <strong>kwizera@brightschool.edu</strong>.
+        For Gmail or other external platforms, the domain must also be connected to a real mail service.
+      </p>
 
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
-            <tr><th>#</th><th>Name</th><th>Location</th><th>Code</th><th>Users</th><th>Created</th><th>Actions</th></tr>
+            <tr><th>#</th><th>Name</th><th>Location</th><th>Code</th><th>Email Domain</th><th>Users</th><th>Created</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {schools.length === 0 && <tr><td colSpan={7} className="empty-text">No schools yet.</td></tr>}
+            {schools.length === 0 && <tr><td colSpan={8} className="empty-text">No schools yet.</td></tr>}
             {schools.map((s, i) => (
               <tr key={s.id}>
                 <td>{i + 1}</td>
                 <td><strong>{s.name}</strong></td>
                 <td>{s.location || '—'}</td>
                 <td>{s.code ? <span className="badge badge-blue">{s.code}</span> : '—'}</td>
+                <td>{s.email_domain || '—'}</td>
                 <td>{s.user_count}</td>
                 <td>{new Date(s.created_at).toLocaleDateString()}</td>
                 <td style={{ display: 'flex', gap: '0.4rem' }}>
