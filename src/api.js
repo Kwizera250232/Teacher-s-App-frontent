@@ -1,6 +1,14 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export const UPLOADS_BASE = import.meta.env.VITE_UPLOADS_URL || API_BASE.replace(/\/api$/, '');
 
+function normalizeLegacySchoolDomainError(message) {
+  const text = String(message || '');
+  if (/school email domain is not configured/i.test(text)) {
+    return 'School email is now auto-generated from school name as schoolname.edu. Please try creating the account again.';
+  }
+  return text;
+}
+
 async function request(method, endpoint, body, token) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -14,7 +22,7 @@ async function request(method, endpoint, body, token) {
     throw new Error(`Server returned ${res.status} — check that the API URL is correct.`);
   }
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok) throw new Error(normalizeLegacySchoolDomainError(data.error || 'Request failed'));
   return data;
 }
 

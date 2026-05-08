@@ -138,7 +138,7 @@ export default function AdminTeachers({ token }) {
         <h2 className="admin-section-title">➕ Create Teacher (School Email)</h2>
         {selectedSchool && (
           <p style={{ margin: '0.4rem 0 0.9rem', color: '#475569', fontSize: '0.9rem' }}>
-            Email domain: <strong>{selectedSchool.email_domain || 'configure school domain first'}</strong>
+            Email domain: <strong>{selectedSchool.email_domain || `${(selectedSchool.name || 'school').toLowerCase().replace(/[^a-z0-9]+/g, '') || 'school'}.edu`}</strong>
           </p>
         )}
         {createMsg && <div style={{ marginBottom: 12, color: '#16a34a' }}>{createMsg}</div>}
