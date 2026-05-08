@@ -30,30 +30,6 @@
     overflow-x: hidden;
   }
 
-  p,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  li,
-  td,
-  th,
-  span {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-
-  .admin-card,
-  .school-card,
-  .profile-view-card,
-  .profile-form,
-  .auth-card {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
   img,
   video,
   canvas,

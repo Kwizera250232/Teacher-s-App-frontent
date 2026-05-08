@@ -177,6 +177,12 @@ body {
 /* Class page */
 .class-page { min-height: 100vh; background: #f5f6fa; }
 .class-main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+.class-main,
+.item-card,
+.item-card-body {
+  min-width: 0;
+  overflow-x: hidden;
+}
 
 .class-hero {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

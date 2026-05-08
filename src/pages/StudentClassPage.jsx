@@ -226,7 +226,7 @@ export default function StudentClassPage() {
                       background: '#f0f2ff', border: '1px solid #c7d2fe', borderRadius: 6,
                       padding: '3px 10px', fontSize: 12, color: '#4338ca', fontWeight: 600 }}>
                       <span>📎</span>
-                      <span style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                      <span style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {n.file_name.replace(/^\d+-\d+\./, '')}
                       </span>
                     </div>
@@ -275,7 +275,7 @@ export default function StudentClassPage() {
                             background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 6,
                             padding: '3px 10px', fontSize: 12, color: '#c2410c', fontWeight: 600 }}>
                             <span>📎</span>
-                            <span style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                            <span style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {hw.file_name.replace(/^\d+-\d+\./, '')}
                             </span>
                           </div>
@@ -334,7 +334,7 @@ export default function StudentClassPage() {
                             background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6,
                             padding: '3px 10px', fontSize: 12, color: '#15803d', fontWeight: 600 }}>
                             <span>📎</span>
-                            <span style={{ maxWidth: '100%', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                            <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {sub.file_name.replace(/^\d+-\d+\./, '')}
                             </span>
                           </div>

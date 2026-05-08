@@ -74,7 +74,6 @@ function getFileType(ext) {
 export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
   const [loading, setLoading] = useState(true);
   const [textContent, setTextContent] = useState('');
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
   const displayName = fileName ? fileName.replace(/^\d+-\d+\./, '') : 'Document';
   const rawExt = displayName.includes('.') ? displayName.split('.').pop() : '';
   const ext = rawExt.toUpperCase();
@@ -161,45 +160,34 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1000, display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
       {/* Header */}
       <div style={{
-        background: '#1e293b', padding: isMobile ? '10px 10px' : '10px 16px',
+        background: '#1e293b', padding: '10px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexShrink: 0, gap: 10, flexWrap: isMobile ? 'wrap' : 'nowrap',
+        flexShrink: 0, gap: 10, minWidth: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden', minWidth: 0, width: isMobile ? '100%' : 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden', minWidth: 0 }}>
           <span style={{
             background: badgeColor, color: '#fff', fontWeight: 700,
             fontSize: 11, padding: '2px 8px', borderRadius: 4, flexShrink: 0,
           }}>{ext || 'FILE'}</span>
-          <span style={{
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: isMobile ? 13 : 15,
-            overflow: 'hidden',
-            textOverflow: isMobile ? 'clip' : 'ellipsis',
-            whiteSpace: isMobile ? 'normal' : 'nowrap',
-            wordBreak: 'break-word',
-          }}>
+          <span style={{ color: '#fff', fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {displayName}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, minWidth: 0 }}>
           <a href={fileUrl} download={displayName} style={{
             padding: '6px 14px', background: '#334155', color: '#fff',
             borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-            flex: isMobile ? 1 : 'none', textAlign: 'center',
           }}>⬇ Download</a>
           <a href={fileUrl} target="_blank" rel="noreferrer" style={{
             padding: '6px 14px', background: '#334155', color: '#fff',
             borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-            flex: isMobile ? 1 : 'none', textAlign: 'center',
           }}>↗ New tab</a>
           <button onClick={onClose} style={{
             background: '#ef4444', color: '#fff', border: 'none',
             borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 700, fontSize: 14,
-            flex: isMobile ? 1 : 'none',
           }}>✕ Close</button>
         </div>
       </div>
