@@ -42,16 +42,16 @@ export default function TeacherDashboard() {
         <div className="dash-user">
           <div className="dash-user-layout">
             <div className="dash-user-row dash-user-row-top">
-              <span className="dash-user-name" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
+              <span className="dash-user-name">👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
                 { icon: '👨‍🏫', label: 'Role', value: 'Teacher' },
                 { icon: '📧', label: 'Email', value: user?.email },
               ] }} /></span>
-              {isImpersonating && (
-                <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
-              )}
               <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
                 💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
               </Link>
+              {isImpersonating && (
+                <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
+              )}
             </div>
             <div className="dash-user-row dash-user-row-bottom">
               <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
