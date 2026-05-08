@@ -80,6 +80,20 @@ body {
 .dash-brand { font-size: 20px; font-weight: 700; color: #667eea; }
 .dash-user { display: flex; align-items: flex-start; gap: 16px; font-size: 14px; color: #555; }
 
+.dash-user-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.dash-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .dash-main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
 
 .dash-top {
@@ -100,18 +114,6 @@ body {
 .classes-grid-main {
   grid-template-columns: 1fr;
   max-width: 860px;
-}
-
-/* Top-corner action visibility for dashboard header */
-.dash-corner-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: stretch;
-  min-width: 140px;
-}
-.dash-corner-actions .btn {
-  justify-content: center;
 }
 
 .class-card {
@@ -433,6 +435,20 @@ body {
   .dash-user { flex-wrap: wrap; gap: 6px; width: 100%; justify-content: space-between; align-items: flex-start; }
   .dash-brand { font-size: 18px; }
 
+  .dash-user-layout {
+    width: 100%;
+  }
+
+  .dash-user-row {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .dash-user-row .btn,
+  .dash-user-row a.btn {
+    min-width: 0;
+  }
+
   .classes-grid { grid-template-columns: 1fr; gap: 14px; }
 
   .class-hero { flex-direction: column; }
@@ -480,18 +496,6 @@ body {
   .responsive-inline-form { flex-direction: column; }
   .responsive-inline-form .btn { width: 100%; justify-content: center; }
 
-  .dash-corner-actions {
-    width: auto;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    gap: 6px;
-    min-width: 132px;
-  }
-  .dash-corner-actions .btn,
-  .dash-corner-actions a.btn {
-    flex: 0 0 auto;
-    min-width: 0;
-  }
 }
 
 @media (max-width: 768px) {
