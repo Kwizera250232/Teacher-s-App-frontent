@@ -526,8 +526,9 @@ body {
     max-width: 100%;
     white-space: normal;
     text-overflow: clip;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+    overflow-wrap: break-word;
+    word-break: normal;
+    line-height: 1.35;
   }
   .doc-actions {
     width: 100%;
@@ -540,6 +541,12 @@ body {
   .doc-actions a.btn {
     flex: 1 1 calc(50% - 8px);
     text-align: center;
+  }
+  .item-card-btns {
+    width: 100%;
+  }
+  .item-card-btns .btn {
+    flex: 1 1 calc(50% - 8px);
   }
   .item-card-actions { width: 100%; flex-wrap: wrap; }
   .item-card-actions .btn { flex: 1; justify-content: center; min-width: 0; }

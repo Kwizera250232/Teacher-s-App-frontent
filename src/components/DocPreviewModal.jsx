@@ -84,8 +84,10 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
 
   // Strip query params for Office Online viewer (needs clean URL)
   const cleanFileUrl = fileUrl.split('?')[0];
-  // Office Online viewer — works for DOC, DOCX, PPT, PPTX, XLS, XLSX
-  const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(cleanFileUrl)}`;
+  // Mobile uses Google Docs Viewer for better readability on small screens.
+  const officeUrl = isNarrow
+    ? `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(cleanFileUrl)}`
+    : `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(cleanFileUrl)}`;
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -154,7 +156,7 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
       return (
         <iframe
           src={officeUrl}
-          style={{ flex: 1, border: 'none', background: '#fff', width: '100%', minWidth: 0 }}
+          style={{ flex: 1, border: 'none', background: '#fff', width: '100%', minWidth: 0, minHeight: 0 }}
           title={displayName}
           allowFullScreen
           onLoad={() => setLoading(false)}
@@ -172,7 +174,7 @@ export default function DocPreviewModal({ fileUrl, fileName, onClose }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1000, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overscrollBehavior: 'contain' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1000, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overscrollBehavior: 'contain', height: '100dvh' }}>
       {/* Header */}
       <div style={{
         background: '#1e293b', padding: '10px 16px',

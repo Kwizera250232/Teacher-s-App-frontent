@@ -378,8 +378,7 @@ export default function TeacherClassPage() {
               const ss = submissionsState[hw.id];
               return (
                 <div key={hw.id} className="item-card" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
-                    <div className="item-card-body" style={{ flex: 1 }}>
+                  <div className="item-card-body" style={{ flex: 1 }}>
                       <h3>📝 {hw.title}</h3>
                       {hw.description && <p>{hw.description}</p>}
                       {dueStatus && (
@@ -408,13 +407,13 @@ export default function TeacherClassPage() {
                           </div>
                         </>
                       )}
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <button className="btn btn-secondary btn-sm" onClick={() => loadSubmissions(hw.id)}>
-                        {ss?.open ? '▲ Hide' : '👥 Submissions'}
-                      </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/homework/${hw.id}`)}>Delete</button>
-                    </div>
+                  </div>
+
+                  <div className="item-card-btns" style={{ marginTop: 10 }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => loadSubmissions(hw.id)}>
+                      {ss?.open ? '▲ Hide' : '👥 Submissions'}
+                    </button>
+                    <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/homework/${hw.id}`)}>Delete</button>
                   </div>
 
                   {/* Submissions panel */}
