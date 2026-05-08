@@ -96,6 +96,23 @@ body {
 /* Classes grid */
 .classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
+/* Student/Teacher dashboard focus: classes as main vertical feature */
+.classes-grid-main {
+  grid-template-columns: 1fr;
+  max-width: 860px;
+}
+
+/* Top-corner action visibility for dashboard header */
+.dash-corner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+.dash-corner-actions .btn {
+  justify-content: center;
+}
+
 .class-card {
   background: white;
   border-radius: 12px;
@@ -412,7 +429,7 @@ body {
 @media (max-width: 600px) {
   .dash-main, .class-main { padding: 16px; }
   .dash-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
-  .dash-user { flex-wrap: wrap; gap: 6px; }
+  .dash-user { flex-wrap: wrap; gap: 6px; width: 100%; justify-content: space-between; }
   .dash-brand { font-size: 18px; }
 
   .classes-grid { grid-template-columns: 1fr; gap: 14px; }
@@ -461,6 +478,18 @@ body {
 
   .responsive-inline-form { flex-direction: column; }
   .responsive-inline-form .btn { width: 100%; justify-content: center; }
+
+  .dash-corner-actions {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .dash-corner-actions .btn,
+  .dash-corner-actions a.btn {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0;
+  }
 }
 
 @media (max-width: 768px) {

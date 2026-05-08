@@ -103,23 +103,25 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="dashboard">
+    <div className="dashboard dashboard-student">
       <header className="dash-header">
         <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
+          <span className="dash-user-name" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
             { icon: '👩‍🎓', label: 'Role', value: 'Student' },
             { icon: '📧', label: 'Email', value: user?.email },
           ] }} /></span>
           {isImpersonating && (
             <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
           )}
-          <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
-          <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
-            💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
-          </Link>
-          <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
-          <button className="btn btn-outline" onClick={logout}>Logout</button>
+          <div className="dash-corner-actions">
+            <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 My Notes</Link>
+            <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
+              💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
+            </Link>
+            <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
+            <button className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
+          </div>
         </div>
       </header>
 
@@ -155,7 +157,7 @@ export default function StudentDashboard() {
             <button className="btn btn-primary" onClick={() => setShowJoin(true)}>Injira mu Ishuri</button>
           </div>
         ) : (
-          <div className="classes-grid">
+          <div className="classes-grid classes-grid-main">
             {classes.map(cls => (
               <div key={cls.id} className="class-card-wrap">
                 <Link to={`/student/classes/${cls.id}`} className="class-card">
