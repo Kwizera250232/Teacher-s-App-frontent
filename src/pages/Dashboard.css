@@ -460,14 +460,36 @@ body {
   .dash-user { flex-wrap: wrap; gap: 6px; width: 100%; justify-content: space-between; align-items: flex-start; }
   .dash-brand { font-size: 18px; }
 
+  .dash-user-layout {
+    max-width: 100%;
+  }
+
   .dash-user-row {
     width: 100%;
     gap: 8px;
   }
 
+  .dash-user-row-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 8px;
+  }
+
+  .dash-user-name {
+    max-width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
+
   .dash-user-row-top > .btn,
   .dash-user-row-top > a.btn {
     flex: 0 0 auto;
+    padding: 7px 10px;
+    font-size: 12px;
   }
 
   .dash-user-row .btn,

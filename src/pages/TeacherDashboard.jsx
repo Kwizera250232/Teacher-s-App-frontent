@@ -65,7 +65,6 @@ export default function TeacherDashboard() {
         <div className="dash-top">
           <div>
             <h1>Amashuri yanjye</h1>
-            <p className="dash-sub">Gucunga amashuri n'abanyeshuri bawe</p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link to="/teacher/cat-marks" className="btn btn-secondary teacher-cat-btn">🧮 Record CAT Marks</Link>
