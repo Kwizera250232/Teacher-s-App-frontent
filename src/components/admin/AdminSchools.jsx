@@ -7,6 +7,7 @@ export default function AdminSchools({ token }) {
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState('');
   const [copiedId, setCopiedId] = useState(null);
+  const [inviteMsg, setInviteMsg] = useState('');
 
   const load = () => api.get('/admin/schools', token).then(setSchools).catch(e => setError(e.message));
   useEffect(() => { load(); }, []);
@@ -47,6 +48,18 @@ export default function AdminSchools({ token }) {
     });
   };
 
+  const generateHeadTeacherInvite = async (schoolId = null) => {
+    try {
+      setError('');
+      setInviteMsg('');
+      const data = await api.post('/admin/invitations/head-teacher', { school_id: schoolId }, token);
+      await navigator.clipboard.writeText(data.invite_link);
+      setInviteMsg(`Head Teacher invitation link copied${data.school_name ? ` for ${data.school_name}` : ''}.`);
+    } catch (e) {
+      setError(e.message || 'Failed to generate invitation link.');
+    }
+  };
+
   return (
     <div className="admin-card">
       <div className="admin-section-header">
@@ -54,6 +67,13 @@ export default function AdminSchools({ token }) {
       </div>
 
       {error && <div style={{ color: '#dc2626', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</div>}
+      {inviteMsg && <div style={{ color: '#166534', marginBottom: '1rem', fontSize: '0.875rem' }}>{inviteMsg}</div>}
+
+      <div style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
+        <button className="btn-sm btn-outline" onClick={() => generateHeadTeacherInvite(null)}>
+          Copy General HT Invite Link
+        </button>
+      </div>
 
       <div className="admin-form-row">
         <input className="admin-input" placeholder="School Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
@@ -102,6 +122,7 @@ export default function AdminSchools({ token }) {
                 <td>{new Date(s.created_at).toLocaleDateString()}</td>
                 <td style={{ display: 'flex', gap: '0.4rem' }}>
                   <button className="btn-sm btn-warning" onClick={() => edit(s)}>✏️ Edit</button>
+                  <button className="btn-sm btn-outline" onClick={() => generateHeadTeacherInvite(s.id)}>Invite HT</button>
                   <button className="btn-sm btn-danger" onClick={() => del(s.id)}>🗑️ Delete</button>
                 </td>
               </tr>

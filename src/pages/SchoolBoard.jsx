@@ -42,6 +42,7 @@ export default function SchoolBoard() {
   const [provisionLoading, setProvisionLoading] = useState(false);
   const [delegatingId, setDelegatingId] = useState(null);
   const [approvingId, setApprovingId] = useState(null);
+  const [inviteStatus, setInviteStatus] = useState('');
   const isHeadTeacher = user?.role === 'head_teacher';
 
   useEffect(() => {
@@ -208,6 +209,18 @@ export default function SchoolBoard() {
     }
   };
 
+  const generateTeacherInvite = async () => {
+    try {
+      setProvisionError('');
+      setInviteStatus('');
+      const data = await api.post('/admin/school/invitations/teacher', {}, token);
+      await navigator.clipboard.writeText(data.invite_link);
+      setInviteStatus('Teacher invitation link copied. Share it with your teachers.');
+    } catch (e) {
+      setProvisionError(e.message || 'Failed to generate teacher invite link.');
+    }
+  };
+
   return (
     <div className="school-board-page">
       <header className="school-board-header">
@@ -245,6 +258,12 @@ export default function SchoolBoard() {
             <div>
               <p className="hero-tag">Welcome Message</p>
               <h2>{school?.welcome_message || `Murakaza neza kuri ${school?.name || 'iri shuri'}!`}</h2>
+              <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn-outline" onClick={generateTeacherInvite}>
+                  Copy Teacher Invite Link
+                </button>
+                {inviteStatus && <span style={{ color: '#065f46', fontSize: '0.875rem' }}>{inviteStatus}</span>}
+              </div>
             </div>
             <div className="hero-code-wrap">
               <span>School Code</span>

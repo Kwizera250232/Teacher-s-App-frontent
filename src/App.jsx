@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import InviteSignup from './pages/InviteSignup';
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherClassPage from './pages/TeacherClassPage';
@@ -56,6 +57,7 @@ export default function App() {
                 <Route path="/join" element={<JoinClass />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/invite" element={<InviteSignup />} />
 
                 <Route path="/admin" element={
                   <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
