@@ -376,6 +376,29 @@ body {
   width: 100%;
 }
 
+/* File chip and action row for notes/homework attachments */
+.doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+.doc-chip-name {
+  display: block;
+  min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.doc-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
 .responsive-inline-form {
   display: flex;
   gap: 10px;
@@ -404,6 +427,28 @@ body {
   .item-card { flex-direction: column; align-items: stretch; gap: 12px; }
   .item-card-btns { flex-direction: row; flex-wrap: wrap; }
   .item-card-btns .btn { flex: 1; justify-content: center; min-width: 0; font-size: 12px; padding: 7px 8px; }
+  .doc-chip {
+    display: flex;
+  }
+  .doc-chip-name {
+    max-width: 100%;
+    white-space: normal;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .doc-actions {
+    width: 100%;
+  }
+  .doc-actions .btn {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+    min-width: 0;
+  }
+  .doc-actions a.btn {
+    flex: 1 1 calc(50% - 8px);
+    text-align: center;
+  }
   .item-card-actions { width: 100%; flex-wrap: wrap; }
   .item-card-actions .btn { flex: 1; justify-content: center; min-width: 0; }
 

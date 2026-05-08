@@ -222,11 +222,11 @@ export default function StudentClassPage() {
                 <div className="item-card-body">
                   <h3>📄 {n.title}</h3>
                   {n.file_name && (
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6,
+                    <div className="doc-chip" style={{ marginTop: 6,
                       background: '#f0f2ff', border: '1px solid #c7d2fe', borderRadius: 6,
                       padding: '3px 10px', fontSize: 12, color: '#4338ca', fontWeight: 600 }}>
                       <span>📎</span>
-                      <span style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span className="doc-chip-name">
                         {n.file_name.replace(/^\d+-\d+\./, '')}
                       </span>
                     </div>
@@ -271,15 +271,15 @@ export default function StudentClassPage() {
                       )}
                       {hw.file_name && (
                         <>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6,
+                          <div className="doc-chip" style={{ marginTop: 6,
                             background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 6,
                             padding: '3px 10px', fontSize: 12, color: '#c2410c', fontWeight: 600 }}>
                             <span>📎</span>
-                            <span style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span className="doc-chip-name">
                               {hw.file_name.replace(/^\d+-\d+\./, '')}
                             </span>
                           </div>
-                          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                          <div className="doc-actions">
                             <button
                               className="btn btn-secondary btn-sm"
                               onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${hw.file_path}?inline=1`, fileName: hw.file_name })}
@@ -330,15 +330,15 @@ export default function StudentClassPage() {
                       {sub.text_response && <p style={{ margin: '4px 0 0' }}>{sub.text_response}</p>}
                       {sub.file_name && (
                         <>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4,
+                          <div className="doc-chip" style={{ marginTop: 4,
                             background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6,
                             padding: '3px 10px', fontSize: 12, color: '#15803d', fontWeight: 600 }}>
                             <span>📎</span>
-                            <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span className="doc-chip-name">
                               {sub.file_name.replace(/^\d+-\d+\./, '')}
                             </span>
                           </div>
-                          <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                          <div className="doc-actions" style={{ marginTop: 6 }}>
                             <button
                               className="btn btn-secondary btn-sm"
                               onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.file_path}?inline=1`, fileName: sub.file_name })}
