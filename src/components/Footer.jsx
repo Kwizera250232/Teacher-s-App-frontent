@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import umunsiLogo from '../assets/umunsi-logo.jpg';
 import umunsimediaLogo from '../assets/umunsimedia-logo.jpg';
 import { useInstallPrompt } from './InstallPrompt';
@@ -38,14 +37,6 @@ export default function Footer() {
         <div className="footer-contact">
           <div className="footer-contact-title">Contact</div>
           <a href="tel:+250783450859" className="footer-contact-num">📞 0783450859</a>
-        </div>
-
-        <div className="footer-legal">
-          <div className="footer-contact-title">Legal</div>
-          <div className="footer-legal-links">
-            <Link to="/terms" className="footer-legal-link">Terms & Conditions</Link>
-            <Link to="/privacy" className="footer-legal-link">Privacy Policy</Link>
-          </div>
         </div>
 
       </div>

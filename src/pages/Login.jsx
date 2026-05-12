@@ -4,30 +4,10 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
-const BLOCKED_PUBLIC_EMAIL_DOMAINS = new Set([
-  'gmail.com',
-  'yahoo.com',
-  'ymail.com',
-  'outlook.com',
-  'hotmail.com',
-  'live.com',
-  'icloud.com',
-  'aol.com',
-  'proton.me',
-  'protonmail.com',
-]);
-
-function emailDomain(email) {
-  const normalized = String(email || '').trim().toLowerCase();
-  if (!normalized.includes('@')) return '';
-  return normalized.split('@').pop();
-}
-
 export default function Login() {
   const [searchParams] = useSearchParams();
   const classCode = searchParams.get('code') || '';
   const [form, setForm] = useState({ email: '', password: '' });
-  const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -37,14 +17,6 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    const domain = emailDomain(form.email);
-    if (BLOCKED_PUBLIC_EMAIL_DOMAINS.has(domain)) {
-      setError("Koresha imeyili y'ishuri gusa (nka @brightschool.edu). Gmail, Yahoo n'izindi ntizemerewe. Hamagara School IT niba ubikeneye.");
-      setLoading(false);
-      return;
-    }
-
     try {
       const data = await api.post('/auth/login', form);
       login(data.token, data.user);
@@ -57,8 +29,6 @@ export default function Login() {
         }
       } else if (data.user.role === 'admin') {
         navigate('/admin');
-      } else if (data.user.role === 'head_teacher') {
-        navigate('/school-board');
       } else {
         navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
       }
@@ -83,36 +53,19 @@ export default function Login() {
               type="email"
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
-              placeholder="you@brightschool.edu"
+              placeholder="you@example.com"
               required
             />
           </div>
           <div className="form-group">
             <label>Ijambo Banga</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPwd ? 'text' : 'password'}
-                value={form.password}
-                onChange={e => setForm({ ...form, password: e.target.value })}
-                placeholder="••••••••"
-                required
-                style={{ paddingRight: 44 }}
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                onClick={() => setShowPwd(v => !v)}
-                style={{
-                  position: 'absolute', right: 10, top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none', border: 'none',
-                  cursor: 'pointer', fontSize: 18, padding: 2, color: '#888',
-                }}
-                aria-label={showPwd ? 'Hisha ijambobanga' : 'Erekana ijambobanga'}
-              >
-                {showPwd ? '🙈' : '👁️'}
-              </button>
-            </div>
+            <input
+              type="password"
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
+              placeholder="••••••••"
+              required
+            />
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'Gutegereza...' : 'Injira'}
@@ -120,11 +73,6 @@ export default function Login() {
         </form>
         <p style={{ textAlign: 'center', marginTop: 10 }}>
           <Link to="/forgot-password" style={{ color: '#667eea', fontSize: 13 }}>Wibagiwe ijambobanga?</Link>
-        </p>
-        <p style={{ textAlign: 'center', marginTop: 8 }}>
-          <Link to="/register?role=head_teacher" style={{ color: '#0ea5e9', fontSize: 13, fontWeight: 700 }}>
-            Sign up as Head Teacher
-          </Link>
         </p>
         <p className="auth-link">Nta konti ufite? <Link to="/register">Iyandikishe</Link></p>
       </div>

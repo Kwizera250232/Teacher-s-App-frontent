@@ -6,22 +6,8 @@ const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export default function AdminContent({ token }) {
   const [tab, setTab] = useState('notes');
   const [data, setData] = useState({ notes: [], homework: [], quizzes: [] });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const load = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const result = await api.get('/admin/content', token);
-      setData(result || { notes: [], homework: [], quizzes: [] });
-    } catch (e) {
-      setError(e.message || 'Failed to load content.');
-      setData({ notes: [], homework: [], quizzes: [] });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const load = () => api.get('/admin/content', token).then(setData).catch(() => {});
   useEffect(() => { load(); }, []);
 
   const delNote = async (id) => {
@@ -39,10 +25,8 @@ export default function AdminContent({ token }) {
               {t.charAt(0).toUpperCase() + t.slice(1)} ({data[t]?.length || 0})
             </button>
           ))}
-          <button className="btn-sm btn-outline" onClick={load} disabled={loading}>{loading ? '...' : '↺'}</button>
         </div>
       </div>
-      {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
 
       <div className="admin-table-wrap">
         {tab === 'notes' && (

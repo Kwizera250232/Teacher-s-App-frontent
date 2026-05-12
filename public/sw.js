@@ -1,5 +1,5 @@
 // Minimal service worker – caches app shell for offline use
-const CACHE = 'uclass-v2';
+const CACHE = 'uclass-v1';
 const PRECACHE = ['/', '/index.html'];
 
 self.addEventListener('install', e => {

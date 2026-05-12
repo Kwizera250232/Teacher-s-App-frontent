@@ -1,118 +1,46 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { downloadCatSheetWord } from '../utils/downloadResult';
-import './Dashboard.css';
-
-const SUBJECTS = [
-  'English',
-  'Kinyarwanda',
-  'Mathematics',
-  'Social and Religious Studies',
-  'SET',
-];
-
-function toInputValue(v) {
-  return v == null ? '' : String(v);
-}
+import '../pages/Dashboard.css';
 
 export default function RecordCatMarks() {
+  const { id } = useParams();
   const { token } = useAuth();
-  const [classes, setClasses] = useState([]);
-  const [classId, setClassId] = useState('');
-  const [subject, setSubject] = useState('');
-  const [lessonTitle, setLessonTitle] = useState('');
-  const [lessonTopic, setLessonTopic] = useState('');
-  const [rows, setRows] = useState([]);
-  const [meta, setMeta] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [recordForm, setRecordForm] = useState({ test_number: 1, student_id: '', marks_obtained: '' });
+  const [quizzes, setQuizzes] = useState([]);
+  const [migrateQuiz, setMigrateQuiz] = useState({ quiz_id: '', test_number: '' });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/classes/cat/classes', token)
-      .then(setClasses)
-      .catch((e) => setError(e.message));
-  }, [token]);
+    Promise.all([
+      api.get(`/classes/${id}/cat-marks/stats`, token).then(setStats),
+      api.get(`/classes/${id}/quizzes`, token).then(setQuizzes),
+    ])
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [id, token]);
 
-  const recalcRow = (cats) => {
-    const cleanCats = cats.map((v) => {
-      if (v === '' || v === null || v === undefined) return null;
-      const n = Number(v);
-      if (!Number.isFinite(n)) return null;
-      if (n < 0) return 0;
-      return Math.round(n * 100) / 100;
-    });
-    const total = cleanCats.reduce((sum, v) => sum + (v == null ? 0 : v), 0);
-    return {
-      cats: cleanCats,
-      total: Math.round(total * 100) / 100,
-      percentage: 0,
-    };
-  };
-
-  const loadSheet = async () => {
-    if (!classId || !subject) return;
-    setLoading(true);
-    setError('');
-    try {
-      const res = await api.get(`/classes/cat/${classId}/sheet?subject=${encodeURIComponent(subject)}`, token);
-      setMeta(res.meta || null);
-      setLessonTitle(res.sheet?.lesson_title || '');
-      setLessonTopic(res.sheet?.lesson_topic || '');
-      setRows((res.rows || []).map((r) => {
-        const cats = Array.isArray(r.cats) ? r.cats : [];
-        return { ...r, cats, total: r.total ?? 0, percentage: r.percentage ?? 0 };
-      }));
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+  const handleRecordMark = async (e) => {
+    e.preventDefault();
+    if (!recordForm.student_id || !recordForm.marks_obtained || recordForm.marks_obtained < 0 || recordForm.marks_obtained > 100) {
+      return setError('Valid student, test number, and marks (0-100) required.');
     }
-  };
-
-  useEffect(() => {
-    if (!classId || !subject) {
-      setRows([]);
-      return;
-    }
-    loadSheet();
-  }, [classId, subject]);
-
-  const selectedClassName = useMemo(() => {
-    const cls = classes.find((c) => String(c.id) === String(classId));
-    return cls?.name || '';
-  }, [classes, classId]);
-
-  const updateCat = (idx, catIndex, raw) => {
-    setRows((prev) => prev.map((r, i) => {
-      if (i !== idx) return r;
-      const cats = [...r.cats];
-      cats[catIndex] = raw;
-      const rec = recalcRow(cats);
-      return { ...r, ...rec };
-    }));
-  };
-
-  const save = async () => {
-    if (!classId || !subject) return;
     setSaving(true);
-    setError('');
-    setSuccess('');
     try {
-      await api.post(`/classes/cat/${classId}/sheet`, {
-        subject,
-        lesson_title: lessonTitle,
-        lesson_topic: lessonTopic,
-        marks: rows.map((r) => ({
-          student_id: r.student_id,
-          cats: r.cats,
-        })),
+      await api.post(`/classes/${id}/cat-marks/mark`, {
+        student_id: parseInt(recordForm.student_id),
+        test_number: parseInt(recordForm.test_number),
+        marks_obtained: parseInt(recordForm.marks_obtained),
+        total_marks: 100,
       }, token);
-      await loadSheet();
-      setSuccess('CAT marks saved successfully.');
+      setRecordForm({ test_number: recordForm.test_number, student_id: '', marks_obtained: '' });
+      setError('');
+      api.get(`/classes/${id}/cat-marks/stats`, token).then(setStats);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -120,118 +48,153 @@ export default function RecordCatMarks() {
     }
   };
 
-  const download = () => {
-    if (!rows.length) return;
-    const fileTag = `${selectedClassName || 'class'}_${subject || 'subject'}_CAT`;
-    downloadCatSheetWord(fileTag.replace(/\s+/g, '_'), {
-      school_name: meta?.school_name || '',
-      teacher_name: meta?.teacher_name || '',
-      class_name: meta?.class_name || selectedClassName,
-      class_subject: meta?.class_subject || '',
-      subject,
-      lesson_title: lessonTitle,
-      lesson_topic: lessonTopic,
-      rows,
-    });
+  const handleMigrateQuiz = async (e) => {
+    e.preventDefault();
+    if (!migrateQuiz.quiz_id || !migrateQuiz.test_number) {
+      return setError('Select a quiz and test number.');
+    }
+    setSaving(true);
+    try {
+      const res = await api.post(`/classes/${id}/cat-marks/migrate-quiz`, {
+        quiz_id: parseInt(migrateQuiz.quiz_id),
+        test_number: parseInt(migrateQuiz.test_number),
+      }, token);
+      setMigrateQuiz({ quiz_id: '', test_number: '' });
+      setError('');
+      api.get(`/classes/${id}/cat-marks/stats`, token).then(setStats);
+      alert(`✅ Migrated ${res.migrated} quiz scores to CAT marks.`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="dashboard">
+    <div className="class-page">
       <header className="dash-header">
-        <div className="dash-brand">🎓 UClass</div>
-        <Link to="/teacher/dashboard" className="btn btn-outline btn-sm">← Back</Link>
+        <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>← Back</button>
+        <div className="dash-brand">📊 Record CAT Marks</div>
       </header>
-
-      <main className="dash-main">
-        <div className="dash-top" style={{ marginBottom: 16 }}>
-          <div>
-            <h1>Record students quizzes marks</h1>
-            <p className="dash-sub">CAT (Continuous Assessment during Term)</p>
-          </div>
-        </div>
-
-        <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Choose Class</label>
-              <select value={classId} onChange={(e) => setClassId(e.target.value)}>
-                <option value="">-- Select Class --</option>
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>{cls.name} ({cls.class_code})</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Choose Subject</label>
-              <select value={subject} onChange={(e) => setSubject(e.target.value)}>
-                <option value="">-- Select Subject --</option>
-                {SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Lesson Title</label>
-              <input value={lessonTitle} onChange={(e) => setLessonTitle(e.target.value)} placeholder="e.g. Fractions CAT" />
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Lesson Topic</label>
-              <input value={lessonTopic} onChange={(e) => setLessonTopic(e.target.value)} placeholder="e.g. Adding fractions" />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-            <button className="btn btn-primary" onClick={save} disabled={!classId || !subject || saving || loading}>
-              {saving ? 'Saving...' : 'Save CAT Marks'}
-            </button>
-            <button className="btn btn-secondary" onClick={loadSheet} disabled={!classId || !subject || loading}>
-              {loading ? 'Loading...' : 'View marks of students'}
-            </button>
-            <button className="btn btn-secondary" onClick={download} disabled={!rows.length}>⬇ Download marks</button>
-          </div>
-        </div>
-
+      <main className="class-main">
         {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
 
-        {!!rows.length && (
-          <div style={{ background: '#fff', borderRadius: 12, padding: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.06)', overflowX: 'auto' }}>
-            <table className="students-table" style={{ minWidth: 1100 }}>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Student</th>
-                  {rows[0]?.cats && Array.from({ length: rows[0].cats.length }, (_, i) => <th key={i}>Mark {i + 1}</th>)}
-                  <th>Total</th>
-                  <th>%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, idx) => (
-                  <tr key={r.student_id}>
-                    <td>{r.number || idx + 1}</td>
-                    <td style={{ minWidth: 180, fontWeight: 600 }}>{r.student_name}</td>
-                    {r.cats.map((cat, c) => (
-                      <td key={c}>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={toInputValue(cat)}
-                          onChange={(e) => updateCat(idx, c, e.target.value)}
-                          style={{ width: 70, padding: '6px 8px', border: '1px solid #e2e8f0', borderRadius: 8 }}
-                        />
-                      </td>
-                    ))}
-                    <td style={{ fontWeight: 700 }}>{r.total ?? 0}</td>
-                    <td style={{ fontWeight: 700 }}>{r.percentage ?? 0}%</td>
-                  </tr>
+        {/* Migrate from Quiz */}
+        <div style={{ background: 'white', padding: '20px', borderRadius: 10, marginBottom: 24, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+          <h2 style={{ marginTop: 0, fontSize: 18 }}>📈 Migrate Quiz Marks to CAT</h2>
+          <p style={{ color: '#666', fontSize: 14, marginBottom: 16 }}>Automatically convert best quiz scores to CAT marks for a test number.</p>
+          <form onSubmit={handleMigrateQuiz} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <select 
+              value={migrateQuiz.quiz_id} 
+              onChange={e => setMigrateQuiz({ ...migrateQuiz, quiz_id: e.target.value })}
+              style={{ flex: 1, minWidth: 200, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+            >
+              <option value="">Select Quiz...</option>
+              {quizzes.map(q => (
+                <option key={q.id} value={q.id}>{q.title}</option>
+              ))}
+            </select>
+            <input 
+              type="number" 
+              min="1" 
+              max="10"
+              value={migrateQuiz.test_number}
+              onChange={e => setMigrateQuiz({ ...migrateQuiz, test_number: e.target.value })}
+              placeholder="Test #"
+              style={{ width: 100, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+            />
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Migrating...' : '🔄 Migrate'}
+            </button>
+          </form>
+        </div>
+
+        {/* Record Individual Mark */}
+        <div style={{ background: 'white', padding: '20px', borderRadius: 10, marginBottom: 24, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+          <h2 style={{ marginTop: 0, fontSize: 18 }}>✏️ Record Mark</h2>
+          <form onSubmit={handleRecordMark} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+            <div className="form-group">
+              <label style={{ fontSize: 13 }}>Test Number *</label>
+              <input 
+                type="number" 
+                min="1" 
+                max="10"
+                value={recordForm.test_number}
+                onChange={e => setRecordForm({ ...recordForm, test_number: e.target.value })}
+                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+              />
+            </div>
+            <div className="form-group">
+              <label style={{ fontSize: 13 }}>Student *</label>
+              <select 
+                value={recordForm.student_id}
+                onChange={e => setRecordForm({ ...recordForm, student_id: e.target.value })}
+                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+              >
+                <option value="">Select...</option>
+                {stats?.students.map(s => (
+                  <option key={s.student_id} value={s.student_id}>{s.name}</option>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              </select>
+            </div>
+            <div className="form-group">
+              <label style={{ fontSize: 13 }}>Marks (0-100) *</label>
+              <input 
+                type="number" 
+                min="0" 
+                max="100"
+                value={recordForm.marks_obtained}
+                onChange={e => setRecordForm({ ...recordForm, marks_obtained: e.target.value })}
+                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={saving} style={{ alignSelf: 'flex-end' }}>
+              {saving ? 'Saving...' : '💾 Record'}
+            </button>
+          </form>
+        </div>
+
+        {/* Stats Table */}
+        <div style={{ background: 'white', padding: '20px', borderRadius: 10, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+          <h2 style={{ marginTop: 0, fontSize: 18 }}>📋 Class CAT Summary</h2>
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#aaa' }}>Loading...</p>
+          ) : !stats || stats.students.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#aaa' }}>No marks recorded yet.</p>
+          ) : (
+            <>
+              <div style={{ marginBottom: 20, padding: '16px 20px', background: '#f0f4ff', borderRadius: 10, border: '2px solid #2563eb' }}>
+                <strong style={{ fontSize: 16, color: '#2563eb' }}>Class Average: {stats.class_average}%</strong>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #e8e8e8', background: '#f9fafb' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700 }}>Student Name</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700 }}>Tests Done</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700 }}>Total Marks</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700 }}>Percentage</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700 }}>Avg %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.students.map((s, i) => (
+                    <tr key={s.student_id} style={{ borderBottom: '1px solid #e8e8e8', background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                      <td style={{ padding: '12px 16px' }}>{s.name}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>{s.test_count}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>{s.total_marks}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <strong style={{ color: s.percentage >= 70 ? '#10b981' : s.percentage >= 50 ? '#f59e0b' : '#ef4444' }}>
+                          {s.percentage}%
+                        </strong>
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>{s.avg_percentage}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
       </main>
     </div>
   );

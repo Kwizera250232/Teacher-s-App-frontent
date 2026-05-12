@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { api } from '../api';
 
 export default function CreateClassModal({ token, onClose, onCreated }) {
-  const [form, setForm] = useState({ name: '', subject: '', head_teacher_code: '' });
+  const [form, setForm] = useState({ name: '', subject: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -47,19 +47,6 @@ export default function CreateClassModal({ token, onClose, onCreated }) {
               onChange={e => setForm({ ...form, subject: e.target.value })}
               placeholder="e.g. Mathematics"
             />
-          </div>
-          <div className="form-group">
-            <label>Head Teacher Code *</label>
-            <input
-              type="password"
-              value={form.head_teacher_code}
-              onChange={e => setForm({ ...form, head_teacher_code: e.target.value })}
-              placeholder="Enter school authorization code"
-              required
-            />
-            <small style={{ color: '#64748b', marginTop: 4, display: 'block' }}>
-              Security check: class creation is allowed only with your school Head Teacher Code.
-            </small>
           </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>

@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import InviteSignup from './pages/InviteSignup';
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherClassPage from './pages/TeacherClassPage';
@@ -18,20 +17,15 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import Messages from './pages/Messages';
-import TermsConditions from './pages/TermsConditions';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import SchoolBoard from './pages/SchoolBoard';
-import NurseryBoard from './pages/NurseryBoard';
 import Footer from './components/Footer';
 import { InstallProvider } from './components/InstallPrompt';
 import './components/Footer.css';
 
-function ProtectedRoute({ children, role, roles }) {
+function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (role && user.role !== role) return <Navigate to="/" replace />;
-  if (Array.isArray(roles) && roles.length > 0 && !roles.includes(user.role)) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -40,8 +34,7 @@ function HomeRedirect() {
   if (loading) return null;
   if (!user) return <Navigate to="/welcome" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
-    if (user.role === 'head_teacher') return <Navigate to="/school-board" replace />;
-    return <Navigate to={user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'} replace />;
+  return <Navigate to={user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'} replace />;
 }
 
 export default function App() {
@@ -57,13 +50,9 @@ export default function App() {
                 <Route path="/join" element={<JoinClass />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/invite" element={<InviteSignup />} />
 
                 <Route path="/admin" element={
                   <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
-                } />
-                <Route path="/school-board" element={
-                  <ProtectedRoute role="head_teacher"><SchoolBoard /></ProtectedRoute>
                 } />
 
                 <Route path="/teacher/dashboard" element={
@@ -72,7 +61,7 @@ export default function App() {
                 <Route path="/teacher/classes/:id" element={
                   <ProtectedRoute role="teacher"><TeacherClassPage /></ProtectedRoute>
                 } />
-                <Route path="/teacher/cat-marks" element={
+                <Route path="/teacher/classes/:id/record-marks" element={
                   <ProtectedRoute role="teacher"><RecordCatMarks /></ProtectedRoute>
                 } />
                 <Route path="/teacher/classes/:classId/quizzes/:quizId/results" element={
@@ -94,9 +83,6 @@ export default function App() {
 
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/terms" element={<TermsConditions />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/nursery-board" element={<NurseryBoard />} />
 
                 <Route path="/profile" element={
                   <ProtectedRoute><Profile /></ProtectedRoute>

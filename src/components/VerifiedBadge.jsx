@@ -24,7 +24,7 @@ export default function VerifiedBadge({ size = 16, info = null, onViewProfile = 
 
   if (!info) {
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 0, flexShrink: 0, verticalAlign: 'middle' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 4, flexShrink: 0, verticalAlign: 'middle' }}>
         <BadgeSvg sz={size} />
       </span>
     );
@@ -36,7 +36,7 @@ export default function VerifiedBadge({ size = 16, info = null, onViewProfile = 
       style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flexShrink: 0, verticalAlign: 'middle' }}
     >
       <span
-        style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 0, cursor: 'pointer' }}
+        style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 4, cursor: 'pointer' }}
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
       >
         <BadgeSvg sz={size} />

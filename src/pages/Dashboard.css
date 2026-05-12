@@ -78,68 +78,23 @@ body {
   z-index: 100;
 }
 .dash-brand { font-size: 20px; font-weight: 700; color: #667eea; }
-.dash-user { display: flex; align-items: flex-start; gap: 16px; font-size: 14px; color: #555; }
+.dash-user { display: flex; align-items: center; gap: 16px; font-size: 14px; color: #555; }
 
-.dash-user-layout {
+.dash-main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+.dash-top {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: stretch;
-  min-width: 0;
-  width: 100%;
-  max-width: 620px;
-}
-
-.dash-user-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.dash-user-row-top {
-  flex-wrap: nowrap;
-  width: 100%;
+  align-items: flex-start;
   justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
-
-.dash-user-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  max-width: 100%;
-  flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.dash-user-row-top > .btn,
-.dash-user-row-top > a.btn {
-  flex: 0 0 auto;
-}
-
-.dash-user-row-bottom .btn,
-.dash-user-row-bottom a.btn {
-  min-width: 140px;
-  justify-content: center;
-}
-
-.dash-user-row-bottom {
-  flex-wrap: nowrap;
-}
+.dash-top h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+.dash-sub { color: #888; font-size: 14px; margin-top: 4px; }
 
 /* Classes grid */
 .classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-
-/* Student/Teacher dashboard focus: classes as main vertical feature */
-.classes-grid-main {
-  grid-template-columns: 1fr;
-  max-width: 860px;
-}
 
 .class-card {
   background: white;
@@ -222,12 +177,6 @@ body {
 /* Class page */
 .class-page { min-height: 100vh; background: #f5f6fa; }
 .class-main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
-.class-main,
-.item-card,
-.item-card-body {
-  min-width: 0;
-  overflow-x: hidden;
-}
 
 .class-hero {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -421,97 +370,15 @@ body {
   width: 100%;
 }
 
-/* File chip and action row for notes/homework attachments */
-.doc-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  min-width: 0;
-}
-.doc-chip-name {
-  display: block;
-  min-width: 0;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.doc-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-
-.responsive-inline-form {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  background: white;
-  padding: 14px 16px;
-  border-radius: 10px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-}
-
 @media (max-width: 600px) {
   .dash-main, .class-main { padding: 16px; }
   .dash-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
-  .dash-user { flex-wrap: wrap; gap: 6px; width: 100%; justify-content: space-between; align-items: flex-start; }
+  .dash-user { flex-wrap: wrap; gap: 6px; }
   .dash-brand { font-size: 18px; }
-
-  .dash-user-layout {
-    max-width: 100%;
-  }
-
-  .dash-user-row {
-    width: 100%;
-    gap: 8px;
-  }
-
-  .dash-user-row-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    column-gap: 8px;
-  }
-
-  .dash-user-name {
-    max-width: 100%;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    overflow-wrap: anywhere;
-    line-height: 1.25;
-  }
-
-  .dash-user-row-top > .btn,
-  .dash-user-row-top > a.btn {
-    flex: 0 0 auto;
-    padding: 7px 10px;
-    font-size: 12px;
-  }
-
-  .dash-user-row .btn,
-  .dash-user-row a.btn {
-    min-width: 0;
-  }
-
-  .dash-user-row-bottom .btn,
-  .dash-user-row-bottom a.btn {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .teacher-cat-btn {
-    display: none;
-  }
 
   .classes-grid { grid-template-columns: 1fr; gap: 14px; }
 
   .class-hero { flex-direction: column; }
-  .class-hero-code .code-big,
-  .code-value { letter-spacing: 1.2px; font-size: 20px; }
   .tabs { overflow-x: auto; gap: 4px; }
   .tab { white-space: nowrap; font-size: 13px; padding: 7px 12px; }
 
@@ -519,53 +386,6 @@ body {
   .item-card { flex-direction: column; align-items: stretch; gap: 12px; }
   .item-card-btns { flex-direction: row; flex-wrap: wrap; }
   .item-card-btns .btn { flex: 1; justify-content: center; min-width: 0; font-size: 12px; padding: 7px 8px; }
-  .doc-chip {
-    display: flex;
-  }
-  .doc-chip-name {
-    max-width: 100%;
-    white-space: normal;
-    text-overflow: clip;
-    overflow-wrap: break-word;
-    word-break: normal;
-    line-height: 1.35;
-  }
-  .doc-actions {
-    width: 100%;
-  }
-  .doc-actions .btn {
-    flex: 1 1 calc(50% - 8px);
-    justify-content: center;
-    min-width: 0;
-  }
-  .doc-actions a.btn {
-    flex: 1 1 calc(50% - 8px);
-    text-align: center;
-  }
-  .item-card-btns {
-    width: 100%;
-  }
-  .item-card-btns .btn {
-    flex: 1 1 calc(50% - 8px);
-  }
-  .item-card-actions { width: 100%; flex-wrap: wrap; }
-  .item-card-actions .btn { flex: 1; justify-content: center; min-width: 0; }
-
-  .section-header { flex-wrap: wrap; gap: 10px; }
-
-  .discussion-input { flex-direction: column; }
-  .discussion-input .btn { width: 100%; justify-content: center; }
-  .disc-comment-form { flex-direction: column; }
-  .disc-comment-form .btn { width: 100%; justify-content: center; }
-
-  .responsive-inline-form { flex-direction: column; }
-  .responsive-inline-form .btn { width: 100%; justify-content: center; }
-
-}
-
-@media (max-width: 768px) {
-  .dash-top h1 { font-size: 24px; }
-  .item-card-body p { overflow-wrap: anywhere; }
 }
 
 /* ── Classmate Cards ───────────────────────────── */

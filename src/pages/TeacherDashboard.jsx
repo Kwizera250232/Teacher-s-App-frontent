@@ -8,7 +8,7 @@ import UmunsiAiModal from '../components/UmunsiAiModal';
 import './Dashboard.css';
 
 export default function TeacherDashboard() {
-  const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
+  const { user, token, logout } = useAuth();
   const [classes, setClasses] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [error, setError] = useState('');
@@ -36,28 +36,19 @@ export default function TeacherDashboard() {
   }, []);
 
   return (
-    <div className="dashboard dashboard-teacher">
+    <div className="dashboard">
       <header className="dash-header">
         <div className="dash-brand">🎓 UClass</div>
         <div className="dash-user">
-          <div className="dash-user-layout">
-            <div className="dash-user-row dash-user-row-top">
-              <span className="dash-user-name">👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
-                { icon: '👨‍🏫', label: 'Role', value: 'Teacher' },
-                { icon: '📧', label: 'Email', value: user?.email },
-              ] }} /></span>
-              <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
-                💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
-              </Link>
-            </div>
-            <div className="dash-user-row dash-user-row-bottom">
-              {isImpersonating && (
-                <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
-              )}
-              <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
-              <button className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
-            </div>
-          </div>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
+            { icon: '👨‍🏫', label: 'Role', value: 'Teacher' },
+            { icon: '📧', label: 'Email', value: user?.email },
+          ] }} /></span>
+          <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
+            💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
+          </Link>
+          <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
+          <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>
 
@@ -65,13 +56,11 @@ export default function TeacherDashboard() {
         <div className="dash-top">
           <div>
             <h1>Amashuri yanjye</h1>
+            <p className="dash-sub">Gucunga amashuri n'abanyeshuri bawe</p>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link to="/teacher/cat-marks" className="btn btn-secondary teacher-cat-btn">🧮 Record CAT Marks</Link>
-            <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-              + Fungura Ishuri
-            </button>
-          </div>
+          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
+            + Fungura Ishuri
+          </button>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
@@ -114,7 +103,7 @@ export default function TeacherDashboard() {
             <button className="btn btn-primary" onClick={() => setShowCreate(true)}>Fungura Ishuri</button>
           </div>
         ) : (
-          <div className="classes-grid classes-grid-main">
+          <div className="classes-grid">
             {classes.map(cls => (
               <div key={cls.id} className="class-card-wrap">
                 <Link to={`/teacher/classes/${cls.id}`} className="class-card">
@@ -138,6 +127,10 @@ export default function TeacherDashboard() {
                 >
                   🎓 Baza Umunsi AI
                 </button>
+                {/* Record Marks button */}
+                <Link to={`/teacher/classes/${cls.id}/record-marks`} className="btn btn-secondary btn-sm" style={{ width: '100%', marginTop: 8, textAlign: 'center' }}>
+                  📊 Record CAT Marks
+                </Link>
               </div>
             ))}
           </div>

@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import './Profile.css';
 import StudentShareFeed from '../components/StudentShareFeed';
 import '../components/StudentShareFeed.css';
-import DeanAiModal from '../components/DeanAiModal';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
 
@@ -42,7 +41,7 @@ function TagInput({ label, values, onChange, placeholder }) {
 }
 
 export default function Profile() {
-  const { user, token, updateUser } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef();
 
@@ -62,11 +61,6 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [showDean, setShowDean] = useState(false);
-  const [emailLocalPart, setEmailLocalPart] = useState('');
-  const [newLoginEmail, setNewLoginEmail] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [emailLoading, setEmailLoading] = useState(false);
 
   useEffect(() => {
     api.get('/profile/me', token).then(p => {
@@ -121,49 +115,6 @@ export default function Profile() {
     }
   };
 
-  const schoolDomain = (() => {
-    const email = String(profile?.email || user?.email || '').toLowerCase();
-    const at = email.indexOf('@');
-    return at > -1 ? email.slice(at + 1) : '';
-  })();
-
-  const changeLoginEmail = async (e) => {
-    e.preventDefault();
-    setMsg('');
-
-    if (!currentPassword.trim()) {
-      setMsg('Current password is required to change login email.');
-      return;
-    }
-    if (!newLoginEmail.trim() && !emailLocalPart.trim()) {
-      setMsg('Provide new login email or email username.');
-      return;
-    }
-
-    try {
-      setEmailLoading(true);
-      const result = await api.put('/profile/me/login-email', {
-        current_password: currentPassword,
-        new_email: newLoginEmail.trim(),
-        email_local_part: emailLocalPart.trim(),
-      }, token);
-
-      if (result?.user) {
-        updateUser(result.user);
-        setProfile((p) => ({ ...(p || {}), email: result.user.email }));
-      }
-
-      setCurrentPassword('');
-      setNewLoginEmail('');
-      setEmailLocalPart('');
-      setMsg(result?.message || 'Login email updated successfully.');
-    } catch (err) {
-      setMsg(err.message || 'Failed to update login email.');
-    } finally {
-      setEmailLoading(false);
-    }
-  };
-
   // ”€”€ View Mode ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
   if (!editMode) {
     return (
@@ -200,58 +151,6 @@ export default function Profile() {
             <span className="profile-role-badge">{user?.role}</span>
           </div>
           <div className="profile-email">✉️ {user?.email}</div>
-
-          <div className="profile-view-section">
-            <div className="profile-view-section-title">🔐 Change Login Email</div>
-            <form onSubmit={changeLoginEmail} style={{ width: '100%' }}>
-              <div className="form-group" style={{ marginBottom: 10 }}>
-                <label>School Email Username (optional)</label>
-                <input
-                  value={emailLocalPart}
-                  onChange={e => setEmailLocalPart(e.target.value)}
-                  placeholder="e.g. john.mugisha"
-                />
-                <small style={{ color: '#64748b' }}>
-                  Username only: username@{schoolDomain || 'school-domain'}
-                </small>
-              </div>
-              <div className="form-group" style={{ marginBottom: 10 }}>
-                <label>Or Enter Full New Login Email</label>
-                <input
-                  type="email"
-                  value={newLoginEmail}
-                  onChange={e => setNewLoginEmail(e.target.value)}
-                  placeholder={schoolDomain ? `you@${schoolDomain}` : 'you@school.edu'}
-                />
-              </div>
-              <div className="form-group" style={{ marginBottom: 10 }}>
-                <label>Current Password (required)</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={e => setCurrentPassword(e.target.value)}
-                  placeholder="Enter current password"
-                />
-              </div>
-              <button type="submit" className="btn btn-outline btn-full" disabled={emailLoading}>
-                {emailLoading ? 'Updating Email...' : 'Update Login Email'}
-              </button>
-            </form>
-          </div>
-
-          {/* Ask Dean button */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <button
-              onClick={() => setShowDean(true)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
-                color: '#fff', border: 'none', borderRadius: 30,
-                padding: '10px 22px', fontSize: 14, fontWeight: 700,
-                cursor: 'pointer', boxShadow: '0 4px 16px rgba(79,70,229,0.35)',
-              }}
-            >🤖 Ask Dean — App Help</button>
-          </div>
 
           {/* Stats */}
           <div className="profile-stats-bar">
@@ -337,8 +236,6 @@ export default function Profile() {
           </div>
         )}
 
-        {showDean && <DeanAiModal token={token} onClose={() => setShowDean(false)} />}
-
         {/* Umunsimedia promo */}
         <div className="umunsimedia-promo">
           <a href="https://umunsimedia.com" target="_blank" rel="noreferrer" className="umunsimedia-link">
@@ -384,44 +281,6 @@ export default function Profile() {
           <span className="profile-role-badge">{user?.role}</span>
         </div>
         <div className="profile-email">✉️ {user?.email}</div>
-
-        <div className="profile-section-title">🔐 Change Login Email</div>
-
-        <div className="form-group">
-          <label>School Email Username (optional)</label>
-          <input
-            value={emailLocalPart}
-            onChange={e => setEmailLocalPart(e.target.value)}
-            placeholder="e.g. john.mugisha"
-          />
-          <small style={{ color: '#64748b' }}>
-            If you enter username only, system builds: username@{schoolDomain || 'school-domain'}
-          </small>
-        </div>
-
-        <div className="form-group">
-          <label>Or Enter Full New Login Email</label>
-          <input
-            type="email"
-            value={newLoginEmail}
-            onChange={e => setNewLoginEmail(e.target.value)}
-            placeholder={schoolDomain ? `you@${schoolDomain}` : 'you@school.edu'}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Current Password (required)</label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={e => setCurrentPassword(e.target.value)}
-            placeholder="Enter current password"
-          />
-        </div>
-
-        <button type="button" className="btn btn-outline btn-full" onClick={changeLoginEmail} disabled={emailLoading}>
-          {emailLoading ? 'Updating Email...' : 'Update Login Email'}
-        </button>
 
         <div className="profile-section-title">📋 Personal Info</div>
 

@@ -11,8 +11,6 @@ import AdminAnnouncements from '../components/admin/AdminAnnouncements';
 import AdminReports from '../components/admin/AdminReports';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminTextbooks from '../components/admin/AdminTextbooks';
-import AdminStudentArticles from '../components/admin/AdminStudentArticles';
-import AdminNurseryMedia from '../components/admin/AdminNurseryMedia';
 import VerifiedBadge from '../components/VerifiedBadge';
 import './AdminDashboard.css';
 
@@ -24,28 +22,18 @@ const NAV = [
   { key: 'classes', label: 'Classes', icon: '📚' },
   { key: 'content', label: 'Content', icon: '📝' },
   { key: 'announcements', label: 'Announcements', icon: '📢' },
-  { key: 'articles', label: 'Articles', icon: '🧾' },
   { key: 'reports', label: 'Reports', icon: '💬' },
   { key: 'textbooks', label: 'AI Textbooks', icon: '🎓' },
-  { key: 'nursery-media', label: 'Nursery Media', icon: '🎵' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
 export default function AdminDashboard() {
-  const { user, token, logout, startImpersonation } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const [page, setPage] = useState('dashboard');
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showViewAs, setShowViewAs] = useState(false);
-  const [teachers, setTeachers] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [selectedTeacher, setSelectedTeacher] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState('');
-  const [impError, setImpError] = useState('');
-  const [impLoading, setImpLoading] = useState(false);
-  const [pendingArticles, setPendingArticles] = useState(0);
 
   useEffect(() => {
     if (page === 'dashboard') {
@@ -53,43 +41,6 @@ export default function AdminDashboard() {
       api.get('/admin/activity', token).then(setActivity).catch(() => {});
     }
   }, [page, token]);
-
-  useEffect(() => {
-    api.get('/admin/student-shares/pending-count', token)
-      .then(r => setPendingArticles(Number(r?.count || 0)))
-      .catch(() => setPendingArticles(0));
-  }, [token, page]);
-
-  const openViewAs = async () => {
-    setShowViewAs(true);
-    setImpError('');
-    if (teachers.length > 0 || students.length > 0) return;
-    try {
-      const [teacherData, studentData] = await Promise.all([
-        api.get('/admin/teachers', token),
-        api.get('/admin/students', token),
-      ]);
-      setTeachers(Array.isArray(teacherData) ? teacherData : []);
-      setStudents(Array.isArray(studentData) ? studentData : []);
-    } catch (e) {
-      setImpError(e.message || 'Failed to load users.');
-    }
-  };
-
-  const viewAs = async (userId) => {
-    if (!userId) return;
-    setImpLoading(true);
-    setImpError('');
-    try {
-      const res = await api.post('/admin/impersonate', { user_id: Number(userId) }, token);
-      startImpersonation(res.token, res.user);
-      navigate(res.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
-    } catch (e) {
-      setImpError(e.message || 'Failed to switch account view.');
-    } finally {
-      setImpLoading(false);
-    }
-  };
 
   const maxCount = activity.length ? Math.max(...activity.map(d => parseInt(d.count))) : 1;
 
@@ -109,16 +60,7 @@ export default function AdminDashboard() {
               onClick={() => setPage(item.key)}
             >
               <span className="admin-nav-icon">{item.icon}</span>
-              {sidebarOpen && (
-                <span className="admin-nav-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  {item.label}
-                  {item.key === 'articles' && pendingArticles > 0 && (
-                    <span style={{ background: '#ef4444', color: '#fff', borderRadius: 20, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
-                      {pendingArticles}
-                    </span>
-                  )}
-                </span>
-              )}
+              {sidebarOpen && <span className="admin-nav-label">{item.label}</span>}
             </button>
           ))}
         </nav>
@@ -136,7 +78,6 @@ export default function AdminDashboard() {
           <button className="admin-toggle" onClick={() => setSidebarOpen(o => !o)}>☰</button>
           <h1 className="admin-page-title">{NAV.find(n => n.key === page)?.label}</h1>
           <div className="admin-user-info">
-            <button className="btn btn-secondary btn-sm" onClick={openViewAs}>👁 View As</button>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👤 {user?.name}<VerifiedBadge size={14} info={{ items: [
               { icon: '🔐', label: 'Role', value: 'Admin' },
               { icon: '📧', label: 'Email', value: user?.email },
@@ -200,56 +141,11 @@ export default function AdminDashboard() {
           {page === 'classes' && <AdminClasses token={token} />}
           {page === 'content' && <AdminContent token={token} />}
           {page === 'announcements' && <AdminAnnouncements token={token} />}
-          {page === 'articles' && <AdminStudentArticles token={token} />}
           {page === 'reports' && <AdminReports token={token} />}
           {page === 'textbooks' && <AdminTextbooks token={token} />}
-          {page === 'nursery-media' && <AdminNurseryMedia token={token} />}
           {page === 'settings' && <AdminSettings token={token} />}
         </div>
       </div>
-
-      {showViewAs && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowViewAs(false)}>
-          <div className="modal" style={{ maxWidth: 520 }}>
-            <h3 style={{ marginBottom: 12 }}>👁 View Account As</h3>
-            <p style={{ color: '#64748b', fontSize: 13, marginBottom: 16 }}>
-              Choose a teacher or student account to open their dashboard using your admin session.
-            </p>
-
-            <div className="form-group">
-              <label>Teacher Account</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <select value={selectedTeacher} onChange={e => setSelectedTeacher(e.target.value)}>
-                  <option value="">Select teacher...</option>
-                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name} ({t.email})</option>)}
-                </select>
-                <button className="btn btn-primary btn-sm" disabled={!selectedTeacher || impLoading} onClick={() => viewAs(selectedTeacher)}>
-                  {impLoading ? 'Opening...' : 'Open'}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Student Account</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <select value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)}>
-                  <option value="">Select student...</option>
-                  {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.email})</option>)}
-                </select>
-                <button className="btn btn-primary btn-sm" disabled={!selectedStudent || impLoading} onClick={() => viewAs(selectedStudent)}>
-                  {impLoading ? 'Opening...' : 'Open'}
-                </button>
-              </div>
-            </div>
-
-            {impError && <div className="alert alert-error" style={{ marginTop: 8 }}>{impError}</div>}
-
-            <div style={{ marginTop: 14, textAlign: 'right' }}>
-              <button className="btn btn-outline btn-sm" onClick={() => setShowViewAs(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
