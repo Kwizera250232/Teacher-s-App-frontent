@@ -256,3 +256,89 @@
 @media (max-width: 380px) {
   .lb-quiz-cards { grid-template-columns: 1fr; }
 }
+
+/* Tabs */
+.lb-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.lb-tab {
+  padding: 10px 20px;
+  border: none;
+  background: #f0f0f0;
+  color: #666;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lb-tab.active {
+  background: #667eea;
+  color: white;
+}
+
+.lb-tab:hover {
+  background: #e0e0e0;
+}
+
+.lb-tab.active:hover {
+  background: #5a6fd8;
+}
+
+/* Composition leaderboard */
+.lb-composition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lb-composition-item {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lb-comp-rank {
+  font-size: 24px;
+  font-weight: 700;
+  color: #666;
+  min-width: 40px;
+  text-align: center;
+}
+
+.lb-comp-content {
+  flex: 1;
+}
+
+.lb-comp-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.lb-comp-author {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.lb-comp-score {
+  font-size: 14px;
+  font-weight: 600;
+  color: #27ae60;
+  margin-bottom: 4px;
+}
+
+.lb-comp-date {
+  font-size: 12px;
+  color: #aaa;
+}

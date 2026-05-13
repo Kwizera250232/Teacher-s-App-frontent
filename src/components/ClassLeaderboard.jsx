@@ -13,8 +13,10 @@ const BADGE_META = {
 
 export default function ClassLeaderboard({ classId }) {
   const { token } = useAuth();
+  const [activeTab, setActiveTab] = useState('quiz');
   const [entries, setEntries] = useState([]);
   const [perQuiz, setPerQuiz] = useState([]);
+  const [compositionEntries, setCompositionEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,10 +25,12 @@ export default function ClassLeaderboard({ classId }) {
     Promise.all([
       api.get(`/classes/${classId}/leaderboard`, token),
       api.get(`/classes/${classId}/top-scorers`, token).catch(() => []),
+      api.get(`/classes/${classId}/composition-leaderboard`, token).catch(() => []),
     ])
-      .then(([overall, topScorers]) => {
+      .then(([overall, topScorers, compositions]) => {
         setEntries(Array.isArray(overall) ? overall : []);
         setPerQuiz(Array.isArray(topScorers) ? topScorers : []);
+        setCompositionEntries(Array.isArray(compositions) ? compositions : []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -45,9 +49,27 @@ export default function ClassLeaderboard({ classId }) {
 
   return (
     <div className="lb-wrapper">
-      {/* Overall top scorer hero banner */}
-      {hasScores && (
-        <div className="lb-hero">
+      {/* Tabs */}
+      <div className="lb-tabs">
+        <button 
+          className={`lb-tab ${activeTab === 'quiz' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('quiz')}
+        >
+          📝 Ibizamini
+        </button>
+        <button 
+          className={`lb-tab ${activeTab === 'composition' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('composition')}
+        >
+          ✍️ Inyandiko
+        </button>
+      </div>
+
+      {activeTab === 'quiz' ? (
+        <>
+          {/* Overall top scorer hero banner */}
+          {hasScores && (
+            <div className="lb-hero">
           <div className="lb-trophy">🏆</div>
           <div className="lb-winner-name">{top.student_name}</div>
           <div className="lb-winner-score">{top.total_score} / {top.total_possible} amanota</div>
@@ -124,6 +146,37 @@ export default function ClassLeaderboard({ classId }) {
           </tbody>
         </table>
       </div>
+        </>
+      ) : (
+        <>
+          {/* Composition leaderboard */}
+          {compositionEntries.length > 0 ? (
+            <div className="lb-composition">
+              <h3 className="lb-section-title">✍️ Inyandiko Nziza</h3>
+              <div className="lb-composition-list">
+                {compositionEntries.map((entry, index) => (
+                  <div key={entry.student_id} className="lb-composition-item">
+                    <div className="lb-comp-rank">
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                    </div>
+                    <div className="lb-comp-content">
+                      <div className="lb-comp-title">{entry.title}</div>
+                      <div className="lb-comp-author">{entry.student_name}</div>
+                      <div className="lb-comp-score">Amanota: {entry.score}/100</div>
+                      <div className="lb-comp-date">{new Date(entry.created_at).toLocaleDateString('rw-RW')}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="lb-empty">
+              <div style={{ fontSize: 50 }}>📝</div>
+              <p>Nta nyandiko yanditswe kandi igaragara hano ubu.</p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
