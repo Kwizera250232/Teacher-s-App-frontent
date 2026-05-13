@@ -40,6 +40,98 @@ function TagInput({ label, values, onChange, placeholder }) {
   );
 }
 
+function TeacherUserCreation({ token }) {
+  const [schools, setSchools] = useState([]);
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'student', school_id: '' });
+  const [createdUser, setCreatedUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.get('/admin/schools', token).then(data => setSchools(data)).catch(() => {});
+  }, [token]);
+
+  const createUser = async () => {
+    if (!newUser.name || !newUser.role || !newUser.school_id) {
+      alert('Name, role, and school are required.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.post('/admin/users', newUser, token);
+      setCreatedUser(res);
+      setNewUser({ name: '', email: '', role: 'student', school_id: '' });
+      alert('User created! Temporary password: ' + res.temp_password);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ background: 'white', padding: '20px', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+        <div className="form-group">
+          <label style={{ fontSize: '14px', fontWeight: 600 }}>Full Name *</label>
+          <input
+            className="profile-input"
+            value={newUser.name}
+            onChange={e => setNewUser(u => ({ ...u, name: e.target.value }))}
+            placeholder="Enter full name"
+          />
+        </div>
+        <div className="form-group">
+          <label style={{ fontSize: '14px', fontWeight: 600 }}>Email (optional)</label>
+          <input
+            className="profile-input"
+            value={newUser.email}
+            onChange={e => setNewUser(u => ({ ...u, email: e.target.value }))}
+            placeholder="name@brightschool.edu"
+          />
+        </div>
+        <div className="form-group">
+          <label style={{ fontSize: '14px', fontWeight: 600 }}>Role *</label>
+          <select
+            className="profile-input"
+            value={newUser.role}
+            onChange={e => setNewUser(u => ({ ...u, role: e.target.value }))}
+          >
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label style={{ fontSize: '14px', fontWeight: 600 }}>School *</label>
+          <select
+            className="profile-input"
+            value={newUser.school_id}
+            onChange={e => setNewUser(u => ({ ...u, school_id: e.target.value }))}
+          >
+            <option value="">Select School</option>
+            {schools.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <button className="btn btn-primary" onClick={createUser} disabled={loading}>
+        {loading ? 'Creating...' : '➕ Create User'}
+      </button>
+
+      {createdUser && (
+        <div style={{ marginTop: '16px', padding: '12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8 }}>
+          <strong>✅ User Created!</strong><br />
+          Name: {createdUser.user.name}<br />
+          Email: {createdUser.user.email}<br />
+          Temp Password: <code>{createdUser.temp_password}</code><br />
+          <small>Share the password securely with the user.</small>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Profile() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
@@ -222,6 +314,17 @@ export default function Profile() {
 
           {msg && <div className={`profile-msg ${msg.includes('success') || msg.includes('updated') ? 'success' : 'error'}`}>{msg}</div>}
         </div>
+
+        {/* User Creation for Teachers */}
+        {(user?.role === 'teacher' || user?.role === 'head_teacher' || user?.role === 'admin') && (
+          <div className="profile-teacher-section">
+            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, color: '#1e40af' }}>👤 Create Student/Teacher Account</h2>
+            <p style={{ color: '#64748b', marginBottom: 20 }}>
+              Create accounts for students or teachers. Email will be auto-generated as @brightschool.edu if not provided.
+            </p>
+            <TeacherUserCreation token={token} />
+          </div>
+        )}
 
         {/* Share feed – students only */}
         {user?.role === 'student' && (
