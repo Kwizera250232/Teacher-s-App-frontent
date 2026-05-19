@@ -16,7 +16,7 @@ export default function AdminSchools({ token }) {
     if (!form.name) return setError('School name is required.');
     try {
       if (editing) {
-        await api.post(`/admin/schools/${editing}`, form, token, 'PUT');
+        await api.put(`/admin/schools/${editing}`, form, token);
       } else {
         await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/schools`, {
           method: 'POST',
@@ -52,7 +52,7 @@ export default function AdminSchools({ token }) {
     try {
       setError('');
       setInviteMsg('');
-      const data = await api.post('/admin/invitations/head-teacher', { school_id: schoolId }, token);
+      const data = await api.post('/admin/invite-head-teacher', { school_id: schoolId }, token);
       await navigator.clipboard.writeText(data.invite_link);
       setInviteMsg(`Head Teacher invitation link copied${data.school_name ? ` for ${data.school_name}` : ''}.`);
     } catch (e) {

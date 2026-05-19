@@ -44,6 +44,7 @@ function TeacherUserCreation({ token }) {
   const [schools, setSchools] = useState([]);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'student', school_id: '' });
   const [createdUser, setCreatedUser] = useState(null);
+  const [bulkNames, setBulkNames] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -57,7 +58,7 @@ function TeacherUserCreation({ token }) {
     }
     setLoading(true);
     try {
-      const res = await api.post('/admin/users', newUser, token);
+      const res = await api.post('/admin/accounts', newUser, token);
       setCreatedUser(res);
       setNewUser({ name: '', email: '', role: 'student', school_id: '' });
       alert('User created! Temporary password: ' + res.temp_password);
@@ -118,6 +119,38 @@ function TeacherUserCreation({ token }) {
       <button className="btn btn-primary" onClick={createUser} disabled={loading}>
         {loading ? 'Creating...' : '➕ Create User'}
       </button>
+
+      <section style={{ marginTop: 20 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 8 }}>Bulk create students</h3>
+        <textarea
+          className="profile-input"
+          style={{ width: '100%', minHeight: 100 }}
+          placeholder="One student name per line"
+          value={bulkNames}
+          onChange={(e) => setBulkNames(e.target.value)}
+        />
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ marginTop: 8 }}
+          disabled={loading}
+          onClick={async () => {
+            if (!bulkNames.trim() || !newUser.school_id) return alert('Enter names and select a school.');
+            setLoading(true);
+            try {
+              const res = await api.post('/admin/accounts/bulk', { names: bulkNames, role: 'student', school_id: newUser.school_id }, token);
+              setBulkNames('');
+              alert(`Created ${res.created.length} student(s).`);
+            } catch (e) {
+              alert(e.message);
+            } finally {
+              setLoading(false);
+            }
+          }}
+        >
+          Create many students
+        </button>
+      </section>
 
       {createdUser && (
         <div style={{ marginTop: '16px', padding: '12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8 }}>
