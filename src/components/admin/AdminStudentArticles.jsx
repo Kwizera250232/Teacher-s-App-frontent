@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -55,7 +55,7 @@ export default function AdminStudentArticles({ token }) {
   return (
     <div className="admin-card">
       <div className="admin-section-header">
-        <h2 className="admin-section-title">🧾 Student Articles Review</h2>
+        <h2 className="admin-section-title">≡ƒº╛ Student Articles Review</h2>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {[
             { key: 'pending', label: 'Pending' },
@@ -85,7 +85,7 @@ export default function AdminStudentArticles({ token }) {
 
       {!loading && rows.map(a => {
         const lines = String(a.content || '').split('\n');
-        const title = lines[0]?.replace('📌 ', '') || 'Untitled';
+        const title = lines[0]?.replace('≡ƒôî ', '') || 'Untitled';
         const shortText = lines.slice(1).join(' ').slice(0, 260);
         return (
           <div key={a.id} style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.9rem 1rem', marginBottom: 10 }}>
@@ -93,13 +93,13 @@ export default function AdminStudentArticles({ token }) {
               <div>
                 <div style={{ fontWeight: 700, color: '#0f172a' }}>{title}</div>
                 <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                  ✍️ {a.student_name} ({a.student_email})
+                  Γ£ì∩╕Å {a.student_name} ({a.student_email})
                 </div>
                 <div style={{ fontSize: 12, color: '#64748b' }}>
-                  🏫 {a.school || '—'} • 🎓 {a.class_name || '—'} • 👨‍🏫 {a.teacher_name || '—'}
+                  ≡ƒÅ½ {a.school || 'ΓÇö'} ΓÇó ≡ƒÄô {a.class_name || 'ΓÇö'} ΓÇó ≡ƒæ¿ΓÇì≡ƒÅ½ {a.teacher_name || 'ΓÇö'}
                 </div>
                 <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                  {new Date(a.created_at).toLocaleString()} • status: {a.status}
+                  {new Date(a.created_at).toLocaleString()} ΓÇó status: {a.status}
                 </div>
               </div>
               {a.status === 'declined' && a.review_note && (
@@ -123,10 +123,10 @@ export default function AdminStudentArticles({ token }) {
                   onChange={e => setReviewText(prev => ({ ...prev, [a.id]: e.target.value }))}
                 />
                 <button className="btn-sm btn-success" disabled={savingId === a.id} onClick={() => moderate(a.id, 'approved')}>
-                  ✅ Approve
+                  Γ£à Approve
                 </button>
                 <button className="btn-sm btn-danger" disabled={savingId === a.id} onClick={() => moderate(a.id, 'declined')}>
-                  ❌ Decline
+                  Γ¥î Decline
                 </button>
               </div>
             )}

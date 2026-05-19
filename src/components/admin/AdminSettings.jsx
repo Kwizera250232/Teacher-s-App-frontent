@@ -26,7 +26,7 @@ export default function AdminSettings({ token }) {
   };
 
   const createUser = async () => {
-    if (!newUser.name || !newUser.role) return alert('Name and role required.');
+    if (!newUser.name || !newUser.role || !newUser.school_id) return alert('Name, role, and school are required.');
     try {
       const res = await api.post('/admin/users', newUser, token);
       setCreatedUser(res);
@@ -76,7 +76,7 @@ export default function AdminSettings({ token }) {
       <div className="admin-card" style={{ maxWidth: 560 }}>
         <h2 className="admin-section-title" style={{ marginBottom: '1.5rem' }}>👤 Create User Account</h2>
         <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1rem' }}>
-          Create student or teacher accounts. Email will be auto-generated if not provided (must be @brightschool.edu).
+          Create student or teacher accounts. Leave email empty to auto-generate from the school domain (schoolname.edu).
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -97,7 +97,7 @@ export default function AdminSettings({ token }) {
               style={{ width: '100%', boxSizing: 'border-box' }}
               value={newUser.email}
               onChange={e => setNewUser(u => ({ ...u, email: e.target.value }))}
-              placeholder="name@brightschool.edu"
+              placeholder="Leave empty for auto-generated email"
             />
           </div>
           <div>

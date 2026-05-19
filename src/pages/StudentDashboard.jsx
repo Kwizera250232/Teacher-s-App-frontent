@@ -8,7 +8,7 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import './Dashboard.css';
 
 export default function StudentDashboard() {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [showJoin, setShowJoin] = useState(false);
@@ -74,6 +74,9 @@ export default function StudentDashboard() {
             { icon: '👩‍🎓', label: 'Role', value: 'Student' },
             { icon: '📧', label: 'Email', value: user?.email },
           ] }} /></span>
+          {isImpersonating && (
+            <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
+          )}
           <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
