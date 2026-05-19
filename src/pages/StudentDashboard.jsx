@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import JoinClassModal from '../components/JoinClassModal';
+import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import VerifiedBadge from '../components/VerifiedBadge';
 import './Dashboard.css';
 
@@ -16,6 +17,10 @@ export default function StudentDashboard() {
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   // Quick note state: { classId, open, text, saving }
   const [quickNote, setQuickNote] = useState(null);
+  const [classmatesClassId, setClassmatesClassId] = useState(null);
+  const [classmates, setClassmates] = useState([]);
+  const [classmatesLoading, setClassmatesLoading] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState(null);
 
   const loadClasses = () => {
     api.get('/classes/my', token).then(setClasses).catch(e => setError(e.message));
@@ -31,6 +36,19 @@ export default function StudentDashboard() {
   useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
   }, []);
+  useEffect(() => {
+    if (classes.length > 0 && !classmatesClassId) {
+      setClassmatesClassId(classes[0].id);
+    }
+  }, [classes, classmatesClassId]);
+  useEffect(() => {
+    if (!classmatesClassId || !token) return;
+    setClassmatesLoading(true);
+    api.get(`/classes/${classmatesClassId}/classmates`, token)
+      .then(res => setClassmates(res.filter(p => p.id !== user?.id)))
+      .catch(() => setClassmates([]))
+      .finally(() => setClassmatesLoading(false));
+  }, [classmatesClassId, token, user?.id]);
 
   const saveQuickNote = async () => {
     if (!quickNote?.text?.trim()) return;
@@ -56,6 +74,7 @@ export default function StudentDashboard() {
             { icon: '👩‍🎓', label: 'Role', value: 'Student' },
             { icon: '📧', label: 'Email', value: user?.email },
           ] }} /></span>
+          <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
@@ -112,6 +131,7 @@ export default function StudentDashboard() {
             <button className="btn btn-primary" onClick={() => setShowJoin(true)}>Injira mu Ishuri</button>
           </div>
         ) : (
+          <>
           <div className="classes-grid">
             {classes.map(cls => (
               <div key={cls.id} className="class-card-wrap">
@@ -142,8 +162,63 @@ export default function StudentDashboard() {
               </div>
             ))}
           </div>
+
+          <section style={{ marginTop: 32 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20 }}>👥 Classmates</h2>
+                <p className="dash-sub" style={{ margin: '4px 0 0' }}>Reba abanyeshuri bari kumwe nawe</p>
+              </div>
+              {classes.length > 1 && (
+                <select
+                  value={classmatesClassId || ''}
+                  onChange={e => setClassmatesClassId(Number(e.target.value))}
+                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14 }}
+                >
+                  {classes.map(cls => (
+                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {classmatesLoading ? (
+              <p style={{ color: '#94a3b8', textAlign: 'center' }}>Loading classmates...</p>
+            ) : (
+              <div className="classmate-grid">
+                {classmates.length === 0 && (
+                  <p style={{ color: '#888', textAlign: 'center', gridColumn: '1 / -1' }}>No classmates in this class yet.</p>
+                )}
+                {classmates.map(p => {
+                  const initials = p.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                  return (
+                    <div key={p.id} className="classmate-card" onClick={() => setSelectedPerson(p)}>
+                      {p.avatar_path
+                        ? <img src={`${UPLOADS_BASE}${p.avatar_path}`} alt={p.name} className="classmate-avatar" />
+                        : <div className="classmate-initials">{initials}</div>}
+                      <div className="classmate-info">
+                        <div className="classmate-name">
+                          {p.name}
+                          <span className="cm-static-badge" title="Verified">✓</span>
+                        </div>
+                        <span className={`cm-role-badge ${p.role}`}>{p.role}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+          </>
         )}
       </main>
+
+      {selectedPerson && (
+        <ClassmateProfileModal
+          person={selectedPerson}
+          onClose={() => setSelectedPerson(null)}
+          onMessage={(uid) => { setSelectedPerson(null); navigate('/messages', { state: { toUserId: uid } }); }}
+        />
+      )}
 
       {showJoin && (
         <JoinClassModal

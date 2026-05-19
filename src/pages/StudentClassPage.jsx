@@ -5,10 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
+import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import VerifiedBadge from '../components/VerifiedBadge';
 import '../pages/Dashboard.css';
 
-const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion'];
+const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Classmates'];
 
 export default function StudentClassPage() {
   const { id } = useParams();
@@ -24,6 +25,8 @@ export default function StudentClassPage() {
   const [subState, setSubState] = useState({});
   const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
+  const [classmates, setClassmates] = useState([]);
+  const [selectedPerson, setSelectedPerson] = useState(null);
 
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
 
@@ -36,6 +39,16 @@ export default function StudentClassPage() {
   const loadTab = async () => {
     setError('');
     if (tab === 'Leaderboard') return; // handled by ClassLeaderboard component
+    if (tab === 'Classmates') {
+      try {
+        const res = await api.get(`/classes/${id}/classmates`, token);
+        setClassmates(res.filter(p => p.id !== user?.id));
+      } catch (e) {
+        setError(e.message);
+        setClassmates([]);
+      }
+      return;
+    }
     try {
       const map = {
         Announcements: `/classes/${id}/announcements`,
@@ -365,7 +378,40 @@ export default function StudentClassPage() {
             </form>
           </>
         )}
+
+        {tab === 'Classmates' && (
+          <div className="classmate-grid">
+            {classmates.length === 0 && (
+              <p style={{ color: '#888', textAlign: 'center', gridColumn: '1 / -1' }}>No classmates yet.</p>
+            )}
+            {classmates.map(p => {
+              const initials = p.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+              return (
+                <div key={p.id} className="classmate-card" onClick={() => setSelectedPerson(p)}>
+                  {p.avatar_path
+                    ? <img src={`${UPLOADS_BASE}${p.avatar_path}`} alt={p.name} className="classmate-avatar" />
+                    : <div className="classmate-initials">{initials}</div>}
+                  <div className="classmate-info">
+                    <div className="classmate-name">
+                      {p.name}
+                      <span className="cm-static-badge" title="Verified">✓</span>
+                    </div>
+                    <span className={`cm-role-badge ${p.role}`}>{p.role}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </main>
+
+      {selectedPerson && (
+        <ClassmateProfileModal
+          person={selectedPerson}
+          onClose={() => setSelectedPerson(null)}
+          onMessage={(uid) => { setSelectedPerson(null); navigate('/messages', { state: { toUserId: uid } }); }}
+        />
+      )}
 
       {previewDoc && (
         <DocPreviewModal

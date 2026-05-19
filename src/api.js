@@ -1,4 +1,7 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const DEFAULT_API_BASE = typeof window !== 'undefined'
+  ? `${window.location.origin}/api`
+  : 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || DEFAULT_API_BASE;
 export const UPLOADS_BASE = import.meta.env.VITE_UPLOADS_URL || API_BASE.replace(/\/api$/, '');
 
 function normalizeLegacySchoolDomainError(message) {
@@ -41,7 +44,14 @@ export async function uploadFile(endpoint, formData, token) {
     headers,
     body: formData,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Upload failed');
+  const contentType = res.headers.get('content-type') || '';
+  let data = {};
+  if (contentType.includes('application/json')) {
+    data = await res.json();
+  } else {
+    const text = await res.text();
+    throw new Error(text || `Upload failed (${res.status})`);
+  }
+  if (!res.ok) throw new Error(normalizeLegacySchoolDomainError(data.error || 'Upload failed'));
   return data;
 }
