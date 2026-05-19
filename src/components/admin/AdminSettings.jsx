@@ -30,7 +30,7 @@ export default function AdminSettings({ token }) {
   const createUser = async () => {
     if (!newUser.name || !newUser.role || !newUser.school_id) return alert('Name, role, and school are required.');
     try {
-      const res = await api.post('/admin/accounts', newUser, token);
+      const res = await api.post('/admin/add-pupil', newUser, token);
       setCreatedUser(res);
       setNewUser({ name: '', email: '', role: 'student', school_id: '' });
       alert('User created! Temporary password: ' + res.temp_password);
@@ -42,7 +42,7 @@ export default function AdminSettings({ token }) {
   const createBulkUsers = async () => {
     if (!bulkNames.trim() || !newUser.school_id) return alert('Enter student names and select a school.');
     try {
-      const res = await api.post('/admin/accounts/bulk', {
+      const res = await api.post('/admin/add-pupils', {
         names: bulkNames,
         role: 'student',
         school_id: newUser.school_id,

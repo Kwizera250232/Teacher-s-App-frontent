@@ -3,6 +3,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/((?!assets|uploads|favicon.ico).*)", "destination": "/index.html" }
+    { "source": "/((?!assets|uploads|favicon.ico|api|download).*)", "destination": "/index.html" }
   ]
 }

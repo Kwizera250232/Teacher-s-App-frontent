@@ -52,7 +52,7 @@ export default function AdminSchools({ token }) {
     try {
       setError('');
       setInviteMsg('');
-      const data = await api.post('/admin/invite-head-teacher', { school_id: schoolId }, token);
+      const data = await api.post('/admin/ht-link', { school_id: schoolId }, token);
       await navigator.clipboard.writeText(data.invite_link);
       setInviteMsg(`Head Teacher invitation link copied${data.school_name ? ` for ${data.school_name}` : ''}.`);
     } catch (e) {

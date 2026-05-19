@@ -58,7 +58,7 @@ function TeacherUserCreation({ token }) {
     }
     setLoading(true);
     try {
-      const res = await api.post('/admin/accounts', newUser, token);
+      const res = await api.post('/admin/add-pupil', newUser, token);
       setCreatedUser(res);
       setNewUser({ name: '', email: '', role: 'student', school_id: '' });
       alert('User created! Temporary password: ' + res.temp_password);
@@ -138,7 +138,7 @@ function TeacherUserCreation({ token }) {
             if (!bulkNames.trim() || !newUser.school_id) return alert('Enter names and select a school.');
             setLoading(true);
             try {
-              const res = await api.post('/admin/accounts/bulk', { names: bulkNames, role: 'student', school_id: newUser.school_id }, token);
+              const res = await api.post('/admin/add-pupils', { names: bulkNames, role: 'student', school_id: newUser.school_id }, token);
               setBulkNames('');
               alert(`Created ${res.created.length} student(s).`);
             } catch (e) {
