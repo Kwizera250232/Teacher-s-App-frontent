@@ -4,7 +4,10 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import TeacherDashboard from './pages/TeacherDashboard';
+import HeadTeacherDashboard from './pages/HeadTeacherDashboard';
+import ParentDashboard from './pages/ParentDashboard';
 import StudentDashboard from './pages/StudentDashboard';
+import { dashboardPath } from './utils/roles';
 import TeacherClassPage from './pages/TeacherClassPage';
 import RecordCatMarks from './pages/RecordCatMarks';
 import StudentClassPage from './pages/StudentClassPage';
@@ -34,8 +37,7 @@ function HomeRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/welcome" replace />;
-  if (user.role === 'admin') return <Navigate to="/admin" replace />;
-  return <Navigate to={user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'} replace />;
+  return <Navigate to={dashboardPath(user.role)} replace />;
 }
 
 export default function App() {
@@ -57,6 +59,19 @@ export default function App() {
                   <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
                 } />
 
+                <Route path="/head-teacher/dashboard" element={
+                  <ProtectedRoute role="head_teacher"><HeadTeacherDashboard /></ProtectedRoute>
+                } />
+                <Route path="/head-teacher/classes/:id" element={
+                  <ProtectedRoute role="head_teacher"><TeacherClassPage /></ProtectedRoute>
+                } />
+                <Route path="/head-teacher/classes/:id/record-marks" element={
+                  <ProtectedRoute role="head_teacher"><RecordCatMarks /></ProtectedRoute>
+                } />
+                <Route path="/head-teacher/classes/:classId/quizzes/:quizId/results" element={
+                  <ProtectedRoute role="head_teacher"><QuizResults /></ProtectedRoute>
+                } />
+
                 <Route path="/teacher/dashboard" element={
                   <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
                 } />
@@ -68,6 +83,10 @@ export default function App() {
                 } />
                 <Route path="/teacher/classes/:classId/quizzes/:quizId/results" element={
                   <ProtectedRoute role="teacher"><QuizResults /></ProtectedRoute>
+                } />
+
+                <Route path="/parent/dashboard" element={
+                  <ProtectedRoute role="parent"><ParentDashboard /></ProtectedRoute>
                 } />
 
                 <Route path="/student/dashboard" element={

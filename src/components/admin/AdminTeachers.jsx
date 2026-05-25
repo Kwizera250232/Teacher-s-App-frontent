@@ -7,6 +7,9 @@ export default function AdminTeachers({ token }) {
   const [teachers, setTeachers] = useState([]);
   const [schools, setSchools] = useState([]);
   const [search, setSearch] = useState('');
+  const [inviteSchoolId, setInviteSchoolId] = useState('');
+  const [inviteMsg, setInviteMsg] = useState('');
+  const [inviteError, setInviteError] = useState('');
 
   const load = () => {
     api.get('/admin/teachers', token).then(setTeachers).catch(() => {});
@@ -44,6 +47,19 @@ export default function AdminTeachers({ token }) {
       body: JSON.stringify({ school_id: school_id || null }),
     });
     load();
+  };
+
+  const inviteTeacher = async () => {
+    if (!inviteSchoolId) return setInviteError('Select a school first.');
+    setInviteError('');
+    setInviteMsg('');
+    try {
+      const data = await api.post('/admin/teacher-link', { school_id: Number(inviteSchoolId) }, token);
+      await navigator.clipboard.writeText(data.invite_link);
+      setInviteMsg(`Teacher invite link copied for ${data.school_name}.`);
+    } catch (e) {
+      setInviteError(e.message || 'Failed to generate invite.');
+    }
   };
 
   const pending = teachers.filter(t => !t.is_approved);
@@ -95,6 +111,17 @@ export default function AdminTeachers({ token }) {
           <h2 className="admin-section-title">👨‍🏫 Abarimu ({approved.length})</h2>
           <input className="admin-input" style={{ maxWidth: 240 }} placeholder="Shakisha izina cyangwa imeyili..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem', padding: '0.75rem', background: '#f0fdf4', borderRadius: 8, border: '1px solid #86efac' }}>
+          <span style={{ fontSize: '0.9rem', color: '#166534', fontWeight: 600 }}>Invite new teacher:</span>
+          <select className="admin-input" style={{ maxWidth: 220 }} value={inviteSchoolId} onChange={e => setInviteSchoolId(e.target.value)}>
+            <option value="">Select school</option>
+            {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <button type="button" className="btn-sm btn-primary" onClick={inviteTeacher}>Copy teacher invite link</button>
+        </div>
+        {inviteError && <p style={{ color: '#dc2626', fontSize: '0.85rem' }}>{inviteError}</p>}
+        {inviteMsg && <p style={{ color: '#166534', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{inviteMsg}</p>}
 
         <div className="admin-table-wrap">
           <table className="admin-table">

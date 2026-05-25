@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { dashboardPath } from '../utils/roles';
 import './Auth.css';
 
 export default function Login() {
@@ -27,10 +28,8 @@ export default function Login() {
         } catch {
           navigate('/student/dashboard');
         }
-      } else if (data.user.role === 'admin') {
-        navigate('/admin');
       } else {
-        navigate(data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+        navigate(dashboardPath(data.user.role));
       }
     } catch (err) {
       setError(err.message);

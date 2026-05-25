@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateQuizModal from '../components/CreateQuizModal';
@@ -7,14 +7,18 @@ import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
+import ClassroomFeed from '../components/ClassroomFeed';
+import CoTeacherInvite from '../components/CoTeacherInvite';
 import '../pages/Dashboard.css';
 
-const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
+const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
 
 export default function TeacherClassPage() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
   const [cls, setCls] = useState(null);
   const [tab, setTab] = useState('Announcements');
   const [data, setData] = useState([]);
@@ -45,7 +49,7 @@ export default function TeacherClassPage() {
 
   const loadTab = async () => {
     setError('');
-    if (tab === 'Leaderboard') return; // handled by ClassLeaderboard component
+    if (tab === 'Leaderboard' || tab === 'Feed') return;
     try {
       const endpointMap = {
         Announcements: `/classes/${id}/announcements`,
@@ -166,7 +170,7 @@ export default function TeacherClassPage() {
   return (
     <div className="class-page">
       <header className="dash-header">
-        <button className="btn btn-outline btn-sm" onClick={() => navigate('/teacher/dashboard')}>← Back</button>
+        <button className="btn btn-outline btn-sm" onClick={() => navigate(`${basePath}/dashboard`)}>← Back</button>
         <div className="dash-brand">🎓 UClass</div>
       </header>
 
@@ -192,6 +196,36 @@ export default function TeacherClassPage() {
 
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
+
+        {tab === 'Feed' && (
+          <>
+            <CoTeacherInvite classId={id} token={token} />
+            <ClassroomFeed classId={id} token={token} />
+            <div style={{ marginTop: '1rem', padding: '1rem', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
+              <h4 style={{ margin: '0 0 0.5rem' }}>📧 Weekly parent update</h4>
+              <p style={{ fontSize: '0.85rem', color: '#92400e', margin: '0 0 0.75rem' }}>
+                Save a weekly summary (behavior, work, attendance, gaps) for parents linked to students in this class.
+              </p>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={async () => {
+                  try {
+                    const r = await api.post(`/parent/classes/${id}/weekly-digest`, {
+                      behavior_note: 'Good participation this week.',
+                      work_summary: 'See classroom feed for assignments.',
+                      attendance: 'Present all sessions',
+                      gaps: '',
+                    }, token);
+                    showSuccess(r.message || 'Digest saved.');
+                  } catch (e) { setError(e.message); }
+                }}
+              >
+                Send weekly digest (save)
+              </button>
+            </div>
+          </>
+        )}
 
         {/* Announcements */}
         {tab === 'Announcements' && (
@@ -497,6 +531,7 @@ export default function TeacherClassPage() {
         {/* Students */}
         {tab === 'Students' && (
           <div style={{ padding: '1.5rem 0' }}>
+            <CoTeacherInvite classId={id} token={token} />
             {data.length === 0 && <p style={{ padding: 20, textAlign: 'center', color: '#888' }}>No students yet.</p>}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'flex-start' }}>
               {data.map(s => {
@@ -585,7 +620,21 @@ export default function TeacherClassPage() {
                   </div>
                 </div>
               </div>
-              <button onClick={() => setSelectedStudent(null)} style={{ marginTop: '1.25rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '0.6rem 2rem', cursor: 'pointer', fontWeight: 600 }}>Funga</button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ marginTop: '1rem', width: '100%' }}
+                onClick={async () => {
+                  try {
+                    const r = await api.post(`/parent/students/${selectedStudent.id}/parent-link`, {}, token);
+                    await navigator.clipboard.writeText(r.invite_link);
+                    showSuccess(`Parent invite link copied for ${r.student_name}`);
+                  } catch (e) { setError(e.message); }
+                }}
+              >
+                Copy parent invite link
+              </button>
+              <button onClick={() => setSelectedStudent(null)} style={{ marginTop: '0.75rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '0.6rem 2rem', cursor: 'pointer', fontWeight: 600 }}>Funga</button>
             </div>
           </div>
         )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { dashboardPath } from '../utils/roles';
 import './Auth.css';
 
 export default function Register() {
@@ -116,10 +117,8 @@ export default function Register() {
         } catch {
           navigate('/student/dashboard');
         }
-      } else if (data.user.role === 'head_teacher' || data.user.role === 'teacher') {
-        navigate('/teacher/dashboard');
       } else {
-        navigate('/student/dashboard');
+        navigate(dashboardPath(data.user.role));
       }
     } catch (err) {
       setError(err.message);

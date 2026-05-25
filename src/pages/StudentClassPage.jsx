@@ -6,10 +6,11 @@ import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import ClassmateProfileModal from '../components/ClassmateProfileModal';
+import ClassroomFeed from '../components/ClassroomFeed';
 import VerifiedBadge from '../components/VerifiedBadge';
 import '../pages/Dashboard.css';
 
-const TABS = ['Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Classmates'];
+const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Classmates'];
 
 export default function StudentClassPage() {
   const { id } = useParams();
@@ -38,7 +39,7 @@ export default function StudentClassPage() {
 
   const loadTab = async () => {
     setError('');
-    if (tab === 'Leaderboard') return; // handled by ClassLeaderboard component
+    if (tab === 'Leaderboard' || tab === 'Feed') return;
     if (tab === 'Classmates') {
       try {
         const res = await api.get(`/classes/${id}/classmates`, token);
@@ -146,6 +147,8 @@ export default function StudentClassPage() {
 
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
+
+        {tab === 'Feed' && <ClassroomFeed classId={id} token={token} />}
 
         {tab === 'Announcements' && (
           data.length === 0

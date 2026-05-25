@@ -14,6 +14,7 @@ import AdminTextbooks from '../components/admin/AdminTextbooks';
 import AdminStudentArticles from '../components/admin/AdminStudentArticles';
 import VerifiedBadge from '../components/VerifiedBadge';
 import { useInstallPrompt } from '../components/InstallPrompt';
+import { dashboardPath } from '../utils/roles';
 import './AdminDashboard.css';
 
 const NAV = [
@@ -84,7 +85,7 @@ export default function AdminDashboard() {
       const res = await api.post('/admin/impersonate', { user_id: Number(userId) }, token);
       startImpersonation(res.token, res.user);
       setShowViewAs(false);
-      navigate(res.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard');
+      navigate(dashboardPath(res.user.role));
     } catch (e) {
       setImpError(e.message || 'Failed to switch account view.');
     } finally {
