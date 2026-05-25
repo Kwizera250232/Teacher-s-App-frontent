@@ -1,8 +1,26 @@
-const DEFAULT_API_BASE = typeof window !== 'undefined'
-  ? `${window.location.origin}/api`
-  : 'http://localhost:5000/api';
-const API_BASE = import.meta.env.VITE_API_URL || DEFAULT_API_BASE;
-export const UPLOADS_BASE = import.meta.env.VITE_UPLOADS_URL || API_BASE.replace(/\/api$/, '');
+const PRODUCTION_API = 'https://studentapi.umunsi.com/api';
+const PRODUCTION_UPLOADS = 'https://studentapi.umunsi.com';
+
+function getDefaultApiBase() {
+  if (typeof window === 'undefined') return 'http://localhost:5000/api';
+  const host = window.location.hostname;
+  if (host === 'student.umunsi.com' || host.endsWith('.vercel.app')) {
+    return PRODUCTION_API;
+  }
+  return `${window.location.origin}/api`;
+}
+
+function getDefaultUploadsBase(apiBase) {
+  if (typeof window === 'undefined') return 'http://localhost:5000';
+  const host = window.location.hostname;
+  if (host === 'student.umunsi.com' || host.endsWith('.vercel.app')) {
+    return PRODUCTION_UPLOADS;
+  }
+  return apiBase.replace(/\/api$/, '');
+}
+
+const API_BASE = import.meta.env.VITE_API_URL || getDefaultApiBase();
+export const UPLOADS_BASE = import.meta.env.VITE_UPLOADS_URL || getDefaultUploadsBase(API_BASE);
 
 function normalizeLegacySchoolDomainError(message) {
   const text = String(message || '');

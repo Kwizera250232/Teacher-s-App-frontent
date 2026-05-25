@@ -74,7 +74,9 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
     setError('');
     setPosting(true);
     try {
-      const prepared = await prepareFeedImageFile(picked);
+      const prepared = /\.(jpe?g|png|webp|gif|bmp|heic)$/i.test(picked.name || '') || picked.type?.startsWith('image/')
+        ? await prepareFeedImageFile(picked)
+        : picked;
       setFile(prepared);
       setPostType((t) => inferPostTypeFromFile(prepared, t));
     } catch (e) {

@@ -1,3 +1,5 @@
+import { UPLOADS_BASE } from '../api';
+
 /** Public site URL for sharing (student.umunsi.com — not the API host). */
 export function publicSiteBase() {
   if (typeof window !== 'undefined' && window.location?.origin) {
@@ -7,10 +9,10 @@ export function publicSiteBase() {
   return String(env).replace(/\/$/, '');
 }
 
-/** Direct link to a note or homework file — uses student.umunsi.com/download/... (proxied to API). */
+/** Direct link to a note or homework file (files live on studentapi.umunsi.com). */
 export function documentShareUrl(kind, filePath) {
   if (!filePath) return null;
-  const base = publicSiteBase();
+  const base = (UPLOADS_BASE || 'https://studentapi.umunsi.com').replace(/\/$/, '');
   const file = String(filePath).replace(/^\//, '');
   return `${base}/download/${kind}/${file}`;
 }
