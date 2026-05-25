@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { api, uploadFile, UPLOADS_BASE } from '../api';
+import { api, uploadFile } from '../api';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 import { useAuth } from '../context/AuthContext';
 import Whiteboard from './Whiteboard';
 import './ClassroomFeed.css';
@@ -21,9 +22,15 @@ const POST_TYPES_STUDENT = [
 ];
 
 function mediaUrl(path) {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  return `${UPLOADS_BASE}${path}`;
+  return resolveMediaUrl(path);
+}
+
+function inferPostTypeFromFile(file, current) {
+  if (!file) return current;
+  if (current === 'drawing') return 'drawing';
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type.startsWith('audio/')) return 'voice';
+  return current;
 }
 
 export default function ClassroomFeed({ classId, token, readOnly = false }) {
@@ -61,15 +68,30 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
 
   useEffect(() => { load(); }, [classId]);
 
+  const onPickFile = (picked) => {
+    if (!picked) return;
+    setFile(picked);
+    setPostType((t) => inferPostTypeFromFile(picked, t));
+  };
+
   const submitPost = async (extraFile = null) => {
     setError('');
+    const upload = extraFile || file;
+    let type = extraFile ? (postType === 'drawing' ? 'drawing' : inferPostTypeFromFile(upload, postType)) : inferPostTypeFromFile(upload, postType);
+    if (['image', 'drawing', 'voice'].includes(type) && !upload) {
+      setError(type === 'image' ? 'Choose a photo first (📷 Choose photo).' : 'Attach a file first.');
+      return;
+    }
+    if (type === 'text' && !body.trim() && !upload) {
+      setError('Write something or attach a photo.');
+      return;
+    }
     setPosting(true);
     try {
       const fd = new FormData();
-      fd.append('post_type', postType);
+      fd.append('post_type', type);
       if (body.trim()) fd.append('body', body.trim());
       if (classworkSummary.trim()) fd.append('classwork_summary', classworkSummary.trim());
-      const upload = extraFile || file;
       if (upload) fd.append('file', upload);
       await uploadFile(`/classroom-feed/${classId}/posts`, fd, token);
       setBody('');
@@ -201,10 +223,30 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
               onChange={(e) => setClassworkSummary(e.target.value)}
             />
           )}
+          {postType === 'image' && (
+            <div className="feed-photo-row">
+              <label className="btn btn-primary btn-sm">
+                📷 Choose photo
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+                />
+              </label>
+              {file && <span className="feed-file-name">✓ {file.name}</span>}
+            </div>
+          )}
           <div className="feed-composer-actions">
             <label className="btn btn-secondary btn-sm">
               📎 Attach
-              <input type="file" hidden onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              <input
+                type="file"
+                hidden
+                accept="image/*,.pdf,.doc,.docx,.webm,.mp3,audio/*"
+                onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+              />
             </label>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowBoard(!showBoard)}>
               🖊️ Whiteboard

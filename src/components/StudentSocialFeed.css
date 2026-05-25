@@ -44,6 +44,8 @@
   font-family: inherit;
 }
 .ssf-composer textarea:focus { border-color: #6366f1; outline: none; }
+.ssf-photo-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap; }
+.ssf-file-name { font-size: 0.85rem; color: #166534; font-weight: 600; }
 .ssf-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
 .ssf-error { color: #dc2626; font-size: 0.9rem; }
 .ssf-loading, .ssf-empty { text-align: center; color: #64748b; padding: 2rem; }

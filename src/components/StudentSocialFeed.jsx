@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { api, uploadFile, UPLOADS_BASE } from '../api';
+import { api, uploadFile } from '../api';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 import { useAuth } from '../context/AuthContext';
 import Whiteboard from './Whiteboard';
 import './StudentSocialFeed.css';
@@ -8,9 +9,15 @@ import './StudentSocialFeed.css';
 const PLACEHOLDER = 'Share your class work here. Feel free to express what you learnt.';
 
 function mediaUrl(path) {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  return `${UPLOADS_BASE}${path}`;
+  return resolveMediaUrl(path);
+}
+
+function inferPostTypeFromFile(file, current) {
+  if (!file) return current;
+  if (current === 'drawing') return 'drawing';
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type.startsWith('audio/')) return 'voice';
+  return current;
 }
 
 function timeAgo(dateStr) {
@@ -50,18 +57,29 @@ export default function StudentSocialFeed({ classes, token }) {
 
   useEffect(() => { if (token) load(); }, [token]);
 
+  const onPickFile = (picked) => {
+    if (!picked) return;
+    setFile(picked);
+    setPostType((t) => inferPostTypeFromFile(picked, t));
+  };
+
   const submitPost = async (extraFile = null) => {
     if (!postClassId) return setError('Join a class first.');
-    if (postType === 'text' && !body.trim() && !extraFile && !file) {
-      return setError('Write what you learnt or attach a photo, drawing, or voice note.');
+    const upload = extraFile || file;
+    let type = extraFile ? (postType === 'drawing' ? 'drawing' : inferPostTypeFromFile(upload, postType)) : inferPostTypeFromFile(upload, postType);
+    if (['image', 'drawing', 'voice'].includes(type) && !upload) {
+      setError(type === 'image' ? 'Choose a photo first.' : 'Attach a file first.');
+      return;
+    }
+    if (type === 'text' && !body.trim() && !upload) {
+      return setError('Write what you learnt or attach a photo.');
     }
     setPosting(true);
     setError('');
     try {
       const fd = new FormData();
-      fd.append('post_type', postType);
+      fd.append('post_type', type);
       if (body.trim()) fd.append('body', body.trim());
-      const upload = extraFile || file;
       if (upload) fd.append('file', upload);
       await uploadFile(`/classroom-feed/${postClassId}/posts`, fd, token);
       setBody('');
@@ -153,10 +171,30 @@ export default function StudentSocialFeed({ classes, token }) {
           onChange={(e) => setBody(e.target.value)}
           rows={3}
         />
+        {postType === 'image' && (
+          <div className="ssf-photo-row">
+            <label className="btn btn-primary btn-sm">
+              📷 Choose photo
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+              />
+            </label>
+            {file && <span className="ssf-file-name">✓ {file.name}</span>}
+          </div>
+        )}
         <div className="ssf-actions">
           <label className="btn btn-secondary btn-sm">
             📎 File
-            <input type="file" hidden accept="image/*,.pdf,.webm,.mp3" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            <input
+              type="file"
+              hidden
+              accept="image/*,.pdf,.webm,.mp3,audio/*"
+              onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+            />
           </label>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowBoard(!showBoard)}>🖊️ Board</button>
           {postType === 'voice' && (
