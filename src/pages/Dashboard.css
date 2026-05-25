@@ -586,3 +586,56 @@ body {
   .classmate-card { padding: 14px 8px 12px; }
   .classmate-name { font-size: 12px; }
 }
+
+.cat-panel {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+.cat-panel h2 { margin-top: 0; font-size: 18px; }
+.cat-form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.cat-form-row label, .cat-form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
+.cat-form-row select, .cat-form-row input, .cat-form-grid select, .cat-form-grid input {
+  padding: 8px 10px;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.cat-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.cat-table-wrap { overflow-x: auto; }
+.cat-class-avg { margin-bottom: 12px; color: #2563eb; }
+.cat-marks-table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.cat-marks-table th,
+.cat-marks-table td {
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+.cat-marks-table th:first-child,
+.cat-marks-table td.cat-name {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: #fff;
+  font-weight: 600;
+  z-index: 1;
+}
+.cat-marks-table thead th { background: #f1f5f9; font-weight: 700; }
+.cat-marks-table tbody tr:nth-child(even) { background: #f8fafc; }
+.cat-marks-table tbody tr:nth-child(even) td.cat-name { background: #f8fafc; }
+.cat-marks-table .cat-total,
+.cat-marks-table .cat-pct { font-weight: 700; }
+.cat-marks-table .cat-avg-row { background: #eff6ff; font-weight: 700; }
+.cat-marks-table .cat-avg-row td.cat-name { background: #eff6ff; }
