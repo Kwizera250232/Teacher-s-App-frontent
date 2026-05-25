@@ -4,6 +4,7 @@ import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
+import { buildShareItem } from '../utils/shareLinks';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import ClassroomFeed from '../components/ClassroomFeed';
@@ -164,9 +165,14 @@ export default function StudentClassPage() {
                 </div>
                 <button
                   className="btn btn-secondary btn-sm"
-                  onClick={() => setShareItem({ title: a.content, text: `Announcement on UClass: ${a.content}`, url: 'https://student.umunsi.com' })}
+                  onClick={() => setShareItem(buildShareItem({
+                    title: a.content,
+                    description: `Announcement on UClass: ${a.content}`,
+                    classId: id,
+                    tab: 'Announcements',
+                  }))}
                 >
-                  🔗 Share
+                  📱 Social Media
                 </button>
               </div>
             ))
@@ -200,8 +206,15 @@ export default function StudentClassPage() {
                     <a href={`${UPLOADS_BASE}/download/notes/${n.file_path}`} download={n.file_name || true} className="btn btn-primary btn-sm">⬇ Download</a>
                     <button
                       className="btn btn-secondary btn-sm"
-                      onClick={() => setShareItem({ title: `📄 ${n.title}`, text: `Check out this note on UClass: ${n.title}`, url: 'https://student.umunsi.com' })}
-                    >🔗 Share</button>
+                      onClick={() => setShareItem(buildShareItem({
+                        title: `📄 ${n.title}`,
+                        description: `Note on UClass: ${n.title}`,
+                        fileKind: 'notes',
+                        filePath: n.file_path,
+                        classId: id,
+                        tab: 'Notes',
+                      }))}
+                    >📱 Social Media</button>
                   </div>
                 )}
               </div>
@@ -245,8 +258,15 @@ export default function StudentClassPage() {
                             <a href={`${UPLOADS_BASE}/download/homework/${hw.file_path}`} download={hw.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
                             <button
                               className="btn btn-secondary btn-sm"
-                              onClick={() => setShareItem({ title: `📝 ${hw.title}`, text: `Check out this homework on UClass: ${hw.title}`, url: 'https://student.umunsi.com' })}
-                            >🔗 Share</button>
+                              onClick={() => setShareItem(buildShareItem({
+                                title: `📝 ${hw.title}`,
+                                description: `Homework on UClass: ${hw.title}`,
+                                fileKind: 'homework',
+                                filePath: hw.file_path,
+                                classId: id,
+                                tab: 'Homework',
+                              }))}
+                            >📱 Social Media</button>
                           </div>
                         </>
                       )}

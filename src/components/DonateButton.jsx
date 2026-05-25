@@ -90,6 +90,12 @@ export default function DonateButton() {
               Help us keep updating tools for Rwanda schools. Minimum <strong>500 RWF</strong>.
             </p>
 
+            <p className="donate-providers-note">
+              <strong>Payment providers:</strong> Only <strong>MTN Mobile Money</strong> is connected today.
+              Airtel Money and bank card need separate APIs (shown as coming soon).
+              The checklist below is MTN&apos;s <em>developer sandbox</em> (Collection + Disbursement test cases), not extra wallets.
+            </p>
+
             <div className="donate-methods">
               {methods.map((m) => (
                 <button
@@ -117,7 +123,8 @@ export default function DonateButton() {
 
             {!info?.mtn_configured && (
               <p className="donate-hint">
-                <strong>Test mode:</strong> No MTN API keys on server yet — payments run as sandbox demo (auto-success for testing). Add keys for live MoMo sandbox.
+                <strong>Testing now:</strong> Demo mode records donations as <strong>SUCCESSFUL</strong> so you can test the app without MTN keys.
+                For real MoMo sandbox, add <code>MTN_SUBSCRIPTION_KEY</code>, <code>MTN_API_USER</code>, and <code>MTN_API_KEY</code> on the server.
               </p>
             )}
 

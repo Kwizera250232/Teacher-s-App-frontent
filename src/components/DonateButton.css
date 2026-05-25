@@ -30,6 +30,16 @@
 }
 .donate-modal h3 { margin: 0 0 0.5rem; color: #1e40af; }
 .donate-tagline { font-size: 0.9rem; color: #475569; line-height: 1.5; }
+.donate-providers-note {
+  font-size: 0.8rem;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  line-height: 1.45;
+  margin: 0.5rem 0;
+}
+.donate-providers-note code { font-size: 0.75rem; }
 .donate-hint { font-size: 0.8rem; color: #b45309; background: #fffbeb; padding: 0.5rem; border-radius: 8px; }
 .donate-modal label { display: block; margin: 0.75rem 0; font-size: 0.85rem; font-weight: 600; }
 .donate-modal input {
