@@ -1,16 +1,22 @@
-import { UPLOADS_BASE } from '../api';
+/** Public site URL for sharing (student.umunsi.com — not the API host). */
+export function publicSiteBase() {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin.replace(/\/$/, '');
+  }
+  const env = import.meta.env.VITE_PUBLIC_URL || 'https://student.umunsi.com';
+  return String(env).replace(/\/$/, '');
+}
 
-/** Direct link to a note or homework file (full URL for WhatsApp, etc.) */
+/** Direct link to a note or homework file — uses student.umunsi.com/download/... (proxied to API). */
 export function documentShareUrl(kind, filePath) {
   if (!filePath) return null;
-  const base = (UPLOADS_BASE || '').replace(/\/$/, '');
+  const base = publicSiteBase();
   const file = String(filePath).replace(/^\//, '');
   return `${base}/download/${kind}/${file}`;
 }
-
 /** Class page link when there is no file attachment */
 export function classPageShareUrl(classId, tab, role = 'student') {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://student.umunsi.com';
+  const origin = publicSiteBase();
   const prefix = role === 'teacher' || role === 'head_teacher' ? '/teacher/classes' : '/student/classes';
   const tabQ = tab ? `?tab=${encodeURIComponent(tab)}` : '';
   return `${origin}${prefix}/${classId}${tabQ}`;
