@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api, uploadFile } from '../api';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { prepareFeedImageFile } from '../utils/compressImage';
 import { useAuth } from '../context/AuthContext';
 import Whiteboard from './Whiteboard';
 import './StudentSocialFeed.css';
@@ -57,15 +58,31 @@ export default function StudentSocialFeed({ classes, token }) {
 
   useEffect(() => { if (token) load(); }, [token]);
 
-  const onPickFile = (picked) => {
+  const onPickFile = async (picked) => {
     if (!picked) return;
-    setFile(picked);
-    setPostType((t) => inferPostTypeFromFile(picked, t));
+    setError('');
+    try {
+      const prepared = picked.type?.startsWith('image/')
+        ? await prepareFeedImageFile(picked)
+        : picked;
+      setFile(prepared);
+      setPostType((t) => inferPostTypeFromFile(prepared, t));
+    } catch (e) {
+      setError(e.message);
+    }
   };
 
   const submitPost = async (extraFile = null) => {
     if (!postClassId) return setError('Join a class first.');
-    const upload = extraFile || file;
+    let upload = extraFile || file;
+    if (upload?.type?.startsWith('image/')) {
+      try {
+        upload = await prepareFeedImageFile(upload);
+      } catch (e) {
+        setError(e.message);
+        return;
+      }
+    }
     let type = extraFile ? (postType === 'drawing' ? 'drawing' : inferPostTypeFromFile(upload, postType)) : inferPostTypeFromFile(upload, postType);
     if (['image', 'drawing', 'voice'].includes(type) && !upload) {
       setError(type === 'image' ? 'Choose a photo first.' : 'Attach a file first.');
