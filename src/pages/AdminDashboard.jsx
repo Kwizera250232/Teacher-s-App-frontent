@@ -13,6 +13,7 @@ import AdminSettings from '../components/admin/AdminSettings';
 import AdminTextbooks from '../components/admin/AdminTextbooks';
 import AdminStudentArticles from '../components/admin/AdminStudentArticles';
 import VerifiedBadge from '../components/VerifiedBadge';
+import { useInstallPrompt } from '../components/InstallPrompt';
 import './AdminDashboard.css';
 
 const NAV = [
@@ -31,6 +32,7 @@ const NAV = [
 
 export default function AdminDashboard() {
   const { user, token, logout, startImpersonation } = useAuth();
+  const { canInstall, triggerInstall } = useInstallPrompt();
   const navigate = useNavigate();
   const [page, setPage] = useState('dashboard');
   const [stats, setStats] = useState(null);
@@ -154,6 +156,7 @@ export default function AdminDashboard() {
                   { label: 'Quizzes', value: stats?.quizzes, icon: '📝', color: '#ef4444' },
                   { label: 'Homework', value: stats?.homework, icon: '📋', color: '#8b5cf6' },
                   { label: 'Pending Articles', value: stats?.pending_articles ?? pendingArticles, icon: '🧾', color: '#ec4899' },
+                  { label: 'App Installs', value: stats?.installations, icon: '📲', color: '#14b8a6' },
                 ].map(s => (
                   <div key={s.label} className="stat-card" style={{ '--accent': s.color }}>
                     <div className="stat-icon">{s.icon}</div>
@@ -163,6 +166,22 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="admin-card" style={{ marginBottom: 24 }}>
+                <h3 className="admin-card-title">📲 Install UClass App</h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: 12 }}>
+                  PWA installs recorded: <strong>{stats?.installations ?? 0}</strong>
+                </p>
+                {canInstall ? (
+                  <button type="button" className="btn btn-primary" onClick={triggerInstall}>
+                    Install app on this device
+                  </button>
+                ) : (
+                  <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                    Open this site in Chrome on mobile/desktop and use the browser menu → Install app, or wait for the install prompt.
+                  </p>
+                )}
               </div>
 
               <div className="admin-card">
