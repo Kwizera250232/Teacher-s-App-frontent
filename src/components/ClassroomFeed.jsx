@@ -148,11 +148,12 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
       const mr = new MediaRecorder(stream);
       chunksRef.current = [];
       mr.ondataavailable = (e) => chunksRef.current.push(e.data);
-      mr.onstop = () => {
+      mr.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        setFile(new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' }));
+        const voiceFile = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
         setPostType('voice');
         stream.getTracks().forEach((t) => t.stop());
+        await submitPost(voiceFile);
       };
       mediaRecorderRef.current = mr;
       mr.start();
@@ -187,7 +188,7 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
           </div>
           <textarea
             className="feed-textarea"
-            placeholder={isStaff ? 'Share class activity, exercise, or lesson notes...' : 'Share your work with the class...'}
+            placeholder={isStaff ? 'Share class activity, exercise, or lesson notes...' : 'Share your class work here. Feel free to express what you learnt.'}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={3}

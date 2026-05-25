@@ -104,10 +104,17 @@ export default function Whiteboard({ onSave, onCancel }) {
 
   const clear = () => initCanvas(true);
 
-  const save = () => {
-    canvasRef.current.toBlob((blob) => {
-      if (blob) onSave(blob);
+  const saveCanvasBlob = (cb) => {
+    canvasRef.current?.toBlob((blob) => {
+      if (blob) cb(blob);
     }, 'image/png');
+  };
+
+  const save = () => saveCanvasBlob((blob) => onSave(blob));
+
+  const postGraphToFeed = () => {
+    if (mode === 'graph') applyGraph();
+    saveCanvasBlob((blob) => onSave(blob));
   };
 
   return (
@@ -189,7 +196,9 @@ export default function Whiteboard({ onSave, onCancel }) {
         onTouchEnd={end}
       />
       <div className="whiteboard-actions">
-        <button type="button" className="btn btn-primary btn-sm" onClick={save}>Post to feed</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={postGraphToFeed}>
+          {mode === 'graph' ? 'Post graph to feed' : 'Post drawing to feed'}
+        </button>
         <button type="button" className="btn btn-outline btn-sm" onClick={onCancel}>Cancel</button>
       </div>
     </div>

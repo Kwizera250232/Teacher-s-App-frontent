@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DonateSupportBanner from '../components/DonateSupportBanner';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -289,6 +290,8 @@ export default function Landing() {
             Sign in
           </button>
         </header>
+
+        <DonateSupportBanner />
 
         <section className="grid animate-fade-up gap-8 rounded-3xl bg-white p-6 shadow-xl shadow-indigo-100 ring-1 ring-indigo-100 md:grid-cols-2 md:items-center md:p-10">
           <div>
