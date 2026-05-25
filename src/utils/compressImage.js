@@ -1,9 +1,12 @@
-/** Resize/compress images before classroom feed upload (avoids server size limits). */
-export async function prepareFeedImageFile(file) {
-  if (!file || !file.type?.startsWith('image/')) return file;
+function isImageFile(file) {
+  if (!file) return false;
+  if (file.type?.startsWith('image/')) return true;
+  return /\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(file.name || '');
+}
 
-  const maxBytes = 3 * 1024 * 1024;
-  if (file.size <= maxBytes && !/heic|heif/i.test(file.type)) return file;
+/** Always re-encode feed photos as JPEG under ~900KB so uploads succeed. */
+export async function prepareFeedImageFile(file) {
+  if (!isImageFile(file)) return file;
 
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -12,7 +15,7 @@ export async function prepareFeedImageFile(file) {
       URL.revokeObjectURL(url);
       let w = img.width;
       let h = img.height;
-      const maxW = 1600;
+      const maxW = 1200;
       if (w > maxW) {
         h = Math.round(h * (maxW / w));
         w = maxW;
@@ -21,23 +24,32 @@ export async function prepareFeedImageFile(file) {
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error('Could not compress image. Try a smaller photo.'));
-            return;
-          }
-          const name = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
-          resolve(new File([blob], name, { type: 'image/jpeg' }));
-        },
-        'image/jpeg',
-        0.85
-      );
+
+      const tryQuality = (q) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Could not process image. Try another photo.'));
+              return;
+            }
+            if (blob.size > 900 * 1024 && q > 0.45) {
+              tryQuality(q - 0.12);
+              return;
+            }
+            resolve(new File([blob], 'feed-photo.jpg', { type: 'image/jpeg' }));
+          },
+          'image/jpeg',
+          q
+        );
+      };
+      tryQuality(0.82);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error('Could not read image file.'));
+      reject(new Error('Could not read this image. Try JPG or PNG.'));
     };
     img.src = url;
   });

@@ -61,23 +61,25 @@ export default function StudentSocialFeed({ classes, token }) {
   const onPickFile = async (picked) => {
     if (!picked) return;
     setError('');
+    setPosting(true);
     try {
-      const prepared = picked.type?.startsWith('image/')
-        ? await prepareFeedImageFile(picked)
-        : picked;
+      const prepared = await prepareFeedImageFile(picked);
       setFile(prepared);
       setPostType((t) => inferPostTypeFromFile(prepared, t));
     } catch (e) {
       setError(e.message);
+    } finally {
+      setPosting(false);
     }
   };
 
   const submitPost = async (extraFile = null) => {
     if (!postClassId) return setError('Join a class first.');
     let upload = extraFile || file;
-    if (upload?.type?.startsWith('image/')) {
+    if (upload && (upload.type?.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(upload.name || ''))) {
       try {
         upload = await prepareFeedImageFile(upload);
+        if (!extraFile) setPostType('image');
       } catch (e) {
         setError(e.message);
         return;
