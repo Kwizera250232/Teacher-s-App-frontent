@@ -40,6 +40,8 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
   const [comments, setComments] = useState({});
   const [commentText, setCommentText] = useState({});
   const [posting, setPosting] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editBody, setEditBody] = useState('');
   const audioRef = useRef(null);
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
@@ -109,6 +111,22 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
     setCommentText((c) => ({ ...c, [postId]: '' }));
     loadComments(postId);
     load();
+  };
+
+  const deletePost = async (postId) => {
+    if (!confirm('Delete this post?')) return;
+    try {
+      await api.delete(`/classroom-feed/${classId}/posts/${postId}`, token);
+      load();
+    } catch (e) { setError(e.message); }
+  };
+
+  const saveEdit = async (postId) => {
+    try {
+      await api.patch(`/classroom-feed/${classId}/posts/${postId}`, { body: editBody }, token);
+      setEditId(null);
+      load();
+    } catch (e) { setError(e.message); }
   };
 
   const repost = async (post) => {
@@ -218,7 +236,21 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
                 <span className="feed-meta">{p.author_role} · {p.post_type} · {new Date(p.created_at).toLocaleString()}</span>
               </header>
               {p.classwork_summary && <p className="feed-summary"><strong>Classwork:</strong> {p.classwork_summary}</p>}
-              {p.body && <p className="feed-body">{p.body}</p>}
+              {editId === p.id ? (
+                <div>
+                  <textarea className="feed-textarea" value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={3} />
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => saveEdit(p.id)}>Save</button>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditId(null)}>Cancel</button>
+                </div>
+              ) : (
+                p.body && <p className="feed-body">{p.body}</p>
+              )}
+              {p.author_id === user?.id && editId !== p.id && (
+                <div className="feed-own-actions">
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => { setEditId(p.id); setEditBody(p.body || ''); }}>Edit</button>
+                  <button type="button" className="btn btn-danger btn-sm" onClick={() => deletePost(p.id)}>Delete</button>
+                </div>
+              )}
               {p.media_url && /\.(png|jpe?g|webp|gif)$/i.test(p.media_url) && (
                 <img src={mediaUrl(p.media_url)} alt="" className="feed-media-img" />
               )}

@@ -565,6 +565,21 @@ export default function TeacherClassPage() {
                         { icon: '👨‍🏫', label: 'Teacher', value: cls?.teacher_name },
                       ] }} />
                     </div>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      style={{ fontSize: 10, padding: '2px 6px', marginTop: 4 }}
+                      onClick={async (ev) => {
+                        ev.stopPropagation();
+                        try {
+                          const r = await api.post(`/parent/students/${s.id}/parent-link`, {}, token);
+                          await navigator.clipboard.writeText(r.invite_link);
+                          showSuccess(`Parent link copied for ${s.name}`);
+                        } catch (e) { setError(e.message); }
+                      }}
+                    >
+                      👪 Parent invite
+                    </button>
                   </div>
                 );
               })}

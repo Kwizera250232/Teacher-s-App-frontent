@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import JoinClassModal from '../components/JoinClassModal';
 import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import VerifiedBadge from '../components/VerifiedBadge';
+import DonateButton from '../components/DonateButton';
 import './Dashboard.css';
 
 export default function StudentDashboard() {
@@ -79,6 +80,7 @@ export default function StudentDashboard() {
           )}
           <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
+          <DonateButton />
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>

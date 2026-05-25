@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
-import ClassroomFeed from '../components/ClassroomFeed';
+import DonateButton from '../components/DonateButton';
 import './Dashboard.css';
 
 export default function ParentDashboard() {
@@ -26,6 +26,7 @@ export default function ParentDashboard() {
         <div className="dash-brand">🎓 UClass Parent</div>
         <div className="dash-user">
           <span>👋 {user?.name} (Parent)</span>
+          <DonateButton />
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
       </header>

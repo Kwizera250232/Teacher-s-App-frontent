@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import CreateClassModal from '../components/CreateClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
 import UmunsiAiModal from '../components/UmunsiAiModal';
+import DonateButton from '../components/DonateButton';
+import StaffQuickActions from '../components/StaffQuickActions';
 import './Dashboard.css';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
@@ -57,6 +59,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
             💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
           </Link>
+          <DonateButton />
           <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <button className="btn btn-outline" onClick={logout}>Logout</button>
         </div>
@@ -74,6 +77,8 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
+
+        <StaffQuickActions token={token} basePath={basePath} firstClassId={classes[0]?.id} />
 
         {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
           <div key={a.id} style={{

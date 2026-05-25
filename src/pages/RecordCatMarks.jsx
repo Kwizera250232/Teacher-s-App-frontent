@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import '../pages/Dashboard.css';
@@ -19,6 +19,9 @@ export default function RecordCatMarks() {
   const [quizzes, setQuizzes] = useState([]);
   const [migrateQuiz, setMigrateQuiz] = useState({ quiz_id: '', test_number: '' });
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
 
   useEffect(() => {
     api.get('/classes', token).then((list) => {
@@ -41,7 +44,32 @@ export default function RecordCatMarks() {
   const handleClassChange = (nextId) => {
     setClassId(nextId);
     setRecordForm({ test_number: 1, student_id: '', marks_obtained: '' });
-    navigate(`/teacher/classes/${nextId}/record-marks`, { replace: true });
+    navigate(`${basePath}/classes/${nextId}/record-marks`, { replace: true });
+  };
+
+  const saveCellMark = async (studentId, testNumber, marksRaw) => {
+    if (marksRaw === '' || marksRaw === '—') return;
+    const marks = parseInt(marksRaw, 10);
+    if (Number.isNaN(marks) || marks < 0 || marks > 100) {
+      setError('Marks must be 0–100.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post(`/catmarks/${classId}/entry`, {
+        student_id: studentId,
+        test_number: testNumber,
+        marks_obtained: marks,
+        total_marks: 100,
+      }, token);
+      setEditing(null);
+      setError('');
+      loadData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const roster = stats?.students || [];
@@ -146,9 +174,38 @@ export default function RecordCatMarks() {
                   {roster.map((s) => (
                     <tr key={s.student_id}>
                       <td className="cat-name">{s.name}</td>
-                      {CAT_NUMS.map((num) => (
-                        <td key={num}>{s.cat?.[num] != null ? s.cat[num] : '—'}</td>
-                      ))}
+                      {CAT_NUMS.map((num) => {
+                        const val = s.cat?.[num];
+                        const isEdit = editing?.studentId === s.student_id && editing?.num === num;
+                        return (
+                          <td
+                            key={num}
+                            className={!isEdit ? 'cat-cell-clickable' : ''}
+                            title="Click to enter mark"
+                            onClick={() => !isEdit && setEditing({ studentId: s.student_id, num, value: val != null ? String(val) : '' })}
+                          >
+                            {isEdit ? (
+                              <input
+                                className="cat-cell-input"
+                                type="number"
+                                min={0}
+                                max={100}
+                                autoFocus
+                                value={editing.value}
+                                onChange={(e) => setEditing({ ...editing, value: e.target.value })}
+                                onBlur={() => saveCellMark(s.student_id, num, editing.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveCellMark(s.student_id, num, editing.value);
+                                  if (e.key === 'Escape') setEditing(null);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              val != null ? val : '—'
+                            )}
+                          </td>
+                        );
+                      })}
                       <td className="cat-total">{s.total_marks}</td>
                       <td className="cat-pct">{s.percentage}%</td>
                       <td>{s.avg_percentage}%</td>
