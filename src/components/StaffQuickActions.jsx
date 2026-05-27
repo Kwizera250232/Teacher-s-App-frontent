@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 
-export default function StaffQuickActions({ token, basePath, firstClassId }) {
+export default function StaffQuickActions({ token, basePath, firstClassId, onAddStudents }) {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
@@ -27,7 +27,9 @@ export default function StaffQuickActions({ token, basePath, firstClassId }) {
       display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem',
       padding: '0.75rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0',
     }}>
-      <Link to="/profile" className="btn btn-secondary btn-sm">➕ Add students</Link>
+      <button type="button" className="btn btn-secondary btn-sm" onClick={onAddStudents}>
+        ➕ Add students
+      </button>
       <button type="button" className="btn btn-secondary btn-sm" onClick={teacherInvite}>
         👨‍🏫 Teacher invite link
       </button>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateClassModal from '../components/CreateClassModal';
+import AddStudentsModal from '../components/AddStudentsModal';
 import VerifiedBadge from '../components/VerifiedBadge';
 import UmunsiAiModal from '../components/UmunsiAiModal';
 import DonateButton from '../components/DonateButton';
@@ -13,6 +14,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
   const [classes, setClasses] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
+  const [showAddStudents, setShowAddStudents] = useState(false);
   const [error, setError] = useState('');
   const [announcements, setAnnouncements] = useState([]);
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
@@ -71,14 +73,19 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <h1>{roleLabel} Dashboard</h1>
             <p className="dash-sub">{subtitle}</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-            + Fungura Ishuri
-          </button>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
+              + Fungura Ishuri
+            </button>
+            <button className="btn btn-secondary" onClick={() => setShowAddStudents(true)}>
+              👤 Add Students
+            </button>
+          </div>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        <StaffQuickActions token={token} basePath={basePath} firstClassId={classes[0]?.id} />
+        <StaffQuickActions token={token} basePath={basePath} firstClassId={classes[0]?.id} onAddStudents={() => setShowAddStudents(true)} />
 
         {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
           <div key={a.id} style={{
@@ -154,6 +161,13 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           token={token}
           onClose={() => setShowCreate(false)}
           onCreated={() => { setShowCreate(false); loadClasses(); }}
+        />
+      )}
+
+      {showAddStudents && (
+        <AddStudentsModal
+          token={token}
+          onClose={() => setShowAddStudents(false)}
         />
       )}
 
