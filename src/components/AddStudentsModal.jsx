@@ -65,7 +65,7 @@ export default function AddStudentsModal({ token, onClose }) {
       };
       if (email.trim()) body.email = email.trim();
       if (password.trim()) body.password = password.trim();
-      const res = await api.post('/admin/add-pupil', body, token);
+      const res = await api.post('/school/add-pupil', body, token);
       setResults({ type: 'single', data: res });
       setName('');
       setEmail('');
@@ -89,7 +89,7 @@ export default function AddStudentsModal({ token, onClose }) {
         school_id: schoolId,
       };
       if (bulkPassword.trim()) body.password = bulkPassword.trim();
-      const res = await api.post('/admin/add-pupils', body, token);
+      const res = await api.post('/school/add-pupils', body, token);
       setResults({ type: 'bulk', data: res });
       setBulkNames('');
       setBulkPassword('');
