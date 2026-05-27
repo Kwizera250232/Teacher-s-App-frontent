@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export default function AddStudentsModal({ token, onClose }) {
+  const { user } = useAuth();
   const [mode, setMode] = useState('single');
   const [schools, setSchools] = useState([]);
   const [schoolId, setSchoolId] = useState('');
@@ -21,18 +23,17 @@ export default function AddStudentsModal({ token, onClose }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/admin/my-school', token).then(data => {
-      if (data?.school_id) {
-        setTeacherSchool(data);
-        setSchoolId(String(data.school_id));
+    if (user?.school_id) {
+      setSchoolId(String(user.school_id));
+    }
+    api.get('/auth/schools', token).then(data => {
+      setSchools(data);
+      if (user?.school_id) {
+        const mySchool = data.find(s => String(s.id) === String(user.school_id));
+        if (mySchool) setTeacherSchool({ school_id: mySchool.id, school_name: mySchool.name });
       }
     }).catch(() => {});
-    api.get('/admin/schools', token)
-      .then(setSchools)
-      .catch(() => {
-        api.get('/auth/schools', token).then(setSchools).catch(() => {});
-      });
-  }, [token]);
+  }, [token, user]);
 
   const handleCreateSchool = async () => {
     if (!newSchoolName.trim()) return;

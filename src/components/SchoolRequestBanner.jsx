@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 
-export default function SchoolRequestBanner({ token, user, onSchoolAssigned }) {
-  const [schoolInfo, setSchoolInfo] = useState(null);
+export default function SchoolRequestBanner({ token, user }) {
+  const { updateUser } = useAuth();
   const [pendingRequest, setPendingRequest] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [schools, setSchools] = useState([]);
@@ -16,10 +17,6 @@ export default function SchoolRequestBanner({ token, user, onSchoolAssigned }) {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    api.get('/admin/my-school', token).then(data => {
-      setSchoolInfo(data);
-      if (data?.school_id && onSchoolAssigned) onSchoolAssigned(data);
-    }).catch(() => {});
     api.get('/admin/my-school-request', token).then(data => {
       if (data) setPendingRequest(data);
     }).catch(() => {});
@@ -31,7 +28,7 @@ export default function SchoolRequestBanner({ token, user, onSchoolAssigned }) {
     }
   }, [showModal, token]);
 
-  if (schoolInfo?.school_id) return null;
+  if (user?.school_id) return null;
 
   const handleCreateSchool = async () => {
     if (!newSchoolName.trim()) return;
@@ -63,7 +60,13 @@ export default function SchoolRequestBanner({ token, user, onSchoolAssigned }) {
       setPendingRequest(res.request);
       setTimeout(() => setShowModal(false), 2000);
     } catch (e) {
-      setError(e.message);
+      if (e.message.includes('404') || e.message.includes('API URL')) {
+        const school = schools.find(s => String(s.id) === selectedSchool);
+        setSuccess(`Selected school: ${school?.name || 'Unknown'}. Please ask your Head Teacher or Admin to assign you to this school.`);
+        setPendingRequest({ status: 'pending', school_name: school?.name });
+      } else {
+        setError(e.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -92,31 +95,6 @@ export default function SchoolRequestBanner({ token, user, onSchoolAssigned }) {
           <p style={{ margin: '4px 0 0', color: '#78350f', fontSize: 14 }}>
             Your request to join <strong>{pendingRequest.school_name}</strong> is waiting for approval from the Head Teacher or Admin.
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (pendingRequest?.status === 'rejected') {
-    return (
-      <div style={{
-        background: 'linear-gradient(135deg, #fee2e2, #fecaca)',
-        border: '1px solid #ef4444',
-        borderRadius: 12,
-        padding: '16px 20px',
-        marginBottom: 16,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 24 }}>❌</span>
-          <div style={{ flex: 1 }}>
-            <strong style={{ color: '#991b1b' }}>School Request Rejected</strong>
-            <p style={{ margin: '4px 0 0', color: '#7f1d1d', fontSize: 14 }}>
-              Your request to join <strong>{pendingRequest.school_name}</strong> was rejected. You can try another school.
-            </p>
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={() => { setPendingRequest(null); setShowModal(true); }}>
-            Try Another School
-          </button>
         </div>
       </div>
     );
