@@ -8,7 +8,7 @@ export default function SchoolRequestsPanel({ token }) {
 
   const load = () => {
     setLoading(true);
-    api.get('/admin/school-requests', token)
+    api.get('/school/school-requests', token)
       .then(setRequests)
       .catch(() => setRequests([]))
       .finally(() => setLoading(false));
@@ -19,7 +19,7 @@ export default function SchoolRequestsPanel({ token }) {
   const handleAction = async (id, action) => {
     setActionLoading(id);
     try {
-      await api.put(`/admin/school-requests/${id}/${action}`, {}, token);
+      await api.put(`/school/school-requests/${id}/${action}`, {}, token);
       load();
     } catch (e) {
       alert(e.message);

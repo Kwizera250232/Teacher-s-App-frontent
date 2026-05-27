@@ -17,7 +17,7 @@ export default function SchoolRequestBanner({ token, user }) {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    api.get('/admin/my-school-request', token).then(data => {
+    api.get('/school/my-school-request', token).then(data => {
       if (data) setPendingRequest(data);
     }).catch(() => {});
   }, [token]);
@@ -52,7 +52,7 @@ export default function SchoolRequestBanner({ token, user }) {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/admin/request-school', {
+      const res = await api.post('/school/request-school', {
         school_id: selectedSchool,
         message: message.trim() || null,
       }, token);
