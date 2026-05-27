@@ -29,6 +29,30 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
+const TEXT_PREVIEW_LENGTH = 120;
+
+function FeedBodyPreview({ text }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!text) return null;
+  const isLong = text.length > TEXT_PREVIEW_LENGTH;
+  if (!isLong || expanded) {
+    return (
+      <p className="ssf-body">
+        {text}
+        {isLong && <button type="button" className="ssf-read-toggle" onClick={() => setExpanded(false)}>Show less</button>}
+      </p>
+    );
+  }
+  const firstLine = text.split('\n')[0];
+  const preview = firstLine.length > TEXT_PREVIEW_LENGTH ? firstLine.slice(0, TEXT_PREVIEW_LENGTH) + '…' : firstLine;
+  return (
+    <p className="ssf-body ssf-body-preview">
+      {preview}
+      <button type="button" className="ssf-read-toggle" onClick={() => setExpanded(true)}>Read more</button>
+    </p>
+  );
+}
+
 export default function StudentSocialFeed({ classes, token }) {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
@@ -257,7 +281,7 @@ export default function StudentSocialFeed({ classes, token }) {
                   <span>{p.class_name} · {timeAgo(p.created_at)}</span>
                 </div>
               </header>
-              {p.body && <p className="ssf-body">{p.body}</p>}
+              <FeedBodyPreview text={p.body} />
               {p.media_url && /\.(png|jpe?g|webp|gif)$/i.test(p.media_url) && (
                 <img src={mediaUrl(p.media_url)} alt="" className="ssf-media" />
               )}

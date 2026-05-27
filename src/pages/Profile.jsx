@@ -41,6 +41,82 @@ function TagInput({ label, values, onChange, placeholder }) {
   );
 }
 
+function MyRepostsSection({ userId }) {
+  const [reposts, setReposts] = useState([]);
+  const [expanded, setExpanded] = useState({});
+
+  useEffect(() => {
+    const key = `my_reposts_${userId}`;
+    const stored = JSON.parse(localStorage.getItem(key) || '[]');
+    setReposts(stored);
+  }, [userId]);
+
+  const removeRepost = (id) => {
+    const key = `my_reposts_${userId}`;
+    const updated = reposts.filter(r => r.id !== id);
+    setReposts(updated);
+    localStorage.setItem(key, JSON.stringify(updated));
+  };
+
+  if (reposts.length === 0) return null;
+
+  return (
+    <div style={{ background: 'white', borderRadius: 16, padding: '20px 24px', marginBottom: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: '#7c3aed', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        📌 My Reposts / Classworks
+      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {reposts.map(r => (
+          <div key={r.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div>
+                <strong style={{ fontSize: 14 }}>{r.author_name}</strong>
+                <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8 }}>{r.author_role} · {r.post_type}</span>
+              </div>
+              <button
+                onClick={() => removeRepost(r.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 16, padding: 0 }}
+                title="Remove from reposts"
+              >✕</button>
+            </div>
+            {r.classwork_summary && (
+              <p style={{ fontSize: 13, color: '#2563eb', fontWeight: 600, marginBottom: 4 }}>Classwork: {r.classwork_summary}</p>
+            )}
+            {r.body && (
+              <div>
+                {expanded[r.id] ? (
+                  <p style={{ fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                    {r.body}
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(e => ({ ...e, [r.id]: false }))}
+                      style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginLeft: 6 }}
+                    >Show less</button>
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 14, color: '#374151' }}>
+                    {r.body.length > 120 ? r.body.split('\n')[0].slice(0, 120) + '…' : r.body}
+                    {r.body.length > 120 && (
+                      <button
+                        type="button"
+                        onClick={() => setExpanded(e => ({ ...e, [r.id]: true }))}
+                        style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginLeft: 6 }}
+                      >Read more</button>
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+              Saved {new Date(r.reposted_at).toLocaleDateString()}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TeacherUserCreation({ token }) {
   const [schools, setSchools] = useState([]);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'student', school_id: '' });
@@ -361,6 +437,9 @@ export default function Profile() {
             <TeacherUserCreation token={token} />
           </div>
         )}
+
+        {/* My Reposts / Classworks – students only */}
+        {user?.role === 'student' && <MyRepostsSection userId={user?.id} />}
 
         {/* Share feed – students only */}
         {user?.role === 'student' && (

@@ -67,6 +67,18 @@
 }
 .ssf-card header span { display: block; font-size: 0.75rem; color: #64748b; font-weight: normal; }
 .ssf-body { white-space: pre-wrap; line-height: 1.5; margin: 0 0 0.75rem; }
+.ssf-body-preview { color: #374151; }
+.ssf-read-toggle {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0;
+  margin-left: 6px;
+}
+.ssf-read-toggle:hover { text-decoration: underline; }
 .ssf-media { max-width: 100%; border-radius: 12px; margin-bottom: 0.5rem; }
 .ssf-audio { width: 100%; }
 .ssf-card footer { display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; }

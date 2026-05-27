@@ -34,6 +34,30 @@ function inferPostTypeFromFile(file, current) {
   return current;
 }
 
+const TEXT_PREVIEW_LENGTH = 120;
+
+function FeedBodyPreview({ text }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!text) return null;
+  const isLong = text.length > TEXT_PREVIEW_LENGTH;
+  if (!isLong || expanded) {
+    return (
+      <p className="feed-body">
+        {text}
+        {isLong && <button type="button" className="feed-read-toggle" onClick={() => setExpanded(false)}>Show less</button>}
+      </p>
+    );
+  }
+  const firstLine = text.split('\n')[0];
+  const preview = firstLine.length > TEXT_PREVIEW_LENGTH ? firstLine.slice(0, TEXT_PREVIEW_LENGTH) + '…' : firstLine;
+  return (
+    <p className="feed-body feed-body-preview">
+      {preview}
+      <button type="button" className="feed-read-toggle" onClick={() => setExpanded(true)}>Read more</button>
+    </p>
+  );
+}
+
 export default function ClassroomFeed({ classId, token, readOnly = false }) {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
@@ -172,17 +196,27 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
     } catch (e) { setError(e.message); }
   };
 
-  const repost = async (post) => {
-    setPosting(true);
-    try {
-      await api.post(`/classroom-feed/${classId}/posts`, {
-        post_type: 'text',
-        body: post.body ? `Repost: ${post.body}` : 'Repost',
-        repost_of_id: post.id,
-      }, token);
-      load();
-    } catch (e) { setError(e.message); }
-    finally { setPosting(false); }
+  const repost = (post) => {
+    const key = `my_reposts_${user?.id}`;
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+    if (existing.some(r => r.id === post.id)) {
+      alert('You already saved this to your reposts.');
+      return;
+    }
+    existing.unshift({
+      id: post.id,
+      class_id: classId,
+      author_name: post.author_name,
+      author_role: post.author_role,
+      post_type: post.post_type,
+      body: post.body,
+      classwork_summary: post.classwork_summary,
+      media_url: post.media_url,
+      created_at: post.created_at,
+      reposted_at: new Date().toISOString(),
+    });
+    localStorage.setItem(key, JSON.stringify(existing));
+    alert('Saved to your Profile under "My Reposts / Classworks"!');
   };
 
   const startRecording = async () => {
@@ -307,7 +341,7 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
                   <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditId(null)}>Cancel</button>
                 </div>
               ) : (
-                p.body && <p className="feed-body">{p.body}</p>
+                <FeedBodyPreview text={p.body} />
               )}
               {p.author_id === user?.id && editId !== p.id && (
                 <div className="feed-own-actions">
@@ -335,7 +369,7 @@ export default function ClassroomFeed({ classId, token, readOnly = false }) {
                   💬 {p.comment_count || 0}
                 </button>
                 {canPost && user?.role === 'student' && (
-                  <button type="button" className="feed-action" onClick={() => repost(p)}>↗️ Repost</button>
+                  <button type="button" className="feed-action" onClick={() => repost(p)}>📌 Save</button>
                 )}
               </footer>
               {expandedComments[p.id] && (

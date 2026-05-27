@@ -40,6 +40,18 @@
 .feed-meta { display: block; font-size: 0.75rem; color: #64748b; font-weight: normal; }
 .feed-summary { background: #eff6ff; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.9rem; }
 .feed-body { white-space: pre-wrap; line-height: 1.5; }
+.feed-body-preview { color: #374151; }
+.feed-read-toggle {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0;
+  margin-left: 6px;
+}
+.feed-read-toggle:hover { text-decoration: underline; }
 .feed-media-img { max-width: 100%; border-radius: 8px; margin-top: 0.5rem; }
 .feed-audio { width: 100%; margin-top: 0.5rem; }
 .feed-doc-link { display: inline-block; margin-top: 0.5rem; color: #2563eb; }

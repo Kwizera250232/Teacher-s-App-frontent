@@ -1,156 +1,26 @@
-import { useState, useEffect } from 'react';
-import { api } from '../api';
-import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
 import './DonateButton.css';
 
 export default function DonateButton() {
-  const { token } = useAuth();
   const [open, setOpen] = useState(false);
-  const [phone, setPhone] = useState('');
-  const [amount, setAmount] = useState('500');
-  const [method, setMethod] = useState('mtn_momo');
-  const [info, setInfo] = useState(null);
-  const [error, setError] = useState('');
-  const [msg, setMsg] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [refId, setRefId] = useState('');
-
-  const openModal = async () => {
-    setOpen(true);
-    setError('');
-    setMsg('');
-    try {
-      const data = await api.get('/donate/info', token);
-      setInfo(data);
-    } catch {
-      setInfo({ min_amount: 500, currency: 'RWF', mode: 'demo', payment_methods: [] });
-    }
-  };
-
-  const pay = async (e) => {
-    e.preventDefault();
-    if (method !== 'mtn_momo') {
-      setError('This payment method is coming soon. Use MTN MoMo for testing now.');
-      return;
-    }
-    setError('');
-    setMsg('');
-    setLoading(true);
-    try {
-      const res = await api.post('/donate/mtn/request', {
-        phone,
-        amount: parseInt(amount, 10),
-      }, token);
-      setRefId(res.reference_id);
-      setMsg(res.message);
-      if (res.mode === 'demo' || res.demo) {
-        setTimeout(async () => {
-          try {
-            const st = await api.get(`/donate/mtn/status/${res.reference_id}`, token);
-            setMsg(`Test successful! Status: ${st.status}. Thank you for supporting education.`);
-          } catch { /* ignore */ }
-        }, 800);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkStatus = async () => {
-    if (!refId) return;
-    setLoading(true);
-    try {
-      const res = await api.get(`/donate/mtn/status/${refId}`, token);
-      setMsg(`Payment status: ${res.status}${res.demo ? ' (sandbox test)' : ''}`);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const methods = info?.payment_methods || [
-    { id: 'mtn_momo', name: 'MTN Mobile Money', active: true },
-    { id: 'airtel', name: 'Airtel Money', active: false },
-    { id: 'card', name: 'Bank / Card', active: false },
-  ];
 
   return (
     <>
-      <button type="button" className="donate-header-btn" onClick={openModal} title="Support UClass education">
+      <button type="button" className="donate-header-btn" onClick={() => setOpen(true)} title="Support UClass education">
         💛 DONATE
       </button>
       {open && (
         <div className="donate-overlay" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
-          <div className="donate-modal">
-            <h3>Support UClass Education</h3>
-            <p className="donate-tagline">
-              Help us keep updating tools for Rwanda schools. Minimum <strong>500 RWF</strong>.
+          <div className="donate-modal" style={{ textAlign: 'center', padding: '40px 32px' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🚀</div>
+            <h3 style={{ marginBottom: 12 }}>Coming Soon!</h3>
+            <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.6, marginBottom: 24 }}>
+              This feature is coming soon so you will be able to donate to us to be able to work well.
+              We are working hard to bring you a seamless donation experience. Stay tuned!
             </p>
-
-            <p className="donate-providers-note">
-              <strong>Payment providers:</strong> Only <strong>MTN Mobile Money</strong> is connected today.
-              Airtel Money and bank card need separate APIs (shown as coming soon).
-              The checklist below is MTN&apos;s <em>developer sandbox</em> (Collection + Disbursement test cases), not extra wallets.
-            </p>
-
-            <div className="donate-methods">
-              {methods.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`donate-method-btn ${method === m.id ? 'active' : ''} ${!m.active ? 'soon' : ''}`}
-                  onClick={() => m.active && setMethod(m.id)}
-                  disabled={!m.active}
-                >
-                  {m.name}{!m.active ? ' (soon)' : ''}
-                </button>
-              ))}
-            </div>
-
-            {info?.mtn_sandbox_steps && (
-              <details className="donate-sandbox-details">
-                <summary>MTN MoMo sandbox APIs (test checklist)</summary>
-                <ul>
-                  {info.mtn_sandbox_steps.map((s) => (
-                    <li key={s.id}>{s.title}</li>
-                  ))}
-                </ul>
-              </details>
-            )}
-
-            {!info?.mtn_configured && (
-              <p className="donate-hint">
-                <strong>Testing now:</strong> Demo mode records donations as <strong>SUCCESSFUL</strong> so you can test the app without MTN keys.
-                For real MoMo sandbox, add <code>MTN_SUBSCRIPTION_KEY</code>, <code>MTN_API_USER</code>, and <code>MTN_API_KEY</code> on the server.
-              </p>
-            )}
-
-            <form onSubmit={pay}>
-              <label>
-                MTN phone (Rwanda)
-                <input type="tel" placeholder="0781234567" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-              </label>
-              <label>
-                Amount (RWF, min {info?.min_amount || 500})
-                <input type="number" min={500} step={100} value={amount} onChange={(e) => setAmount(e.target.value)} required />
-              </label>
-              {error && <p className="donate-err">{error}</p>}
-              {msg && <p className="donate-ok">{msg}</p>}
-              <div className="donate-actions">
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? 'Processing...' : 'Pay with MTN MoMo'}
-                </button>
-                {refId && (
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={checkStatus} disabled={loading}>
-                    Check status
-                  </button>
-                )}
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => setOpen(false)}>Close</button>
-              </div>
-            </form>
+            <button type="button" className="btn btn-primary" onClick={() => setOpen(false)}>
+              Got it!
+            </button>
           </div>
         </div>
       )}
