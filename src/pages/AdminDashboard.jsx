@@ -12,6 +12,7 @@ import AdminReports from '../components/admin/AdminReports';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminTextbooks from '../components/admin/AdminTextbooks';
 import AdminStudentArticles from '../components/admin/AdminStudentArticles';
+import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import VerifiedBadge from '../components/VerifiedBadge';
 import { useInstallPrompt } from '../components/InstallPrompt';
 import { dashboardPath } from '../utils/roles';
@@ -148,6 +149,7 @@ export default function AdminDashboard() {
         <div className="admin-content">
           {page === 'dashboard' && (
             <div className="admin-dashboard">
+              <SchoolRequestsPanel token={token} />
               <div className="stats-grid">
                 {[
                   { label: 'Schools', value: stats?.schools, icon: '🏫', color: '#6366f1' },

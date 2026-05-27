@@ -5,6 +5,7 @@ export default function AddStudentsModal({ token, onClose }) {
   const [mode, setMode] = useState('single');
   const [schools, setSchools] = useState([]);
   const [schoolId, setSchoolId] = useState('');
+  const [teacherSchool, setTeacherSchool] = useState(null);
   const [newSchoolName, setNewSchoolName] = useState('');
   const [showNewSchool, setShowNewSchool] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,12 @@ export default function AddStudentsModal({ token, onClose }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    api.get('/admin/my-school', token).then(data => {
+      if (data?.school_id) {
+        setTeacherSchool(data);
+        setSchoolId(String(data.school_id));
+      }
+    }).catch(() => {});
     api.get('/admin/schools', token)
       .then(setSchools)
       .catch(() => {
@@ -118,7 +125,14 @@ export default function AddStudentsModal({ token, onClose }) {
 
         {/* School selection */}
         <div className="form-group">
-          <label style={{ fontSize: 14, fontWeight: 600 }}>School *</label>
+          <label style={{ fontSize: 14, fontWeight: 600 }}>
+            School *
+            {teacherSchool && (
+              <span style={{ fontWeight: 400, color: '#16a34a', marginLeft: 8, fontSize: 12 }}>
+                (Your school: {teacherSchool.school_name})
+              </span>
+            )}
+          </label>
           {!showNewSchool ? (
             <div style={{ display: 'flex', gap: 8 }}>
               <select
@@ -128,7 +142,7 @@ export default function AddStudentsModal({ token, onClose }) {
               >
                 <option value="">Select School</option>
                 {schools.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
+                  <option key={s.id} value={s.id}>{s.name}{teacherSchool && String(teacherSchool.school_id) === String(s.id) ? ' (Your school)' : ''}</option>
                 ))}
               </select>
               <button

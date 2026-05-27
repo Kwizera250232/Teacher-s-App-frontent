@@ -4,6 +4,8 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateClassModal from '../components/CreateClassModal';
 import AddStudentsModal from '../components/AddStudentsModal';
+import SchoolRequestBanner from '../components/SchoolRequestBanner';
+import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import VerifiedBadge from '../components/VerifiedBadge';
 import UmunsiAiModal from '../components/UmunsiAiModal';
 import DonateButton from '../components/DonateButton';
@@ -82,6 +84,9 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             </button>
           </div>
         </div>
+
+        <SchoolRequestBanner token={token} user={user} />
+        {roleLabel === 'Head Teacher' && <SchoolRequestsPanel token={token} />}
 
         {error && <div className="alert alert-error">{error}</div>}
 
