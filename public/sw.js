@@ -1,6 +1,6 @@
-const CACHE_VERSION = 'uclass-v4';
+const CACHE_VERSION = 'uclass-v5';
 const API_CACHE = 'uclass-api-v2';
-const STATIC_ASSETS = ['/manifest.json', '/icon.svg'];
+const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 
 const API_CACHE_PATTERNS = [
   /\/api\/classes\/\d+\/quizzes$/,
@@ -30,8 +30,28 @@ self.addEventListener('activate', (e) => {
           .map((k) => caches.delete(k))
       )
     ).then(() => self.clients.claim())
+      .then(() => cacheAppShell())
   );
 });
+
+async function cacheAppShell() {
+  try {
+    const cache = await caches.open(CACHE_VERSION);
+    const resp = await fetch('/');
+    if (!resp.ok) return;
+    const html = await resp.text();
+    cache.put('/', new Response(html, { headers: { 'Content-Type': 'text/html' } }));
+    cache.put('/index.html', new Response(html, { headers: { 'Content-Type': 'text/html' } }));
+    const assets = [];
+    const jsMatches = html.matchAll(/src="(\/assets\/[^"]+)"/g);
+    for (const m of jsMatches) assets.push(m[1]);
+    const cssMatches = html.matchAll(/href="(\/assets\/[^"]+\.css[^"]*)"/g);
+    for (const m of cssMatches) assets.push(m[1]);
+    await Promise.all(assets.map((url) =>
+      fetch(url).then((r) => r.ok ? cache.put(url, r) : null).catch(() => {})
+    ));
+  } catch {}
+}
 
 function shouldCacheApi(url) {
   return API_CACHE_PATTERNS.some((p) => p.test(url));
@@ -46,6 +66,9 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   const url = new URL(request.url);
+  if (url.origin !== self.location.origin && !url.hostname.includes('fonts')) {
+    return;
+  }
   if (url.pathname.startsWith('/api/')) {
     e.respondWith(networkFirstApi(request));
   } else if (request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
@@ -76,7 +99,7 @@ async function cacheFirstStatic(request) {
   if (cached) return cached;
   try {
     const response = await fetch(request);
-    if (response.ok && response.type === 'basic') {
+    if (response.ok) {
       const cache = await caches.open(CACHE_VERSION);
       cache.put(request, response.clone());
     }

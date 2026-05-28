@@ -30,7 +30,16 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   };
 
   const loadClasses = () => {
-    api.get('/classes', token).then(setClasses).catch(e => setError(e.message));
+    api.get('/classes', token).then(data => {
+      setClasses(data);
+      try { localStorage.setItem('cached_staff_classes', JSON.stringify(data)); } catch {}
+    }).catch(e => {
+      if (!navigator.onLine) {
+        try { const c = JSON.parse(localStorage.getItem('cached_staff_classes') || '[]'); setClasses(c); } catch {}
+      } else {
+        setError(e.message);
+      }
+    });
   };
 
   useEffect(() => { loadClasses(); }, []);

@@ -20,7 +20,16 @@ export default function StudentDashboard() {
   const [quickNote, setQuickNote] = useState(null);
 
   const loadClasses = () => {
-    api.get('/classes/my', token).then(setClasses).catch(e => setError(e.message));
+    api.get('/classes/my', token).then(data => {
+      setClasses(data);
+      try { localStorage.setItem('cached_classes', JSON.stringify(data)); } catch {}
+    }).catch(e => {
+      if (!navigator.onLine) {
+        try { const c = JSON.parse(localStorage.getItem('cached_classes') || '[]'); setClasses(c); } catch {}
+      } else {
+        setError(e.message);
+      }
+    });
   };
 
   const dismissAnnouncement = (id) => {
