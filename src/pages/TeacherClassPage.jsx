@@ -41,12 +41,23 @@ export default function TeacherClassPage() {
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
 
   useEffect(() => {
-    api.get(`/classes/${id}`, token).then(setCls).catch(() => navigate(-1));
+    api.get(`/classes/${id}`, token).then(data => {
+      setCls(data);
+      try { localStorage.setItem(`class_${id}`, JSON.stringify(data)); } catch {}
+    }).catch(() => {
+      try {
+        const cached = JSON.parse(localStorage.getItem(`class_${id}`));
+        if (cached) setCls(cached);
+        else if (navigator.onLine) navigate(-1);
+      } catch { if (navigator.onLine) navigate(-1); }
+    });
   }, [id]);
 
   useEffect(() => {
     loadTab();
   }, [tab, id]);
+
+  const tCacheKey = (t) => `tclass_${id}_${t}`;
 
   const loadTab = async () => {
     setError('');
@@ -62,8 +73,11 @@ export default function TeacherClassPage() {
       };
       const res = await api.get(endpointMap[tab], token);
       setData(res);
+      try { localStorage.setItem(tCacheKey(tab), JSON.stringify(res)); } catch {}
     } catch (e) {
-      setError(e.message);
+      const cached = JSON.parse(localStorage.getItem(tCacheKey(tab)) || '[]');
+      if (cached.length) setData(cached);
+      else if (navigator.onLine) setError(e.message);
     }
   };
 

@@ -33,10 +33,21 @@ export default function StudentClassPage() {
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
 
   useEffect(() => {
-    api.get(`/classes/${id}`, token).then(setCls).catch(() => navigate(-1));
+    api.get(`/classes/${id}`, token).then(data => {
+      setCls(data);
+      try { localStorage.setItem(`class_${id}`, JSON.stringify(data)); } catch {}
+    }).catch(() => {
+      try {
+        const cached = JSON.parse(localStorage.getItem(`class_${id}`));
+        if (cached) setCls(cached);
+        else if (navigator.onLine) navigate(-1);
+      } catch { if (navigator.onLine) navigate(-1); }
+    });
   }, [id]);
 
   useEffect(() => { loadTab(); }, [tab, id]);
+
+  const cacheKey = (t) => `class_${id}_${t}`;
 
   const loadTab = async () => {
     setError('');
@@ -45,9 +56,12 @@ export default function StudentClassPage() {
       try {
         const res = await api.get(`/classes/${id}/classmates`, token);
         setClassmates(res.filter(p => p.id !== user?.id));
+        try { localStorage.setItem(cacheKey('Classmates'), JSON.stringify(res)); } catch {}
       } catch (e) {
-        setError(e.message);
-        setClassmates([]);
+        const cached = JSON.parse(localStorage.getItem(cacheKey('Classmates')) || '[]');
+        if (cached.length) setClassmates(cached.filter(p => p.id !== user?.id));
+        else if (navigator.onLine) setError(e.message);
+        setClassmates(prev => prev.length ? prev : []);
       }
       return;
     }
@@ -61,7 +75,7 @@ export default function StudentClassPage() {
       };
       const res = await api.get(map[tab], token);
       setData(res);
-      // Load existing submissions for each homework
+      try { localStorage.setItem(cacheKey(tab), JSON.stringify(res)); } catch {}
       if (tab === 'Homework') {
         const subs = {};
         await Promise.all(res.map(async (hw) => {
@@ -74,7 +88,11 @@ export default function StudentClassPage() {
         }));
         setSubState(subs);
       }
-    } catch (e) { setError(e.message); }
+    } catch (e) {
+      const cached = JSON.parse(localStorage.getItem(cacheKey(tab)) || '[]');
+      if (cached.length) setData(cached);
+      else if (navigator.onLine) setError(e.message);
+    }
   };
 
   const postDiscussion = async (e) => {
