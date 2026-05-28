@@ -166,7 +166,6 @@ body {
 .modal {
   background: white; border-radius: 16px; padding: 32px;
   width: 100%; max-width: 460px;
-  max-height: 90vh; overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -190,9 +189,8 @@ body {
 .class-hero-code .code-label { font-size: 11px; opacity: 0.8; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: block; }
 .class-hero-code .code-big { font-size: 26px; font-weight: 700; letter-spacing: 4px; }
 
-.tabs { display: flex; gap: 4px; background: white; border-radius: 12px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.tabs::-webkit-scrollbar { display: none; }
-.tab { padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: #666; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+.tabs { display: flex; gap: 4px; background: white; border-radius: 12px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; flex-wrap: wrap; }
+.tab { padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: #666; transition: all 0.2s; }
 .tab.active { background: #667eea; color: white; }
 .tab:hover:not(.active) { background: #f0f2ff; color: #667eea; }
 
@@ -374,34 +372,20 @@ body {
 
 @media (max-width: 600px) {
   .dash-main, .class-main { padding: 16px; }
-  .dash-header {
-    padding: 12px 16px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-  .dash-brand { font-size: 18px; text-align: center; }
-  .dash-user {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    font-size: 14px;
-  }
+  .dash-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+  .dash-user { flex-wrap: wrap; gap: 6px; }
+  .dash-brand { font-size: 18px; }
 
   .classes-grid { grid-template-columns: 1fr; gap: 14px; }
 
   .class-hero { flex-direction: column; }
-  .tab { font-size: 13px; padding: 7px 12px; }
+  .tabs { overflow-x: auto; gap: 4px; }
+  .tab { white-space: nowrap; font-size: 13px; padding: 7px 12px; }
 
-  .modal { padding: 24px; max-width: calc(100vw - 24px); }
-  .modal-overlay { padding: 12px; }
-
+  /* Notes/Homework item cards — stack vertically */
   .item-card { flex-direction: column; align-items: stretch; gap: 12px; }
   .item-card-btns { flex-direction: row; flex-wrap: wrap; }
   .item-card-btns .btn { flex: 1; justify-content: center; min-width: 0; font-size: 12px; padding: 7px 8px; }
-
-  .students-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
 /* ── Classmate Cards ───────────────────────────── */
