@@ -1,6 +1,6 @@
-const CACHE_VERSION = 'uclass-v3';
-const API_CACHE = 'uclass-api-v1';
-const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg'];
+const CACHE_VERSION = 'uclass-v4';
+const API_CACHE = 'uclass-api-v2';
+const STATIC_ASSETS = ['/manifest.json', '/icon.svg'];
 
 const API_CACHE_PATTERNS = [
   /\/api\/classes\/\d+\/quizzes$/,
@@ -48,10 +48,28 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(request.url);
   if (url.pathname.startsWith('/api/')) {
     e.respondWith(networkFirstApi(request));
+  } else if (request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    e.respondWith(networkFirstStatic(request));
   } else {
     e.respondWith(cacheFirstStatic(request));
   }
 });
+
+async function networkFirstStatic(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_VERSION);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    const fallback = await caches.match('/index.html');
+    return fallback || new Response('Offline', { status: 503 });
+  }
+}
 
 async function cacheFirstStatic(request) {
   const cached = await caches.match(request);
