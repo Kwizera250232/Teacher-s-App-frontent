@@ -21,6 +21,7 @@ export default function TeacherClassPage() {
   const location = useLocation();
   const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
   const [cls, setCls] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
   const [tab, setTab] = useState('Announcements');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,15 +42,17 @@ export default function TeacherClassPage() {
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
 
   useEffect(() => {
+    setPageLoading(true);
     api.get(`/classes/${id}`, token).then(data => {
       setCls(data);
+      setPageLoading(false);
       try { localStorage.setItem(`class_${id}`, JSON.stringify(data)); } catch {}
     }).catch(() => {
       try {
         const cached = JSON.parse(localStorage.getItem(`class_${id}`));
-        if (cached) setCls(cached);
-        else if (navigator.onLine) navigate(-1);
-      } catch { if (navigator.onLine) navigate(-1); }
+        if (cached) { setCls(cached); setPageLoading(false); }
+        else { setPageLoading(false); if (navigator.onLine) navigate(basePath + '/dashboard'); }
+      } catch { setPageLoading(false); if (navigator.onLine) navigate(basePath + '/dashboard'); }
     });
   }, [id]);
 
@@ -181,6 +184,23 @@ export default function TeacherClassPage() {
       setSubmissionsState(prev => ({ ...prev, [hwId]: { open: true, submissions: subs, gradeForm } }));
     } catch (e) { setError(e.message); }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="class-page">
+        <header className="dash-header">
+          <button className="btn btn-outline btn-sm" onClick={() => navigate(`${basePath}/dashboard`)}>← Back</button>
+          <div className="dash-brand">🎓 UClass</div>
+        </header>
+        <main className="class-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+          <div style={{ textAlign: 'center', color: '#64748b' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
+            <p>Loading class...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="class-page">
