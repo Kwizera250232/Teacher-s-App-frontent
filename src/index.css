@@ -24,7 +24,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-    overscroll-behavior: none;
+    overflow-y: auto;
   }
 
   html,
@@ -34,6 +34,7 @@
     max-width: 100vw;
     min-height: 100%;
     overflow-x: hidden;
+    overflow-y: auto;
   }
 
   img,
