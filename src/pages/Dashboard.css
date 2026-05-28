@@ -166,6 +166,7 @@ body {
 .modal {
   background: white; border-radius: 16px; padding: 32px;
   width: 100%; max-width: 460px;
+  max-height: 90vh; overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -371,21 +372,37 @@ body {
 }
 
 @media (max-width: 600px) {
-  .dash-main, .class-main { padding: 16px; }
-  .dash-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
-  .dash-user { flex-wrap: wrap; gap: 6px; }
-  .dash-brand { font-size: 18px; }
+  .dash-main, .class-main { padding: 12px; }
+  .dash-header { padding: 10px 12px; flex-wrap: wrap; gap: 6px; }
+  .dash-user { flex-wrap: wrap; gap: 4px; font-size: 12px; }
+  .dash-user .btn { padding: 4px 8px; font-size: 11px; }
+  .dash-brand { font-size: 16px; }
+
+  .dash-top { flex-direction: column; gap: 10px; }
+  .dash-top h1 { font-size: 22px; }
+  .dash-sub { font-size: 12px; }
 
   .classes-grid { grid-template-columns: 1fr; gap: 14px; }
 
-  .class-hero { flex-direction: column; }
-  .tabs { overflow-x: auto; gap: 4px; }
-  .tab { white-space: nowrap; font-size: 13px; padding: 7px 12px; }
+  .class-hero { flex-direction: column; padding: 20px 16px; }
+  .class-hero h1 { font-size: 20px; }
+  .tabs { overflow-x: auto; gap: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { white-space: nowrap; font-size: 12px; padding: 6px 10px; }
 
-  /* Notes/Homework item cards — stack vertically */
+  .modal { padding: 20px; margin: 10px; max-width: calc(100vw - 20px); }
+  .modal-overlay { padding: 10px; }
+
   .item-card { flex-direction: column; align-items: stretch; gap: 12px; }
   .item-card-btns { flex-direction: row; flex-wrap: wrap; }
   .item-card-btns .btn { flex: 1; justify-content: center; min-width: 0; font-size: 12px; padding: 7px 8px; }
+
+  .class-code-display { padding: 8px 10px; }
+  .code-value { font-size: 18px; letter-spacing: 2px; }
+
+  .students-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .score-card { padding: 24px 16px; }
+  .score-big { font-size: 48px; }
 }
 
 /* ── Classmate Cards ───────────────────────────── */
