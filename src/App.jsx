@@ -22,6 +22,7 @@ import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import Messages from './pages/Messages';
 import Footer from './components/Footer';
+import OfflineBanner from './components/OfflineBanner';
 import { InstallProvider } from './components/InstallPrompt';
 import './components/Footer.css';
 
@@ -46,6 +47,7 @@ export default function App() {
       <InstallProvider>
         <BrowserRouter>
           <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <OfflineBanner />
             <div style={{ flex: 1 }}>
               <Routes>
                 <Route path="/" element={<HomeRedirect />} />

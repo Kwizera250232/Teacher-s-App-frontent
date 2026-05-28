@@ -1,24 +1,172 @@
-// Minimal service worker – caches app shell for offline use
-const CACHE = 'uclass-v1';
-const PRECACHE = ['/', '/index.html'];
+const CACHE_VERSION = 'uclass-v3';
+const API_CACHE = 'uclass-api-v1';
+const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 
-self.addEventListener('install', e => {
+const API_CACHE_PATTERNS = [
+  /\/api\/classes\/\d+\/quizzes$/,
+  /\/api\/classes\/\d+\/quizzes\/\d+\/questions$/,
+  /\/api\/classes\/\d+\/notes$/,
+  /\/api\/classes\/\d+\/homework$/,
+  /\/api\/classes\/my$/,
+  /\/api\/classes$/,
+  /\/api\/classroom-feed\/\d+\/posts$/,
+  /\/api\/auth\/schools$/,
+];
+
+self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE_VERSION)
+      .then((c) => c.addAll(STATIC_ASSETS))
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', e => {
+self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((k) => k !== CACHE_VERSION && k !== API_CACHE)
+          .map((k) => caches.delete(k))
+      )
     ).then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
-  );
+function shouldCacheApi(url) {
+  return API_CACHE_PATTERNS.some((p) => p.test(url));
+}
+
+self.addEventListener('fetch', (e) => {
+  const { request } = e;
+  if (request.method !== 'GET') {
+    if (request.method === 'POST' && request.url.includes('/quizzes/') && request.url.includes('/submit')) {
+      e.respondWith(handleQuizSubmit(request));
+    }
+    return;
+  }
+  const url = new URL(request.url);
+  if (url.pathname.startsWith('/api/')) {
+    e.respondWith(networkFirstApi(request));
+  } else {
+    e.respondWith(cacheFirstStatic(request));
+  }
 });
+
+async function cacheFirstStatic(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
+    if (response.ok && response.type === 'basic') {
+      const cache = await caches.open(CACHE_VERSION);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const fallback = await caches.match('/index.html');
+    return fallback || new Response('Offline', { status: 503 });
+  }
+}
+
+async function networkFirstApi(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok && shouldCacheApi(request.url)) {
+      const cache = await caches.open(API_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    return new Response(
+      JSON.stringify({ error: 'You are offline. This content is not available offline yet.', offline: true }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+async function handleQuizSubmit(request) {
+  try {
+    const response = await fetch(request.clone());
+    return response;
+  } catch {
+    const body = await request.clone().json();
+    const url = request.url;
+    const authHeader = request.headers.get('Authorization');
+    const pending = JSON.parse((await getPendingQuizzes()) || '[]');
+    pending.push({
+      id: Date.now().toString(36),
+      url,
+      body,
+      authHeader,
+      timestamp: new Date().toISOString(),
+    });
+    await savePendingQuizzes(JSON.stringify(pending));
+    notifyClients({ type: 'QUIZ_SAVED_OFFLINE', count: pending.length });
+    return new Response(
+      JSON.stringify({
+        offline: true,
+        message: 'Quiz saved offline. It will be submitted automatically when you reconnect.',
+        score: null,
+        total: null,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+async function getPendingQuizzes() {
+  const cache = await caches.open(API_CACHE);
+  const resp = await cache.match('/_pending_quizzes');
+  if (!resp) return '[]';
+  return resp.text();
+}
+
+async function savePendingQuizzes(data) {
+  const cache = await caches.open(API_CACHE);
+  await cache.put('/_pending_quizzes', new Response(data, { headers: { 'Content-Type': 'application/json' } }));
+}
+
+function notifyClients(msg) {
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((c) => c.postMessage(msg));
+  });
+}
+
+self.addEventListener('message', (e) => {
+  if (e.data === 'SYNC_PENDING_QUIZZES') {
+    syncPendingQuizzes();
+  }
+});
+
+async function syncPendingQuizzes() {
+  const raw = await getPendingQuizzes();
+  const pending = JSON.parse(raw || '[]');
+  if (pending.length === 0) return;
+  const remaining = [];
+  for (const quiz of pending) {
+    try {
+      const resp = await fetch(quiz.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(quiz.authHeader ? { Authorization: quiz.authHeader } : {}),
+        },
+        body: JSON.stringify(quiz.body),
+      });
+      if (resp.ok) {
+        notifyClients({ type: 'QUIZ_SYNCED', quizId: quiz.id });
+      } else {
+        remaining.push(quiz);
+      }
+    } catch {
+      remaining.push(quiz);
+    }
+  }
+  await savePendingQuizzes(JSON.stringify(remaining));
+  if (remaining.length === 0) {
+    notifyClients({ type: 'ALL_QUIZZES_SYNCED' });
+  }
+}

@@ -52,9 +52,15 @@ export default function TakeQuiz() {
     setLoading(true);
     try {
       const res = await api.post(`/classes/${classId}/quizzes/${quizId}/submit`, { answers }, token);
-      setResult(res);
-      setSubmitted(true);
-      setError('');
+      if (res.offline) {
+        setError('');
+        setResult({ score: '?', total: questions.length, results: {}, offline: true });
+        setSubmitted(true);
+      } else {
+        setResult(res);
+        setSubmitted(true);
+        setError('');
+      }
     } catch (e) {
       setError(e.message);
     } finally {
@@ -226,6 +232,28 @@ export default function TakeQuiz() {
   }
 
   if (submitted && result) {
+    if (result.offline) {
+      return (
+        <div className="class-page">
+          <header className="dash-header">
+            <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>← Back</button>
+            <div className="dash-brand">🎓 UClass</div>
+          </header>
+          <main className="class-main" style={{ maxWidth: 600 }}>
+            <div className="score-card">
+              <div style={{ fontSize: 48 }}>📡</div>
+              <h2>Quiz Saved Offline!</h2>
+              <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.6, marginTop: 12 }}>
+                Your answers have been saved on your device. They will be submitted automatically when you reconnect to the internet.
+              </p>
+              <button className="btn btn-primary" style={{ marginTop: 20 }} onClick={() => navigate(-1)}>
+                ← Back to Class
+              </button>
+            </div>
+          </main>
+        </div>
+      );
+    }
     const percentage = Math.round((result.score / result.total) * 100);
     return (
       <div className="class-page">

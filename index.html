@@ -45,12 +45,37 @@
     <link rel="apple-touch-icon" href="/icon.svg" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="splash-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-family:'Nunito',system-ui,sans-serif;">
+        <div style="font-size:64px;margin-bottom:16px;animation:pulse 1.5s ease-in-out infinite">🎓</div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:1px">UClass</div>
+        <div style="font-size:14px;opacity:0.8;margin-top:6px">Urubuga rw'Inyigisho</div>
+        <div style="margin-top:24px;width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+      </div>
+      <style>
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+      </style>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js');
+          navigator.serviceWorker.register('/sw.js').then(reg => {
+            reg.addEventListener('updatefound', () => {
+              const w = reg.installing;
+              if (w) w.addEventListener('statechange', () => {
+                if (w.state === 'activated' && navigator.serviceWorker.controller) {
+                  console.log('[SW] New version active');
+                }
+              });
+            });
+          });
+        });
+        window.addEventListener('online', () => {
+          navigator.serviceWorker.ready.then(reg => {
+            reg.active?.postMessage('SYNC_PENDING_QUIZZES');
+          });
         });
       }
     </script>
