@@ -190,8 +190,9 @@ body {
 .class-hero-code .code-label { font-size: 11px; opacity: 0.8; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: block; }
 .class-hero-code .code-big { font-size: 26px; font-weight: 700; letter-spacing: 4px; }
 
-.tabs { display: flex; gap: 4px; background: white; border-radius: 12px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; flex-wrap: wrap; }
-.tab { padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: #666; transition: all 0.2s; }
+.tabs { display: flex; gap: 4px; background: white; border-radius: 12px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: #666; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
 .tab.active { background: #667eea; color: white; }
 .tab:hover:not(.active) { background: #f0f2ff; color: #667eea; }
 
@@ -386,9 +387,8 @@ body {
 
   .class-hero { flex-direction: column; padding: 20px 16px; }
   .class-hero h1 { font-size: 20px; }
-  .tabs { overflow-x: auto; gap: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { white-space: nowrap; font-size: 12px; padding: 6px 10px; }
+  .tabs { gap: 2px; }
+  .tab { font-size: 12px; padding: 7px 12px; }
 
   .modal { padding: 20px; margin: 10px; max-width: calc(100vw - 20px); }
   .modal-overlay { padding: 10px; }
