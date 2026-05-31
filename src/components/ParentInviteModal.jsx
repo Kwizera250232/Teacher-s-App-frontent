@@ -1,0 +1,114 @@
+import { useState, useEffect } from 'react';
+import { api } from '../api';
+import { copyToClipboard } from '../utils/copyToClipboard';
+import ShareModal from './ShareModal';
+
+/**
+ * @param {object} props
+ * @param {string} props.token - auth token
+ * @param {number} [props.studentId] - for teachers; omit for student self-invite
+ * @param {string} props.studentName
+ * @param {() => void} props.onClose
+ */
+export default function ParentInviteModal({ token, studentId, studentName, onClose }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = studentId
+          ? await api.post(`/parent/students/${studentId}/parent-link`, {}, token)
+          : await api.post('/parent/my/parent-invite', {}, token);
+        if (!cancelled) setInviteLink(data.invite_link || '');
+      } catch (e) {
+        if (!cancelled) setError(e.message || 'Could not create invite link.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token, studentId]);
+
+  const handleCopy = async () => {
+    if (!inviteLink) return;
+    const ok = await copyToClipboard(inviteLink);
+    setCopied(ok);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const shareText = `Join UClass as parent of ${studentName}. You will only see ${studentName}'s quizzes, marks, and classroom work.`;
+
+  return (
+    <>
+      <div
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+        }}
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div
+          style={{
+            background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 style={{ margin: '0 0 8px', fontSize: 20 }}>👪 Parent invitation</h2>
+          <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: 14, lineHeight: 1.5 }}>
+            Send this link to <strong>{studentName}</strong>&apos;s parent. After signup they only see this child&apos;s quizzes, marks, drawings, and feed.
+          </p>
+
+          {loading && <p style={{ color: '#64748b' }}>Creating secure link…</p>}
+          {error && <p className="alert alert-error">{error}</p>}
+
+          {!loading && !error && inviteLink && (
+            <>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>
+                Invitation link
+              </label>
+              <input
+                readOnly
+                value={inviteLink}
+                onFocus={(e) => e.target.select()}
+                style={{
+                  width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+                  borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, marginBottom: 12,
+                }}
+              />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <button type="button" className="btn btn-primary" onClick={handleCopy}>
+                  {copied ? '✓ Copied' : 'Copy link'}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowShare(true)}>
+                  Share (WhatsApp…)
+                </button>
+                <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
+              </div>
+            </>
+          )}
+
+          {!loading && error && (
+            <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
+          )}
+        </div>
+      </div>
+
+      {showShare && inviteLink && (
+        <ShareModal
+          title={`Parent invite — ${studentName}`}
+          text={shareText}
+          url={inviteLink}
+          onClose={() => setShowShare(false)}
+        />
+      )}
+    </>
+  );
+}

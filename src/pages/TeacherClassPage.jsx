@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateQuizModal from '../components/CreateQuizModal';
@@ -12,6 +12,7 @@ import ClassroomFeed from '../components/ClassroomFeed';
 import CoTeacherInvite from '../components/CoTeacherInvite';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
+import ParentInviteModal from '../components/ParentInviteModal';
 import '../pages/Dashboard.css';
 
 const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
@@ -21,6 +22,7 @@ export default function TeacherClassPage() {
   const { token, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
   const [cls, setCls] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -44,6 +46,12 @@ export default function TeacherClassPage() {
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
   const [showNotifyParents, setShowNotifyParents] = useState(false);
   const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
+  const [parentInviteFor, setParentInviteFor] = useState(null);
+
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && TABS.includes(urlTab)) setTab(urlTab);
+  }, [searchParams]);
 
   useEffect(() => {
     setPageLoading(true);
@@ -629,13 +637,9 @@ export default function TeacherClassPage() {
                       type="button"
                       className="btn btn-outline btn-sm"
                       style={{ fontSize: 10, padding: '2px 6px', marginTop: 4 }}
-                      onClick={async (ev) => {
+                      onClick={(ev) => {
                         ev.stopPropagation();
-                        try {
-                          const r = await api.post(`/parent/students/${s.id}/parent-link`, {}, token);
-                          await navigator.clipboard.writeText(r.invite_link);
-                          showSuccess(`Parent link copied for ${s.name}`);
-                        } catch (e) { setError(e.message); }
+                        setParentInviteFor({ studentId: s.id, studentName: s.name });
                       }}
                     >
                       👪 Parent invite
@@ -699,15 +703,14 @@ export default function TeacherClassPage() {
                 type="button"
                 className="btn btn-secondary btn-sm"
                 style={{ marginTop: '1rem', width: '100%' }}
-                onClick={async () => {
-                  try {
-                    const r = await api.post(`/parent/students/${selectedStudent.id}/parent-link`, {}, token);
-                    await navigator.clipboard.writeText(r.invite_link);
-                    showSuccess(`Parent invite link copied for ${r.student_name}`);
-                  } catch (e) { setError(e.message); }
+                onClick={() => {
+                  setParentInviteFor({
+                    studentId: selectedStudent.id,
+                    studentName: selectedStudent.name,
+                  });
                 }}
               >
-                Copy parent invite link
+                👪 Parent invite link
               </button>
               <button onClick={() => setSelectedStudent(null)} style={{ marginTop: '0.75rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '0.6rem 2rem', cursor: 'pointer', fontWeight: 600 }}>Funga</button>
             </div>
@@ -764,6 +767,15 @@ export default function TeacherClassPage() {
           classId={parseInt(id, 10)}
           onClose={() => setShowWeeklyDigest(false)}
           onSent={() => showSuccess('Weekly digest sent to parents.')}
+        />
+      )}
+
+      {parentInviteFor && (
+        <ParentInviteModal
+          token={token}
+          studentId={parentInviteFor.studentId}
+          studentName={parentInviteFor.studentName}
+          onClose={() => setParentInviteFor(null)}
         />
       )}
     </div>

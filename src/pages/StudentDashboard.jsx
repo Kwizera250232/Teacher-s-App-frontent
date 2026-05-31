@@ -6,6 +6,7 @@ import JoinClassModal from '../components/JoinClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
 import DonateButton from '../components/DonateButton';
 import StudentSocialFeed from '../components/StudentSocialFeed';
+import ParentInviteModal from '../components/ParentInviteModal';
 import './Dashboard.css';
 
 export default function StudentDashboard() {
@@ -18,6 +19,7 @@ export default function StudentDashboard() {
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   // Quick note state: { classId, open, text, saving }
   const [quickNote, setQuickNote] = useState(null);
+  const [showParentInvite, setShowParentInvite] = useState(false);
 
   const loadClasses = () => {
     api.get('/classes/my', token).then(data => {
@@ -82,8 +84,31 @@ export default function StudentDashboard() {
             <h1>Amashuri Yanjye</h1>
             <p className="dash-sub">Injira mu mashuri yawe</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowJoin(true)}>
-            + Injira mu Ishuri
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <button className="btn btn-primary" onClick={() => setShowJoin(true)}>
+              + Injira mu Ishuri
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => setShowParentInvite(true)}>
+              👪 Tuma ababyeyi
+            </button>
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #f0fdf4, #ecfdf5)',
+            border: '1px solid #86efac',
+            borderRadius: 12,
+            padding: '1rem 1.25rem',
+            marginBottom: '1rem',
+          }}
+        >
+          <strong style={{ color: '#166534' }}>Invite your parent</strong>
+          <p style={{ margin: '0.35rem 0 0.75rem', color: '#374151', fontSize: '0.9rem' }}>
+            Share a link so your parent can join UClass and see only your quizzes, marks, drawings, and class posts.
+          </p>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowParentInvite(true)}>
+            Get parent invite link
           </button>
         </div>
 
@@ -169,6 +194,14 @@ export default function StudentDashboard() {
           token={token}
           onClose={() => setShowJoin(false)}
           onJoined={() => { setShowJoin(false); loadClasses(); }}
+        />
+      )}
+
+      {showParentInvite && user?.name && (
+        <ParentInviteModal
+          token={token}
+          studentName={user.name}
+          onClose={() => setShowParentInvite(false)}
         />
       )}
 

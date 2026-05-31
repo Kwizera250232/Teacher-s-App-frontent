@@ -334,8 +334,15 @@ export default function ParentHub() {
                     <section className="phub-section">
                       <h3>Compositions & shares</h3>
                       {summary.compositions?.length ? summary.compositions.map((c, i) => (
-                        <div key={i} className="phub-row">{c.title || 'Share'} — {c.status}</div>
-                      )) : <p className="phub-muted">No compositions yet.</p>}
+                        <div key={i} className="phub-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                          <span><strong>{c.title || 'Share'}</strong> · {c.status}</span>
+                          {c.body && (
+                            <span className="phub-muted" style={{ fontSize: 13, marginTop: 4 }}>
+                              {String(c.body).slice(0, 200)}{String(c.body).length > 200 ? '…' : ''}
+                            </span>
+                          )}
+                        </div>
+                      )) : <p className="phub-muted">No compositions or drawings yet.</p>}
                     </section>
                   </>
                 )}

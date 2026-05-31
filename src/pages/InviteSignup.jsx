@@ -79,7 +79,6 @@ export default function InviteSignup() {
         payload.parent_token = parentToken;
         payload.role = 'parent';
         payload.email = form.email.trim().toLowerCase();
-        await api.post('/auth/validate-email', { email: payload.email });
       } else if (staffInvite) {
         payload.role = preview.role;
         payload.invite_token = token;

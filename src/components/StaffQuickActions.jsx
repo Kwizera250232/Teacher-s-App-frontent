@@ -34,7 +34,11 @@ export default function StaffQuickActions({ token, basePath, firstClassId, onAdd
         👨‍🏫 Teacher invite link
       </button>
       {firstClassId && (
-        <Link to={`${basePath}/classes/${firstClassId}`} className="btn btn-outline btn-sm">
+        <Link
+          to={`${basePath}/classes/${firstClassId}?tab=Students`}
+          className="btn btn-outline btn-sm"
+          title="Open class → Students tab → Parent invite on each student"
+        >
           👪 Parent invites (per student)
         </Link>
       )}

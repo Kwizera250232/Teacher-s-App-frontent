@@ -36,6 +36,12 @@ This workspace contains two independent repos:
 - API client: `src/api.js` — single fetch-based module, no axios/React Query.
 - No controllers/models layer — all business logic is in route handler files under `routes/`.
 
+### Parent invites (UI)
+
+- Teachers: class **Students** tab → **Parent invite** (modal with copy + WhatsApp share).
+- Students: dashboard **Get parent invite link** → same modal (`POST /parent/my/parent-invite`).
+- Staff dashboard quick link goes to `?tab=Students` on the first class.
+
 ### Email signup (UI)
 
 - Staff register with a **school email username** (shown as `user@schooldomain.edu`) and log in with that address only.
