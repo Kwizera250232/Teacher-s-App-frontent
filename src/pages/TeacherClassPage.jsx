@@ -599,6 +599,20 @@ export default function TeacherClassPage() {
         {/* Students */}
         {tab === 'Students' && (
           <div style={{ padding: '1.5rem 0' }}>
+            <div
+              style={{
+                background: '#f0fdf4',
+                border: '1px solid #86efac',
+                borderRadius: 12,
+                padding: '12px 16px',
+                marginBottom: '1rem',
+              }}
+            >
+              <strong style={{ color: '#166534' }}>👪 Parent invite</strong>
+              <p style={{ margin: '6px 0 0', fontSize: 13, color: '#374151' }}>
+                Tap <strong>Parent invite</strong> under a student to copy or share a WhatsApp link for their parent.
+              </p>
+            </div>
             <CoTeacherInvite classId={id} token={token} />
             {data.length === 0 && <p style={{ padding: 20, textAlign: 'center', color: '#888' }}>No students yet.</p>}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'flex-start' }}>

@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { copyToClipboard } from '../utils/copyToClipboard';
 
-export default function StaffQuickActions({ token, basePath, firstClassId, onAddStudents }) {
+export default function StaffQuickActions({ token, onAddStudents, onParentInvites }) {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
   const copy = async (text) => {
-    await navigator.clipboard.writeText(text);
-    setMsg('Link copied to clipboard.');
-    setTimeout(() => setMsg(''), 3000);
+    const ok = await copyToClipboard(text);
+    setMsg(ok ? 'Link copied to clipboard.' : 'Copy the link from the box if paste did not work.');
+    setTimeout(() => setMsg(''), 4000);
   };
 
   const teacherInvite = async () => {
@@ -33,15 +33,17 @@ export default function StaffQuickActions({ token, basePath, firstClassId, onAdd
       <button type="button" className="btn btn-secondary btn-sm" onClick={teacherInvite}>
         👨‍🏫 Teacher invite link
       </button>
-      {firstClassId && (
-        <Link
-          to={`${basePath}/classes/${firstClassId}?tab=Students`}
-          className="btn btn-outline btn-sm"
-          title="Open class → Students tab → Parent invite on each student"
-        >
-          👪 Parent invites (per student)
-        </Link>
-      )}
+      <button
+        type="button"
+        className="btn btn-outline btn-sm"
+        onClick={() => {
+          setErr('');
+          if (onParentInvites) onParentInvites();
+          else setErr('Parent invites are not available on this screen.');
+        }}
+      >
+        👪 Parent invites (per student)
+      </button>
       {msg && <span style={{ color: '#166534', fontSize: '0.85rem', width: '100%' }}>{msg}</span>}
       {err && <span style={{ color: '#dc2626', fontSize: '0.85rem', width: '100%' }}>{err}</span>}
     </div>

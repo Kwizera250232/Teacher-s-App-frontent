@@ -38,9 +38,9 @@ This workspace contains two independent repos:
 
 ### Parent invites (UI)
 
-- Teachers: class **Students** tab → **Parent invite** (modal with copy + WhatsApp share).
-- Students: dashboard **Get parent invite link** → same modal (`POST /parent/my/parent-invite`).
-- Staff dashboard quick link goes to `?tab=Students` on the first class.
+- Teachers: dashboard **Parent invites (per student)** → picker modal → choose student → copy/share link.
+- Also: class **Students** tab → **Parent invite** under each student.
+- Students: dashboard **Get parent invite link** → same share modal (`POST /parent/my/parent-invite`).
 
 ### Email signup (UI)
 

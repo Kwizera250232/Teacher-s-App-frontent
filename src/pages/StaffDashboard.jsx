@@ -13,6 +13,7 @@ import StaffQuickActions from '../components/StaffQuickActions';
 import SchoolHubPanel from '../components/staff/SchoolHubPanel';
 import AddTeacherModal from '../components/staff/AddTeacherModal';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
+import ParentInvitesPickerModal from '../components/ParentInvitesPickerModal';
 import './Dashboard.css';
 import './ParentHub.css';
 
@@ -28,6 +29,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   const [unread, setUnread] = useState(0);
   const [showAddTeacher, setShowAddTeacher] = useState(false);
   const [showNotifyParents, setShowNotifyParents] = useState(false);
+  const [showParentInvites, setShowParentInvites] = useState(false);
   const isHeadTeacher = roleLabel === 'Head Teacher';
 
   const dismissAnnouncement = (id) => {
@@ -116,7 +118,11 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        <StaffQuickActions token={token} basePath={basePath} firstClassId={classes[0]?.id} onAddStudents={() => setShowAddStudents(true)} />
+        <StaffQuickActions
+          token={token}
+          onAddStudents={() => setShowAddStudents(true)}
+          onParentInvites={() => setShowParentInvites(true)}
+        />
 
         {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
           <div key={a.id} style={{
@@ -225,6 +231,13 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           token={token}
           classId={classes[0]?.id}
           onClose={() => setShowNotifyParents(false)}
+        />
+      )}
+
+      {showParentInvites && (
+        <ParentInvitesPickerModal
+          token={token}
+          onClose={() => setShowParentInvites(false)}
         />
       )}
     </div>
