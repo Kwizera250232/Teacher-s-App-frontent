@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { api, UPLOADS_BASE } from '../api';
 import { ParentChildFeed } from './ParentDashboard';
 import { useAuth } from '../context/AuthContext';
@@ -32,8 +33,39 @@ export default function ParentHub() {
 
   useEffect(() => { loadHub(); }, [token]);
   useEffect(() => {
-    api.get('/profile/contacts/list', token).then(setContacts).catch(() => {});
+    Promise.all([
+      api.get('/profile/contacts/list', token).catch(() => []),
+      api.get('/messages/inbox', token).catch(() => []),
+    ]).then(([profileContacts, inbox]) => {
+      const map = new Map();
+      profileContacts.forEach((c) => map.set(c.id, c));
+      inbox.forEach((m) => {
+        if (!map.has(m.sender_id)) {
+          map.set(m.sender_id, {
+            id: m.sender_id,
+            name: m.sender_name,
+            role: m.sender_role,
+            avatar_path: m.avatar_path,
+          });
+        }
+      });
+      setContacts([...map.values()].sort((a, b) => a.name.localeCompare(b.name)));
+    });
   }, [token]);
+
+  const unreadNotif = hub?.unread_notifications_count ?? 0;
+
+  const openNotification = async (n) => {
+    if (!n.is_read) {
+      await api.put(`/parent/notifications/${n.id}/read`, {}, token).catch(() => {});
+      loadHub();
+    }
+    if (n.sender_id) {
+      setTab('chats');
+      setActiveChat(n.sender_id);
+      setMobilePanel('chat');
+    }
+  };
 
   useEffect(() => {
     if (!selectedChild) return;
@@ -78,6 +110,7 @@ export default function ParentHub() {
           <span className="phub-sub">Parent</span>
         </div>
         <div className="phub-header-actions">
+          <Link to="/messages" className="btn btn-secondary btn-sm">💬 All messages</Link>
           <DonateButton />
           <button type="button" className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
         </div>
@@ -95,8 +128,8 @@ export default function ParentHub() {
             {t === 'feed' && '📰 Classroom feed'}
             {t === 'school' && '🏫 School'}
             {t === 'child' && '👧 My child'}
-            {t === 'chats' && hub?.children?.[0]?.unread_notifications > 0 && (
-              <span className="phub-badge">{hub.children.reduce((n, c) => n + (c.unread_notifications || 0), 0)}</span>
+            {t === 'school' && unreadNotif > 0 && (
+              <span className="phub-badge">{unreadNotif}</span>
             )}
           </button>
         ))}
@@ -199,7 +232,15 @@ export default function ParentHub() {
 
             <h2 style={{ marginTop: 24 }}>Notifications</h2>
             {hub?.notifications?.length ? hub.notifications.map((n) => (
-              <article key={n.id} className={`phub-card ${n.is_read ? '' : 'phub-card-unread'}`}>
+              <article
+                key={n.id}
+                role="button"
+                tabIndex={0}
+                className={`phub-card ${n.is_read ? '' : 'phub-card-unread'}`}
+                onClick={() => openNotification(n)}
+                onKeyDown={(e) => e.key === 'Enter' && openNotification(n)}
+                style={{ cursor: n.sender_id ? 'pointer' : 'default' }}
+              >
                 <strong>{n.title}</strong>
                 <p>{n.body}</p>
                 <small>{new Date(n.created_at).toLocaleString()}</small>
@@ -250,6 +291,24 @@ export default function ParentHub() {
                       {summary.marks?.length ? summary.marks.map((m, i) => (
                         <div key={i} className="phub-row">{m.class_name} test {m.test_number}: {m.marks_obtained}/{m.total_marks}</div>
                       )) : <p className="phub-muted">No marks recorded.</p>}
+                    </section>
+                    <section className="phub-section">
+                      <h3>Weekly teacher updates</h3>
+                      {summary.weekly_digests?.length ? summary.weekly_digests.map((d, i) => {
+                        let j = d.digest_json || {};
+                        if (typeof j === 'string') {
+                          try { j = JSON.parse(j); } catch { j = {}; }
+                        }
+                        return (
+                          <div key={i} className="phub-card" style={{ marginBottom: 8 }}>
+                            <small>{new Date(d.created_at).toLocaleDateString()}</small>
+                            {j.behavior_note && <p><strong>Behavior:</strong> {j.behavior_note}</p>}
+                            {j.work_summary && <p><strong>Work:</strong> {j.work_summary}</p>}
+                            {j.attendance && <p><strong>Attendance:</strong> {j.attendance}</p>}
+                            {j.gaps && <p><strong>Next:</strong> {j.gaps}</p>}
+                          </div>
+                        );
+                      }) : <p className="phub-muted">No weekly updates yet.</p>}
                     </section>
                     <section className="phub-section">
                       <h3>Compositions & shares</h3>

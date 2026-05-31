@@ -6,7 +6,7 @@ import '../../pages/ParentHub.css';
 export default function SchoolHubPanel({ token, isHeadTeacher }) {
   const [school, setSchool] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
-  const [form, setForm] = useState({ title: '', body: '', district: '', sector: '' });
+  const [form, setForm] = useState({ title: '', body: '', district: '', sector: '', welcome_message: '' });
   const [msg, setMsg] = useState('');
 
   const load = () => {
@@ -23,6 +23,7 @@ export default function SchoolHubPanel({ token, isHeadTeacher }) {
       await api.put('/parent/school/profile', {
         district: form.district || school?.district,
         sector: form.sector || school?.sector,
+        welcome_message: form.welcome_message ?? school?.welcome_message,
       }, token);
       setMsg('School profile updated.');
       load();
@@ -49,7 +50,12 @@ export default function SchoolHubPanel({ token, isHeadTeacher }) {
 
   useEffect(() => {
     if (school) {
-      setForm((f) => ({ ...f, district: school.district || '', sector: school.sector || '' }));
+      setForm((f) => ({
+        ...f,
+        district: school.district || '',
+        sector: school.sector || '',
+        welcome_message: school.welcome_message || '',
+      }));
     }
   }, [school]);
 
@@ -70,6 +76,14 @@ export default function SchoolHubPanel({ token, isHeadTeacher }) {
           <div className="form-group">
             <label>Sector</label>
             <input value={form.sector} onChange={(e) => setForm((f) => ({ ...f, sector: e.target.value }))} />
+          </div>
+          <div className="form-group">
+            <label>Welcome message</label>
+            <textarea
+              rows={2}
+              value={form.welcome_message}
+              onChange={(e) => setForm((f) => ({ ...f, welcome_message: e.target.value }))}
+            />
           </div>
           <button type="button" className="btn btn-primary btn-sm" onClick={saveProfile}>Save</button>
         </div>

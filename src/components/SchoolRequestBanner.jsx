@@ -17,10 +17,20 @@ export default function SchoolRequestBanner({ token, user }) {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    api.get('/school/my-school-request', token).then(data => {
+    api.get('/admin/my-school-request', token).then(data => {
       if (data) setPendingRequest(data);
     }).catch(() => {});
   }, [token]);
+
+  useEffect(() => {
+    if (!pendingRequest || pendingRequest.status !== 'pending' || user?.school_id) return undefined;
+    const t = setInterval(() => {
+      api.get('/auth/me', token).then((r) => {
+        if (r.user?.school_id) updateUser(r.user);
+      }).catch(() => {});
+    }, 15000);
+    return () => clearInterval(t);
+  }, [pendingRequest, token, user?.school_id, updateUser]);
 
   useEffect(() => {
     if (showModal) {
@@ -53,7 +63,7 @@ export default function SchoolRequestBanner({ token, user }) {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/school/request-school', {
+      const res = await api.post('/admin/request-school', {
         school_id: selectedSchool,
         message: message.trim() || null,
       }, token);
@@ -61,13 +71,7 @@ export default function SchoolRequestBanner({ token, user }) {
       setPendingRequest(res.request);
       setTimeout(() => setShowModal(false), 2000);
     } catch (e) {
-      if (e.message.includes('404') || e.message.includes('API URL')) {
-        const school = schools.find(s => String(s.id) === selectedSchool);
-        setSuccess(`Selected school: ${school?.name || 'Unknown'}. Please ask your Head Teacher or Admin to assign you to this school.`);
-        setPendingRequest({ status: 'pending', school_name: school?.name });
-      } else {
-        setError(e.message);
-      }
+      setError(e.message);
     } finally {
       setLoading(false);
     }

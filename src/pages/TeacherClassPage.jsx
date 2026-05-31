@@ -11,6 +11,7 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import ClassroomFeed from '../components/ClassroomFeed';
 import CoTeacherInvite from '../components/CoTeacherInvite';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
+import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
 import '../pages/Dashboard.css';
 
 const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
@@ -42,6 +43,7 @@ export default function TeacherClassPage() {
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
   const [showNotifyParents, setShowNotifyParents] = useState(false);
+  const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
 
   useEffect(() => {
     setPageLoading(true);
@@ -247,19 +249,9 @@ export default function TeacherClassPage() {
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  onClick={async () => {
-                    try {
-                      const r = await api.post(`/parent/classes/${id}/weekly-digest`, {
-                        behavior_note: 'Good participation this week.',
-                        work_summary: 'See classroom feed for assignments.',
-                        attendance: 'Present all sessions',
-                        gaps: '',
-                      }, token);
-                      showSuccess(r.message || 'Digest saved.');
-                    } catch (e) { setError(e.message); }
-                  }}
+                  onClick={() => setShowWeeklyDigest(true)}
                 >
-                  Send weekly digest (save)
+                  Weekly parent update
                 </button>
                 <button
                   type="button"
@@ -763,6 +755,15 @@ export default function TeacherClassPage() {
           token={token}
           classId={parseInt(id, 10)}
           onClose={() => setShowNotifyParents(false)}
+        />
+      )}
+
+      {showWeeklyDigest && (
+        <WeeklyDigestModal
+          token={token}
+          classId={parseInt(id, 10)}
+          onClose={() => setShowWeeklyDigest(false)}
+          onSent={() => showSuccess('Weekly digest sent to parents.')}
         />
       )}
     </div>

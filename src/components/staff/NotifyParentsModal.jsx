@@ -3,7 +3,7 @@ import { api } from '../../api';
 
 export default function NotifyParentsModal({ token, classId, onClose }) {
   const [parents, setParents] = useState([]);
-  const [audience, setAudience] = useState('all');
+  const [audience, setAudience] = useState(classId ? 'class' : 'all');
   const [selected, setSelected] = useState([]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -65,6 +65,7 @@ export default function NotifyParentsModal({ token, classId, onClose }) {
           <label className="form-group">
             Send to
             <select value={audience} onChange={(e) => setAudience(e.target.value)}>
+              {classId && <option value="class">All parents in this class</option>}
               <option value="all">All parents in school</option>
               <option value="selected">Selected parents</option>
             </select>
