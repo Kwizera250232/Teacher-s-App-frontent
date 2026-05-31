@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import JoinClassModal from '../components/JoinClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
 import DonateButton from '../components/DonateButton';
-import StudentSocialFeed from '../components/StudentSocialFeed';
 import ParentInviteModal from '../components/ParentInviteModal';
 import './Dashboard.css';
 
@@ -184,7 +183,6 @@ export default function StudentDashboard() {
             ))}
           </div>
 
-          <StudentSocialFeed classes={classes} token={token} />
           </>
         )}
       </main>
@@ -200,6 +198,7 @@ export default function StudentDashboard() {
       {showParentInvite && user?.name && (
         <ParentInviteModal
           token={token}
+          selfStudentId={user.id}
           studentName={user.name}
           onClose={() => setShowParentInvite(false)}
         />

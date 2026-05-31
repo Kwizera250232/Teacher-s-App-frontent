@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
 import { copyToClipboard } from '../utils/copyToClipboard';
+import { createParentInviteLink } from '../utils/parentInviteApi';
 import ShareModal from './ShareModal';
 
 /**
  * @param {object} props
  * @param {string} props.token - auth token
- * @param {number} [props.studentId] - for teachers; omit for student self-invite
+ * @param {number} [props.studentId] - for teachers inviting a pupil
+ * @param {number} [props.selfStudentId] - logged-in student id (self-invite)
  * @param {string} props.studentName
  * @param {() => void} props.onClose
  */
-export default function ParentInviteModal({ token, studentId, studentName, onClose }) {
+export default function ParentInviteModal({ token, studentId, selfStudentId, studentName, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [inviteLink, setInviteLink] = useState('');
@@ -23,9 +24,7 @@ export default function ParentInviteModal({ token, studentId, studentName, onClo
       setLoading(true);
       setError('');
       try {
-        const data = studentId
-          ? await api.post(`/parent/students/${studentId}/parent-link`, {}, token)
-          : await api.post('/parent/my/parent-invite', {}, token);
+        const data = await createParentInviteLink({ token, studentId, selfStudentId });
         if (!cancelled) setInviteLink(data.invite_link || '');
       } catch (e) {
         if (!cancelled) setError(e.message || 'Could not create invite link.');
@@ -34,7 +33,7 @@ export default function ParentInviteModal({ token, studentId, studentName, onClo
       }
     })();
     return () => { cancelled = true; };
-  }, [token, studentId]);
+  }, [token, studentId, selfStudentId]);
 
   const handleCopy = async () => {
     if (!inviteLink) return;
@@ -100,7 +99,7 @@ export default function ParentInviteModal({ token, studentId, studentName, onClo
           {!loading && error && (
             <>
               <p style={{ fontSize: 13, color: '#64748b' }}>
-                If this keeps failing, deploy the latest API or open the class Students tab and try again.
+                Ask your teacher to create a parent invite from the class Students tab, or try again after the school updates the app server.
               </p>
               <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
             </>
