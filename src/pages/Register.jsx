@@ -3,6 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { dashboardPath } from '../utils/roles';
+import { schoolDomainFromName, buildSchoolEmailPreview } from '../utils/schoolDomain';
 import './Auth.css';
 
 export default function Register() {
@@ -15,18 +16,13 @@ export default function Register() {
   const [selectedRole, setSelectedRole] = useState(
     ['head_teacher', 'teacher'].includes(searchRole) ? searchRole : 'student'
   );
-  const [codeInput, setCodeInput] = useState('');
-  const [codeLoading, setCodeLoading] = useState(false);
-  const [codeError, setCodeError] = useState('');
   const [verifiedSchool, setVerifiedSchool] = useState(null);
-  const [staffDomain, setStaffDomain] = useState('staff.umunsi.edu');
-  const [optionalCode, setOptionalCode] = useState('');
-  const [showOptionalCode, setShowOptionalCode] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
     email: '',
     schoolEmailLocal: '',
+    staffSchoolName: '',
     password: '',
     phone: '',
     school_id: '',
@@ -47,12 +43,6 @@ export default function Register() {
   useEffect(() => {
     api.get('/auth/schools').then(setSchools).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (selectedRole === 'teacher' || selectedRole === 'head_teacher') {
-      api.get('/auth/staff-signup-domain').then((r) => setStaffDomain(r.email_domain || 'staff.umunsi.edu')).catch(() => {});
-    }
-  }, [selectedRole]);
 
   useEffect(() => {
     if (['head_teacher', 'teacher'].includes(searchRole)) {
@@ -84,10 +74,15 @@ export default function Register() {
           setLoading(false);
           return;
         }
+        if (!verifiedSchool && !form.staffSchoolName.trim()) {
+          setError('Andika izina ry\'ishuri.');
+          setLoading(false);
+          return;
+        }
       } else if (form.email.trim()) {
         await api.post('/auth/validate-email', {
           email: form.email.trim().toLowerCase(),
-          school_code: verifiedSchool ? codeInput.trim().toUpperCase() : undefined,
+          school_code: verifiedSchool?.code ? String(verifiedSchool.code).trim().toUpperCase() : undefined,
           school_id: schoolId || undefined,
         });
       }
@@ -102,15 +97,15 @@ export default function Register() {
 
       if (isStaff) {
         payload.school_email_local = form.schoolEmailLocal.trim();
+        if (!verifiedSchool && form.staffSchoolName.trim()) {
+          payload.staff_school_name = form.staffSchoolName.trim();
+        }
       } else {
         payload.email = form.email.trim().toLowerCase();
       }
 
-      const codeForRegister = (verifiedSchool && (codeInput || optionalCode))
-        ? (codeInput || optionalCode).trim().toUpperCase()
-        : '';
-      if (codeForRegister) {
-        payload.school_code = codeForRegister;
+      if (verifiedSchool?.code) {
+        payload.school_code = String(verifiedSchool.code).trim().toUpperCase();
       }
 
       const data = await api.post('/auth/register', payload);
@@ -222,105 +217,89 @@ export default function Register() {
               {(selectedRole === 'teacher' || selectedRole === 'head_teacher') ? (
                 <>
                 <div className="form-group">
-                  <label>Fungura imeyili y&apos;ishuri yawe (login)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                  <label>Izina ry&apos;ishuri</label>
+                  <input
+                    type="text"
+                    value={verifiedSchool ? verifiedSchool.name : form.staffSchoolName}
+                    onChange={(e) => {
+                      if (verifiedSchool) return;
+                      setForm({ ...form, staffSchoolName: e.target.value });
+                      setSchoolEmailStatus('');
+                      const dom = schoolDomainFromName(e.target.value);
+                      if (form.schoolEmailLocal.trim() && dom) {
+                        setSchoolEmailPreview(buildSchoolEmailPreview(form.schoolEmailLocal, dom));
+                      }
+                    }}
+                    readOnly={Boolean(verifiedSchool)}
+                    placeholder="e.g. Green Hills Academy"
+                    required={!verifiedSchool}
+                    style={verifiedSchool ? { background: '#f1f5f9' } : undefined}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Imeyili y&apos;ishuri (login)</label>
+                  <div className="auth-school-email-row">
                     <input
                       type="text"
                       value={form.schoolEmailLocal}
                       onChange={(e) => {
-                        setForm({ ...form, schoolEmailLocal: e.target.value });
+                        const local = e.target.value;
+                        setForm({ ...form, schoolEmailLocal: local });
                         setSchoolEmailStatus('');
+                        const dom = verifiedSchool?.email_domain || schoolDomainFromName(form.staffSchoolName);
+                        if (local.trim() && dom) {
+                          setSchoolEmailPreview(buildSchoolEmailPreview(local, dom));
+                        }
                       }}
                       onBlur={async () => {
                         const local = form.schoolEmailLocal.trim();
                         if (!local) return;
-                        const code = (verifiedSchool ? codeInput : optionalCode).trim().toUpperCase();
+                        const schoolName = verifiedSchool?.name || form.staffSchoolName.trim();
+                        if (!schoolName) {
+                          setSchoolEmailStatus('Andika izina ry\'ishuri mbere.');
+                          return;
+                        }
                         try {
-                          const q = code
-                            ? `local=${encodeURIComponent(local)}&code=${encodeURIComponent(code)}`
-                            : `local=${encodeURIComponent(local)}`;
-                          const r = await api.get(`/auth/check-school-email?${q}`);
+                          const params = new URLSearchParams({ local });
+                          if (verifiedSchool?.code) {
+                            params.set('code', String(verifiedSchool.code).trim().toUpperCase());
+                          } else {
+                            params.set('school_name', schoolName);
+                          }
+                          const r = await api.get(`/auth/check-school-email?${params}`);
                           setSchoolEmailPreview(r.email);
                           setSchoolEmailStatus(
                             r.available ? `✓ ${r.email} is available` : `✗ ${r.email} is already taken`
                           );
-                          if (r.school_name && code) {
-                            setVerifiedSchool((prev) => prev || { name: r.school_name, code, email_domain: r.email_domain });
-                          }
                         } catch (err) {
                           setSchoolEmailStatus(err.message);
                         }
                       }}
                       placeholder="john.doe"
                       required
-                      style={{ flex: '1 1 140px', minWidth: 120 }}
+                      className="auth-school-email-local"
                     />
-                    <span style={{ color: '#475569', fontWeight: 600 }}>
-                      @{(verifiedSchool?.email_domain || staffDomain)}
+                    <span className="auth-school-email-domain">
+                      @
+                      {verifiedSchool?.email_domain
+                        || schoolDomainFromName(form.staffSchoolName)
+                        || 'schoolname.edu'}
                     </span>
                   </div>
                   <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-                    This is your permanent login email. Link your school from the dashboard after signup.
+                    Injira ukoresheje <strong>username@izinaryishuri.edu</strong> — izina ry&apos;ishuri hejuru rigena aderesi yawe.
                   </p>
+                  {schoolEmailPreview && (
+                    <p style={{ fontSize: 12, marginTop: 4, color: '#0f766e' }}>
+                      Imeyili yo kwinjira: <strong>{schoolEmailPreview}</strong>
+                    </p>
+                  )}
                   {schoolEmailStatus && (
                     <p style={{ fontSize: 12, marginTop: 4, color: schoolEmailStatus.startsWith('✓') ? '#059669' : '#dc2626' }}>
                       {schoolEmailStatus}
                     </p>
                   )}
                 </div>
-                {!showOptionalCode ? (
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm"
-                    style={{ marginBottom: 12 }}
-                    onClick={() => setShowOptionalCode(true)}
-                  >
-                    I have a school code (optional)
-                  </button>
-                ) : (
-                  <div className="form-group">
-                    <label>School code (optional)</label>
-                    <input
-                      type="text"
-                      value={optionalCode}
-                      onChange={(e) => {
-                        setOptionalCode(e.target.value.toUpperCase());
-                        setCodeInput(e.target.value.toUpperCase());
-                        setVerifiedSchool(null);
-                        setCodeError('');
-                      }}
-                      onBlur={async () => {
-                        const c = optionalCode.trim();
-                        if (!c) return;
-                        setCodeLoading(true);
-                        setCodeError('');
-                        try {
-                          const data = await api.get(`/auth/validate-school-code?code=${encodeURIComponent(c)}`);
-                          if (selectedRole === 'head_teacher' && data.school.has_head_teacher) {
-                            setCodeError('This school already has a Head Teacher. Continue without code or join as Teacher.');
-                            setVerifiedSchool(null);
-                          } else {
-                            setVerifiedSchool(data.school);
-                            setCodeInput(c);
-                            setSchoolEmailStatus('');
-                          }
-                        } catch (err) {
-                          setCodeError(err.message);
-                          setVerifiedSchool(null);
-                        } finally {
-                          setCodeLoading(false);
-                        }
-                      }}
-                      placeholder="e.g. AB3X7YQ2"
-                      maxLength={12}
-                      style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
-                    />
-                    {codeError && <p style={{ fontSize: 12, color: '#dc2626' }}>{codeError}</p>}
-                    {verifiedSchool && (
-                      <p style={{ fontSize: 12, color: '#059669' }}>🏫 {verifiedSchool.name}</p>
-                    )}
-                  </div>
-                )}
                 </>
               ) : (
                 <div className="form-group">
