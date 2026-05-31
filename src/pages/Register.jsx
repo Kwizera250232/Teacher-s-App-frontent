@@ -19,6 +19,9 @@ export default function Register() {
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeError, setCodeError] = useState('');
   const [verifiedSchool, setVerifiedSchool] = useState(null);
+  const [staffDomain, setStaffDomain] = useState('staff.umunsi.edu');
+  const [optionalCode, setOptionalCode] = useState('');
+  const [showOptionalCode, setShowOptionalCode] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -45,42 +48,20 @@ export default function Register() {
     api.get('/auth/schools').then(setSchools).catch(() => {});
   }, []);
 
-  const handleRoleNext = () => {
+  useEffect(() => {
     if (selectedRole === 'teacher' || selectedRole === 'head_teacher') {
-      setStep('code');
-    } else {
-      setStep('form');
+      api.get('/auth/staff-signup-domain').then((r) => setStaffDomain(r.email_domain || 'staff.umunsi.edu')).catch(() => {});
     }
-  };
+  }, [selectedRole]);
 
-  const handleCodeSubmit = async (e) => {
-    e.preventDefault();
-    setCodeError('');
-    if (!codeInput.trim()) {
-      setCodeError('Please enter the school code.');
-      return;
-    }
-    setCodeLoading(true);
-    try {
-      const data = await api.get(
-        `/auth/validate-school-code?code=${encodeURIComponent(codeInput.trim().toUpperCase())}`
-      );
-      if (selectedRole === 'head_teacher' && data.school.has_head_teacher) {
-        setCodeError(
-          'This school already has a Head Teacher. If you are a teacher, select the Teacher role.'
-        );
-        setCodeLoading(false);
-        return;
-      }
-      setVerifiedSchool(data.school);
-      setSchoolEmailStatus('');
-      setSchoolEmailPreview('');
+  useEffect(() => {
+    if (['head_teacher', 'teacher'].includes(searchRole)) {
       setStep('form');
-    } catch (err) {
-      setCodeError(err.message || 'Invalid code. Please try again.');
-    } finally {
-      setCodeLoading(false);
     }
+  }, [searchRole]);
+
+  const handleRoleNext = () => {
+    setStep('form');
   };
 
   const handleSubmit = async (e) => {
@@ -125,8 +106,11 @@ export default function Register() {
         payload.email = form.email.trim().toLowerCase();
       }
 
-      if (verifiedSchool) {
-        payload.school_code = codeInput.trim().toUpperCase();
+      const codeForRegister = (verifiedSchool && (codeInput || optionalCode))
+        ? (codeInput || optionalCode).trim().toUpperCase()
+        : '';
+      if (codeForRegister) {
+        payload.school_code = codeForRegister;
       }
 
       const data = await api.post('/auth/register', payload);
@@ -202,14 +186,9 @@ export default function Register() {
                 Students select their school from the list in the next step.
               </p>
             )}
-            {selectedRole === 'head_teacher' && (
+            {(selectedRole === 'head_teacher' || selectedRole === 'teacher') && (
               <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: 4 }}>
-                You need the <strong>School Code</strong> from your school admin.
-              </p>
-            )}
-            {selectedRole === 'teacher' && (
-              <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: 4 }}>
-                You need the <strong>School Code</strong> from your Head Teacher.
+                Sign up now with your UClass school email. You can link to your school from the dashboard after login (school code optional).
               </p>
             )}
 
@@ -222,54 +201,6 @@ export default function Register() {
             </button>
             <p className="auth-link" style={{ marginTop: 16 }}>
               Usanzwe ufite konti? <Link to="/login">Injira</Link>
-            </p>
-          </>
-        ) : step === 'code' ? (
-          <>
-            <h2>{selectedRole === 'head_teacher' ? '🏫 Head Teacher Signup' : '👨‍🏫 Teacher Signup'}</h2>
-            <p className="auth-sub">
-              {selectedRole === 'head_teacher'
-                ? 'Enter the School Code given to you by the system admin'
-                : 'Enter the School Code shared by your Head Teacher'}
-            </p>
-
-            {codeError && <div className="alert alert-error">{codeError}</div>}
-            <form onSubmit={handleCodeSubmit}>
-              <div className="form-group" style={{ marginTop: 16 }}>
-                <label>School Code</label>
-                <input
-                  type="text"
-                  value={codeInput}
-                  onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-                  placeholder="e.g. AB3X7YQ2"
-                  maxLength={12}
-                  style={{ letterSpacing: '0.15em', fontWeight: 700, textTransform: 'uppercase' }}
-                  required
-                  autoFocus
-                />
-              </div>
-              <button type="submit" className="btn btn-primary btn-full" disabled={codeLoading}>
-                {codeLoading ? 'Verifying...' : 'Verify Code'}
-              </button>
-            </form>
-
-            <p className="auth-link" style={{ marginTop: 12 }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('role');
-                  setCodeError('');
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#6366f1',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-              >
-                ← Subira inyuma
-              </button>
             </p>
           </>
         ) : (
@@ -288,9 +219,10 @@ export default function Register() {
                   required
                 />
               </div>
-              {(selectedRole === 'teacher' || selectedRole === 'head_teacher') && verifiedSchool ? (
+              {(selectedRole === 'teacher' || selectedRole === 'head_teacher') ? (
+                <>
                 <div className="form-group">
-                  <label>Fungura imeyili y&apos;ishuri yawe</label>
+                  <label>Fungura imeyili y&apos;ishuri yawe (login)</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
                     <input
                       type="text"
@@ -301,15 +233,20 @@ export default function Register() {
                       }}
                       onBlur={async () => {
                         const local = form.schoolEmailLocal.trim();
-                        if (!local || !verifiedSchool?.code) return;
+                        if (!local) return;
+                        const code = (verifiedSchool ? codeInput : optionalCode).trim().toUpperCase();
                         try {
-                          const r = await api.get(
-                            `/auth/check-school-email?local=${encodeURIComponent(local)}&code=${encodeURIComponent(codeInput.trim().toUpperCase())}`
-                          );
+                          const q = code
+                            ? `local=${encodeURIComponent(local)}&code=${encodeURIComponent(code)}`
+                            : `local=${encodeURIComponent(local)}`;
+                          const r = await api.get(`/auth/check-school-email?${q}`);
                           setSchoolEmailPreview(r.email);
                           setSchoolEmailStatus(
                             r.available ? `✓ ${r.email} is available` : `✗ ${r.email} is already taken`
                           );
+                          if (r.school_name && code) {
+                            setVerifiedSchool((prev) => prev || { name: r.school_name, code, email_domain: r.email_domain });
+                          }
                         } catch (err) {
                           setSchoolEmailStatus(err.message);
                         }
@@ -319,11 +256,11 @@ export default function Register() {
                       style={{ flex: '1 1 140px', minWidth: 120 }}
                     />
                     <span style={{ color: '#475569', fontWeight: 600 }}>
-                      @{verifiedSchool.email_domain || 'school.edu'}
+                      @{(verifiedSchool?.email_domain || staffDomain)}
                     </span>
                   </div>
                   <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-                    This school email is your unique login for UClass. Use it every time you sign in.
+                    This is your permanent login email. Link your school from the dashboard after signup.
                   </p>
                   {schoolEmailStatus && (
                     <p style={{ fontSize: 12, marginTop: 4, color: schoolEmailStatus.startsWith('✓') ? '#059669' : '#dc2626' }}>
@@ -331,6 +268,60 @@ export default function Register() {
                     </p>
                   )}
                 </div>
+                {!showOptionalCode ? (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    style={{ marginBottom: 12 }}
+                    onClick={() => setShowOptionalCode(true)}
+                  >
+                    I have a school code (optional)
+                  </button>
+                ) : (
+                  <div className="form-group">
+                    <label>School code (optional)</label>
+                    <input
+                      type="text"
+                      value={optionalCode}
+                      onChange={(e) => {
+                        setOptionalCode(e.target.value.toUpperCase());
+                        setCodeInput(e.target.value.toUpperCase());
+                        setVerifiedSchool(null);
+                        setCodeError('');
+                      }}
+                      onBlur={async () => {
+                        const c = optionalCode.trim();
+                        if (!c) return;
+                        setCodeLoading(true);
+                        setCodeError('');
+                        try {
+                          const data = await api.get(`/auth/validate-school-code?code=${encodeURIComponent(c)}`);
+                          if (selectedRole === 'head_teacher' && data.school.has_head_teacher) {
+                            setCodeError('This school already has a Head Teacher. Continue without code or join as Teacher.');
+                            setVerifiedSchool(null);
+                          } else {
+                            setVerifiedSchool(data.school);
+                            setCodeInput(c);
+                            setSchoolEmailStatus('');
+                          }
+                        } catch (err) {
+                          setCodeError(err.message);
+                          setVerifiedSchool(null);
+                        } finally {
+                          setCodeLoading(false);
+                        }
+                      }}
+                      placeholder="e.g. AB3X7YQ2"
+                      maxLength={12}
+                      style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
+                    />
+                    {codeError && <p style={{ fontSize: 12, color: '#dc2626' }}>{codeError}</p>}
+                    {verifiedSchool && (
+                      <p style={{ fontSize: 12, color: '#059669' }}>🏫 {verifiedSchool.name}</p>
+                    )}
+                  </div>
+                )}
+                </>
               ) : (
                 <div className="form-group">
                   <label>Imeyili</label>
@@ -414,6 +405,11 @@ export default function Register() {
                   }}
                 >
                   🏫 School: <strong>{verifiedSchool.name}</strong>
+                  {selectedRole === 'teacher' && (
+                    <span style={{ display: 'block', fontSize: 12, fontWeight: 400, marginTop: 4 }}>
+                      Your account may need Head Teacher approval before login.
+                    </span>
+                  )}
                 </div>
               )}
               <div className="form-group">

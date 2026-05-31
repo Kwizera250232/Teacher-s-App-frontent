@@ -28,7 +28,7 @@ This workspace contains two independent repos:
 
 - There is **no automated test suite** — `npm test` exits with error. Validation is done via manual API calls and UI testing.
 - JWT tokens contain only `{id, role}`, not `school_id`. The `resolveSchoolForAccount` function in `routes/admin.js` looks up `school_id` from the database when not present in the JWT.
-- To test teacher features, register a head_teacher with a school code first, then log in.
+- Teachers and head teachers sign up without a school code; they link a school from the dashboard (`SchoolRequestBanner`). Optional school code at signup still supported.
 
 ### Key API patterns
 
