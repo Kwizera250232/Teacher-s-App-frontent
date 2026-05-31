@@ -18,11 +18,14 @@ export default function InviteSignup() {
   const [form, setForm] = useState({
     name: '',
     email: '',
+    schoolEmailLocal: '',
     password: '',
     phone: '',
     new_school_name: '',
     new_school_location: '',
   });
+  const [schoolEmailPreview, setSchoolEmailPreview] = useState('');
+  const [schoolEmailStatus, setSchoolEmailStatus] = useState('');
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -44,6 +47,14 @@ export default function InviteSignup() {
       .finally(() => setLoadingPreview(false));
   }, [token, parentToken, isParentInvite]);
 
+  const staffInvite =
+    !isParentInvite && (preview?.role === 'teacher' || preview?.role === 'head_teacher');
+  const inviteSchoolDomain =
+    preview?.email_domain ||
+    (preview?.can_create_school && form.new_school_name
+      ? `${form.new_school_name.toLowerCase().replace(/[^a-z0-9]/g, '')}.edu`
+      : null);
+
   const roleLabel = isParentInvite
     ? 'Parent'
     : preview?.role === 'head_teacher'
@@ -61,23 +72,35 @@ export default function InviteSignup() {
     try {
       const payload = {
         name: form.name,
-        email: form.email,
         password: form.password,
         phone: form.phone || undefined,
       };
       if (isParentInvite) {
         payload.parent_token = parentToken;
         payload.role = 'parent';
-      } else {
+        payload.email = form.email.trim().toLowerCase();
+        await api.post('/auth/validate-email', { email: payload.email });
+      } else if (staffInvite) {
         payload.role = preview.role;
         payload.invite_token = token;
         payload.new_school_name = preview.can_create_school ? form.new_school_name : undefined;
         payload.new_school_location = preview.can_create_school ? form.new_school_location : undefined;
+        payload.school_email_local = form.schoolEmailLocal.trim();
+        if (!payload.school_email_local) {
+          setError('Create your school email username.');
+          setSubmitting(false);
+          return;
+        }
+      } else {
+        payload.role = preview.role;
+        payload.invite_token = token;
+        payload.email = form.email.trim().toLowerCase();
       }
 
       const data = await api.post('/auth/register', payload);
 
       if (data.pending) {
+        if (data.login_email) setSchoolEmailPreview(data.login_email);
         setPending(true);
         return;
       }
@@ -120,7 +143,12 @@ export default function InviteSignup() {
             <h2>Account submitted</h2>
             <p className="auth-sub">
               Your {roleLabel} account is waiting for approval. You will be able to log in once approved.
-              A confirmation email was also sent to your inbox.
+              {schoolEmailPreview && (
+                <>
+                  <br />
+                  Use: <strong>{schoolEmailPreview}</strong>
+                </>
+              )}
             </p>
             <Link to="/login" className="btn btn-primary btn-full">Go to login</Link>
           </>
@@ -171,10 +199,49 @@ export default function InviteSignup() {
                 Full name *
                 <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </label>
-              <label className="form-group">
-                Email *
-                <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              </label>
+              {staffInvite ? (
+                <label className="form-group">
+                  School email (your login) *
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                    <input
+                      required
+                      value={form.schoolEmailLocal}
+                      onChange={(e) => {
+                        setForm({ ...form, schoolEmailLocal: e.target.value });
+                        setSchoolEmailStatus('');
+                      }}
+                      onBlur={async () => {
+                        const local = form.schoolEmailLocal.trim();
+                        if (!local || !preview.school_code) return;
+                        try {
+                          const r = await api.get(
+                            `/auth/check-school-email?local=${encodeURIComponent(local)}&code=${encodeURIComponent(preview.school_code)}`
+                          );
+                          setSchoolEmailPreview(r.email);
+                          setSchoolEmailStatus(r.available ? `✓ ${r.email}` : '✗ Already taken');
+                        } catch (err) {
+                          setSchoolEmailStatus(err.message);
+                        }
+                      }}
+                      placeholder="john.doe"
+                      style={{ flex: '1 1 140px' }}
+                    />
+                    <span style={{ fontWeight: 600, color: '#475569' }}>
+                      @{inviteSchoolDomain || 'school.edu'}
+                    </span>
+                  </div>
+                  {schoolEmailStatus && (
+                    <span style={{ fontSize: 12, color: schoolEmailStatus.startsWith('✓') ? '#059669' : '#dc2626' }}>
+                      {schoolEmailStatus}
+                    </span>
+                  )}
+                </label>
+              ) : (
+                <label className="form-group">
+                  Email *
+                  <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                </label>
+              )}
               <label className="form-group">
                 Password *
                 <input type="password" required minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />

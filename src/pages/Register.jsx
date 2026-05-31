@@ -23,11 +23,14 @@ export default function Register() {
   const [form, setForm] = useState({
     name: '',
     email: '',
+    schoolEmailLocal: '',
     password: '',
     phone: '',
     school_id: '',
     newSchool: '',
   });
+  const [schoolEmailPreview, setSchoolEmailPreview] = useState('');
+  const [schoolEmailStatus, setSchoolEmailStatus] = useState('');
 
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
@@ -69,6 +72,8 @@ export default function Register() {
         return;
       }
       setVerifiedSchool(data.school);
+      setSchoolEmailStatus('');
+      setSchoolEmailPreview('');
       setStep('form');
     } catch (err) {
       setCodeError(err.message || 'Invalid code. Please try again.');
@@ -89,14 +94,35 @@ export default function Register() {
         schoolId = school.id;
       }
 
+      const isStaff = selectedRole === 'teacher' || selectedRole === 'head_teacher';
+
+      if (isStaff) {
+        if (!form.schoolEmailLocal.trim()) {
+          setError('Create your school email username.');
+          setLoading(false);
+          return;
+        }
+      } else if (form.email.trim()) {
+        await api.post('/auth/validate-email', {
+          email: form.email.trim().toLowerCase(),
+          school_code: verifiedSchool ? codeInput.trim().toUpperCase() : undefined,
+          school_id: schoolId || undefined,
+        });
+      }
+
       const payload = {
         name: form.name,
-        email: form.email,
         password: form.password,
         role: selectedRole,
         school_id: verifiedSchool ? verifiedSchool.id : (schoolId || null),
         phone: form.phone || undefined,
       };
+
+      if (isStaff) {
+        payload.school_email_local = form.schoolEmailLocal.trim();
+      } else {
+        payload.email = form.email.trim().toLowerCase();
+      }
 
       if (verifiedSchool) {
         payload.school_code = codeInput.trim().toUpperCase();
@@ -105,17 +131,12 @@ export default function Register() {
       const data = await api.post('/auth/register', payload);
 
       if (data.pending) {
+        if (data.login_email) setSchoolEmailPreview(data.login_email);
         setPending(true);
         return;
       }
 
       login(data.token, data.user);
-      if (!data.user.email_verified) {
-        navigate(dashboardPath(data.user.role), {
-          state: { emailVerificationSent: true },
-        });
-        return;
-      }
       if (data.user.role === 'student' && classCode) {
         try {
           const joined = await api.post('/classes/join', { class_code: classCode }, data.token);
@@ -143,8 +164,13 @@ export default function Register() {
             <h2>✅ Konti Yoherejwe!</h2>
             <p className="auth-sub" style={{ marginTop: 12, lineHeight: 1.6 }}>
               Konti yawe y'umwarimu yoherejwe.{' '}
-              <strong>Tegereza ko umuyobozi w'ishuri ayemera</strong> mbere yo kwinjira mu rubuga.
-              Twakoherereje n&apos;ubutumwa bwo kwemeza imeyili yawe — reba inbox yawe.
+              <strong>Tegereza ko umuyobozi w'ishuri ayemera</strong> mbere yo kwinjira.
+              {schoolEmailPreview && (
+                <>
+                  <br />
+                  Injira ukoresheje: <strong>{schoolEmailPreview}</strong>
+                </>
+              )}
             </p>
             <div style={{ marginTop: 24 }}>
               <a href="/login" className="btn btn-primary btn-full">
@@ -261,19 +287,64 @@ export default function Register() {
                   required
                 />
               </div>
-              <div className="form-group">
-                <label>Imeyili</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="you@example.com"
-                  required
-                />
-                <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-                  Use the email you check regularly. We will send a confirmation link before you can use homework, quizzes, and other class tools.
-                </p>
-              </div>
+              {(selectedRole === 'teacher' || selectedRole === 'head_teacher') && verifiedSchool ? (
+                <div className="form-group">
+                  <label>Fungura imeyili y&apos;ishuri yawe</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      value={form.schoolEmailLocal}
+                      onChange={(e) => {
+                        setForm({ ...form, schoolEmailLocal: e.target.value });
+                        setSchoolEmailStatus('');
+                      }}
+                      onBlur={async () => {
+                        const local = form.schoolEmailLocal.trim();
+                        if (!local || !verifiedSchool?.code) return;
+                        try {
+                          const r = await api.get(
+                            `/auth/check-school-email?local=${encodeURIComponent(local)}&code=${encodeURIComponent(codeInput.trim().toUpperCase())}`
+                          );
+                          setSchoolEmailPreview(r.email);
+                          setSchoolEmailStatus(
+                            r.available ? `✓ ${r.email} is available` : `✗ ${r.email} is already taken`
+                          );
+                        } catch (err) {
+                          setSchoolEmailStatus(err.message);
+                        }
+                      }}
+                      placeholder="john.doe"
+                      required
+                      style={{ flex: '1 1 140px', minWidth: 120 }}
+                    />
+                    <span style={{ color: '#475569', fontWeight: 600 }}>
+                      @{verifiedSchool.email_domain || 'school.edu'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
+                    This school email is your unique login for UClass. Use it every time you sign in.
+                  </p>
+                  {schoolEmailStatus && (
+                    <p style={{ fontSize: 12, marginTop: 4, color: schoolEmailStatus.startsWith('✓') ? '#059669' : '#dc2626' }}>
+                      {schoolEmailStatus}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>Imeyili</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="you@gmail.com"
+                    required
+                  />
+                  <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
+                    Use a real Gmail address or your school email. Fake or disposable addresses are not allowed.
+                  </p>
+                </div>
+              )}
               <div className="form-group">
                 <label>Ijambo Banga</label>
                 <input

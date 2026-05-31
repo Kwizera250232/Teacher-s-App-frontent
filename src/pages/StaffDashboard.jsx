@@ -10,7 +10,6 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import UmunsiAiModal from '../components/UmunsiAiModal';
 import DonateButton from '../components/DonateButton';
 import StaffQuickActions from '../components/StaffQuickActions';
-import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import './Dashboard.css';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
@@ -96,7 +95,6 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         </div>
 
         <SchoolRequestBanner token={token} user={user} />
-        <EmailVerificationBanner />
         {roleLabel === 'Head Teacher' && <SchoolRequestsPanel token={token} />}
 
         {error && <div className="alert alert-error">{error}</div>}

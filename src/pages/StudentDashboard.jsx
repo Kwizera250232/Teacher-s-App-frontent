@@ -6,7 +6,6 @@ import JoinClassModal from '../components/JoinClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
 import DonateButton from '../components/DonateButton';
 import StudentSocialFeed from '../components/StudentSocialFeed';
-import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import './Dashboard.css';
 
 export default function StudentDashboard() {
@@ -78,7 +77,6 @@ export default function StudentDashboard() {
       </header>
 
       <main className="dash-main">
-        <EmailVerificationBanner />
         <div className="dash-top">
           <div>
             <h1>Amashuri Yanjye</h1>

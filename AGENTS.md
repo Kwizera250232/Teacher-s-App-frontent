@@ -36,7 +36,7 @@ This workspace contains two independent repos:
 - API client: `src/api.js` — single fetch-based module, no axios/React Query.
 - No controllers/models layer — all business logic is in route handler files under `routes/`.
 
-### Email confirmation (UI)
+### Email signup (UI)
 
-- Users can open dashboards without confirming email; class tabs and routes like quizzes/messages show `EmailVerificationModal` until `user.email_verified` is true.
-- Confirmation link: `/verify-email?token=...` (backend sends via SMTP).
+- Staff register with a **school email username** (shown as `user@schooldomain.edu`) and log in with that address only.
+- Students use Gmail or school email on the register form; backend validates on submit.

@@ -19,8 +19,6 @@ import StudentNotes from './pages/StudentNotes';
 import InviteSignup from './pages/InviteSignup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import VerifyEmail from './pages/VerifyEmail';
-import EmailVerificationPageGate from './components/EmailVerificationPageGate';
 import Profile from './pages/Profile';
 import Messages from './pages/Messages';
 import Footer from './components/Footer';
@@ -70,9 +68,7 @@ export default function App() {
                   <ProtectedRoute role="head_teacher"><TeacherClassPage /></ProtectedRoute>
                 } />
                 <Route path="/head-teacher/classes/:id/record-marks" element={
-                  <ProtectedRoute role="head_teacher">
-                    <EmailVerificationPageGate featureLabel="CAT marks"><RecordCatMarks /></EmailVerificationPageGate>
-                  </ProtectedRoute>
+                  <ProtectedRoute role="head_teacher"><RecordCatMarks /></ProtectedRoute>
                 } />
                 <Route path="/head-teacher/classes/:classId/quizzes/:quizId/results" element={
                   <ProtectedRoute role="head_teacher"><QuizResults /></ProtectedRoute>
@@ -85,9 +81,7 @@ export default function App() {
                   <ProtectedRoute role="teacher"><TeacherClassPage /></ProtectedRoute>
                 } />
                 <Route path="/teacher/classes/:id/record-marks" element={
-                  <ProtectedRoute role="teacher">
-                    <EmailVerificationPageGate featureLabel="CAT marks"><RecordCatMarks /></EmailVerificationPageGate>
-                  </ProtectedRoute>
+                  <ProtectedRoute role="teacher"><RecordCatMarks /></ProtectedRoute>
                 } />
                 <Route path="/teacher/classes/:classId/quizzes/:quizId/results" element={
                   <ProtectedRoute role="teacher"><QuizResults /></ProtectedRoute>
@@ -104,27 +98,20 @@ export default function App() {
                   <ProtectedRoute role="student"><StudentClassPage /></ProtectedRoute>
                 } />
                 <Route path="/student/classes/:classId/quizzes/:quizId" element={
-                  <ProtectedRoute role="student">
-                    <EmailVerificationPageGate featureLabel="quizzes"><TakeQuiz /></EmailVerificationPageGate>
-                  </ProtectedRoute>
+                  <ProtectedRoute role="student"><TakeQuiz /></ProtectedRoute>
                 } />
                 <Route path="/student/notes" element={
-                  <ProtectedRoute role="student">
-                    <EmailVerificationPageGate featureLabel="your notes"><StudentNotes /></EmailVerificationPageGate>
-                  </ProtectedRoute>
+                  <ProtectedRoute role="student"><StudentNotes /></ProtectedRoute>
                 } />
 
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
 
                 <Route path="/profile" element={
                   <ProtectedRoute><Profile /></ProtectedRoute>
                 } />
                 <Route path="/messages" element={
-                  <ProtectedRoute>
-                    <EmailVerificationPageGate featureLabel="messages"><Messages /></EmailVerificationPageGate>
-                  </ProtectedRoute>
+                  <ProtectedRoute><Messages /></ProtectedRoute>
                 } />
               </Routes>
             </div>
