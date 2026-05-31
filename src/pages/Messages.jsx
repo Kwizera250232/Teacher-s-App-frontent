@@ -225,7 +225,10 @@ export default function Messages() {
               {thread.length === 0 && <div className="msg-empty" style={{ textAlign: 'center', marginTop: 40 }}>Start the conversation!</div>}
               {thread.map(m => (
                 <div key={m.id} className={`msg-bubble-wrap ${m.sender_id === user?.id ? 'mine' : 'theirs'}`}>
-                  <div className="msg-bubble">
+                  <div className={`msg-bubble ${m.message_type && m.message_type !== 'chat' ? 'msg-bubble-announce' : ''}`}>
+                    {m.message_type && m.message_type !== 'chat' && (
+                      <span className="msg-type-tag">{m.message_type.replace(/_/g, ' ')}</span>
+                    )}
                     {m.image_path && (
                       <img
                         src={`${UPLOADS_BASE}${m.image_path}`}

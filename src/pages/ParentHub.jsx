@@ -32,6 +32,23 @@ export default function ParentHub() {
   };
 
   useEffect(() => { loadHub(); }, [token]);
+
+  useEffect(() => {
+    if (typeof Notification === 'undefined' || !hub?.unread_notifications_count) return;
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+    if (Notification.permission === 'granted' && hub.unread_notifications_count > 0) {
+      const latest = hub.notifications?.find((n) => !n.is_read);
+      if (latest) {
+        try {
+          new Notification(latest.title, { body: latest.body, tag: `parent-${latest.id}` });
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }, [hub?.unread_notifications_count]);
   useEffect(() => {
     Promise.all([
       api.get('/profile/contacts/list', token).catch(() => []),
@@ -111,6 +128,7 @@ export default function ParentHub() {
         </div>
         <div className="phub-header-actions">
           <Link to="/messages" className="btn btn-secondary btn-sm">💬 All messages</Link>
+          <Link to="/parent/legacy" className="btn btn-outline btn-sm">Classic feed</Link>
           <DonateButton />
           <button type="button" className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
         </div>

@@ -4,12 +4,12 @@ import { api } from '../api';
 
 import './Auth.css';
 
-export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+export default function ForgotPassword({ initialEmail = '', initialCode = '', startStep = 1 }) {
+  const [email, setEmail] = useState(initialEmail);
+  const [code, setCode] = useState(initialCode);
   const [newPassword, setNewPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(startStep);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);

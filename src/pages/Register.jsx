@@ -31,6 +31,7 @@ export default function Register() {
   });
   const [schoolEmailPreview, setSchoolEmailPreview] = useState('');
   const [schoolEmailStatus, setSchoolEmailStatus] = useState('');
+  const [studentEmailStatus, setStudentEmailStatus] = useState('');
 
   const [schools, setSchools] = useState([]);
   const [error, setError] = useState('');
@@ -336,13 +337,31 @@ export default function Register() {
                   <input
                     type="email"
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) => { setForm({ ...form, email: e.target.value }); setStudentEmailStatus(''); }}
+                    onBlur={async () => {
+                      const em = form.email.trim().toLowerCase();
+                      if (!em || selectedRole !== 'student') return;
+                      try {
+                        await api.post('/auth/validate-email', {
+                          email: em,
+                          school_id: form.school_id || verifiedSchool?.id || undefined,
+                        });
+                        setStudentEmailStatus('✓ Email looks valid');
+                      } catch (err) {
+                        setStudentEmailStatus(err.message);
+                      }
+                    }}
                     placeholder="you@gmail.com"
                     required
                   />
                   <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
                     Use a real Gmail address or your school email. Fake or disposable addresses are not allowed.
                   </p>
+                  {studentEmailStatus && (
+                    <p style={{ fontSize: 12, marginTop: 4, color: studentEmailStatus.startsWith('✓') ? '#059669' : '#dc2626' }}>
+                      {studentEmailStatus}
+                    </p>
+                  )}
                 </div>
               )}
               <div className="form-group">
