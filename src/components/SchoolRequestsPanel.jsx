@@ -30,8 +30,7 @@ export default function SchoolRequestsPanel({ token }) {
 
   const pending = requests.filter(r => r.status === 'pending');
 
-  if (loading) return null;
-  if (pending.length === 0) return null;
+  if (loading) return <p className="phub-muted" style={{ marginBottom: 16 }}>Loading join requests…</p>;
 
   return (
     <div style={{
@@ -47,6 +46,9 @@ export default function SchoolRequestsPanel({ token }) {
           School Join Requests ({pending.length})
         </strong>
       </div>
+      {pending.length === 0 ? (
+        <p style={{ margin: 0, color: '#78350f', fontSize: 14 }}>No pending teacher requests. Teachers will appear here when they tap Join school on their dashboard.</p>
+      ) : (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {pending.map(r => (
           <div key={r.id} style={{
@@ -92,6 +94,7 @@ export default function SchoolRequestsPanel({ token }) {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

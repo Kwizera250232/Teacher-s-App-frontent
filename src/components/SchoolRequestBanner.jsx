@@ -38,7 +38,7 @@ export default function SchoolRequestBanner({ token, user }) {
     }
   }, [showModal, token]);
 
-  if (!['teacher', 'head_teacher'].includes(user?.role)) return null;
+  if (user?.role !== 'teacher') return null;
   if (user?.school_id) return null;
 
   const handleCreateSchool = async () => {
@@ -107,7 +107,9 @@ export default function SchoolRequestBanner({ token, user }) {
 
   return (
     <>
-      <div style={{
+      <div
+        id="school-join-banner"
+        style={{
         background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
         border: '1px solid #3b82f6',
         borderRadius: 12,
@@ -122,9 +124,7 @@ export default function SchoolRequestBanner({ token, user }) {
         <div style={{ flex: 1 }}>
           <strong style={{ color: '#1e40af' }}>No School Assigned</strong>
           <p style={{ margin: '4px 0 0', color: '#1e3a5f', fontSize: 14 }}>
-            {user?.role === 'head_teacher'
-              ? 'Link your account to a school to manage teachers and classes. Search for your school or add a new one.'
-              : 'Join a school to add students and manage your classes. Search for your school or add a new one.'}
+            Join a school to add students and manage your classes. Choose your school and tap Join — your Head Teacher will approve.
           </p>
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
@@ -222,7 +222,7 @@ export default function SchoolRequestBanner({ token, user }) {
             <div className="modal-footer">
               <button className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleSubmitRequest} disabled={loading || !selectedSchool}>
-                {loading ? 'Sending...' : 'Send Request'}
+                {loading ? 'Sending...' : 'Join school'}
               </button>
             </div>
           </div>

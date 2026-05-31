@@ -4,6 +4,7 @@ import { api, UPLOADS_BASE } from '../api';
 import { ParentChildFeed } from './ParentDashboard';
 import { useAuth } from '../context/AuthContext';
 import DonateButton from '../components/DonateButton';
+import MessageContextBanner from '../components/MessageContextBanner';
 import '../pages/Messages.css';
 import './ParentHub.css';
 
@@ -20,6 +21,7 @@ export default function ParentHub() {
   const [thread, setThread] = useState([]);
   const [text, setText] = useState('');
   const [mobilePanel, setMobilePanel] = useState('list');
+  const [marksPeriod, setMarksPeriod] = useState('week');
   const bottomRef = useRef();
 
   const loadHub = () => {
@@ -86,8 +88,10 @@ export default function ParentHub() {
 
   useEffect(() => {
     if (!selectedChild) return;
-    api.get(`/parent/children/${selectedChild}/summary`, token).then(setSummary).catch(() => setSummary(null));
-  }, [selectedChild, token]);
+    api.get(`/parent/children/${selectedChild}/summary?period=${marksPeriod}`, token)
+      .then(setSummary)
+      .catch(() => setSummary(null));
+  }, [selectedChild, marksPeriod, token]);
 
   useEffect(() => {
     if (!activeChat) return;
@@ -118,9 +122,11 @@ export default function ParentHub() {
   };
 
   const child = hub?.children?.find((c) => c.id === selectedChild);
+  const latestCtx = [...thread].reverse().find((m) => m.context_json)?.context_json;
+  const activeContact = contacts.find((c) => c.id === activeChat);
 
   return (
-    <div className="phub-page">
+    <div className="phub-page wa-theme">
       <header className="phub-header">
         <div className="phub-brand">
           <span className="phub-logo">UClass</span>
@@ -185,29 +191,38 @@ export default function ParentHub() {
                 <div className="msg-no-chat">Select a conversation with your school</div>
               ) : (
                 <>
-                  <div className="phub-chat-header">
+                  <div className="phub-chat-header wa-chat-header">
                     <button type="button" className="msg-back-btn" onClick={() => setMobilePanel('list')}>←</button>
                     <div>
-                      <strong>{contacts.find((c) => c.id === activeChat)?.name}</strong>
-                      {child && (
+                      <strong>{activeContact?.name}</strong>
+                      {(child || latestCtx) && (
                         <div className="phub-chat-meta">
-                          Child: {child.name}
-                          {child.school_name && ` · ${child.school_name}`}
-                          {child.district && ` · ${child.district}`}
-                          {child.sector && ` / ${child.sector}`}
+                          {child && <>Child: {child.name}</>}
+                          {(child?.school_name || latestCtx?.school_name) && (
+                            <> · {child?.school_name || latestCtx?.school_name}</>
+                          )}
+                          {(child?.district || latestCtx?.district) && (
+                            <> · {[child?.district || latestCtx?.district, child?.sector || latestCtx?.sector].filter(Boolean).join(' / ')}</>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="msg-messages">
+                  <MessageContextBanner ctx={latestCtx} />
+                  <div className="msg-messages wa-messages">
                     {thread.map((m) => (
-                      <div key={m.id} className={`msg-bubble ${m.sender_id === user?.id ? 'sent' : 'received'}`}>
-                        {m.content}
+                      <div key={m.id}>
+                        {m.context_json && m.sender_id !== user?.id && (
+                          <MessageContextBanner ctx={m.context_json} />
+                        )}
+                        <div className={`msg-bubble ${m.sender_id === user?.id ? 'sent' : 'received'}`}>
+                          {m.content}
+                        </div>
                       </div>
                     ))}
                     <div ref={bottomRef} />
                   </div>
-                  <form className="msg-input-bar" onSubmit={sendMsg}>
+                  <form className="msg-input-bar wa-input-bar" onSubmit={sendMsg}>
                     <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message…" />
                     <button type="submit" className="btn btn-primary">Send</button>
                   </form>
@@ -244,7 +259,8 @@ export default function ParentHub() {
           <div className="phub-panel">
             <h2>School announcements</h2>
             {hub?.announcements?.length ? hub.announcements.map((a) => (
-              <article key={a.id} className="phub-card">
+              <article key={a.id} className={`phub-card ${a.is_pinned ? 'phub-pinned' : ''}`}>
+                {a.is_pinned && <span style={{ fontSize: 11, color: '#b45309', fontWeight: 700 }}>📌 PINNED</span>}
                 <strong>{a.title}</strong>
                 <p>{a.body}</p>
                 <small>{a.school_name} · {new Date(a.created_at).toLocaleString()}</small>
@@ -295,6 +311,23 @@ export default function ParentHub() {
                 </div>
                 {summary && (
                   <>
+                    <div className="phub-period-tabs">
+                      {[
+                        { id: 'today', label: 'Today' },
+                        { id: 'week', label: 'This week' },
+                        { id: 'term', label: 'This term' },
+                        { id: 'all', label: 'All' },
+                      ].map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className={marksPeriod === p.id ? 'active' : ''}
+                          onClick={() => setMarksPeriod(p.id)}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
                     <section className="phub-section">
                       <h3>Quizzes</h3>
                       {summary.quizzes?.length ? summary.quizzes.map((q, i) => (

@@ -42,6 +42,13 @@ This workspace contains two independent repos:
 - Also: class **Students** tab → **Parent invite** under each student.
 - Students: dashboard **Get parent invite link** → same share modal (`POST /parent/my/parent-invite`).
 
+### Staff / parent communication hub
+
+- **Teachers only** see **Join a school** (`SchoolRequestBanner`); HT approves in **School** tab.
+- Teacher/HT dashboard tabs: **Classes | School | Chats | Tools** (WhatsApp-style green chat theme).
+- Parents: `/parent/dashboard` — Chats, feed, school (pinned announcements), child summary with **Today / week / term** filters.
+- Notify parents: in-app + optional email (`also_email` when SMTP configured). School announcements support **pin**.
+
 ### Email signup (UI)
 
 - Staff register with a **school email username** (shown as `user@schooldomain.edu`) and log in with that address only.

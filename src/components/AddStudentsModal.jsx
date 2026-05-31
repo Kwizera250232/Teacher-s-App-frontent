@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 
-export default function AddStudentsModal({ token, onClose }) {
+export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
   const { user } = useAuth();
+  const teacherNeedsSchool = user?.role === 'teacher' && !user?.school_id;
   const [mode, setMode] = useState('single');
   const [schools, setSchools] = useState([]);
   const [schoolId, setSchoolId] = useState('');
@@ -25,14 +26,18 @@ export default function AddStudentsModal({ token, onClose }) {
   useEffect(() => {
     if (user?.school_id) {
       setSchoolId(String(user.school_id));
-    }
-    api.get('/auth/schools', token).then(data => {
-      setSchools(data);
-      if (user?.school_id) {
-        const mySchool = data.find(s => String(s.id) === String(user.school_id));
+      api.get('/auth/schools', token).then((data) => {
+        const mySchool = data.find((s) => String(s.id) === String(user.school_id));
         if (mySchool) setTeacherSchool({ school_id: mySchool.id, school_name: mySchool.name });
-      }
-    }).catch(() => {});
+        setSchools(data);
+      }).catch(() => {});
+      return;
+    }
+    if (user?.role === 'teacher') {
+      setSchools([]);
+      return;
+    }
+    api.get('/auth/schools', token).then(setSchools).catch(() => {});
   }, [token, user]);
 
   const handleCreateSchool = async () => {
@@ -124,7 +129,19 @@ export default function AddStudentsModal({ token, onClose }) {
           </button>
         </div>
 
+        {teacherNeedsSchool && (
+          <div className="alert alert-error" style={{ marginBottom: 16 }}>
+            Your account is not linked to a school yet. Join a school from the dashboard first — your Head Teacher must approve before you can add students.
+            {onNeedJoinSchool && (
+              <button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={() => { onClose(); onNeedJoinSchool(); }}>
+                Join a school
+              </button>
+            )}
+          </div>
+        )}
+
         {/* School selection */}
+        {!teacherNeedsSchool && (
         <div className="form-group">
           <label style={{ fontSize: 14, fontWeight: 600 }}>
             School *
@@ -134,7 +151,13 @@ export default function AddStudentsModal({ token, onClose }) {
               </span>
             )}
           </label>
-          {!showNewSchool ? (
+          {user?.school_id && teacherSchool ? (
+            <input
+              readOnly
+              value={teacherSchool.school_name}
+              style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: '#f8fafc' }}
+            />
+          ) : !showNewSchool ? (
             <div style={{ display: 'flex', gap: 8 }}>
               <select
                 style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: 'white' }}
@@ -143,7 +166,7 @@ export default function AddStudentsModal({ token, onClose }) {
               >
                 <option value="">Select School</option>
                 {schools.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}{teacherSchool && String(teacherSchool.school_id) === String(s.id) ? ' (Your school)' : ''}</option>
+                  <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
               <button
@@ -182,11 +205,12 @@ export default function AddStudentsModal({ token, onClose }) {
             </div>
           )}
         </div>
+        )}
 
         {error && <div className="alert alert-error">{error}</div>}
 
         {/* Single student form */}
-        {mode === 'single' && !results && (
+        {mode === 'single' && !results && !teacherNeedsSchool && (
           <div>
             <div className="form-group">
               <label style={{ fontSize: 14, fontWeight: 600 }}>Full Name *</label>
@@ -229,7 +253,7 @@ export default function AddStudentsModal({ token, onClose }) {
         )}
 
         {/* Bulk student form */}
-        {mode === 'bulk' && !results && (
+        {mode === 'bulk' && !results && !teacherNeedsSchool && (
           <div>
             <div className="form-group">
               <label style={{ fontSize: 14, fontWeight: 600 }}>Student Names (one per line) *</label>

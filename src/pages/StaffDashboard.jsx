@@ -14,6 +14,8 @@ import SchoolHubPanel from '../components/staff/SchoolHubPanel';
 import AddTeacherModal from '../components/staff/AddTeacherModal';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import ParentInvitesPickerModal from '../components/ParentInvitesPickerModal';
+import StaffChatsPanel from '../components/staff/StaffChatsPanel';
+import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
 import './Dashboard.css';
 import './ParentHub.css';
 
@@ -30,7 +32,10 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   const [showAddTeacher, setShowAddTeacher] = useState(false);
   const [showNotifyParents, setShowNotifyParents] = useState(false);
   const [showParentInvites, setShowParentInvites] = useState(false);
+  const [hubTab, setHubTab] = useState('classes');
+  const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
   const isHeadTeacher = roleLabel === 'Head Teacher';
+  const hasSchool = Boolean(user?.school_id);
 
   const dismissAnnouncement = (id) => {
     const updated = [...dismissed, id];
@@ -64,9 +69,12 @@ export default function StaffDashboard({ roleLabel, basePath }) {
     : 'Gucunga amashuri n\'abanyeshuri bawe';
 
   return (
-    <div className="dashboard">
-      <header className="dash-header">
-        <div className="dash-brand">🎓 UClass</div>
+    <div className="dashboard staff-hub-page wa-theme">
+      <header className="dash-header phub-header">
+        <div className="phub-brand">
+          <span className="phub-logo">UClass</span>
+          <span className="phub-sub">{roleLabel}</span>
+        </div>
         <div className="dash-user">
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             👋 {user?.name}
@@ -87,7 +95,69 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         </div>
       </header>
 
+      <nav className="phub-nav staff-hub-nav">
+        {[
+          { id: 'classes', label: '📚 Classes' },
+          { id: 'school', label: '🏫 School' },
+          { id: 'chats', label: '💬 Chats' },
+          { id: 'tools', label: '⚡ Tools' },
+        ].map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={`phub-nav-btn ${hubTab === t.id ? 'active' : ''}`}
+            onClick={() => setHubTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
       <main className="dash-main">
+        <SchoolRequestBanner token={token} user={user} />
+        {isHeadTeacher && hubTab === 'school' && <SchoolRequestsPanel token={token} />}
+
+        {error && <div className="alert alert-error">{error}</div>}
+
+        {hubTab === 'school' && hasSchool && (
+          <SchoolHubPanel token={token} isHeadTeacher={isHeadTeacher} />
+        )}
+        {hubTab === 'school' && !hasSchool && user?.role === 'teacher' && (
+          <p className="phub-muted">Join a school from the banner above before posting announcements.</p>
+        )}
+
+        {hubTab === 'chats' && hasSchool && <StaffChatsPanel token={token} />}
+        {hubTab === 'chats' && !hasSchool && (
+          <p className="phub-muted">Link to a school to message parents.</p>
+        )}
+
+        {hubTab === 'tools' && (
+          <div style={{ marginBottom: 16 }}>
+            <StaffQuickActions
+              token={token}
+              onAddStudents={() => setShowAddStudents(true)}
+              onParentInvites={() => setShowParentInvites(true)}
+            />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowNotifyParents(true)}>
+                📢 Notify parents
+              </button>
+              {isHeadTeacher && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowAddTeacher(true)}>
+                  👨‍🏫 Add teacher
+                </button>
+              )}
+              {classes[0]?.id && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowWeeklyDigest(true)}>
+                  📊 Weekly behavior digest
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {hubTab === 'classes' && (
+          <>
         <div className="dash-top">
           <div>
             <h1>{roleLabel} Dashboard</h1>
@@ -97,32 +167,11 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
               + Fungura Ishuri
             </button>
-            <button className="btn btn-secondary" onClick={() => setShowAddStudents(true)}>
+            <button className="btn btn-secondary" onClick={() => setShowAddStudents(true)} disabled={user?.role === 'teacher' && !hasSchool}>
               👤 Add Students
             </button>
-            <button className="btn btn-secondary" onClick={() => setShowNotifyParents(true)}>
-              📢 Notify parents
-            </button>
-            {isHeadTeacher && (
-              <button className="btn btn-secondary" onClick={() => setShowAddTeacher(true)}>
-                👨‍🏫 Add teacher
-              </button>
-            )}
           </div>
         </div>
-
-        <SchoolHubPanel token={token} isHeadTeacher={isHeadTeacher} />
-
-        <SchoolRequestBanner token={token} user={user} />
-        {roleLabel === 'Head Teacher' && <SchoolRequestsPanel token={token} />}
-
-        {error && <div className="alert alert-error">{error}</div>}
-
-        <StaffQuickActions
-          token={token}
-          onAddStudents={() => setShowAddStudents(true)}
-          onParentInvites={() => setShowParentInvites(true)}
-        />
 
         {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
           <div key={a.id} style={{
@@ -191,6 +240,8 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             ))}
           </div>
         )}
+          </>
+        )}
       </main>
 
       {showCreate && (
@@ -205,6 +256,13 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         <AddStudentsModal
           token={token}
           onClose={() => setShowAddStudents(false)}
+          onNeedJoinSchool={() => {
+            setShowAddStudents(false);
+            setHubTab('classes');
+            setTimeout(() => {
+              document.getElementById('school-join-banner')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }}
         />
       )}
 
@@ -238,6 +296,15 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         <ParentInvitesPickerModal
           token={token}
           onClose={() => setShowParentInvites(false)}
+        />
+      )}
+
+      {showWeeklyDigest && classes[0]?.id && (
+        <WeeklyDigestModal
+          token={token}
+          classId={classes[0].id}
+          onClose={() => setShowWeeklyDigest(false)}
+          onSent={() => setShowWeeklyDigest(false)}
         />
       )}
     </div>

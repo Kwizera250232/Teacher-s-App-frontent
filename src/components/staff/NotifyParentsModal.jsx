@@ -8,6 +8,7 @@ export default function NotifyParentsModal({ token, classId, onClose }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [type, setType] = useState('announcement');
+  const [alsoEmail, setAlsoEmail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -28,6 +29,7 @@ export default function NotifyParentsModal({ token, classId, onClose }) {
         audience,
         class_id: classId || undefined,
         parent_ids: audience === 'selected' ? selected : undefined,
+        also_email: alsoEmail,
       }, token);
       setMsg(r.message);
     } catch (err) {
@@ -69,6 +71,10 @@ export default function NotifyParentsModal({ token, classId, onClose }) {
               <option value="all">All parents in school</option>
               <option value="selected">Selected parents</option>
             </select>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 14 }}>
+            <input type="checkbox" checked={alsoEmail} onChange={(e) => setAlsoEmail(e.target.checked)} />
+            Also send email (if SMTP is configured)
           </label>
           {audience === 'selected' && (
             <div style={{ maxHeight: 160, overflow: 'auto', marginBottom: 12 }}>

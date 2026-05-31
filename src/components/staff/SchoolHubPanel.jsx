@@ -6,7 +6,10 @@ import '../../pages/ParentHub.css';
 export default function SchoolHubPanel({ token, isHeadTeacher }) {
   const [school, setSchool] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
-  const [form, setForm] = useState({ title: '', body: '', district: '', sector: '', welcome_message: '' });
+  const [form, setForm] = useState({
+    title: '', body: '', district: '', sector: '', welcome_message: '',
+    also_email: false, is_pinned: false,
+  });
   const [msg, setMsg] = useState('');
 
   const load = () => {
@@ -35,13 +38,19 @@ export default function SchoolHubPanel({ token, isHeadTeacher }) {
   const postAnnouncement = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/parent/school/announcements', {
+      const r = await api.post('/parent/school/announcements', {
         title: form.title,
         body: form.body,
         notify_parents: true,
+        also_email: form.also_email,
+        is_pinned: form.is_pinned,
       }, token);
       setForm((f) => ({ ...f, title: '', body: '' }));
-      setMsg('Announcement sent to parents in the app.');
+      setMsg(
+        r.parents_notified != null
+          ? `Sent to ${r.parents_notified} parent(s) in the app.${r.emails_sent ? ` Email: ${r.emails_sent}.` : ''}`
+          : 'Announcement published.'
+      );
       load();
     } catch (e) {
       setMsg(e.message);
@@ -107,6 +116,22 @@ export default function SchoolHubPanel({ token, isHeadTeacher }) {
           rows={3}
           style={{ width: '100%', marginBottom: 8 }}
         />
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 14 }}>
+          <input
+            type="checkbox"
+            checked={form.is_pinned}
+            onChange={(e) => setForm((f) => ({ ...f, is_pinned: e.target.checked }))}
+          />
+          Pin at top for parents
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 14 }}>
+          <input
+            type="checkbox"
+            checked={form.also_email}
+            onChange={(e) => setForm((f) => ({ ...f, also_email: e.target.checked }))}
+          />
+          Also send email (if SMTP is configured)
+        </label>
         <button type="submit" className="btn btn-primary btn-sm">Publish & notify parents</button>
       </form>
 
@@ -116,7 +141,8 @@ export default function SchoolHubPanel({ token, isHeadTeacher }) {
       {announcements.length === 0 ? (
         <p className="phub-muted">None yet.</p>
       ) : announcements.slice(0, 5).map((a) => (
-        <div key={a.id} className="phub-card">
+        <div key={a.id} className={`phub-card ${a.is_pinned ? 'phub-pinned' : ''}`}>
+          {a.is_pinned && <small style={{ color: '#b45309' }}>📌 Pinned</small>}
           <strong>{a.title}</strong>
           <p>{a.body}</p>
         </div>

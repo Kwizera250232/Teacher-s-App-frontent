@@ -50,9 +50,12 @@ export default function AddTeacherModal({ token, onClose, onCreated }) {
           </>
         ) : (
           <form onSubmit={submit}>
+            <p className="phub-muted" style={{ marginBottom: 12 }}>
+              Enter the teacher&apos;s name and school email username. We show the full email before you save.
+            </p>
             <label className="form-group">
               Full name
-              <input required value={name} onChange={(e) => setName(e.target.value)} />
+              <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Jean de Dieu Kwizera" />
             </label>
             <label className="form-group">
               School email username
