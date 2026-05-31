@@ -20,6 +20,7 @@ import DonateButton from '../components/DonateButton';
 import './Dashboard.css';
 import './ParentHub.css';
 import './MobileDashboard.css';
+import CompositionStatusList from '../components/CompositionStatusList';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
   const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
@@ -134,7 +135,15 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         {error && <div className="alert alert-error">{error}</div>}
 
         {hubTab === 'school' && hasSchool && (
-          <SchoolHubPanel token={token} isHeadTeacher={isHeadTeacher} />
+          <>
+            <SchoolHubPanel token={token} isHeadTeacher={isHeadTeacher} />
+            {isHeadTeacher && (
+              <section style={{ marginTop: 20 }}>
+                <h2 style={{ fontSize: 17, color: '#075e54', marginBottom: 10 }}>✍️ School — C. Status</h2>
+                <CompositionStatusList token={token} schoolWide />
+              </section>
+            )}
+          </>
         )}
         {hubTab === 'school' && !hasSchool && user?.role === 'teacher' && (
           <p className="phub-muted">Join a school from the banner above before posting announcements.</p>
@@ -147,6 +156,12 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
         {hubTab === 'tools' && (
           <div style={{ marginBottom: 16 }}>
+            {hasSchool && (
+              <section style={{ marginBottom: 20 }}>
+                <h2 style={{ fontSize: 17, color: '#075e54', marginBottom: 10 }}>✍️ C. Status (school)</h2>
+                <CompositionStatusList token={token} schoolWide />
+              </section>
+            )}
             <StaffQuickActions
               token={token}
               onAddStudents={() => setShowAddStudents(true)}
@@ -259,7 +274,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           👥 View students
         </button>
         <button type="button" onClick={() => setHubTab('tools')}>
-          ✍️ Compositions
+          ✍️ C. Status
         </button>
         <button type="button" onClick={() => setShowParentInvites(true)}>
           👪 Parent invite

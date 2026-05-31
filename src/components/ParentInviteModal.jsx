@@ -1,22 +1,16 @@
 import { useState, useEffect } from 'react';
 import { copyToClipboard } from '../utils/copyToClipboard';
-import { createParentInviteLink } from '../utils/parentInviteApi';
+import { createParentInviteLink, formatParentInviteCode } from '../utils/parentInviteApi';
 import { MODAL_CARD_STYLE, MODAL_OVERLAY_STYLE } from '../utils/modalOverlay';
 import ShareModal from './ShareModal';
 
-/**
- * @param {object} props
- * @param {string} props.token - auth token
- * @param {number} [props.studentId] - for teachers inviting a pupil
- * @param {number} [props.selfStudentId] - logged-in student id (self-invite)
- * @param {string} props.studentName
- * @param {() => void} props.onClose
- */
 export default function ParentInviteModal({ token, studentId, selfStudentId, studentName, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [inviteLink, setInviteLink] = useState('');
+  const [inviteToken, setInviteToken] = useState('');
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
@@ -26,7 +20,10 @@ export default function ParentInviteModal({ token, studentId, selfStudentId, stu
       setError('');
       try {
         const data = await createParentInviteLink({ token, studentId, selfStudentId });
-        if (!cancelled) setInviteLink(data.invite_link || '');
+        if (!cancelled) {
+          setInviteLink(data.invite_link || '');
+          setInviteToken(data.token || '');
+        }
       } catch (e) {
         if (!cancelled) setError(e.message || 'Could not create invite link.');
       } finally {
@@ -36,11 +33,21 @@ export default function ParentInviteModal({ token, studentId, selfStudentId, stu
     return () => { cancelled = true; };
   }, [token, studentId, selfStudentId]);
 
+  const parentCode = formatParentInviteCode(inviteToken);
+  const signupHint = inviteLink || (parentCode ? `https://student.umunsi.com/invite?parent_token=…` : '');
+
   const handleCopy = async () => {
     if (!inviteLink) return;
     const ok = await copyToClipboard(inviteLink);
     setCopied(ok);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleCopyCode = async () => {
+    const text = `Join UClass as parent of ${studentName}. Open this link to register:\n${inviteLink}`;
+    const ok = await copyToClipboard(text);
+    setCodeCopied(ok);
+    setTimeout(() => setCodeCopied(false), 2500);
   };
 
   const shareText = `Join UClass as parent of ${studentName}. You will only see ${studentName}'s quizzes, marks, and classroom work.`;
@@ -55,20 +62,42 @@ export default function ParentInviteModal({ token, studentId, selfStudentId, stu
       >
         <div
           style={{ ...MODAL_CARD_STYLE, maxWidth: 440 }}
+          className="wa-theme"
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 style={{ margin: '0 0 8px', fontSize: 20 }}>👪 Parent invitation</h2>
-          <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: 14, lineHeight: 1.5 }}>
-            Send this link to <strong>{studentName}</strong>&apos;s parent. After signup they only see this child&apos;s quizzes, marks, drawings, and feed.
+          <h2 style={{ margin: '0 0 8px', fontSize: 20, color: '#075e54' }}>👪 Parent invitation</h2>
+          <p style={{ margin: '0 0 16px', color: '#667781', fontSize: 14, lineHeight: 1.5 }}>
+            Every student has a <strong>unique link</strong> for their parent. Same signup form for all parents.
           </p>
 
-          {loading && <p style={{ color: '#64748b' }}>Creating secure link…</p>}
+          {loading && <p style={{ color: '#667781' }}>Preparing your invite…</p>}
           {error && <p className="alert alert-error">{error}</p>}
 
           {!loading && !error && inviteLink && (
             <>
+              {parentCode && (
+                <div
+                  style={{
+                    background: '#dcf8c6',
+                    borderRadius: 12,
+                    padding: '14px 16px',
+                    marginBottom: 14,
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#075e54', letterSpacing: 1 }}>
+                    YOUR PARENT CODE
+                  </div>
+                  <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: 4, color: '#111b21', margin: '6px 0' }}>
+                    {parentCode}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#54656f' }}>
+                    Parents open your link below — same form for every family
+                  </div>
+                </div>
+              )}
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>
-                Invitation link
+                Invitation link for {studentName}&apos;s parent
               </label>
               <input
                 readOnly
@@ -81,10 +110,13 @@ export default function ParentInviteModal({ token, studentId, selfStudentId, stu
               />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 <button type="button" className="btn btn-primary" onClick={handleCopy}>
-                  {copied ? '✓ Copied' : 'Copy link'}
+                  {copied ? '✓ Copied link' : 'Copy link'}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={handleCopyCode}>
+                  {codeCopied ? '✓ Copied all' : 'Copy for WhatsApp'}
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowShare(true)}>
-                  Share (WhatsApp…)
+                  Share
                 </button>
                 <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
               </div>
@@ -93,8 +125,8 @@ export default function ParentInviteModal({ token, studentId, selfStudentId, stu
 
           {!loading && error && (
             <>
-              <p style={{ fontSize: 13, color: '#64748b' }}>
-                Ask your teacher to create a parent invite from the class Students tab, or try again after the school updates the app server.
+              <p style={{ fontSize: 13, color: '#667781' }}>
+                If this keeps failing, ask your teacher for a parent link from the class Students tab.
               </p>
               <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
             </>

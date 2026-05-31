@@ -13,35 +13,56 @@ function isRetryableStudentInviteError(err) {
   return false;
 }
 
-/** Create parent invite link — tries routes supported across API versions. */
+async function tryInviteCalls(calls) {
+  let lastError;
+  for (const call of calls) {
+    try {
+      return await call();
+    } catch (err) {
+      lastError = err;
+      if (!isRetryableStudentInviteError(err)) throw err;
+    }
+  }
+  throw lastError;
+}
+
+/** Create or fetch parent invite link — tries GET then POST across API versions. */
 export async function createParentInviteLink({ token, studentId, selfStudentId }) {
   if (studentId) {
     return api.post(`/parent/students/${studentId}/parent-link`, {}, token);
   }
 
   const id = selfStudentId;
-  const attempts = [
+  const getAttempts = [
+    () => api.get('/auth/parent-invite', token),
+    () => api.get('/student/parent-invite', token),
+    () => api.get('/parent/my/parent-invite', token),
+  ];
+  const postAttempts = [
     () => api.post('/auth/parent-invite', {}, token),
     () => api.post('/student/parent-invite', {}, token),
     () => api.post('/parent/my/parent-invite', {}, token),
   ];
   if (id) {
-    attempts.push(() => api.post(`/parent/students/${id}/parent-link`, {}, token));
+    postAttempts.push(() => api.post(`/parent/students/${id}/parent-link`, {}, token));
   }
 
-  let lastError;
-  for (const attempt of attempts) {
-    try {
-      return await attempt();
-    } catch (err) {
-      lastError = err;
-      if (!isRetryableStudentInviteError(err)) throw err;
-    }
+  try {
+    return await tryInviteCalls([...getAttempts, ...postAttempts]);
+  } catch (lastError) {
+    throw new Error(
+      lastError?.message?.includes('404')
+        ? 'Parent invite is not ready on the server yet. Your school must update studentapi.umunsi.com (git pull + pm2 restart).'
+        : lastError?.message || 'Could not create parent invite.'
+    );
   }
+}
 
-  throw new Error(
-    'Parent invite is not ready on the server yet. Ask your teacher for a parent link from the class Students tab.'
-  );
+/** Short code shown to parents (from invite token). */
+export function formatParentInviteCode(token) {
+  if (!token) return '';
+  const t = String(token).replace(/[^a-f0-9]/gi, '');
+  return t.slice(0, 8).toUpperCase();
 }
 
 /** Load students for teacher parent-invite picker (fallback if API route missing). */

@@ -13,9 +13,11 @@ import CoTeacherInvite from '../components/CoTeacherInvite';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
 import ParentInviteModal from '../components/ParentInviteModal';
+import CompositionStatusList from '../components/CompositionStatusList';
 import '../pages/Dashboard.css';
+import '../pages/MobileDashboard.css';
 
-const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
+const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'C. Status', 'Students'];
 
 export default function TeacherClassPage() {
   const { id } = useParams();
@@ -76,7 +78,7 @@ export default function TeacherClassPage() {
 
   const loadTab = async () => {
     setError('');
-    if (tab === 'Leaderboard' || tab === 'Feed') return;
+    if (tab === 'Leaderboard' || tab === 'Feed' || tab === 'C. Status') return;
     try {
       const endpointMap = {
         Announcements: `/classes/${id}/announcements`,
@@ -594,6 +596,12 @@ export default function TeacherClassPage() {
               <button type="submit" className="btn btn-primary">Send</button>
             </form>
           </>
+        )}
+
+        {tab === 'C. Status' && (
+          <div style={{ padding: '1rem 0' }}>
+            <CompositionStatusList token={token} classId={id} />
+          </div>
         )}
 
         {/* Students */}

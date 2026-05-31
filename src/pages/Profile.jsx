@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Profile.css';
@@ -245,6 +245,7 @@ function TeacherUserCreation({ token }) {
 export default function Profile() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const fileRef = useRef();
 
   const [profile, setProfile] = useState(null);
@@ -263,6 +264,15 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+
+  useEffect(() => {
+    if (searchParams.get('compose') === 'composition' && user?.role === 'student') {
+      const t = setTimeout(() => {
+        document.querySelector('.profile-share-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [searchParams, user?.role]);
 
   useEffect(() => {
     api.get('/profile/me', token).then(p => {

@@ -26,6 +26,7 @@ import Footer from './components/Footer';
 import OfflineBanner from './components/OfflineBanner';
 import { InstallProvider } from './components/InstallPrompt';
 import './components/Footer.css';
+import './styles/WaAppShell.css';
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -47,7 +48,7 @@ export default function App() {
     <AuthProvider>
       <InstallProvider>
         <BrowserRouter>
-          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <div className="app-wa-shell" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <OfflineBanner />
             <div style={{ flex: 1 }}>
               <Routes>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import JoinClassModal from '../components/JoinClassModal';
@@ -8,13 +8,12 @@ import DonateButton from '../components/DonateButton';
 import ParentInviteModal from '../components/ParentInviteModal';
 import MobileStudentHeader from '../components/MobileStudentHeader';
 import MobileBottomBar from '../components/MobileBottomBar';
-import StudentCompositionWall from '../components/StudentCompositionWall';
+import CompositionStatusPanel from '../components/CompositionStatusPanel';
 import './Dashboard.css';
 import './MobileDashboard.css';
 
 export default function StudentDashboard() {
   const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
-  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [showJoin, setShowJoin] = useState(false);
   const [error, setError] = useState('');
@@ -22,7 +21,9 @@ export default function StudentDashboard() {
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   const [quickNote, setQuickNote] = useState(null);
   const [showParentInvite, setShowParentInvite] = useState(false);
-  const compositionsRef = useRef(null);
+  const [showCompositionStatus, setShowCompositionStatus] = useState(false);
+  const [statusPickerOpen, setStatusPickerOpen] = useState(false);
+  const statusRef = useRef(null);
   const classesRef = useRef(null);
 
   const loadClasses = () => {
@@ -47,6 +48,14 @@ export default function StudentDashboard() {
   useEffect(() => { loadClasses(); }, []);
   useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
+  }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('status') === '1') {
+      setShowCompositionStatus(true);
+      setStatusPickerOpen(true);
+      window.history.replaceState({}, '', '/student/dashboard');
+    }
   }, []);
 
   const saveQuickNote = async () => {
@@ -171,11 +180,17 @@ export default function StudentDashboard() {
           )}
         </div>
 
-        <div ref={compositionsRef}>
-          <StudentCompositionWall
-            token={token}
-            onWriteClick={() => navigate('/profile')}
-          />
+        <div ref={statusRef} className="wa-status-bar">
+          <button
+            type="button"
+            className="wa-status-btn"
+            onClick={() => {
+              setStatusPickerOpen(false);
+              setShowCompositionStatus(true);
+            }}
+          >
+            ➕ Add C. Status
+          </button>
         </div>
 
         {classes.length > 0 && (
@@ -204,7 +219,7 @@ export default function StudentDashboard() {
       <MobileBottomBar
         items={[
           { id: 'classes', icon: '📚', label: 'Classes', onClick: () => scrollTo(classesRef), active: true },
-          { id: 'compositions', icon: '✍️', label: 'Compositions', onClick: () => scrollTo(compositionsRef) },
+          { id: 'status', icon: '✍️', label: 'C. Status', onClick: () => { setStatusPickerOpen(false); setShowCompositionStatus(true); } },
           { id: 'notes', icon: '📝', label: 'My Notes', to: '/student/notes' },
           { id: 'parent', icon: '👪', label: 'Parent', onClick: () => setShowParentInvite(true) },
           { id: 'profile', icon: '👤', label: 'Profile', to: '/profile' },
@@ -225,6 +240,14 @@ export default function StudentDashboard() {
           selfStudentId={user.id}
           studentName={user.name}
           onClose={() => setShowParentInvite(false)}
+        />
+      )}
+
+      {showCompositionStatus && (
+        <CompositionStatusPanel
+          token={token}
+          openPickerInitially={statusPickerOpen}
+          onClose={() => setShowCompositionStatus(false)}
         />
       )}
 
