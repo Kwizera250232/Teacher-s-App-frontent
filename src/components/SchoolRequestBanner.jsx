@@ -28,6 +28,7 @@ export default function SchoolRequestBanner({ token, user }) {
     }
   }, [showModal, token]);
 
+  if (user?.role !== 'teacher') return null;
   if (user?.school_id) return null;
 
   const handleCreateSchool = async () => {

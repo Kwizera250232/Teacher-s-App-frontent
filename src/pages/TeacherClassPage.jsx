@@ -10,6 +10,7 @@ import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
 import ClassroomFeed from '../components/ClassroomFeed';
 import CoTeacherInvite from '../components/CoTeacherInvite';
+import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import '../pages/Dashboard.css';
 
 const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
@@ -40,6 +41,7 @@ export default function TeacherClassPage() {
   const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
+  const [showNotifyParents, setShowNotifyParents] = useState(false);
 
   useEffect(() => {
     setPageLoading(true);
@@ -241,23 +243,32 @@ export default function TeacherClassPage() {
               <p style={{ fontSize: '0.85rem', color: '#92400e', margin: '0 0 0.75rem' }}>
                 Save a weekly summary (behavior, work, attendance, gaps) for parents linked to students in this class.
               </p>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={async () => {
-                  try {
-                    const r = await api.post(`/parent/classes/${id}/weekly-digest`, {
-                      behavior_note: 'Good participation this week.',
-                      work_summary: 'See classroom feed for assignments.',
-                      attendance: 'Present all sessions',
-                      gaps: '',
-                    }, token);
-                    showSuccess(r.message || 'Digest saved.');
-                  } catch (e) { setError(e.message); }
-                }}
-              >
-                Send weekly digest (save)
-              </button>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={async () => {
+                    try {
+                      const r = await api.post(`/parent/classes/${id}/weekly-digest`, {
+                        behavior_note: 'Good participation this week.',
+                        work_summary: 'See classroom feed for assignments.',
+                        attendance: 'Present all sessions',
+                        gaps: '',
+                      }, token);
+                      showSuccess(r.message || 'Digest saved.');
+                    } catch (e) { setError(e.message); }
+                  }}
+                >
+                  Send weekly digest (save)
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowNotifyParents(true)}
+                >
+                  Notify parents in app
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -744,6 +755,14 @@ export default function TeacherClassPage() {
           text={shareItem.text}
           url={shareItem.url}
           onClose={() => setShareItem(null)}
+        />
+      )}
+
+      {showNotifyParents && (
+        <NotifyParentsModal
+          token={token}
+          classId={parseInt(id, 10)}
+          onClose={() => setShowNotifyParents(false)}
         />
       )}
     </div>

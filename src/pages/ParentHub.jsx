@@ -1,0 +1,269 @@
+import { useState, useEffect, useRef } from 'react';
+import { api, UPLOADS_BASE } from '../api';
+import { ParentChildFeed } from './ParentDashboard';
+import { useAuth } from '../context/AuthContext';
+import DonateButton from '../components/DonateButton';
+import '../pages/Messages.css';
+import './ParentHub.css';
+
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234285f4'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
+
+export default function ParentHub() {
+  const { user, token, logout } = useAuth();
+  const [tab, setTab] = useState('chats');
+  const [hub, setHub] = useState(null);
+  const [selectedChild, setSelectedChild] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [contacts, setContacts] = useState([]);
+  const [activeChat, setActiveChat] = useState(null);
+  const [thread, setThread] = useState([]);
+  const [text, setText] = useState('');
+  const [mobilePanel, setMobilePanel] = useState('list');
+  const bottomRef = useRef();
+
+  const loadHub = () => {
+    api.get('/parent/hub', token).then((data) => {
+      setHub(data);
+      if (data.children?.length && !selectedChild) {
+        setSelectedChild(data.children[0].id);
+      }
+    }).catch(() => {});
+  };
+
+  useEffect(() => { loadHub(); }, [token]);
+  useEffect(() => {
+    api.get('/profile/contacts/list', token).then(setContacts).catch(() => {});
+  }, [token]);
+
+  useEffect(() => {
+    if (!selectedChild) return;
+    api.get(`/parent/children/${selectedChild}/summary`, token).then(setSummary).catch(() => setSummary(null));
+  }, [selectedChild, token]);
+
+  useEffect(() => {
+    if (!activeChat) return;
+    const load = () => api.get(`/messages/thread/${activeChat}`, token).then(setThread).catch(() => {});
+    load();
+    const t = setInterval(load, 4000);
+    return () => clearInterval(t);
+  }, [activeChat, token]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [thread]);
+
+  const sendMsg = async (e) => {
+    e.preventDefault();
+    if (!activeChat || !text.trim()) return;
+    try {
+      const msg = await api.post('/messages', { receiver_id: activeChat, content: text.trim() }, token);
+      setThread((t) => [...t, { ...msg, sender_name: user?.name }]);
+      setText('');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const markAllRead = () => {
+    api.put('/parent/notifications/read-all', {}, token).then(loadHub).catch(() => {});
+  };
+
+  const child = hub?.children?.find((c) => c.id === selectedChild);
+
+  return (
+    <div className="phub-page">
+      <header className="phub-header">
+        <div className="phub-brand">
+          <span className="phub-logo">UClass</span>
+          <span className="phub-sub">Parent</span>
+        </div>
+        <div className="phub-header-actions">
+          <DonateButton />
+          <button type="button" className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
+        </div>
+      </header>
+
+      <nav className="phub-nav">
+        {['chats', 'feed', 'school', 'child'].map((t) => (
+          <button
+            key={t}
+            type="button"
+            className={`phub-nav-btn ${tab === t ? 'active' : ''}`}
+            onClick={() => { setTab(t); setMobilePanel('list'); }}
+          >
+            {t === 'chats' && '💬 Chats'}
+            {t === 'feed' && '📰 Classroom feed'}
+            {t === 'school' && '🏫 School'}
+            {t === 'child' && '👧 My child'}
+            {t === 'chats' && hub?.children?.[0]?.unread_notifications > 0 && (
+              <span className="phub-badge">{hub.children.reduce((n, c) => n + (c.unread_notifications || 0), 0)}</span>
+            )}
+          </button>
+        ))}
+      </nav>
+
+      <div className="phub-body">
+        {tab === 'chats' && (
+          <div className="msg-page phub-chat-wrap">
+            <div className={`msg-sidebar ${mobilePanel === 'chat' ? 'msg-sidebar-hidden' : ''}`}>
+              <div className="msg-sidebar-header">
+                <span>Chats</span>
+                {hub?.notifications?.some((n) => !n.is_read) && (
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={markAllRead}>Mark read</button>
+                )}
+              </div>
+              {contacts.length === 0 && (
+                <p className="msg-empty">No school contacts yet. Use your child&apos;s parent invite from the teacher.</p>
+              )}
+              {contacts.map((c) => (
+                <div
+                  key={c.id}
+                  className={`msg-contact ${activeChat === c.id ? 'active' : ''}`}
+                  onClick={() => { setActiveChat(c.id); setMobilePanel('chat'); }}
+                >
+                  <img src={c.avatar_path ? `${UPLOADS_BASE}${c.avatar_path}` : DEFAULT_AVATAR} alt="" className="msg-contact-avatar" />
+                  <div className="msg-contact-info">
+                    <span className="msg-contact-name">{c.name}</span>
+                    <span className="msg-contact-role">{c.role?.replace('_', ' ')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className={`msg-chat ${mobilePanel === 'list' ? 'msg-chat-hidden' : ''}`}>
+              {!activeChat ? (
+                <div className="msg-no-chat">Select a conversation with your school</div>
+              ) : (
+                <>
+                  <div className="phub-chat-header">
+                    <button type="button" className="msg-back-btn" onClick={() => setMobilePanel('list')}>←</button>
+                    <div>
+                      <strong>{contacts.find((c) => c.id === activeChat)?.name}</strong>
+                      {child && (
+                        <div className="phub-chat-meta">
+                          Child: {child.name}
+                          {child.school_name && ` · ${child.school_name}`}
+                          {child.district && ` · ${child.district}`}
+                          {child.sector && ` / ${child.sector}`}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="msg-messages">
+                    {thread.map((m) => (
+                      <div key={m.id} className={`msg-bubble ${m.sender_id === user?.id ? 'sent' : 'received'}`}>
+                        {m.content}
+                      </div>
+                    ))}
+                    <div ref={bottomRef} />
+                  </div>
+                  <form className="msg-input-bar" onSubmit={sendMsg}>
+                    <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message…" />
+                    <button type="submit" className="btn btn-primary">Send</button>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'feed' && (
+          <div className="phub-panel">
+            {hub?.children?.length > 1 && (
+              <label className="phub-select-label">
+                Child
+                <select value={selectedChild || ''} onChange={(e) => setSelectedChild(Number(e.target.value))}>
+                  {hub.children.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {selectedChild ? (
+              <ParentChildFeed studentId={selectedChild} token={token} />
+            ) : (
+              <p className="phub-muted">Connect your child using the teacher&apos;s parent invite link.</p>
+            )}
+          </div>
+        )}
+
+        {tab === 'school' && (
+          <div className="phub-panel">
+            <h2>School announcements</h2>
+            {hub?.announcements?.length ? hub.announcements.map((a) => (
+              <article key={a.id} className="phub-card">
+                <strong>{a.title}</strong>
+                <p>{a.body}</p>
+                <small>{a.school_name} · {new Date(a.created_at).toLocaleString()}</small>
+              </article>
+            )) : <p className="phub-muted">No school announcements yet.</p>}
+
+            <h2 style={{ marginTop: 24 }}>Notifications</h2>
+            {hub?.notifications?.length ? hub.notifications.map((n) => (
+              <article key={n.id} className={`phub-card ${n.is_read ? '' : 'phub-card-unread'}`}>
+                <strong>{n.title}</strong>
+                <p>{n.body}</p>
+                <small>{new Date(n.created_at).toLocaleString()}</small>
+              </article>
+            )) : <p className="phub-muted">No notifications yet.</p>}
+          </div>
+        )}
+
+        {tab === 'child' && (
+          <div className="phub-panel">
+            {hub?.children?.length > 1 && (
+              <label className="phub-select-label">
+                Child
+                <select value={selectedChild || ''} onChange={(e) => setSelectedChild(Number(e.target.value))}>
+                  {hub.children.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {!child ? (
+              <p>Use the invitation link from your child&apos;s teacher to connect.</p>
+            ) : (
+              <>
+                <div className="phub-card phub-child-hero">
+                  <h2>{child.name}</h2>
+                  <p>{child.school_name || 'School'}</p>
+                  {(child.district || child.sector) && (
+                    <p className="phub-muted">{[child.district, child.sector].filter(Boolean).join(' · ')}</p>
+                  )}
+                </div>
+                {summary && (
+                  <>
+                    <section className="phub-section">
+                      <h3>Quizzes</h3>
+                      {summary.quizzes?.length ? summary.quizzes.map((q, i) => (
+                        <div key={i} className="phub-row">{(q.class_name)} — {q.title}: <strong>{q.score}%</strong></div>
+                      )) : <p className="phub-muted">No quiz attempts yet.</p>}
+                    </section>
+                    <section className="phub-section">
+                      <h3>Homework</h3>
+                      {summary.homework?.length ? summary.homework.map((h, i) => (
+                        <div key={i} className="phub-row">{h.class_name} — {h.title} {h.grade != null ? `(grade: ${h.grade})` : h.submitted_at ? '✓ submitted' : '· due ' + (h.due_date || '')}</div>
+                      )) : <p className="phub-muted">No homework yet.</p>}
+                    </section>
+                    <section className="phub-section">
+                      <h3>Marks (CAT)</h3>
+                      {summary.marks?.length ? summary.marks.map((m, i) => (
+                        <div key={i} className="phub-row">{m.class_name} test {m.test_number}: {m.marks_obtained}/{m.total_marks}</div>
+                      )) : <p className="phub-muted">No marks recorded.</p>}
+                    </section>
+                    <section className="phub-section">
+                      <h3>Compositions & shares</h3>
+                      {summary.compositions?.length ? summary.compositions.map((c, i) => (
+                        <div key={i} className="phub-row">{c.title || 'Share'} — {c.status}</div>
+                      )) : <p className="phub-muted">No compositions yet.</p>}
+                    </section>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

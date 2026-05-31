@@ -60,7 +60,7 @@ export default function ParentDashboard() {
   );
 }
 
-function ParentChildFeed({ studentId, token }) {
+export function ParentChildFeed({ studentId, token }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 

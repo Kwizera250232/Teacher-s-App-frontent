@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import TeacherDashboard from './pages/TeacherDashboard';
 import HeadTeacherDashboard from './pages/HeadTeacherDashboard';
+import ParentHub from './pages/ParentHub';
 import ParentDashboard from './pages/ParentDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import { dashboardPath } from './utils/roles';
@@ -88,6 +89,9 @@ export default function App() {
                 } />
 
                 <Route path="/parent/dashboard" element={
+                  <ProtectedRoute role="parent"><ParentHub /></ProtectedRoute>
+                } />
+                <Route path="/parent/legacy" element={
                   <ProtectedRoute role="parent"><ParentDashboard /></ProtectedRoute>
                 } />
 

@@ -10,7 +10,11 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import UmunsiAiModal from '../components/UmunsiAiModal';
 import DonateButton from '../components/DonateButton';
 import StaffQuickActions from '../components/StaffQuickActions';
+import SchoolHubPanel from '../components/staff/SchoolHubPanel';
+import AddTeacherModal from '../components/staff/AddTeacherModal';
+import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import './Dashboard.css';
+import './ParentHub.css';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
   const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
@@ -22,6 +26,9 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   const [aiModal, setAiModal] = useState(null);
   const [unread, setUnread] = useState(0);
+  const [showAddTeacher, setShowAddTeacher] = useState(false);
+  const [showNotifyParents, setShowNotifyParents] = useState(false);
+  const isHeadTeacher = roleLabel === 'Head Teacher';
 
   const dismissAnnouncement = (id) => {
     const updated = [...dismissed, id];
@@ -91,8 +98,18 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <button className="btn btn-secondary" onClick={() => setShowAddStudents(true)}>
               👤 Add Students
             </button>
+            <button className="btn btn-secondary" onClick={() => setShowNotifyParents(true)}>
+              📢 Notify parents
+            </button>
+            {isHeadTeacher && (
+              <button className="btn btn-secondary" onClick={() => setShowAddTeacher(true)}>
+                👨‍🏫 Add teacher
+              </button>
+            )}
           </div>
         </div>
+
+        <SchoolHubPanel token={token} isHeadTeacher={isHeadTeacher} />
 
         <SchoolRequestBanner token={token} user={user} />
         {roleLabel === 'Head Teacher' && <SchoolRequestsPanel token={token} />}
@@ -192,6 +209,22 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           token={token}
           isTeacher={true}
           onClose={() => setAiModal(null)}
+        />
+      )}
+
+      {showAddTeacher && (
+        <AddTeacherModal
+          token={token}
+          onClose={() => setShowAddTeacher(false)}
+          onCreated={() => setShowAddTeacher(false)}
+        />
+      )}
+
+      {showNotifyParents && (
+        <NotifyParentsModal
+          token={token}
+          classId={classes[0]?.id}
+          onClose={() => setShowNotifyParents(false)}
         />
       )}
     </div>

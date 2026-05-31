@@ -40,3 +40,13 @@ This workspace contains two independent repos:
 
 - Staff register with a **school email username** (shown as `user@schooldomain.edu`) and log in with that address only.
 - Students use Gmail or school email on the register form; backend validates on submit.
+- CLI: `npm run check-email -- user@gmail.com` in the backend repo.
+
+### Parent hub & school communication
+
+- Parent UI: `ParentHub` at `/parent/dashboard` (tabs: Chats, Classroom feed, School, My child). Legacy feed-only UI remains at `/parent/legacy`.
+- Parent API hub: `GET /api/parent/hub`, `GET /api/parent/children/:id/summary`, notifications under `/api/parent/notifications`.
+- Staff: `SchoolHubPanel` on teacher/HT dashboards; `POST /api/parent/notify` and `POST /api/parent/school/announcements` deliver **in-app** notifications + chat messages (not external email).
+- HT-only: `POST /api/parent/school/teachers`, `PUT /api/parent/school/profile` (district/sector).
+- Parent ↔ teacher/HT messaging rules live in `lib/messagingAccess.js`.
+- Hub tables/columns are ensured at startup via `lib/parentHub.js` (`school_announcements`, `parent_notifications`, `schools.district`, `schools.sector`).
