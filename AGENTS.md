@@ -40,12 +40,19 @@ This workspace contains two independent repos:
 
 - Teachers: dashboard **Parent invites (per student)** → picker modal → choose student → copy/share link.
 - Also: class **Students** tab → **Parent invite** under each student.
-- Students: dashboard **Get parent invite link** → same share modal (`POST /parent/my/parent-invite`).
+- Students: **Parent invitation** modal shows unique **parent code** + link (`utils/parentInviteApi.js` tries GET then POST). Parent signup: `/invite?parent_token=...` (same form as staff invites).
+
+### Composition status (C. Status)
+
+- Student dashboard: **Add C. Status** only (no composer on dashboard). No approved composition → Profile (`?compose=composition`). Pick approved share → 7-day status with view list for owner.
+- Teachers: class tab **C. Status**; **Tools** tab → school-wide list when linked to a school. HT **School** tab also lists school statuses.
+- Components: `CompositionStatusPanel.jsx`, `CompositionStatusList.jsx`.
 
 ### Staff / parent communication hub
 
 - **Teachers only** see **Join a school** (`SchoolRequestBanner`); HT approves in **School** tab.
-- Teacher/HT dashboard tabs: **Classes | School | Chats | Tools** (WhatsApp-style green chat theme).
+- Teacher dashboard tabs: **Classes | Chats | Tools** (no **School** tab). **Head teacher** adds **School** tab.
+- WhatsApp-style shell: `app-wa-shell` in `App.jsx`, `MobileDashboard.css`, `styles/WaAppShell.css`.
 - Parents: `/parent/dashboard` — Chats, feed, school (pinned announcements), child summary with **Today / week / term** filters.
 - Notify parents: in-app + optional email (`also_email` when SMTP configured). School announcements support **pin**.
 
