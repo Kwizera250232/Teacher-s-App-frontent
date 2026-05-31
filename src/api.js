@@ -43,7 +43,11 @@ async function request(method, endpoint, body, token) {
     throw new Error(`Server returned ${res.status} — check that the API URL is correct.`);
   }
   const data = await res.json();
-  if (!res.ok) throw new Error(normalizeLegacySchoolDomainError(data.error || 'Request failed'));
+  if (!res.ok) {
+    const err = new Error(normalizeLegacySchoolDomainError(data.error || 'Request failed'));
+    if (data.code) err.code = data.code;
+    throw err;
+  }
   return data;
 }
 
@@ -71,6 +75,10 @@ export async function uploadFile(endpoint, formData, token) {
     const text = await res.text();
     throw new Error(text || `Upload failed (${res.status})`);
   }
-  if (!res.ok) throw new Error(normalizeLegacySchoolDomainError(data.error || 'Upload failed'));
+  if (!res.ok) {
+    const err = new Error(normalizeLegacySchoolDomainError(data.error || 'Upload failed'));
+    if (data.code) err.code = data.code;
+    throw err;
+  }
   return data;
 }

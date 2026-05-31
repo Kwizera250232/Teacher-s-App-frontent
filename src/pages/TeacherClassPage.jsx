@@ -10,6 +10,9 @@ import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
 import ClassroomFeed from '../components/ClassroomFeed';
 import CoTeacherInvite from '../components/CoTeacherInvite';
+import EmailVerificationModal from '../components/EmailVerificationModal';
+import { useEmailVerificationGate } from '../hooks/useEmailVerificationGate';
+import { isGatedClassTab, needsEmailVerification } from '../utils/emailVerification';
 import '../pages/Dashboard.css';
 
 const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Students'];
@@ -40,6 +43,7 @@ export default function TeacherClassPage() {
   const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
+  const { modalOpen, featureLabel, guardTab, closeModal } = useEmailVerificationGate();
 
   useEffect(() => {
     setPageLoading(true);
@@ -64,6 +68,7 @@ export default function TeacherClassPage() {
 
   const loadTab = async () => {
     setError('');
+    if (needsEmailVerification(user) && isGatedClassTab(tab)) return;
     if (tab === 'Leaderboard' || tab === 'Feed') return;
     try {
       const endpointMap = {
@@ -78,6 +83,7 @@ export default function TeacherClassPage() {
       setData(res);
       try { localStorage.setItem(tCacheKey(tab), JSON.stringify(res)); } catch {}
     } catch (e) {
+      if (e.code === 'EMAIL_NOT_VERIFIED') return;
       const cached = JSON.parse(localStorage.getItem(tCacheKey(tab)) || '[]');
       if (cached.length) setData(cached);
       else if (navigator.onLine) setError(e.message);
@@ -225,9 +231,16 @@ export default function TeacherClassPage() {
 
         <div className="tabs">
           {TABS.map(t => (
-            <button key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t}</button>
+            <button
+              key={t}
+              className={`tab ${tab === t ? 'active' : ''}`}
+              onClick={() => guardTab(t, () => setTab(t))}
+            >
+              {t}
+            </button>
           ))}
         </div>
+        <EmailVerificationModal open={modalOpen} featureLabel={featureLabel} onClose={closeModal} />
 
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}

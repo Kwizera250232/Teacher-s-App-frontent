@@ -110,6 +110,12 @@ export default function Register() {
       }
 
       login(data.token, data.user);
+      if (!data.user.email_verified) {
+        navigate(dashboardPath(data.user.role), {
+          state: { emailVerificationSent: true },
+        });
+        return;
+      }
       if (data.user.role === 'student' && classCode) {
         try {
           const joined = await api.post('/classes/join', { class_code: classCode }, data.token);
@@ -138,6 +144,7 @@ export default function Register() {
             <p className="auth-sub" style={{ marginTop: 12, lineHeight: 1.6 }}>
               Konti yawe y'umwarimu yoherejwe.{' '}
               <strong>Tegereza ko umuyobozi w'ishuri ayemera</strong> mbere yo kwinjira mu rubuga.
+              Twakoherereje n&apos;ubutumwa bwo kwemeza imeyili yawe — reba inbox yawe.
             </p>
             <div style={{ marginTop: 24 }}>
               <a href="/login" className="btn btn-primary btn-full">
@@ -263,6 +270,9 @@ export default function Register() {
                   placeholder="you@example.com"
                   required
                 />
+                <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
+                  Use the email you check regularly. We will send a confirmation link before you can use homework, quizzes, and other class tools.
+                </p>
               </div>
               <div className="form-group">
                 <label>Ijambo Banga</label>

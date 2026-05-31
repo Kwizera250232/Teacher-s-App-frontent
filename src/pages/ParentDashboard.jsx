@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import DonateButton from '../components/DonateButton';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import './Dashboard.css';
 
 export default function ParentDashboard() {
@@ -31,6 +32,7 @@ export default function ParentDashboard() {
         </div>
       </header>
       <main className="dash-main">
+        <EmailVerificationBanner />
         <h1>Parent Dashboard</h1>
         <p className="dash-sub">View only your child&apos;s classroom work — not other students.</p>
         {error && <div className="alert alert-error">{error}</div>}

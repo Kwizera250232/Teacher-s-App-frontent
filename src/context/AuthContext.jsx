@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { api } from '../api';
 
 const AuthContext = createContext(null);
 const IMPERSONATING_KEY = 'impersonating';
@@ -17,6 +18,14 @@ export function AuthProvider({ children }) {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
+      api.get('/auth/me', storedToken)
+        .then((data) => {
+          if (data?.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setUser(data.user);
+          }
+        })
+        .catch(() => {});
     }
     setIsImpersonating(localStorage.getItem(IMPERSONATING_KEY) === '1');
     setLoading(false);

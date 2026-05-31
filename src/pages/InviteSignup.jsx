@@ -120,6 +120,7 @@ export default function InviteSignup() {
             <h2>Account submitted</h2>
             <p className="auth-sub">
               Your {roleLabel} account is waiting for approval. You will be able to log in once approved.
+              A confirmation email was also sent to your inbox.
             </p>
             <Link to="/login" className="btn btn-primary btn-full">Go to login</Link>
           </>

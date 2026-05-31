@@ -35,3 +35,8 @@ This workspace contains two independent repos:
 - Auth: `Authorization: Bearer <jwt>` header on all authenticated requests.
 - API client: `src/api.js` — single fetch-based module, no axios/React Query.
 - No controllers/models layer — all business logic is in route handler files under `routes/`.
+
+### Email confirmation (UI)
+
+- Users can open dashboards without confirming email; class tabs and routes like quizzes/messages show `EmailVerificationModal` until `user.email_verified` is true.
+- Confirmation link: `/verify-email?token=...` (backend sends via SMTP).

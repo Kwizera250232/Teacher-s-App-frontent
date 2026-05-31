@@ -432,7 +432,7 @@ export default function Profile() {
           <div className="profile-teacher-section">
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, color: '#1e40af' }}>👤 Create Student/Teacher Account</h2>
             <p style={{ color: '#64748b', marginBottom: 20 }}>
-              Create accounts for students or teachers. Email will be auto-generated as @brightschool.edu if not provided.
+              Create accounts for students or teachers. Leave email empty to auto-generate a school address, or enter one that matches your school domain.
             </p>
             <TeacherUserCreation token={token} />
           </div>
