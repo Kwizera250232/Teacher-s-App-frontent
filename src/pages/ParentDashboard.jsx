@@ -32,7 +32,7 @@ export default function ParentDashboard() {
       </header>
       <main className="dash-main">
         <h1>Parent Dashboard</h1>
-        <p className="dash-sub">View only your child&apos;s classroom work — not other students.</p>
+        <p className="dash-sub">Only your invited child&apos;s posts and summary — never other students in the class.</p>
         {error && <div className="alert alert-error">{error}</div>}
         {children.length === 0 ? (
           <p>Use the invitation link from your child&apos;s teacher to connect your account.</p>

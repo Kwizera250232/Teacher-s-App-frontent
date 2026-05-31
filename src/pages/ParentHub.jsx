@@ -219,6 +219,9 @@ export default function ParentHub() {
 
         {tab === 'feed' && (
           <div className="phub-panel">
+            <p className="phub-muted" style={{ marginBottom: 12 }}>
+              Posts your child shared in class — not other students&apos; work.
+            </p>
             {hub?.children?.length > 1 && (
               <label className="phub-select-label">
                 Child
