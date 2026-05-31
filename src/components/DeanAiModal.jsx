@@ -92,7 +92,7 @@ export default function DeanAiModal({ token, onClose }) {
           }}>🤖</div>
           <div style={{ flex: 1 }}>
             <div style={{ color: '#fff', fontWeight: 800, fontSize: 17, lineHeight: 1.2 }}>Dean</div>
-            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12 }}>UClass App Assistant</div>
+            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12 }}>Our AI Support</div>
           </div>
           <button onClick={onClose} style={{
             background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%',

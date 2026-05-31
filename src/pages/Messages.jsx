@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import ClassmateProfileModal from '../components/ClassmateProfileModal';
+import ShareCompositionModal from '../components/ShareCompositionModal';
+import '../styles/WaChatShell.css';
 import './Messages.css';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
@@ -30,10 +32,28 @@ export default function Messages() {
   // Mobile: which panel is visible — 'list' or 'chat'
   const [mobilePanel, setMobilePanel] = useState('list');
   const [profilePerson, setProfilePerson] = useState(null);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showShareComposition, setShowShareComposition] = useState(false);
   const bottomRef = useRef();
+  const threadRef = useRef();
   const fileRef = useRef();
   const emojiRef = useRef();
   const inboxDataRef = useRef({});
+  const shouldScrollOnSendRef = useRef(false);
+
+  const scrollThreadToBottom = (behavior = 'auto') => {
+    requestAnimationFrame(() => {
+      const el = threadRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+      bottomRef.current?.scrollIntoView({ behavior, block: 'end' });
+    });
+  };
+
+  const openChat = (contactId) => {
+    setActiveId(contactId);
+    setMobilePanel('chat');
+    setTimeout(() => scrollThreadToBottom('auto'), 0);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -48,15 +68,20 @@ export default function Messages() {
       setContacts([...contactList, ...extra]);
     }).catch(() => {});
     const uid = searchParams.get('to');
-    if (uid) { setActiveId(parseInt(uid)); setMobilePanel('chat'); }
+    if (uid) openChat(parseInt(uid, 10));
   }, [token]);
 
   useEffect(() => {
     if (!activeId) return;
+    let firstLoad = true;
     const load = () => {
       api.get(`/messages/thread/${activeId}`, token).then(msgs => {
         setThread(msgs);
         setInbox(prev => prev.filter(m => m.sender_id !== activeId));
+        if (firstLoad) {
+          firstLoad = false;
+          scrollThreadToBottom('auto');
+        }
       }).catch(() => {});
     };
     load();
@@ -65,7 +90,9 @@ export default function Messages() {
   }, [activeId, token]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!shouldScrollOnSendRef.current) return;
+    shouldScrollOnSendRef.current = false;
+    scrollThreadToBottom('smooth');
   }, [thread]);
 
   // Close emoji panel on outside click
@@ -111,6 +138,7 @@ export default function Messages() {
       }
       setText('');
       clearImg();
+      shouldScrollOnSendRef.current = true;
     } catch {/* ignore */}
     setSending(false);
   };
@@ -124,11 +152,11 @@ export default function Messages() {
 
   return (
     <>
-    <div className="msg-page">
+    <div className="msg-page wa-chat-shell msg-page--fullscreen">
       <div className={`msg-sidebar ${mobilePanel === 'chat' ? 'msg-sidebar-hidden' : ''}`}>
         <div className="msg-sidebar-header">
-          <button className="btn btn-outline btn-sm" onClick={() => navigate(-1)}>←</button>
-          <span>💬 Messages</span>
+          <button type="button" className="msg-wa-back" onClick={() => navigate(-1)} aria-label="Back">←</button>
+          <span className="msg-sidebar-title">Chats</span>
         </div>
         {contacts.length === 0 && <div className="msg-empty">No contacts yet. Join a class first.</div>}
 
@@ -140,7 +168,7 @@ export default function Messages() {
             <div
               key={c.id}
               className={`msg-contact ${activeId === c.id ? 'active' : ''}${isUnread ? ' unread' : ''}`}
-              onClick={() => { setActiveId(c.id); setMobilePanel('chat'); }}
+              onClick={() => openChat(c.id)}
             >
               <div className="msg-contact-avatar-wrap">
                 <img src={c.avatar_path ? `${UPLOADS_BASE}${c.avatar_path}` : DEFAULT_AVATAR} alt="" className="msg-contact-avatar" />
@@ -171,7 +199,7 @@ export default function Messages() {
           <div
             key={c.id}
             className={`msg-contact ${activeId === c.id ? 'active' : ''}`}
-            onClick={() => { setActiveId(c.id); setMobilePanel('chat'); }}
+            onClick={() => openChat(c.id)}
           >
             <div className="msg-contact-avatar-wrap">
               <img src={c.avatar_path ? `${UPLOADS_BASE}${c.avatar_path}` : DEFAULT_AVATAR} alt="" className="msg-contact-avatar" />
@@ -221,38 +249,66 @@ export default function Messages() {
               </div>
             </div>
 
-            <div className="msg-thread">
-              {thread.length === 0 && <div className="msg-empty" style={{ textAlign: 'center', marginTop: 40 }}>Start the conversation!</div>}
-              {thread.map(m => (
-                <div key={m.id} className={`msg-bubble-wrap ${m.sender_id === user?.id ? 'mine' : 'theirs'}`}>
-                  <div className={`msg-bubble ${m.message_type && m.message_type !== 'chat' ? 'msg-bubble-announce' : ''}`}>
-                    {m.message_type && m.message_type !== 'chat' && (
-                      <span className="msg-type-tag">{m.message_type.replace(/_/g, ' ')}</span>
-                    )}
-                    {m.image_path && (
-                      <img
-                        src={`${UPLOADS_BASE}${m.image_path}`}
-                        alt="shared"
-                        className="msg-img"
-                        onClick={() => window.open(`${UPLOADS_BASE}${m.image_path}`, '_blank')}
-                      />
-                    )}
-                    {m.content && <p>{m.content}</p>}
-                    <span className="msg-time">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <div className="wa-chat-body">
+              <div className="msg-thread" ref={threadRef}>
+                {thread.length === 0 && <div className="msg-empty msg-thread-empty">Start the conversation!</div>}
+                {thread.map(m => (
+                  <div key={m.id} className={`msg-bubble-wrap ${m.sender_id === user?.id ? 'mine' : 'theirs'}`}>
+                    <div className={`msg-bubble ${m.message_type && m.message_type !== 'chat' ? 'msg-bubble-announce' : ''}`}>
+                      {m.message_type && m.message_type !== 'chat' && (
+                        <span className="msg-type-tag">{m.message_type.replace(/_/g, ' ')}</span>
+                      )}
+                      {m.image_path && (
+                        <img
+                          src={`${UPLOADS_BASE}${m.image_path}`}
+                          alt="shared"
+                          className="msg-img"
+                          onClick={() => window.open(`${UPLOADS_BASE}${m.image_path}`, '_blank')}
+                        />
+                      )}
+                      {m.content && <p>{m.content}</p>}
+                      <span className="msg-time">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
                   </div>
+                ))}
+                <div ref={bottomRef} />
+              </div>
+
+              {imgPreview && (
+                <div className="msg-img-preview">
+                  <img src={imgPreview} alt="preview" />
+                  <button className="msg-img-clear" onClick={clearImg}>✕</button>
                 </div>
-              ))}
-              <div ref={bottomRef} />
+              )}
             </div>
 
-            {imgPreview && (
-              <div className="msg-img-preview">
-                <img src={imgPreview} alt="preview" />
-                <button className="msg-img-clear" onClick={clearImg}>✕</button>
-              </div>
-            )}
-
             <form className="msg-input-row" onSubmit={send}>
+              <div className="msg-attach-wrap">
+                <button
+                  type="button"
+                  className="msg-icon-btn"
+                  title="Attach"
+                  onClick={() => setShowAttachMenu((s) => !s)}
+                >+</button>
+                {showAttachMenu && (
+                  <div className="msg-attach-menu">
+                    <button type="button" onClick={() => { fileRef.current?.click(); setShowAttachMenu(false); }}>
+                      🖼 Image
+                    </button>
+                    {user?.role === 'student' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAttachMenu(false);
+                          setShowShareComposition(true);
+                        }}
+                      >
+                        📄 Share composition to…
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="msg-emoji-wrap" ref={emojiRef}>
                 <button type="button" className="msg-icon-btn" onClick={() => setShowEmoji(s => !s)} title="Emoji">😊</button>
                 {showEmoji && (
@@ -263,7 +319,6 @@ export default function Messages() {
                   </div>
                 )}
               </div>
-              <button type="button" className="msg-icon-btn" onClick={() => fileRef.current?.click()} title="Send image">🖼</button>
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleImgChange} />
               <input
                 value={text}
@@ -281,6 +336,18 @@ export default function Messages() {
         )}
       </div>
     </div>
+    {showShareComposition && activeId && (
+      <ShareCompositionModal
+        token={token}
+        receiverId={activeId}
+        receiverName={activeContact?.name}
+        onClose={() => setShowShareComposition(false)}
+        onSent={() => {
+          shouldScrollOnSendRef.current = true;
+          api.get(`/messages/thread/${activeId}`, token).then(setThread).catch(() => {});
+        }}
+      />
+    )}
     {profilePerson && (
       <ClassmateProfileModal
         person={profilePerson}

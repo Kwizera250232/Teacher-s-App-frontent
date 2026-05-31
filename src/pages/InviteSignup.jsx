@@ -3,6 +3,7 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { dashboardPath } from '../utils/roles';
+import AuthAppShell from '../components/AuthAppShell';
 import './Auth.css';
 
 export default function InviteSignup() {
@@ -115,32 +116,35 @@ export default function InviteSignup() {
 
   if (loadingPreview) {
     return (
-      <section className="auth-container">
-        <section className="auth-card"><p>Loading invitation...</p></section>
-      </section>
+      <AuthAppShell title="Loading…" subtitle="Checking your invitation">
+        <p>Loading invitation...</p>
+      </AuthAppShell>
     );
   }
 
   if (loadError || !preview) {
     return (
-      <section className="auth-container">
-        <section className="auth-card">
-          <h2>Invalid invitation</h2>
-          <p className="auth-sub">{loadError || 'This link is not valid.'}</p>
-          <Link to="/register" className="btn btn-primary btn-full">Go to signup</Link>
-        </section>
-      </section>
+      <AuthAppShell title="Invalid invitation" subtitle={loadError || 'This link is not valid.'}>
+        <Link to="/register" className="btn btn-primary" style={{ display: 'block', textAlign: 'center' }}>Go to signup</Link>
+      </AuthAppShell>
     );
   }
 
   return (
-    <section className="auth-container">
-      <section className="auth-card">
-        <section className="auth-logo">🎓</section>
+    <AuthAppShell
+      title={pending ? 'Account submitted' : `${roleLabel} signup`}
+      subtitle={
+        pending
+          ? 'Waiting for approval — Dean (Our AI Support) can help after you sign in'
+          : isParentInvite
+            ? `Parent invite for ${preview.student_name}`
+            : 'Complete your account — same look as inside the app'
+      }
+      footer={<p>Already have an account? <Link to="/login">Sign in</Link></p>}
+    >
         {pending ? (
           <>
-            <h2>Account submitted</h2>
-            <p className="auth-sub">
+            <p className="auth-app-shell__sub">
               Your {roleLabel} account is waiting for approval. You will be able to log in once approved.
               {schoolEmailPreview && (
                 <>
@@ -153,8 +157,7 @@ export default function InviteSignup() {
           </>
         ) : (
           <>
-            <h2>{roleLabel} signup</h2>
-            <p className="auth-sub">
+            <p className="auth-app-shell__sub">
               {isParentInvite
                 ? 'Create your parent account to view your child\'s classroom work only.'
                 : 'Complete your account using this invitation.'}
@@ -237,8 +240,19 @@ export default function InviteSignup() {
                 </label>
               ) : (
                 <label className="form-group">
-                  Email *
-                  <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  {isParentInvite ? 'Personal email (Gmail, Yahoo, Outlook…) *' : 'Email *'}
+                  <input
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder={isParentInvite ? 'you@gmail.com' : undefined}
+                  />
+                  {isParentInvite && (
+                    <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
+                      Use your real personal email (Gmail, Yahoo, Outlook, etc.). School @ addresses are for teachers only.
+                    </p>
+                  )}
                 </label>
               )}
               <label className="form-group">
@@ -253,10 +267,8 @@ export default function InviteSignup() {
                 {submitting ? 'Creating account...' : 'Create account'}
               </button>
             </form>
-            <p className="auth-link">Already have an account? <Link to="/login">Login</Link></p>
           </>
         )}
-      </section>
-    </section>
+    </AuthAppShell>
   );
 }

@@ -41,6 +41,12 @@ export async function createParentInviteLink({ token, studentId, selfStudentId }
     () => api.post('/parent/my/parent-invite', {}, token),
   ];
 
+  if (selfStudentId) {
+    studentOnlyCalls.push(() =>
+      api.post(`/parent/students/${selfStudentId}/parent-link`, {}, token)
+    );
+  }
+
   try {
     return await tryInviteCalls(studentOnlyCalls);
   } catch (lastError) {

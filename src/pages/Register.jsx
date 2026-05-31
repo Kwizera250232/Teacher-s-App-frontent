@@ -3,6 +3,8 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { dashboardPath } from '../utils/roles';
+import { schoolDomainFromName, buildSchoolEmailPreview } from '../utils/schoolDomain';
+import AuthAppShell from '../components/AuthAppShell';
 import './Auth.css';
 
 export default function Register() {
@@ -19,7 +21,6 @@ export default function Register() {
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeError, setCodeError] = useState('');
   const [verifiedSchool, setVerifiedSchool] = useState(null);
-  const [staffDomain, setStaffDomain] = useState('staff.umunsi.edu');
   const [optionalCode, setOptionalCode] = useState('');
   const [showOptionalCode, setShowOptionalCode] = useState(false);
 
@@ -27,6 +28,7 @@ export default function Register() {
     name: '',
     email: '',
     schoolEmailLocal: '',
+    staffSchoolName: '',
     password: '',
     phone: '',
     school_id: '',
@@ -47,12 +49,6 @@ export default function Register() {
   useEffect(() => {
     api.get('/auth/schools').then(setSchools).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (selectedRole === 'teacher' || selectedRole === 'head_teacher') {
-      api.get('/auth/staff-signup-domain').then((r) => setStaffDomain(r.email_domain || 'staff.umunsi.edu')).catch(() => {});
-    }
-  }, [selectedRole]);
 
   useEffect(() => {
     if (['head_teacher', 'teacher'].includes(searchRole)) {
@@ -84,6 +80,11 @@ export default function Register() {
           setLoading(false);
           return;
         }
+        if (!verifiedSchool && !form.staffSchoolName.trim()) {
+          setError('Andika izina ry\'ishuri.');
+          setLoading(false);
+          return;
+        }
       } else if (form.email.trim()) {
         await api.post('/auth/validate-email', {
           email: form.email.trim().toLowerCase(),
@@ -102,6 +103,9 @@ export default function Register() {
 
       if (isStaff) {
         payload.school_email_local = form.schoolEmailLocal.trim();
+        if (!verifiedSchool && form.staffSchoolName.trim()) {
+          payload.staff_school_name = form.staffSchoolName.trim();
+        }
       } else {
         payload.email = form.email.trim().toLowerCase();
       }
@@ -140,14 +144,14 @@ export default function Register() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-logo">🎓</div>
-
+    <AuthAppShell
+      title={pending ? "Konti Yoherejwe" : step === "role" ? "Fungura Konti" : "Fungura Konti"}
+      subtitle={pending ? "Tegereza kwemezwa n'umuyobozi" : step === "role" ? "Hitamo uwo uri we" : "Injira mu rubuga rw'inyigisho"}
+      footer={<p>Usanzwe ufite konti? <Link to="/login">Injira</Link></p>}
+    >
         {pending ? (
           <>
-            <h2>✅ Konti Yoherejwe!</h2>
-            <p className="auth-sub" style={{ marginTop: 12, lineHeight: 1.6 }}>
+            <p className="auth-app-shell__sub" style={{ marginTop: 12, lineHeight: 1.6 }}>
               Konti yawe y'umwarimu yoherejwe.{' '}
               <strong>Tegereza ko umuyobozi w'ishuri ayemera</strong> mbere yo kwinjira.
               {schoolEmailPreview && (
@@ -165,8 +169,6 @@ export default function Register() {
           </>
         ) : step === 'role' ? (
           <>
-            <h2>Fungura Konti</h2>
-            <p className="auth-sub">Hitamo uwo uri we</p>
 
             <div className="form-group" style={{ marginTop: 20 }}>
               <label>Ndi</label>
@@ -199,14 +201,10 @@ export default function Register() {
             >
               Komeza →
             </button>
-            <p className="auth-link" style={{ marginTop: 16 }}>
-              Usanzwe ufite konti? <Link to="/login">Injira</Link>
-            </p>
+
           </>
         ) : (
           <>
-            <h2>Fungura Konti</h2>
-            <p className="auth-sub">Injira mu rubuga rw'inyigisho</p>
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -222,46 +220,84 @@ export default function Register() {
               {(selectedRole === 'teacher' || selectedRole === 'head_teacher') ? (
                 <>
                 <div className="form-group">
-                  <label>Fungura imeyili y&apos;ishuri yawe (login)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                  <label>Izina ry&apos;ishuri</label>
+                  <input
+                    type="text"
+                    value={verifiedSchool ? verifiedSchool.name : form.staffSchoolName}
+                    onChange={(e) => {
+                      if (verifiedSchool) return;
+                      setForm({ ...form, staffSchoolName: e.target.value });
+                      setSchoolEmailStatus('');
+                      const dom = schoolDomainFromName(e.target.value);
+                      if (form.schoolEmailLocal.trim() && dom) {
+                        setSchoolEmailPreview(buildSchoolEmailPreview(form.schoolEmailLocal, dom));
+                      }
+                    }}
+                    readOnly={Boolean(verifiedSchool)}
+                    placeholder="e.g. Green Hills Academy"
+                    required={!verifiedSchool}
+                    style={verifiedSchool ? { background: '#f1f5f9' } : undefined}
+                  />
+                  {verifiedSchool && (
+                    <p style={{ fontSize: 12, color: '#059669', marginTop: 4 }}>🏫 Linked via school code</p>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label>Imeyili y&apos;ishuri (login)</label>
+                  <div className="auth-school-email-row">
                     <input
                       type="text"
                       value={form.schoolEmailLocal}
                       onChange={(e) => {
-                        setForm({ ...form, schoolEmailLocal: e.target.value });
+                        const local = e.target.value;
+                        setForm({ ...form, schoolEmailLocal: local });
                         setSchoolEmailStatus('');
+                        const dom = verifiedSchool?.email_domain || schoolDomainFromName(form.staffSchoolName);
+                        if (local.trim() && dom) {
+                          setSchoolEmailPreview(buildSchoolEmailPreview(local, dom));
+                        }
                       }}
                       onBlur={async () => {
                         const local = form.schoolEmailLocal.trim();
                         if (!local) return;
                         const code = (verifiedSchool ? codeInput : optionalCode).trim().toUpperCase();
+                        const schoolName = verifiedSchool?.name || form.staffSchoolName.trim();
+                        if (!code && !schoolName) {
+                          setSchoolEmailStatus('Andika izina ry\'ishuri mbere.');
+                          return;
+                        }
                         try {
-                          const q = code
-                            ? `local=${encodeURIComponent(local)}&code=${encodeURIComponent(code)}`
-                            : `local=${encodeURIComponent(local)}`;
-                          const r = await api.get(`/auth/check-school-email?${q}`);
+                          const params = new URLSearchParams({ local });
+                          if (code) params.set('code', code);
+                          else params.set('school_name', schoolName);
+                          const r = await api.get(`/auth/check-school-email?${params}`);
                           setSchoolEmailPreview(r.email);
                           setSchoolEmailStatus(
                             r.available ? `✓ ${r.email} is available` : `✗ ${r.email} is already taken`
                           );
-                          if (r.school_name && code) {
-                            setVerifiedSchool((prev) => prev || { name: r.school_name, code, email_domain: r.email_domain });
-                          }
                         } catch (err) {
                           setSchoolEmailStatus(err.message);
                         }
                       }}
                       placeholder="john.doe"
                       required
-                      style={{ flex: '1 1 140px', minWidth: 120 }}
+                      className="auth-school-email-local"
                     />
-                    <span style={{ color: '#475569', fontWeight: 600 }}>
-                      @{(verifiedSchool?.email_domain || staffDomain)}
+                    <span className="auth-school-email-domain">
+                      @
+                      {verifiedSchool?.email_domain
+                        || schoolDomainFromName(form.staffSchoolName)
+                        || 'schoolname.edu'}
                     </span>
                   </div>
                   <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-                    This is your permanent login email. Link your school from the dashboard after signup.
+                    Your login is <strong>username@schoolname.edu</strong> — the school name above sets the address (not @staff.umunsi.edu).
                   </p>
+                  {schoolEmailPreview && (
+                    <p style={{ fontSize: 12, marginTop: 4, color: '#0f766e' }}>
+                      Login email: <strong>{schoolEmailPreview}</strong>
+                    </p>
+                  )}
                   {schoolEmailStatus && (
                     <p style={{ fontSize: 12, marginTop: 4, color: schoolEmailStatus.startsWith('✓') ? '#059669' : '#dc2626' }}>
                       {schoolEmailStatus}
@@ -275,11 +311,11 @@ export default function Register() {
                     style={{ marginBottom: 12 }}
                     onClick={() => setShowOptionalCode(true)}
                   >
-                    I have a school code (optional)
+                    Nfite kode y&apos;ishuri (optional)
                   </button>
                 ) : (
                   <div className="form-group">
-                    <label>School code (optional)</label>
+                    <label>Kode y&apos;ishuri (optional)</label>
                     <input
                       type="text"
                       value={optionalCode}
@@ -302,6 +338,7 @@ export default function Register() {
                           } else {
                             setVerifiedSchool(data.school);
                             setCodeInput(c);
+                            setForm((f) => ({ ...f, staffSchoolName: data.school.name }));
                             setSchoolEmailStatus('');
                           }
                         } catch (err) {
@@ -317,7 +354,7 @@ export default function Register() {
                     />
                     {codeError && <p style={{ fontSize: 12, color: '#dc2626' }}>{codeError}</p>}
                     {verifiedSchool && (
-                      <p style={{ fontSize: 12, color: '#059669' }}>🏫 {verifiedSchool.name}</p>
+                      <p style={{ fontSize: 12, color: '#059669' }}>🏫 {verifiedSchool.name} · @{verifiedSchool.email_domain}</p>
                     )}
                   </div>
                 )}
@@ -430,8 +467,7 @@ export default function Register() {
             </p>
           </>
         )}
-      </div>
-    </div>
+    </AuthAppShell>
   );
 }
 

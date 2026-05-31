@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import '../../styles/WaChatShell.css';
 import '../../pages/Messages.css';
 import MessageContextBanner from '../MessageContextBanner';
 import '../../pages/ParentHub.css';
@@ -15,6 +16,19 @@ export default function StaffChatsPanel({ token }) {
   const [text, setText] = useState('');
   const [mobilePanel, setMobilePanel] = useState('list');
   const bottomRef = useRef();
+  const shouldScrollOnSendRef = useRef(false);
+
+  const scrollThreadToBottom = (behavior = 'auto') => {
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior, block: 'end' });
+    });
+  };
+
+  const openChat = (contactId) => {
+    setActiveChat(contactId);
+    setMobilePanel('chat');
+    setTimeout(() => scrollThreadToBottom('auto'), 0);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -45,14 +59,23 @@ export default function StaffChatsPanel({ token }) {
 
   useEffect(() => {
     if (!activeChat) return;
-    const load = () => api.get(`/messages/thread/${activeChat}`, token).then(setThread).catch(() => {});
+    let firstLoad = true;
+    const load = () => api.get(`/messages/thread/${activeChat}`, token).then((msgs) => {
+      setThread(msgs);
+      if (firstLoad) {
+        firstLoad = false;
+        scrollThreadToBottom('auto');
+      }
+    }).catch(() => {});
     load();
     const t = setInterval(load, 4000);
     return () => clearInterval(t);
   }, [activeChat, token]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!shouldScrollOnSendRef.current) return;
+    shouldScrollOnSendRef.current = false;
+    scrollThreadToBottom('smooth');
   }, [thread]);
 
   const sendMsg = async (e) => {
@@ -62,6 +85,7 @@ export default function StaffChatsPanel({ token }) {
       const msg = await api.post('/messages', { receiver_id: activeChat, content: text.trim() }, token);
       setThread((t) => [...t, { ...msg, sender_name: user?.name }]);
       setText('');
+      shouldScrollOnSendRef.current = true;
     } catch (err) {
       alert(err.message);
     }
@@ -71,7 +95,7 @@ export default function StaffChatsPanel({ token }) {
   const latestCtx = [...thread].reverse().find((m) => m.context_json)?.context_json;
 
   return (
-    <div className="msg-page phub-chat-wrap wa-chat-shell" style={{ height: 'min(70vh, 640px)' }}>
+    <div className="msg-page phub-chat-wrap wa-chat-shell msg-page--hub-embed">
       <div className={`msg-sidebar ${mobilePanel === 'chat' ? 'msg-sidebar-hidden' : ''}`}>
         <div className="msg-sidebar-header">
           <span>Chats</span>
@@ -83,7 +107,7 @@ export default function StaffChatsPanel({ token }) {
           <div
             key={c.id}
             className={`msg-contact ${activeChat === c.id ? 'active' : ''}`}
-            onClick={() => { setActiveChat(c.id); setMobilePanel('chat'); }}
+            onClick={() => openChat(c.id)}
           >
             <img src={c.avatar_path ? `${UPLOADS_BASE}${c.avatar_path}` : DEFAULT_AVATAR} alt="" className="msg-contact-avatar" />
             <div className="msg-contact-info">
@@ -108,23 +132,31 @@ export default function StaffChatsPanel({ token }) {
                 <div className="phub-chat-meta">{activeContact?.role?.replace('_', ' ')}</div>
               </div>
             </div>
-            <MessageContextBanner ctx={latestCtx} />
-            <div className="msg-messages wa-messages">
-              {thread.map((m) => (
-                <div key={m.id}>
-                  {m.context_json && m.sender_id !== user?.id && (
-                    <MessageContextBanner ctx={m.context_json} />
-                  )}
-                  <div className={`msg-bubble ${m.sender_id === user?.id ? 'sent' : 'received'}`}>
-                    {m.content}
+            <div className="wa-chat-body">
+              <MessageContextBanner ctx={latestCtx} />
+              <div className="msg-thread wa-messages">
+                {thread.map((m) => (
+                  <div key={m.id} className={`msg-bubble-wrap ${m.sender_id === user?.id ? 'mine' : 'theirs'}`}>
+                    {m.context_json && m.sender_id !== user?.id && (
+                      <MessageContextBanner ctx={m.context_json} />
+                    )}
+                    <div className={`msg-bubble ${m.sender_id === user?.id ? 'sent' : 'received'}`}>
+                      {m.content && <p>{m.content}</p>}
+                    </div>
                   </div>
-                </div>
-              ))}
-              <div ref={bottomRef} />
+                ))}
+                <div ref={bottomRef} />
+              </div>
             </div>
-            <form className="msg-input-bar wa-input-bar" onSubmit={sendMsg}>
-              <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message…" />
-              <button type="submit" className="btn btn-primary">Send</button>
+            <form className="msg-input-row wa-input-bar" onSubmit={sendMsg}>
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Type a message…"
+              />
+              <button type="submit" className="msg-send-btn" disabled={!text.trim()}>
+                ➤
+              </button>
             </form>
           </>
         )}

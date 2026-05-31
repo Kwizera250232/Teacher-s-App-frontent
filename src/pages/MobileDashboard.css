@@ -529,6 +529,17 @@
   border: none;
 }
 
+.staff-hub-page .phub-header .btn-logout {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+}
+
+.staff-hub-page .mobile-staff-header .mobile-nav-text-btn--muted,
+.staff-hub-page .mobile-student-header .mobile-nav-text-btn--muted {
+  color: rgba(255, 255, 255, 0.95);
+}
+
 .staff-hub-page .staff-hub-nav {
   background: #fff;
 }
@@ -546,4 +557,433 @@
   .student-wa-dashboard .mobile-student-header {
     display: none !important;
   }
+}
+
+/* Staff / teacher WhatsApp dashboard */
+.staff-wa-dashboard {
+  background: #e5ddd5;
+  min-height: 100dvh;
+}
+
+.staff-wa-dashboard .dash-main.wa-chat-screen {
+  background: transparent;
+}
+
+.staff-wa-dashboard .phub-header {
+  background: #128c7e;
+  border: none;
+  color: #fff;
+}
+
+.staff-wa-dashboard .phub-logo,
+.staff-wa-dashboard .phub-sub {
+  color: #fff;
+}
+
+.staff-wa-dashboard .dash-user .btn {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.wa-toolbar-top--staff {
+  justify-content: flex-start;
+}
+
+.wa-class-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.wa-class-row--mate {
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.wa-announce-meta {
+  display: block;
+  font-size: 11px;
+  color: #667781;
+  margin-top: 4px;
+}
+
+.wa-tools-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.wa-tools-panel h2 {
+  font-size: 17px;
+  color: #075e54;
+  margin: 0 0 10px;
+}
+
+.wa-chat-section {
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .staff-wa-dashboard .staff-hub-nav {
+    display: none;
+  }
+
+  .staff-wa-dashboard .phub-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 14px 0;
+    background: #128c7e;
+  }
+
+  .staff-wa-dashboard .phub-brand {
+    display: none;
+  }
+
+  .staff-wa-dashboard .phub-header .dash-user {
+    display: none !important;
+  }
+
+  .staff-wa-dashboard .mobile-staff-header .mobile-student-greet,
+  .staff-wa-dashboard .mobile-staff-header .mobile-nav-text-btn {
+    color: #fff;
+  }
+
+  .staff-wa-dashboard .mobile-staff-header .mobile-nav-text-btn--muted {
+    color: rgba(255, 255, 255, 0.92);
+    background: none;
+  }
+
+  .staff-wa-dashboard .dash-main {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-staff-quick-bar {
+    display: none !important;
+  }
+}
+
+/* Classic student dashboard + Dean FAB */
+.student-dashboard-classic {
+  background: #f5f6fa;
+  min-height: 100dvh;
+}
+
+.student-dashboard-classic .dash-main {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+
+.student-dashboard-classic .dash-header--student {
+  background: #fff;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.student-dashboard-classic .mobile-student-greet {
+  color: #1e293b;
+}
+
+.student-dashboard-classic .mobile-nav-text-btn {
+  color: #128c7e;
+}
+
+.student-dashboard-classic .mobile-nav-text-btn--muted {
+  color: #54656f;
+}
+
+.student-parent-invite-banner {
+  margin-bottom: 1.25rem;
+}
+
+.student-classmates-section {
+  margin-top: 2rem;
+}
+
+.student-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 12px;
+}
+
+.dean-fab-wrap {
+  position: fixed;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.dean-fab-label {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 18px rgba(79, 70, 229, 0.45);
+  white-space: nowrap;
+}
+
+.dean-fab-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-size: 26px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(79, 70, 229, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dean-fab-btn:hover {
+  transform: scale(1.06);
+}
+
+@media (min-width: 769px) {
+  .dean-fab-wrap {
+    bottom: 24px;
+  }
+}
+
+/* Student classic dashboard — desktop + mobile parity */
+.student-dashboard-classic .student-bottom-nav {
+  display: flex !important;
+}
+
+.student-dashboard-classic .dash-main {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding-left: 16px;
+  padding-right: 16px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  .student-dashboard-classic .dash-main {
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .student-dashboard-classic .dash-top-actions-desktop {
+    display: flex !important;
+  }
+}
+
+.student-dash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.student-desktop-quick-nav {
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 769px) {
+  .student-dashboard-classic .student-desktop-quick-nav {
+    display: flex;
+  }
+}
+
+.student-desktop-quick-nav__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.student-desktop-quick-nav__btn:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4338ca;
+}
+
+.student-announcement {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.student-announcement p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.student-dean-banner {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #eef2ff, #faf5ff);
+  border: 1px solid #c7d2fe;
+  border-radius: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.student-dean-banner strong {
+  display: block;
+  font-size: 1.05rem;
+  color: #312e81;
+  margin-bottom: 4px;
+}
+
+.student-dean-banner p {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
+}
+
+@media (min-width: 769px) {
+  .student-dashboard-classic .dean-fab-wrap {
+    bottom: 96px;
+  }
+
+  .student-dashboard-classic .mobile-donate-fab {
+    bottom: 100px;
+  }
+}
+
+.student-classes-section {
+  margin-top: 0.5rem;
+}
+
+.student-classes-heading {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 14px;
+}
+
+@media (min-width: 769px) {
+  .student-classes-heading {
+    display: none;
+  }
+}
+
+/* Square class tiles */
+.student-dashboard-classic .classes-grid--square {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.student-dashboard-classic .class-card-wrap--square {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.student-dashboard-classic .class-card--square {
+  aspect-ratio: 1;
+  min-height: 260px;
+  justify-content: space-between;
+  text-align: center;
+  padding: 16px 14px;
+  border-radius: 12px 12px 0 0;
+}
+
+.student-dashboard-classic .class-card-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 12px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.student-dashboard-classic .class-card--square .class-card-header h3 {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.student-dashboard-classic .class-card--square .class-code-display {
+  padding: 6px 10px;
+  margin: 4px 0;
+}
+
+.student-dashboard-classic .class-card--square .code-value {
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+
+.student-dashboard-classic .class-card-wrap--square .class-card-note-btn {
+  border-radius: 0 0 12px 12px;
+  margin-top: 0;
+}
+
+
+/* Staff / HT square class tiles */
+.staff-dashboard-classic .classes-grid--square {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+.staff-dashboard-classic .class-card--square {
+  aspect-ratio: 1;
+  min-height: 280px;
+  text-align: center;
+  padding: 18px 14px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-decoration: none;
+  color: inherit;
+}
+.staff-dashboard-classic .class-card-icon {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 12px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #128c7e, #25d366);
+  color: #fff;
+  font-size: 36px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

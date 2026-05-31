@@ -34,13 +34,27 @@ export default function CompositionStatusPanel({ token, onClose, openPickerIniti
     setLoading(true);
     setError('');
     try {
-      const m = await api.get('/composition-status/mine', token);
+      let m;
+      try {
+        m = await api.get('/composition-status/mine', token);
+      } catch (e) {
+        if (/404|not found/i.test(String(e.message))) {
+          m = await api.get('/student/composition-status/mine', token);
+        } else throw e;
+      }
       if (m.active) {
         setMine(m.active);
         setStep('active');
         return;
       }
-      const picks = await api.get('/composition-status/pickable-shares', token);
+      let picks;
+      try {
+        picks = await api.get('/composition-status/pickable-shares', token);
+      } catch (e) {
+        if (/404|not found/i.test(String(e.message))) {
+          picks = await api.get('/student/composition-status/pickable-shares', token);
+        } else throw e;
+      }
       setPickable(Array.isArray(picks) ? picks : []);
       if (openPickerInitially || (picks && picks.length)) {
         setStep(picks.length ? 'pick' : 'empty');

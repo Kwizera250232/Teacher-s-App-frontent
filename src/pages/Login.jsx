@@ -3,6 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { dashboardPath } from '../utils/roles';
+import AuthAppShell from '../components/AuthAppShell';
 import './Auth.css';
 
 export default function Login() {
@@ -39,11 +40,11 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-logo">🎓</div>
-        <h2>Murakaza Neza</h2>
-        <p className="auth-sub">Injira muri konti yawe</p>
+    <AuthAppShell
+      title="Murakaza Neza"
+      subtitle="Injira muri konti yawe — same look as inside the app"
+      footer={<p>Nta konti ufite? <Link to="/register">Iyandikishe</Link></p>}
+    >
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -71,10 +72,8 @@ export default function Login() {
           </button>
         </form>
         <p style={{ textAlign: 'center', marginTop: 10 }}>
-          <Link to="/forgot-password" style={{ color: '#667eea', fontSize: 13 }}>Wibagiwe ijambobanga?</Link>
+          <Link to="/forgot-password" style={{ color: '#128c7e', fontSize: 13, fontWeight: 600 }}>Wibagiwe ijambobanga?</Link>
         </p>
-        <p className="auth-link">Nta konti ufite? <Link to="/register">Iyandikishe</Link></p>
-      </div>
-    </div>
+    </AuthAppShell>
   );
 }

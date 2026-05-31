@@ -8,6 +8,7 @@ import SchoolRequestBanner from '../components/SchoolRequestBanner';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import VerifiedBadge from '../components/VerifiedBadge';
 import UmunsiAiModal from '../components/UmunsiAiModal';
+import DeanSupportFab from '../components/DeanSupportFab';
 import StaffQuickActions from '../components/StaffQuickActions';
 import SchoolHubPanel from '../components/staff/SchoolHubPanel';
 import AddTeacherModal from '../components/staff/AddTeacherModal';
@@ -78,7 +79,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   ];
 
   return (
-    <div className="dashboard staff-hub-page wa-theme">
+    <div className="dashboard staff-hub-page staff-dashboard-classic wa-theme">
       <header className="dash-header phub-header">
         <div className="phub-brand">
           <span className="phub-logo">UClass</span>
@@ -107,7 +108,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           </Link>
           <DonateButton />
           <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
-          <button className="btn btn-outline" onClick={logout}>Logout</button>
+          <button type="button" className="btn btn-sm btn-logout" onClick={logout}>Logout</button>
         </div>
       </header>
 
@@ -128,8 +129,8 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         ))}
       </nav>
 
-      <main className="dash-main">
-        <SchoolRequestBanner token={token} user={user} />
+      <main className={`dash-main${hubTab === 'chats' ? ' dash-main--chats-full' : ''}`}>
+        {hubTab !== 'chats' && <SchoolRequestBanner token={token} user={user} />}
         {isHeadTeacher && hubTab === 'school' && <SchoolRequestsPanel token={token} />}
 
         {error && <div className="alert alert-error">{error}</div>}
@@ -237,15 +238,19 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         ) : (
           <>
             <div className="wa-section-title">Your classes</div>
-            <div className="wa-class-list wa-class-list--staff">
+            <div className="classes-grid classes-grid--square">
               {classes.map(cls => (
-                <Link key={cls.id} to={`${basePath}/classes/${cls.id}`} className="wa-class-row">
-                  <div className="wa-class-avatar">{(cls.name || 'C').slice(0, 1)}</div>
-                  <div className="wa-class-body">
-                    <strong>{cls.name}</strong>
-                    <span>{cls.subject || 'Class'} · Code {cls.class_code} · 👥 {cls.student_count}</span>
+                <Link key={cls.id} to={`${basePath}/classes/${cls.id}`} className="class-card class-card--square">
+                  <div className="class-card-icon">{(cls.name || 'C').slice(0, 1)}</div>
+                  <div className="class-card-header">
+                    <h3>{cls.name}</h3>
+                    {cls.subject && <span className="subject-tag">{cls.subject}</span>}
                   </div>
-                  <span className="wa-class-arrow">›</span>
+                  <p className="class-teacher">Code {cls.class_code} · 👥 {cls.student_count}</p>
+                  <div className="class-card-footer">
+                    <span>Open class</span>
+                    <span className="arrow">→</span>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -257,7 +262,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
                     className="wa-pill-btn"
                     onClick={() => setAiModal({ classId: classes[0].id, className: classes[0].name })}
                   >
-                    🎓 Umunsi AI
+                    🎓 Dean (Our AI Support)
                   </button>
                   <Link to={`${basePath}/classes/${classes[0].id}/record-marks`} className="wa-pill-btn wa-pill-btn--outline">
                     📊 CAT Marks
@@ -305,6 +310,14 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         />
       )}
 
+      <DeanSupportFab
+        token={token}
+        classId={classes[0]?.id}
+        className={classes[0]?.name}
+        isTeacher
+        showClassAi={Boolean(classes[0]?.id)}
+        hideFab={Boolean(aiModal)}
+      />
       {aiModal && (
         <UmunsiAiModal
           classId={aiModal.classId}

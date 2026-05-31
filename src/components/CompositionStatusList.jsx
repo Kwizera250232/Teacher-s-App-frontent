@@ -26,7 +26,7 @@ export default function CompositionStatusList({ token, classId, schoolWide = fal
 
   if (loading) return <p className="csp-muted">Loading composition statuses…</p>;
   if (!items.length) {
-    return <p className="csp-muted">No active C. Status this week. Students add status from their dashboard.</p>;
+    return <p className="csp-muted">No active composition status this week.</p>;
   }
 
   return (

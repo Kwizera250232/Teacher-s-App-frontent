@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 
 /** Fixed bottom actions for mobile dashboards */
-export default function MobileBottomBar({ items = [] }) {
+export default function MobileBottomBar({ items = [], className = '' }) {
   if (!items.length) return null;
   return (
-    <nav className="mobile-bottom-bar" aria-label="Quick actions">
+    <nav className={`mobile-bottom-bar${className ? ` ${className}` : ''}`} aria-label="Quick actions">
       {items.map((item) => {
         const cls = `mobile-bottom-bar__btn${item.active ? ' mobile-bottom-bar__btn--active' : ''}`;
         if (item.to) {
