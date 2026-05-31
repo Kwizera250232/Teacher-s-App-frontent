@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api';
+import { MODAL_CARD_STYLE, MODAL_OVERLAY_STYLE } from '../../utils/modalOverlay';
 
 export default function NotifyParentsModal({ token, classId, onClose }) {
   const [parents, setParents] = useState([]);
@@ -44,9 +45,18 @@ export default function NotifyParentsModal({ token, classId, onClose }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
-        <h2>Notify parents (in app)</h2>
+    <div
+      style={MODAL_OVERLAY_STYLE}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      role="presentation"
+    >
+      <div
+        style={MODAL_CARD_STYLE}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="notify-parents-title"
+      >
+        <h2 id="notify-parents-title" style={{ marginTop: 0 }}>Notify parents (in app)</h2>
         <form onSubmit={send}>
           <label className="form-group">
             Type

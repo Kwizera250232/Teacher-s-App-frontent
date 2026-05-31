@@ -370,9 +370,90 @@ body {
   width: 100%;
 }
 
+/* Student mobile header */
+.dash-header--student { flex-wrap: wrap; align-items: flex-start; gap: 0; }
+.dash-header-desktop-brand,
+.dash-header-desktop-actions { display: flex; }
+.mobile-student-header { display: none; width: 100%; }
+
+.mobile-student-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.mobile-student-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+.mobile-student-greet {
+  font-weight: 700;
+  font-size: 16px;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobile-profile-btn { flex-shrink: 0; }
+
+.mobile-student-row2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.mobile-student-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+.mobile-student-chip--ghost {
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+.mobile-student-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(18, 140, 126, 0.35);
+}
+.mobile-student-icon-inner { font-size: 1.15rem; line-height: 1; }
+
+@media (max-width: 768px) {
+  .dash-header--student {
+    padding: 12px 14px 14px;
+    flex-direction: column;
+  }
+  .dash-header-desktop-brand,
+  .dash-header-desktop-actions { display: none !important; }
+  .mobile-student-header { display: block; }
+  .dash-top-actions-desktop { display: none !important; }
+  .dash-top-actions-mobile { display: flex !important; }
+}
+.dash-top-actions-mobile { display: none; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
 @media (max-width: 600px) {
   .dash-main, .class-main { padding: 16px; }
-  .dash-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+  .dash-header:not(.dash-header--student) { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
   .dash-user { flex-wrap: wrap; gap: 6px; }
   .dash-brand { font-size: 18px; }
 

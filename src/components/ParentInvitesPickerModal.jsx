@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
+import { loadInvitableStudents } from '../utils/parentInviteApi';
+import { MODAL_CARD_STYLE, MODAL_OVERLAY_STYLE } from '../utils/modalOverlay';
 import ParentInviteModal from './ParentInviteModal';
 
 /**
@@ -18,8 +19,8 @@ export default function ParentInvitesPickerModal({ token, onClose }) {
       setLoading(true);
       setError('');
       try {
-        const rows = await api.get('/parent/invitable-students', token);
-        if (!cancelled) setStudents(Array.isArray(rows) ? rows : []);
+        const rows = await loadInvitableStudents(token);
+        if (!cancelled) setStudents(rows);
       } catch (e) {
         if (!cancelled) setError(e.message || 'Could not load students.');
       } finally {
@@ -58,17 +59,11 @@ export default function ParentInvitesPickerModal({ token, onClose }) {
 
   return (
     <div
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-      }}
+      style={{ ...MODAL_OVERLAY_STYLE, zIndex: 5000 }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        style={{
-          background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 520,
-          maxHeight: '85vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-        }}
+        style={{ ...MODAL_CARD_STYLE, maxWidth: 520 }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ margin: '0 0 8px', fontSize: 20 }}>👪 Parent invites</h2>

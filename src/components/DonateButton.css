@@ -10,6 +10,17 @@
   box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35);
 }
 .donate-header-btn:hover { filter: brightness(1.05); }
+.donate-header-btn--compact {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 .donate-overlay {
   position: fixed;
   inset: 0;

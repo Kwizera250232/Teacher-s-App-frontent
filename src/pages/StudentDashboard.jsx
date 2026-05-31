@@ -6,6 +6,7 @@ import JoinClassModal from '../components/JoinClassModal';
 import VerifiedBadge from '../components/VerifiedBadge';
 import DonateButton from '../components/DonateButton';
 import ParentInviteModal from '../components/ParentInviteModal';
+import MobileStudentHeader from '../components/MobileStudentHeader';
 import './Dashboard.css';
 
 export default function StudentDashboard() {
@@ -60,9 +61,16 @@ export default function StudentDashboard() {
 
   return (
     <div className="dashboard">
-      <header className="dash-header">
-        <div className="dash-brand">🎓 UClass</div>
-        <div className="dash-user">
+      <header className="dash-header dash-header--student">
+        <div className="dash-header-desktop-brand dash-brand">🎓 UClass</div>
+        <MobileStudentHeader
+          user={user}
+          onLogout={logout}
+          onParentInvite={() => setShowParentInvite(true)}
+          isImpersonating={isImpersonating}
+          stopImpersonation={stopImpersonation}
+        />
+        <div className="dash-header-desktop-actions dash-user">
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👋 {user?.name}<VerifiedBadge size={15} info={{ items: [
             { icon: '👩‍🎓', label: 'Role', value: 'Student' },
             { icon: '📧', label: 'Email', value: user?.email },
@@ -71,9 +79,17 @@ export default function StudentDashboard() {
             <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
           )}
           <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
-          <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 Amateka Yanjye</Link>
+          <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 My Notes</Link>
           <DonateButton />
-          <button className="btn btn-outline" onClick={logout}>Logout</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={logout}>Logout</button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setShowParentInvite(true)}
+            title="Invite parent"
+          >
+            👪 Invite parent
+          </button>
         </div>
       </header>
 
@@ -83,12 +99,17 @@ export default function StudentDashboard() {
             <h1>Amashuri Yanjye</h1>
             <p className="dash-sub">Injira mu mashuri yawe</p>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div className="dash-top-actions-desktop" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             <button className="btn btn-primary" onClick={() => setShowJoin(true)}>
               + Injira mu Ishuri
             </button>
             <button type="button" className="btn btn-secondary" onClick={() => setShowParentInvite(true)}>
-              👪 Tuma ababyeyi
+              👪 Invite parent
+            </button>
+          </div>
+          <div className="dash-top-actions-mobile">
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowJoin(true)}>
+              + Join class
             </button>
           </div>
         </div>

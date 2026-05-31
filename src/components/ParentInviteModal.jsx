@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { copyToClipboard } from '../utils/copyToClipboard';
 import { createParentInviteLink } from '../utils/parentInviteApi';
+import { MODAL_CARD_STYLE, MODAL_OVERLAY_STYLE } from '../utils/modalOverlay';
 import ShareModal from './ShareModal';
 
 /**
@@ -47,19 +48,13 @@ export default function ParentInviteModal({ token, studentId, selfStudentId, stu
   return (
     <>
       <div
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1100,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-        }}
+        style={{ ...MODAL_OVERLAY_STYLE, zIndex: 5500 }}
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
         <div
-          style={{
-            background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-          }}
+          style={{ ...MODAL_CARD_STYLE, maxWidth: 440 }}
           onClick={(e) => e.stopPropagation()}
         >
           <h2 style={{ margin: '0 0 8px', fontSize: 20 }}>👪 Parent invitation</h2>
