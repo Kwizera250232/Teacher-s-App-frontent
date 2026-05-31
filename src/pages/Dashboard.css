@@ -408,23 +408,7 @@ body {
   gap: 8px;
   width: 100%;
 }
-.mobile-student-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  color: #334155;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-}
-.mobile-student-chip--ghost {
-  background: #fff;
-  cursor: pointer;
-  font-family: inherit;
-}
+/* Row 2 uses .mobile-nav-text-btn from MobileDashboard.css — no pill chips */
 .mobile-student-icon-btn {
   width: 40px;
   height: 40px;

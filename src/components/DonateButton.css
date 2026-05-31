@@ -21,6 +21,14 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
+.donate-header-btn--fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.45);
+}
 .donate-overlay {
   position: fixed;
   inset: 0;

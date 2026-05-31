@@ -9,7 +9,7 @@ function isRetryableStudentInviteError(err) {
   const msg = String(err?.message || '');
   if (isMissingRouteError(err)) return true;
   if (/insufficient role/i.test(msg)) return true;
-  if (/Forbidden/i.test(msg) && /student/i.test(msg) === false) return true;
+  if (/Forbidden/i.test(msg)) return true;
   return false;
 }
 

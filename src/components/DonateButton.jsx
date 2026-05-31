@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import './DonateButton.css';
 
-export default function DonateButton({ compact = false }) {
+export default function DonateButton({ compact = false, fab = false }) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <button
         type="button"
-        className={`donate-header-btn ${compact ? 'donate-header-btn--compact' : ''}`}
+        className={`donate-header-btn ${compact ? 'donate-header-btn--compact' : ''} ${fab ? 'donate-header-btn--fab' : ''}`}
         onClick={() => setOpen(true)}
         title="Support UClass education"
         aria-label="Donate"

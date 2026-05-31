@@ -23,6 +23,25 @@ function Avatar({ name, size = 42, color = '#2563eb' }) {
   );
 }
 
+function CompSection({ label, text }) {
+  const [open, setOpen] = useState(false);
+  const max = 160;
+  if (!text) return null;
+  const needs = text.length > max;
+  const shown = open || !needs ? text : `${text.slice(0, max).trim()}…`;
+  return (
+    <div className="sf-post-comp-section">
+      <div className="sf-post-comp-label">{label}</div>
+      <div className="sf-post-comp-text">{shown}</div>
+      {needs && (
+        <button type="button" className="sf-read-more" onClick={() => setOpen(!open)}>
+          {open ? 'Show less' : 'Read more'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
   if (diff < 60) return 'just now';
@@ -95,6 +114,16 @@ export default function StudentShareFeed({ token }) {
       setShares(prev => prev.filter(s => s.id !== id));
     } catch {}
     finally { setDeleting(null); }
+  };
+
+  const handlePin = async (share) => {
+    if (share.type !== 'composition' || share.status !== 'approved') return;
+    try {
+      await api.patch(`/student-shares/${share.id}/pin`, { pinned: !share.pinned }, token);
+      setShares((prev) =>
+        prev.map((s) => (s.id === share.id ? { ...s, pinned: !s.pinned } : s)).sort((a, b) => Number(b.pinned) - Number(a.pinned))
+      );
+    } catch {}
   };
 
   const handleLike = async (id) => {
@@ -266,10 +295,7 @@ export default function StudentShareFeed({ token }) {
               <div className="sf-post-body">
                 {postTitle && <div className="sf-post-comp-title">{postTitle}</div>}
                 {sections.map((sec, i) => (
-                  <div key={i} className="sf-post-comp-section">
-                    <div className="sf-post-comp-label">{sec.label}</div>
-                    <div className="sf-post-comp-text">{sec.text}</div>
-                  </div>
+                  <CompSection key={i} label={sec.label} text={sec.text} />
                 ))}
               </div>
               {isOwn && s.status === 'declined' && s.review_note && (
@@ -278,6 +304,11 @@ export default function StudentShareFeed({ token }) {
                 </div>
               )}
               <div className="sf-post-foot">
+                {isOwn && s.type === 'composition' && s.status === 'approved' && (
+                  <button type="button" className="sf-like-btn" onClick={() => handlePin(s)}>
+                    {s.pinned ? '📌 Pinned' : '📍 Pin'}
+                  </button>
+                )}
                 <button className={`sf-like-btn${s.liked_by_me ? ' sf-like-btn--on' : ''}`}
                   disabled={liking === s.id} onClick={() => handleLike(s.id)}>
                   {s.liked_by_me ? '❤️' : '🤍'}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +7,10 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import DonateButton from '../components/DonateButton';
 import ParentInviteModal from '../components/ParentInviteModal';
 import MobileStudentHeader from '../components/MobileStudentHeader';
+import MobileBottomBar from '../components/MobileBottomBar';
+import StudentCompositionWall from '../components/StudentCompositionWall';
 import './Dashboard.css';
+import './MobileDashboard.css';
 
 export default function StudentDashboard() {
   const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
@@ -17,9 +20,10 @@ export default function StudentDashboard() {
   const [error, setError] = useState('');
   const [announcements, setAnnouncements] = useState([]);
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
-  // Quick note state: { classId, open, text, saving }
   const [quickNote, setQuickNote] = useState(null);
   const [showParentInvite, setShowParentInvite] = useState(false);
+  const compositionsRef = useRef(null);
+  const classesRef = useRef(null);
 
   const loadClasses = () => {
     api.get('/classes/my', token).then(data => {
@@ -44,6 +48,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
   }, []);
+
   const saveQuickNote = async () => {
     if (!quickNote?.text?.trim()) return;
     setQuickNote(q => ({ ...q, saving: true }));
@@ -59,8 +64,12 @@ export default function StudentDashboard() {
     }
   };
 
+  const scrollTo = (ref) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <div className="dashboard">
+    <div className="dashboard student-wa-dashboard wa-theme">
       <header className="dash-header dash-header--student">
         <div className="dash-header-desktop-brand dash-brand">🎓 UClass</div>
         <MobileStudentHeader
@@ -93,87 +102,84 @@ export default function StudentDashboard() {
         </div>
       </header>
 
+      <div className="mobile-donate-fab">
+        <DonateButton compact fab />
+      </div>
+
       <main className="dash-main">
-        <div className="dash-top">
-          <div>
-            <h1>Amashuri Yanjye</h1>
-            <p className="dash-sub">Injira mu mashuri yawe</p>
-          </div>
-          <div className="dash-top-actions-desktop" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <button className="btn btn-primary" onClick={() => setShowJoin(true)}>
-              + Injira mu Ishuri
-            </button>
-            <button type="button" className="btn btn-secondary" onClick={() => setShowParentInvite(true)}>
-              👪 Invite parent
-            </button>
-          </div>
-          <div className="dash-top-actions-mobile">
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowJoin(true)}>
-              + Join class
-            </button>
-          </div>
+        <div className="dash-top dash-top-actions-desktop" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button className="btn btn-primary" onClick={() => setShowJoin(true)}>
+            + Join class
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={() => setShowParentInvite(true)}>
+            👪 Invite parent
+          </button>
         </div>
 
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #f0fdf4, #ecfdf5)',
-            border: '1px solid #86efac',
-            borderRadius: 12,
-            padding: '1rem 1.25rem',
-            marginBottom: '1rem',
-          }}
-        >
-          <strong style={{ color: '#166534' }}>Invite your parent</strong>
-          <p style={{ margin: '0.35rem 0 0.75rem', color: '#374151', fontSize: '0.9rem' }}>
-            Share a link so your parent can join UClass and see only your quizzes, marks, drawings, and class posts.
-          </p>
-          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowParentInvite(true)}>
+        <div className="wa-invite-banner">
+          <strong>Invite your parent</strong>
+          <p>Share a link so your parent sees only your quizzes, marks, and class work.</p>
+          <button type="button" onClick={() => setShowParentInvite(true)}>
             Get parent invite link
           </button>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        {/* Admin Announcements */}
         {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
-          <div key={a.id} style={{
-            background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
-            border: '1px solid #93c5fd',
-            borderRadius: 12,
-            padding: '1rem 1.25rem',
-            marginBottom: '0.75rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '1rem',
-          }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span>📢</span>
-                <strong style={{ color: '#1e40af', fontSize: '0.95rem' }}>{a.title}</strong>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>— {a.admin_name}</span>
+          <div key={a.id} className="wa-invite-banner" style={{ background: '#e8f0fe' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              <div>
+                <strong style={{ color: '#1e40af' }}>📢 {a.title}</strong>
+                <p style={{ margin: '4px 0 0', fontSize: 13 }}>{a.message}</p>
               </div>
-              <p style={{ margin: 0, color: '#374151', fontSize: '0.9rem' }}>{a.message}</p>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</span>
+              <button
+                type="button"
+                onClick={() => dismissAnnouncement(a.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+              >✕</button>
             </div>
-            <button
-              onClick={() => dismissAnnouncement(a.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.2rem', padding: 0, lineHeight: 1, flexShrink: 0 }}
-              title="Siba iri tangazo"
-            >✕</button>
           </div>
         ))}
 
-        {classes.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">🎒</div>
-            <h3>Nta mashuri ufite</h3>
-            <p>Injira mu ishuri ukoresheje kode umwarimu wawe yakuguye</p>
-            <button className="btn btn-primary" onClick={() => setShowJoin(true)}>Injira mu Ishuri</button>
+        <div ref={classesRef}>
+          <div className="wa-search-bar">
+            <span>🔍</span>
+            <span>My classes — tap to open chat &amp; work</span>
           </div>
-        ) : (
-          <>
-          <div className="classes-grid">
+
+          {classes.length === 0 ? (
+            <div className="empty-state" style={{ background: '#fff', borderRadius: 12, padding: 24 }}>
+              <div className="empty-icon">🎒</div>
+              <h3>No classes yet</h3>
+              <p>Join a class with the code from your teacher</p>
+              <button className="btn btn-primary" onClick={() => setShowJoin(true)}>Join class</button>
+            </div>
+          ) : (
+            <div className="wa-class-list">
+              {classes.map(cls => (
+                <Link key={cls.id} to={`/student/classes/${cls.id}`} className="wa-class-row">
+                  <div className="wa-class-avatar">{(cls.name || 'C').slice(0, 1)}</div>
+                  <div className="wa-class-body">
+                    <strong>{cls.name}</strong>
+                    <span>{cls.subject ? `${cls.subject} · ` : ''}👨‍🏫 {cls.teacher_name}</span>
+                  </div>
+                  <span className="wa-class-arrow">›</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div ref={compositionsRef}>
+          <StudentCompositionWall
+            token={token}
+            onWriteClick={() => navigate('/profile')}
+          />
+        </div>
+
+        {classes.length > 0 && (
+          <div className="classes-grid" style={{ display: 'none' }}>
             {classes.map(cls => (
               <div key={cls.id} className="class-card-wrap">
                 <Link to={`/student/classes/${cls.id}`} className="class-card">
@@ -181,32 +187,29 @@ export default function StudentDashboard() {
                     <h3>{cls.name}</h3>
                     {cls.subject && <span className="subject-tag">{cls.subject}</span>}
                   </div>
-                  <div className="class-teacher">
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>👨‍🏫 {cls.teacher_name}<VerifiedBadge size={13} info={{ items: [
-                      { icon: '📚', label: 'Class', value: cls.name },
-                      { icon: '📖', label: 'Subject', value: cls.subject || '—' },
-                      { icon: '🏷️', label: 'Code', value: cls.class_code },
-                    ] }} /></span>
-                  </div>
-                  <div className="class-card-footer">
-                    <span>Tap to enter</span>
-                    <span className="arrow">→</span>
-                  </div>
                 </Link>
-                {/* Summary button — visually separate from card */}
                 <button
                   className="class-card-note-btn"
-                  onClick={e => { e.stopPropagation(); setQuickNote({ classId: cls.id, open: true, text: '', saving: false }); }}
+                  type="button"
+                  onClick={() => setQuickNote({ classId: cls.id, open: true, text: '', saving: false })}
                 >
-                  📝 Muri make ibyo twize
+                  📝 Quick summary note
                 </button>
               </div>
             ))}
           </div>
-
-          </>
         )}
       </main>
+
+      <MobileBottomBar
+        items={[
+          { id: 'classes', icon: '📚', label: 'Classes', onClick: () => scrollTo(classesRef), active: true },
+          { id: 'compositions', icon: '✍️', label: 'Compositions', onClick: () => scrollTo(compositionsRef) },
+          { id: 'notes', icon: '📝', label: 'My Notes', to: '/student/notes' },
+          { id: 'parent', icon: '👪', label: 'Parent', onClick: () => setShowParentInvite(true) },
+          { id: 'profile', icon: '👤', label: 'Profile', to: '/profile' },
+        ]}
+      />
 
       {showJoin && (
         <JoinClassModal
@@ -225,30 +228,27 @@ export default function StudentDashboard() {
         />
       )}
 
-      {/* Quick note modal */}
       {quickNote?.open && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setQuickNote(null)}>
           <div className="modal" style={{ maxWidth: 420 }}>
-            <h3 style={{ marginBottom: 4, fontSize: 18 }}>📝 Note zanjye</h3>
-            <p style={{ fontSize: 13, color: '#888', marginBottom: 14 }}>Andika inshamake y'isomo mwize uyu munsi</p>
+            <h3 style={{ marginBottom: 4, fontSize: 18 }}>📝 Quick note</h3>
             <textarea
               autoFocus
               rows={5}
               style={{ width: '100%', padding: '10px 14px', border: '2px solid #e0e0e0', borderRadius: 10, fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
-              placeholder="Uyu munsi twize... Ibisanzwe...  Nize..."
+              placeholder="What did you learn today?"
               value={quickNote.text}
               onChange={e => setQuickNote(q => ({ ...q, text: e.target.value }))}
-              onKeyDown={e => { if (e.ctrlKey && e.key === 'Enter') saveQuickNote(); }}
             />
-            <p style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>Ctrl+Enter gufunga</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
-              <button className="btn btn-outline" onClick={() => setQuickNote(null)}>Reka</button>
+              <button type="button" className="btn btn-outline" onClick={() => setQuickNote(null)}>Cancel</button>
               <button
+                type="button"
                 className="btn btn-primary"
                 disabled={quickNote.saving || !quickNote.text.trim()}
                 onClick={saveQuickNote}
               >
-                {quickNote.saving ? 'Kubika...' : '💾 Bika Inshamake'}
+                {quickNote.saving ? 'Saving…' : 'Save'}
               </button>
             </div>
           </div>

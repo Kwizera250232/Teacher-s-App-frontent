@@ -8,7 +8,6 @@ import SchoolRequestBanner from '../components/SchoolRequestBanner';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import VerifiedBadge from '../components/VerifiedBadge';
 import UmunsiAiModal from '../components/UmunsiAiModal';
-import DonateButton from '../components/DonateButton';
 import StaffQuickActions from '../components/StaffQuickActions';
 import SchoolHubPanel from '../components/staff/SchoolHubPanel';
 import AddTeacherModal from '../components/staff/AddTeacherModal';
@@ -16,8 +15,11 @@ import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import ParentInvitesPickerModal from '../components/ParentInvitesPickerModal';
 import StaffChatsPanel from '../components/staff/StaffChatsPanel';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
+import MobileStaffHeader from '../components/MobileStaffHeader';
+import DonateButton from '../components/DonateButton';
 import './Dashboard.css';
 import './ParentHub.css';
+import './MobileDashboard.css';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
   const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
@@ -58,15 +60,21 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
   useEffect(() => { loadClasses(); }, []);
   useEffect(() => {
+    if (!isHeadTeacher && hubTab === 'school') setHubTab('classes');
+  }, [isHeadTeacher, hubTab]);
+  useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
   }, []);
   useEffect(() => {
     api.get('/messages/unread-count', token).then(r => setUnread(r.count)).catch(() => {});
   }, []);
 
-  const subtitle = roleLabel === 'Head Teacher'
-    ? 'Gucunga amashuri y\'ishuri ryawe'
-    : 'Gucunga amashuri n\'abanyeshuri bawe';
+  const navTabs = [
+    { id: 'classes', label: '📚 Classes' },
+    ...(isHeadTeacher ? [{ id: 'school', label: '🏫 School' }] : []),
+    ...(hasSchool ? [{ id: 'chats', label: '💬 Chats' }] : []),
+    { id: 'tools', label: '⚡ Tools' },
+  ];
 
   return (
     <div className="dashboard staff-hub-page wa-theme">
@@ -75,6 +83,13 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           <span className="phub-logo">UClass</span>
           <span className="phub-sub">{roleLabel}</span>
         </div>
+        <MobileStaffHeader
+          user={user}
+          roleLabel={roleLabel}
+          onLogout={logout}
+          isImpersonating={isImpersonating}
+          stopImpersonation={stopImpersonation}
+        />
         <div className="dash-user">
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             👋 {user?.name}
@@ -95,13 +110,12 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         </div>
       </header>
 
+      <div className="mobile-donate-fab">
+        <DonateButton compact fab />
+      </div>
+
       <nav className="phub-nav staff-hub-nav">
-        {[
-          { id: 'classes', label: '📚 Classes' },
-          { id: 'school', label: '🏫 School' },
-          { id: 'chats', label: '💬 Chats' },
-          { id: 'tools', label: '⚡ Tools' },
-        ].map((t) => (
+        {navTabs.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -158,12 +172,8 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
         {hubTab === 'classes' && (
           <>
-        <div className="dash-top">
-          <div>
-            <h1>{roleLabel} Dashboard</h1>
-            <p className="dash-sub">{subtitle}</p>
-          </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div className="dash-top dash-top--staff-actions">
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
             <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
               + Fungura Ishuri
             </button>
@@ -243,6 +253,18 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           </>
         )}
       </main>
+
+      <div className="mobile-staff-quick-bar">
+        <button type="button" onClick={() => { setHubTab('classes'); setShowAddStudents(true); }}>
+          👥 View students
+        </button>
+        <button type="button" onClick={() => setHubTab('tools')}>
+          ✍️ Compositions
+        </button>
+        <button type="button" onClick={() => setShowParentInvites(true)}>
+          👪 Parent invite
+        </button>
+      </div>
 
       {showCreate && (
         <CreateClassModal
