@@ -102,7 +102,7 @@ export default function StudentNotes() {
       <div className="sn-header">
         <div className="sn-header-left">
           <Link to="/student/dashboard" className="btn btn-outline btn-sm">← Inyuma</Link>
-          <h1 className="sn-title">📝 Amateka Yanjye</h1>
+          <h1 className="sn-title">📝 My Notes</h1>
         </div>
         <div className="sn-header-right">
           <input
