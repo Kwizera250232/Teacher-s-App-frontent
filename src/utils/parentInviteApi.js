@@ -26,46 +26,40 @@ async function tryInviteCalls(calls) {
   throw lastError;
 }
 
-/** Create or fetch parent invite link — tries GET then POST across API versions. */
+/** Create or fetch parent invite link — student routes only (never teacher parent-link for self). */
 export async function createParentInviteLink({ token, studentId, selfStudentId }) {
   if (studentId) {
     return api.post(`/parent/students/${studentId}/parent-link`, {}, token);
   }
 
-  const id = selfStudentId;
-  const getAttempts = [
+  const studentOnlyCalls = [
     () => api.get('/auth/parent-invite', token),
     () => api.get('/student/parent-invite', token),
     () => api.get('/parent/my/parent-invite', token),
-  ];
-  const postAttempts = [
     () => api.post('/auth/parent-invite', {}, token),
     () => api.post('/student/parent-invite', {}, token),
     () => api.post('/parent/my/parent-invite', {}, token),
   ];
-  if (id) {
-    postAttempts.push(() => api.post(`/parent/students/${id}/parent-link`, {}, token));
-  }
 
   try {
-    return await tryInviteCalls([...getAttempts, ...postAttempts]);
+    return await tryInviteCalls(studentOnlyCalls);
   } catch (lastError) {
-    throw new Error(
-      lastError?.message?.includes('404')
-        ? 'Parent invite is not ready on the server yet. Your school must update studentapi.umunsi.com (git pull + pm2 restart).'
-        : lastError?.message || 'Could not create parent invite.'
-    );
+    const msg = String(lastError?.message || '');
+    if (/insufficient role/i.test(msg) || /404/.test(msg)) {
+      throw new Error(
+        'Parent invite needs the latest API on studentapi.umunsi.com. Ask your school to run: git pull, npm ci --omit=dev, pm2 restart studentapi.'
+      );
+    }
+    throw new Error(msg || 'Could not create parent invite.');
   }
 }
 
-/** Short code shown to parents (from invite token). */
-export function formatParentInviteCode(token) {
-  if (!token) return '';
-  const t = String(token).replace(/[^a-f0-9]/gi, '');
+export function formatParentInviteCode(inviteToken) {
+  if (!inviteToken) return '';
+  const t = String(inviteToken).replace(/[^a-f0-9]/gi, '');
   return t.slice(0, 8).toUpperCase();
 }
 
-/** Load students for teacher parent-invite picker (fallback if API route missing). */
 export async function loadInvitableStudents(token) {
   try {
     const rows = await api.get('/parent/invitable-students', token);
@@ -95,7 +89,7 @@ export async function loadInvitableStudents(token) {
           });
         });
       } catch {
-        /* skip class */
+        /* skip */
       }
     })
   );

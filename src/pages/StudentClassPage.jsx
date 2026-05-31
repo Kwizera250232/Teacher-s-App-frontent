@@ -145,8 +145,8 @@ export default function StudentClassPage() {
 
   if (pageLoading) {
     return (
-      <div className="class-page">
-        <header className="dash-header">
+      <div className="class-page wa-theme">
+        <header className="dash-header wa-class-header">
           <button className="btn btn-outline btn-sm" onClick={() => navigate('/student/dashboard')}>← Back</button>
           <div className="dash-brand">🎓 UClass</div>
         </header>
@@ -161,13 +161,16 @@ export default function StudentClassPage() {
   }
 
   return (
-    <div className="class-page">
-      <header className="dash-header">
-        <button className="btn btn-outline btn-sm" onClick={() => navigate('/student/dashboard')}>← Back</button>
-        <div className="dash-brand">🎓 UClass</div>
+    <div className="class-page wa-theme">
+      <header className="dash-header wa-class-header">
+        <button type="button" className="wa-back-btn" onClick={() => navigate('/student/dashboard')}>←</button>
+        <div className="wa-class-header-title">
+          <strong>{cls?.name || 'Class'}</strong>
+          <span>{cls?.subject || 'UClass'}</span>
+        </div>
       </header>
 
-      <main className="class-main">
+      <main className="class-main wa-chat-screen">
         {cls && (
           <div className="class-hero">
             <div>

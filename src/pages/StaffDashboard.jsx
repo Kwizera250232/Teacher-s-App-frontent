@@ -235,35 +235,37 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <button className="btn btn-primary" onClick={() => setShowCreate(true)}>Fungura Ishuri</button>
           </div>
         ) : (
-          <div className="classes-grid">
-            {classes.map(cls => (
-              <div key={cls.id} className="class-card-wrap">
-                <Link to={`${basePath}/classes/${cls.id}`} className="class-card">
-                  <div className="class-card-header">
-                    <h3>{cls.name}</h3>
-                    {cls.subject && <span className="subject-tag">{cls.subject}</span>}
+          <>
+            <div className="wa-section-title">Your classes</div>
+            <div className="wa-class-list wa-class-list--staff">
+              {classes.map(cls => (
+                <Link key={cls.id} to={`${basePath}/classes/${cls.id}`} className="wa-class-row">
+                  <div className="wa-class-avatar">{(cls.name || 'C').slice(0, 1)}</div>
+                  <div className="wa-class-body">
+                    <strong>{cls.name}</strong>
+                    <span>{cls.subject || 'Class'} · Code {cls.class_code} · 👥 {cls.student_count}</span>
                   </div>
-                  <div className="class-code-display">
-                    <span className="code-label">Class Code</span>
-                    <span className="code-value">{cls.class_code}</span>
-                  </div>
-                  <div className="class-card-footer">
-                    <span>👥 {cls.student_count} students</span>
-                    <span className="arrow">→</span>
-                  </div>
+                  <span className="wa-class-arrow">›</span>
                 </Link>
-                <button
-                  className="class-card-note-btn"
-                  onClick={() => setAiModal({ classId: cls.id, className: cls.name })}
-                >
-                  🎓 Baza Umunsi AI
-                </button>
-                <Link to={`${basePath}/classes/${cls.id}/record-marks`} className="btn btn-secondary btn-sm" style={{ width: '100%', marginTop: 8, textAlign: 'center' }}>
-                  📊 Record CAT Marks
-                </Link>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            <div className="wa-staff-class-actions">
+              {classes[0] && (
+                <>
+                  <button
+                    type="button"
+                    className="wa-pill-btn"
+                    onClick={() => setAiModal({ classId: classes[0].id, className: classes[0].name })}
+                  >
+                    🎓 Umunsi AI
+                  </button>
+                  <Link to={`${basePath}/classes/${classes[0].id}/record-marks`} className="wa-pill-btn wa-pill-btn--outline">
+                    📊 CAT Marks
+                  </Link>
+                </>
+              )}
+            </div>
+          </>
         )}
           </>
         )}
