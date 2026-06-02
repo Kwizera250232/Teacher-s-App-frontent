@@ -119,16 +119,46 @@
 .wcert-top-logos {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 28px;
+  align-items: flex-end;
+  gap: 24px;
   margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
-.wcert-top-logos img {
-  height: 52px;
+.wcert-top-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.wcert-top-brand img {
+  height: 48px;
   width: auto;
   object-fit: contain;
+}
+
+.wcert-top-brand--hero img,
+.wcert-umunsimedia-logo {
+  height: 88px;
+  width: 88px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.wcert-top-brand--hero span {
+  color: #c2410c;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.wcert-footer-umunsimedia .wcert-umunsimedia-logo {
+  height: 52px;
+  width: 52px;
 }
 
 .wcert-student-badge {
@@ -265,10 +295,17 @@
   font-weight: 600;
 }
 
-.wcert-footer-brands img {
+.wcert-footer-brands img:not(.wcert-umunsimedia-logo) {
   height: 44px;
   width: auto;
   object-fit: contain;
+}
+
+.wcert-footer-brands .wcert-umunsimedia-logo {
+  height: 48px;
+  width: 48px;
+  object-fit: contain;
+  border-radius: 50%;
 }
 
 .wcert-brand-student .wcert-brand-icon {

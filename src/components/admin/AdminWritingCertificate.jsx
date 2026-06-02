@@ -46,9 +46,29 @@ export function WritingCertificateDocument({
     <article className="wcert-certificate" id="writing-competition-certificate">
       <div className="wcert-inner">
         <div className="wcert-top-logos">
-          <img src={umunsiLogo} alt="Umunsi.com" />
-          <img src={umunsimediaLogo} alt="Umunsimedia.com" />
-          <div className="wcert-student-badge">
+          <a
+            href="https://umunsi.com"
+            target="_blank"
+            rel="noreferrer"
+            className="wcert-top-brand wcert-top-brand--side"
+          >
+            <img src={umunsiLogo} alt="Umunsi.com" />
+            <span>umunsi.com</span>
+          </a>
+          <a
+            href="https://umunsimedia.com"
+            target="_blank"
+            rel="noreferrer"
+            className="wcert-top-brand wcert-top-brand--hero"
+          >
+            <img
+              src={umunsimediaLogo}
+              alt="umunsimedia.com"
+              className="wcert-umunsimedia-logo"
+            />
+            <span>umunsimedia.com</span>
+          </a>
+          <div className="wcert-student-badge wcert-top-brand--side">
             <span aria-hidden>🎓</span>
             <span>student.umunsi.com</span>
           </div>
@@ -56,7 +76,7 @@ export function WritingCertificateDocument({
 
         <h1 className="wcert-title">{(title || DEFAULT_TITLE).trim()}</h1>
         <p className="wcert-subtitle">
-          Umunsi.com · Umunsimedia.com · student.umunsi.com
+          Presented by <strong>umunsimedia.com</strong> — Umunsi.com education platform · student.umunsi.com
           <br />
           Education through writing — empowering the next generation
         </p>
@@ -85,9 +105,9 @@ export function WritingCertificateDocument({
             <img src={umunsiLogo} alt="" />
             <span>Umunsi.com</span>
           </a>
-          <a href="https://umunsimedia.com" target="_blank" rel="noreferrer">
-            <img src={umunsimediaLogo} alt="" />
-            <span>Umunsimedia.com</span>
+          <a href="https://umunsimedia.com" target="_blank" rel="noreferrer" className="wcert-footer-umunsimedia">
+            <img src={umunsimediaLogo} alt="" className="wcert-umunsimedia-logo" />
+            <span>umunsimedia.com</span>
           </a>
           <div className="wcert-brand-student">
             <span className="wcert-brand-icon" aria-hidden>
