@@ -33,9 +33,11 @@
 .feed-card {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1rem;
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
+.feed-card-head strong { font-size: 0.95rem; color: #0f172a; }
 .feed-card-head { margin-bottom: 0.5rem; }
 .feed-meta { display: block; font-size: 0.75rem; color: #64748b; font-weight: normal; }
 .feed-summary { background: #eff6ff; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.9rem; }

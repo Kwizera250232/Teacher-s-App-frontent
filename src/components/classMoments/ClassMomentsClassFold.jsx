@@ -35,7 +35,7 @@ export default function ClassMomentsClassFold({ classId, token, className }) {
     if (!open || loaded || !token || !classId) return;
     setLoading(true);
     api
-      .get('/class-moments/feed', token)
+      .get(`/class-moments/feed?class_id=${encodeURIComponent(classId)}`, token)
       .then((rows) => {
         const filtered = (rows || []).filter((m) => String(m.class_id) === String(classId));
         setMoments(filtered.slice(0, 5));
@@ -79,7 +79,7 @@ export default function ClassMomentsClassFold({ classId, token, className }) {
           {!loading && moments.length > 0 && (
             <div className="cm-feed cm-feed--compact">
               {moments.map((m) => (
-                <ClassMomentCard key={m.id} moment={m} />
+                <ClassMomentCard key={m.id} moment={m} token={token} />
               ))}
             </div>
           )}
