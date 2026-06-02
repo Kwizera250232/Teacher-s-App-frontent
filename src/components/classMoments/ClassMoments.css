@@ -88,6 +88,151 @@
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
+/* Student dashboard — folded below classes */
+.cm-fold {
+  margin: 2rem 0 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.cm-fold-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cm-fold-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  color: #0f172a;
+}
+
+.cm-fold-toggle:hover,
+.cm-fold-toggle:focus-visible {
+  background: #f1f5f9;
+  border-color: rgba(79, 70, 229, 0.35);
+}
+
+.cm-fold-toggle-icon {
+  font-size: 12px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.cm-fold-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cm-fold-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.cm-fold-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.cm-fold-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+}
+
+.cm-fold-open-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(79, 70, 229, 0.35);
+  background: #fff;
+  color: #4338ca;
+  cursor: pointer;
+}
+
+.cm-fold-body {
+  margin-top: 12px;
+}
+
+.cm-fold-hint {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.cm-fold .cm-hero {
+  margin-bottom: 0;
+}
+
+/* Inside a class page — bottom strip */
+.cm-class-fold {
+  margin: 2rem 0 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.45);
+}
+
+.cm-class-fold-toggle {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  color: #334155;
+}
+
+.cm-class-fold-toggle strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.cm-class-fold-sub {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.cm-class-fold-body {
+  margin-top: 12px;
+}
+
+.cm-class-fold-all {
+  margin-top: 12px;
+}
+
+.cm-feed--compact {
+  gap: 1rem;
+}
+
+.cm-feed--compact .cm-card {
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
 .cm-feed {
   display: flex;
   flex-direction: column;
