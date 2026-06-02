@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import umunsiLogo from '../../assets/umunsi-logo.jpg';
 import umunsimediaLogo from '../../assets/umunsimedia-logo.jpg';
+import CertificateReviewModal from './CertificateReviewModal';
+import { downloadCertificatePdf, downloadCertificatePng } from '../../utils/certificateDownload';
 import './WritingCertificate.css';
 
 const DEFAULT_TITLE = 'UMUNSI MEDIA WRITING COMPETITION';
@@ -152,19 +154,65 @@ export default function AdminWritingCertificate() {
   const [signerRole, setSignerRole] = useState(DEFAULT_SIGNER_ROLE);
   const [governmentLine, setGovernmentLine] = useState(DEFAULT_GOV_LINE);
 
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [downloadBusy, setDownloadBusy] = useState('');
+  const [downloadError, setDownloadError] = useState('');
+
   const canPrint = useMemo(() => studentName.trim().length > 0, [studentName]);
   const isAdmin = user?.role === 'admin';
+
+  const certificateProps = useMemo(
+    () => ({
+      studentName,
+      schoolName,
+      certificateDate,
+      title,
+      subtitle,
+      bodyText,
+      signerName,
+      signerRole,
+      awardLabel,
+      governmentLine,
+    }),
+    [
+      studentName,
+      schoolName,
+      certificateDate,
+      title,
+      subtitle,
+      bodyText,
+      signerName,
+      signerRole,
+      awardLabel,
+      governmentLine,
+    ]
+  );
 
   const handlePrint = () => {
     if (!canPrint) return;
     window.print();
   };
 
+  const handleDownload = async (kind) => {
+    if (!canPrint) return;
+    setDownloadBusy(kind);
+    setDownloadError('');
+    try {
+      const name = studentName.trim();
+      if (kind === 'pdf') await downloadCertificatePdf(name);
+      else await downloadCertificatePng(name);
+    } catch (e) {
+      setDownloadError(e.message || 'Download failed.');
+    } finally {
+      setDownloadBusy('');
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="admin-card">
         <p style={{ margin: 0, color: '#64748b' }}>
-          Only UClass administrators can create and print writing competition certificates.
+          Only UClass administrators can review, download, and print writing competition certificates.
         </p>
       </div>
     );
@@ -175,8 +223,10 @@ export default function AdminWritingCertificate() {
       <div className="wcert-form-card">
         <h3>Writing competition certificate</h3>
         <p className="wcert-form-hint">
-          Fill in the winner&apos;s details, set the date, preview, then print or save as PDF.
+          Fill in the winner&apos;s details, review the certificate, then download (PDF/PNG) or print.
+          Only administrators can use this tool.
         </p>
+        {downloadError && <p className="wcert-form-error">{downloadError}</p>}
 
         <div className="wcert-field">
           <label htmlFor="wcert-student">Student name *</label>
@@ -250,12 +300,36 @@ export default function AdminWritingCertificate() {
         </div>
 
         <div className="wcert-actions">
-          <button type="button" className="btn btn-primary" disabled={!canPrint} onClick={handlePrint}>
-            Print certificate
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!canPrint}
+            onClick={() => setReviewOpen(true)}
+          >
+            Review certificate
           </button>
           <button
             type="button"
             className="btn btn-secondary"
+            disabled={!canPrint || Boolean(downloadBusy)}
+            onClick={() => handleDownload('pdf')}
+          >
+            {downloadBusy === 'pdf' ? 'Downloading…' : 'Download PDF'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={!canPrint || Boolean(downloadBusy)}
+            onClick={() => handleDownload('png')}
+          >
+            {downloadBusy === 'png' ? 'Downloading…' : 'Download PNG'}
+          </button>
+          <button type="button" className="btn btn-secondary" disabled={!canPrint} onClick={handlePrint}>
+            Print
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline"
             onClick={() => {
               setStudentName('');
               setSchoolName('');
@@ -275,20 +349,16 @@ export default function AdminWritingCertificate() {
       </div>
 
       <div className="wcert-preview-wrap">
-        <p className="wcert-preview-label">Print preview (A4)</p>
-        <WritingCertificateDocument
-          studentName={studentName}
-          schoolName={schoolName}
-          certificateDate={certificateDate}
-          title={title}
-          subtitle={subtitle}
-          bodyText={bodyText}
-          signerName={signerName}
-          signerRole={signerRole}
-          awardLabel={awardLabel}
-          governmentLine={governmentLine}
-        />
+        <p className="wcert-preview-label">Live preview (A4) — use Review for fullscreen</p>
+        <WritingCertificateDocument {...certificateProps} />
       </div>
+
+      <CertificateReviewModal
+        open={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        certificateProps={certificateProps}
+        studentName={studentName}
+      />
     </div>
   );
 }
