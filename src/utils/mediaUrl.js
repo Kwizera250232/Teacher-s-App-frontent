@@ -1,10 +1,17 @@
 import { UPLOADS_BASE } from '../api';
 
-/** Media files are stored on the API server (studentapi.umunsi.com). */
+/** Media files are stored on the API server under /uploads/. */
 export function resolveMediaUrl(path) {
   if (!path) return null;
-  if (path.startsWith('http')) return path;
+  const raw = String(path).trim();
+  if (raw.startsWith('blob:') || raw.startsWith('http')) return raw;
+
   const base = (UPLOADS_BASE || 'https://studentapi.umunsi.com').replace(/\/$/, '');
-  const p = path.startsWith('/') ? path : `/${path}`;
-  return `${base}${p}`;
+  let p = raw.replace(/^\/+/, '');
+
+  if (!p.startsWith('uploads/')) {
+    p = `uploads/${p}`;
+  }
+
+  return `${base}/${p}`;
 }

@@ -53,7 +53,7 @@ function FeedBodyPreview({ text }) {
   );
 }
 
-export default function StudentSocialFeed({ classes, token }) {
+export default function StudentSocialFeed({ classes, token, embedded = false }) {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -171,14 +171,16 @@ export default function StudentSocialFeed({ classes, token }) {
   };
 
   return (
-    <section className="student-social-feed">
-      <div className="ssf-hero">
-        <div className="ssf-hero-icon">✨</div>
-        <div>
-          <h2>Student Feed</h2>
-          <p className="ssf-tagline">{PLACEHOLDER}</p>
+    <section className={`student-social-feed${embedded ? ' student-social-feed--embedded' : ''}`}>
+      {!embedded && (
+        <div className="ssf-hero">
+          <div className="ssf-hero-icon">✨</div>
+          <div>
+            <h2>Class activities</h2>
+            <p className="ssf-tagline">{PLACEHOLDER}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="ssf-composer">
         {classes?.length > 1 && (
