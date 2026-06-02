@@ -27,7 +27,7 @@ import { usePresence } from '../hooks/usePresence';
 import '../components/classMoments/ClassMoments.css';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
-  const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
+  const { user, token, logout, isImpersonating, stopImpersonation, updateUser } = useAuth();
   const [classes, setClasses] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddStudents, setShowAddStudents] = useState(false);
@@ -45,6 +45,15 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   const isHeadTeacher = roleLabel === 'Head Teacher';
   const hasSchool = Boolean(user?.school_id);
   const momentsFeedPath = `${basePath}/class-moments`;
+
+  useEffect(() => {
+    if (!token) return;
+    api.get('/auth/me', token)
+      .then((data) => {
+        if (data?.user) updateUser(data.user);
+      })
+      .catch(() => {});
+  }, [token, updateUser]);
 
   const dismissAnnouncement = (id) => {
     const updated = [...dismissed, id];
