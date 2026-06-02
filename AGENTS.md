@@ -13,6 +13,7 @@ This workspace contains two independent repos:
 - **Backend**: `npm run dev` (nodemon) in the backend repo. Requires PostgreSQL running and a `.env` with `DATABASE_URL`, `JWT_SECRET`, `PORT=5000`.
 - **Frontend**: `npm run dev -- --host` in the frontend repo. The `.env` has `VITE_API_URL=http://localhost:5000/api`.
 - **Build check**: `npm run build` in the frontend repo (Vite build).
+- **Long-running dev servers:** use tmux (e.g. sessions `backend-dev` / `frontend-dev`) so nodemon and Vite survive after the setup agent exits. There is no ESLint script in either repo; use `npm test` (backend smoke) and `npm run build` (frontend) for automated checks.
 
 ### Database setup gotchas
 
