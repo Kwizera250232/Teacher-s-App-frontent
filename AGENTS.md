@@ -2,6 +2,12 @@
 
 ## Cursor Cloud specific instructions
 
+### Deploy (production)
+
+- **student.umunsi.com** — Vercel from this repo’s `main` (auto on push).
+- **studentapi.umunsi.com** — VPS pull + `pm2 restart` (see backend `DEPLOY.md`). UI also at `https://studentapi.umunsi.com/app/` from backend `student-web` build.
+- **Class Moments UI** — `src/components/classMoments/*` + `ClassMoments.css` (`cm-soc-*` Facebook/WhatsApp hybrid feed).
+
 ### Architecture
 
 This workspace contains two independent repos:
