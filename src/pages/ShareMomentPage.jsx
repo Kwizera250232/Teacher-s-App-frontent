@@ -34,6 +34,30 @@ export default function ShareMomentPage() {
     ? momentImageUrl(firstImg.file_path)
     : data?.image_url || '';
 
+  useEffect(() => {
+    if (!data) return;
+    const title = data.title || `${data.teacher_name || 'Teacher'} · ${data.class_name || 'Class'}`;
+    const desc = data.description || 'Class moment on UClass';
+    document.title = title;
+    const setMeta = (prop, content, isProperty = true) => {
+      if (!content) return;
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.querySelector(`meta[${attr}="${prop}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, prop);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+    setMeta('og:title', title);
+    setMeta('og:description', desc);
+    setMeta('og:image', imgSrc);
+    setMeta('og:image:secure_url', imgSrc);
+    setMeta('twitter:card', 'summary_large_image', false);
+    setMeta('twitter:image', imgSrc, false);
+  }, [data, imgSrc]);
+
   return (
     <div className="share-moment-page">
       <header className="share-moment-header">
