@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { UPLOADS_BASE } from '../api';
 import { momentImageUrl } from '../utils/momentImages';
+import { pickFirstMomentPhoto } from '../utils/momentPreviewImage';
 import '../components/classMoments/ClassMoments.css';
 import './ShareMomentPage.css';
 
@@ -29,10 +30,11 @@ export default function ShareMomentPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const firstImg = Array.isArray(data?.images) && data.images[0];
-  const imgSrc = firstImg
-    ? momentImageUrl(firstImg.file_path)
-    : data?.image_url || '';
+  const previewPhoto = pickFirstMomentPhoto(data?.images);
+  const imgSrc =
+    data?.preview_image_url ||
+    data?.image_url ||
+    (previewPhoto ? momentImageUrl(previewPhoto.file_path) : '');
 
   useEffect(() => {
     if (!data) return;
