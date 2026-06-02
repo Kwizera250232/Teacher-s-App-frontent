@@ -1,6 +1,4 @@
 .student-social-feed { margin-top: 1.5rem; }
-.student-social-feed--embedded { margin-top: 0; }
-.student-social-feed--embedded .ssf-composer { margin-bottom: 0.75rem; }
 .ssf-hero {
   display: flex;
   gap: 1rem;

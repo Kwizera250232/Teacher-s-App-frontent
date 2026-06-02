@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ClassMomentsHero from './ClassMomentsHero';
-import StudentSocialFeed from '../StudentSocialFeed';
 
 const STORAGE_KEY = 'student_class_updates_fold_open';
-const TAB_KEY = 'student_class_updates_tab';
 
 /**
- * Collapsible classroom updates — below classes; teacher photos + Facebook-style class activities.
+ * Collapsible classroom updates — kept below classes so it does not interrupt lesson work.
  */
 export default function ClassMomentsFold({
   preview,
   feedPath = '/student/class-moments',
   defaultOpen = false,
-  classes = [],
-  token,
 }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(() => {
@@ -26,15 +22,6 @@ export default function ClassMomentsFold({
       /* ignore */
     }
     return defaultOpen;
-  });
-  const [section, setSection] = useState(() => {
-    try {
-      const t = localStorage.getItem(TAB_KEY);
-      if (t === 'activities' || t === 'moments') return t;
-    } catch {
-      /* ignore */
-    }
-    return 'moments';
   });
 
   const count = preview?.today_count ?? 0;
@@ -48,18 +35,10 @@ export default function ClassMomentsFold({
     }
   }, [open]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(TAB_KEY, section);
-    } catch {
-      /* ignore */
-    }
-  }, [section]);
-
   const summary =
     count > 0
       ? `${count} update${count === 1 ? '' : 's'} today`
-      : 'Photos and class activities from your classes';
+      : 'Photos and stories from your classes';
 
   return (
     <section className="cm-fold" aria-label="Classroom updates">
@@ -86,40 +65,15 @@ export default function ClassMomentsFold({
           className="cm-fold-open-link"
           onClick={() => navigate(feedPath)}
         >
-          Teacher photos
+          Open feed
         </button>
       </div>
       {open && (
         <div className="cm-fold-body">
           <p className="cm-fold-hint">
-            Optional — open when class is done. Homework and quizzes stay in each class above.
+            Optional — check when class is done. Homework and quizzes stay above in each class.
           </p>
-          <div className="cm-fold-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={section === 'moments'}
-              className={section === 'moments' ? 'active' : ''}
-              onClick={() => setSection('moments')}
-            >
-              📸 Teacher updates
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={section === 'activities'}
-              className={section === 'activities' ? 'active' : ''}
-              onClick={() => setSection('activities')}
-            >
-              💬 Class activities
-            </button>
-          </div>
-          {section === 'moments' && (
-            <ClassMomentsHero preview={preview} feedPath={feedPath} />
-          )}
-          {section === 'activities' && token && (
-            <StudentSocialFeed classes={classes} token={token} embedded />
-          )}
+          <ClassMomentsHero preview={preview} feedPath={feedPath} />
         </div>
       )}
     </section>

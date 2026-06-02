@@ -7,9 +7,6 @@ function getDefaultApiBase() {
   if (host === 'student.umunsi.com' || host.endsWith('.vercel.app')) {
     return PRODUCTION_API;
   }
-  if (host === 'localhost' || host === '127.0.0.1') {
-    return 'http://localhost:5000/api';
-  }
   return `${window.location.origin}/api`;
 }
 
