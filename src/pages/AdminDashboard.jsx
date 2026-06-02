@@ -106,7 +106,7 @@ export default function AdminDashboard() {
           {sidebarOpen && <span className="admin-brand-text">UClass Admin</span>}
         </div>
         <nav className="admin-nav">
-          {NAV.map(item => (
+          {NAV.filter((item) => item.key !== 'certificates' || user?.role === 'admin').map(item => (
             <button
               key={item.key}
               className={`admin-nav-item ${page === item.key ? 'active' : ''}`}
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
           {page === 'content' && <AdminContent token={token} />}
           {page === 'announcements' && <AdminAnnouncements token={token} />}
           {page === 'articles' && <AdminStudentArticles token={token} />}
-          {page === 'certificates' && <AdminWritingCertificate />}
+          {page === 'certificates' && user?.role === 'admin' && <AdminWritingCertificate />}
           {page === 'reports' && <AdminReports token={token} />}
           {page === 'textbooks' && <AdminTextbooks token={token} />}
           {page === 'settings' && <AdminSettings token={token} />}

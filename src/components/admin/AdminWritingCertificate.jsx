@@ -124,17 +124,6 @@ export function WritingCertificateDocument({
 
 export default function AdminWritingCertificate() {
   const { user } = useAuth();
-
-  if (user?.role !== 'admin') {
-    return (
-      <div className="admin-card">
-        <p style={{ margin: 0, color: '#64748b' }}>
-          Only UClass administrators can create and print writing competition certificates.
-        </p>
-      </div>
-    );
-  }
-
   const [studentName, setStudentName] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [certificateDate, setCertificateDate] = useState(todayInputValue);
@@ -145,11 +134,22 @@ export default function AdminWritingCertificate() {
   const [signerRole, setSignerRole] = useState(DEFAULT_SIGNER_ROLE);
 
   const canPrint = useMemo(() => studentName.trim().length > 0, [studentName]);
+  const isAdmin = user?.role === 'admin';
 
   const handlePrint = () => {
     if (!canPrint) return;
     window.print();
   };
+
+  if (!isAdmin) {
+    return (
+      <div className="admin-card">
+        <p style={{ margin: 0, color: '#64748b' }}>
+          Only UClass administrators can create and print writing competition certificates.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="wcert-layout">
