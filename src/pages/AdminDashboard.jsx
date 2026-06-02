@@ -12,6 +12,7 @@ import AdminReports from '../components/admin/AdminReports';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminTextbooks from '../components/admin/AdminTextbooks';
 import AdminStudentArticles from '../components/admin/AdminStudentArticles';
+import AdminWritingCertificate from '../components/admin/AdminWritingCertificate';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import VerifiedBadge from '../components/VerifiedBadge';
 import { useInstallPrompt } from '../components/InstallPrompt';
@@ -27,6 +28,7 @@ const NAV = [
   { key: 'content', label: 'Content', icon: '📝' },
   { key: 'announcements', label: 'Announcements', icon: '📢' },
   { key: 'articles', label: 'Articles', icon: '🧾' },
+  { key: 'certificates', label: 'Certificates', icon: '🏆' },
   { key: 'reports', label: 'Reports', icon: '💬' },
   { key: 'textbooks', label: 'AI Textbooks', icon: '🤖' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
@@ -218,6 +220,7 @@ export default function AdminDashboard() {
           {page === 'content' && <AdminContent token={token} />}
           {page === 'announcements' && <AdminAnnouncements token={token} />}
           {page === 'articles' && <AdminStudentArticles token={token} />}
+          {page === 'certificates' && <AdminWritingCertificate />}
           {page === 'reports' && <AdminReports token={token} />}
           {page === 'textbooks' && <AdminTextbooks token={token} />}
           {page === 'settings' && <AdminSettings token={token} />}

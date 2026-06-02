@@ -1,0 +1,319 @@
+.wcert-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .wcert-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wcert-form-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.wcert-form-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.wcert-form-hint {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.wcert-field {
+  margin-bottom: 0.85rem;
+}
+
+.wcert-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+.wcert-field input,
+.wcert-field textarea {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.wcert-field textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.wcert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.wcert-preview-wrap {
+  background: #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  overflow: auto;
+}
+
+.wcert-preview-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+/* Certificate — screen preview scales to fit */
+.wcert-certificate {
+  width: 794px;
+  max-width: 100%;
+  min-height: 1123px;
+  margin: 0 auto;
+  background: #fffef8;
+  border: 6px double #b8860b;
+  outline: 2px solid #1a472a;
+  outline-offset: 8px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.15);
+  padding: 48px 56px 40px;
+  box-sizing: border-box;
+  position: relative;
+  color: #1e293b;
+}
+
+.wcert-certificate::before {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(184, 134, 11, 0.45);
+  pointer-events: none;
+}
+
+.wcert-inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 1000px;
+}
+
+.wcert-top-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.wcert-top-logos img {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+}
+
+.wcert-student-badge {
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #166534;
+  font-weight: 700;
+}
+
+.wcert-student-badge span:first-child {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.wcert-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #14532d;
+  margin: 8px 0 6px;
+  line-height: 1.35;
+}
+
+.wcert-subtitle {
+  font-size: 0.95rem;
+  color: #475569;
+  margin: 0 0 28px;
+  line-height: 1.5;
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.wcert-presented {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.wcert-student-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+  line-height: 1.2;
+  border-bottom: 2px solid #b8860b;
+  display: inline-block;
+  padding: 0 12px 8px;
+  min-width: 280px;
+}
+
+.wcert-school {
+  font-size: 1.05rem;
+  color: #334155;
+  margin: 0 0 24px;
+  font-weight: 600;
+}
+
+.wcert-school--empty {
+  font-weight: 400;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.wcert-body {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #334155;
+  max-width: 580px;
+  margin: 0 auto 32px;
+  text-align: center;
+}
+
+.wcert-date {
+  font-size: 0.95rem;
+  color: #475569;
+  margin-bottom: 48px;
+}
+
+.wcert-signature-block {
+  margin-top: auto;
+  padding-top: 24px;
+  text-align: center;
+}
+
+.wcert-signature-line {
+  font-family: 'Brush Script MT', 'Segoe Script', cursive;
+  font-size: 2rem;
+  color: #1e3a5f;
+  margin: 0 0 6px;
+  min-height: 2.5rem;
+}
+
+.wcert-signer-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.wcert-signer-role {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.wcert-footer-brands {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.wcert-footer-brands a,
+.wcert-footer-brands .wcert-brand-student {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.wcert-footer-brands img {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+}
+
+.wcert-brand-student .wcert-brand-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .wcert-certificate,
+  .wcert-certificate * {
+    visibility: visible !important;
+  }
+
+  .wcert-certificate {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    min-height: auto;
+    height: auto;
+    margin: 0;
+    box-shadow: none;
+    border-width: 4px;
+    outline-offset: 4px;
+    padding: 36px 44px 32px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .wcert-preview-wrap {
+    background: none;
+    padding: 0;
+  }
+
+  .wcert-preview-label {
+    display: none !important;
+  }
+}
