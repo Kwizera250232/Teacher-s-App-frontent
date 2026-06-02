@@ -31,8 +31,8 @@ export default function ClassMomentsFeed({
     );
   }
   return (
-    <div className="cm-wa-feed-wrap">
-      <div className="cm-wa-feed">
+    <div className="cm-soc-feed-wrap">
+      <div className="cm-soc-feed">
         {moments.map((m, i) => (
           <ClassMomentCard
             key={m.id}

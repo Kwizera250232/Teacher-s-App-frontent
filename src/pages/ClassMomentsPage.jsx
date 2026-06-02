@@ -112,7 +112,7 @@ export default function ClassMomentsPage({ backPath }) {
   };
 
   return (
-    <div className="dashboard cm-page cm-wa-page">
+    <div className="dashboard cm-page cm-wa-page cm-soc-page">
       <header className="cm-wa-header">
         <Link to={home} className="btn btn-secondary btn-sm">
           ← Back
@@ -127,8 +127,8 @@ export default function ClassMomentsPage({ backPath }) {
         loading ? (
           <p className="cm-wa-empty">Loading…</p>
         ) : single ? (
-          <div className="cm-wa-feed-wrap">
-            <div className="cm-wa-feed">
+          <div className="cm-soc-feed-wrap">
+            <div className="cm-soc-feed">
               <ClassMomentCard moment={single} token={token} onReactionsChange={patchReactions} />
             </div>
           </div>
