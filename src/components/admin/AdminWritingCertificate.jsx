@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import umunsiLogo from '../../assets/umunsi-logo.jpg';
 import umunsimediaLogo from '../../assets/umunsimedia-logo.jpg';
 import './WritingCertificate.css';
@@ -122,6 +123,18 @@ export function WritingCertificateDocument({
 }
 
 export default function AdminWritingCertificate() {
+  const { user } = useAuth();
+
+  if (user?.role !== 'admin') {
+    return (
+      <div className="admin-card">
+        <p style={{ margin: 0, color: '#64748b' }}>
+          Only UClass administrators can create and print writing competition certificates.
+        </p>
+      </div>
+    );
+  }
+
   const [studentName, setStudentName] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [certificateDate, setCertificateDate] = useState(todayInputValue);
