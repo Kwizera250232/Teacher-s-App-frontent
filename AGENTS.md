@@ -12,7 +12,10 @@
 
 - Teacher class **Quizzes** tab → **Share** opens WhatsApp/Facebook/copy modal (`QuizShareModal`).
 - Public landing: `/quiz/share/:token` (`QuizShareLanding`) — guest form or links to `/register?role=…&quiz_share=…`.
-- Guest dashboard: `/guest/dashboard` — quizzes from shared links only; no classes/leaderboard.
+- Guest dashboard: `/guest/dashboard` — home, donate tab, classes unlocked via share links.
+- Guest class view: `/guest/classes/:classId` — read-only Announcements, Notes, Homework; Quizzes (take, no leaderboard).
+- Guest profile: `/guest/profile` — avatar, phone, quiz stats, donate banner (not full student profile).
+- Guests are not on class roster, leaderboard, discussions, or classmates.
 
 ### Architecture
 
