@@ -8,6 +8,12 @@
 - **studentapi.umunsi.com** — VPS pull + `pm2 restart` (see backend `DEPLOY.md`). UI also at `https://studentapi.umunsi.com/app/` from backend `student-web` build.
 - **Class Moments UI** — `src/components/classMoments/*` + `ClassMoments.css` (`cm-soc-*` Facebook/WhatsApp hybrid feed).
 
+### Quiz share & guests
+
+- Teacher class **Quizzes** tab → **Share** opens WhatsApp/Facebook/copy modal (`QuizShareModal`).
+- Public landing: `/quiz/share/:token` (`QuizShareLanding`) — guest form or links to `/register?role=…&quiz_share=…`.
+- Guest dashboard: `/guest/dashboard` — quizzes from shared links only; no classes/leaderboard.
+
 ### Architecture
 
 This workspace contains two independent repos:
