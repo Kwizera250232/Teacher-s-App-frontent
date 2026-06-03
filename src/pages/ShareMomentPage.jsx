@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { UPLOADS_BASE } from '../api';
 import { momentImageUrl } from '../utils/momentImages';
+import { publicSiteBase } from '../utils/shareLinks';
 import { pickFirstMomentPhoto } from '../utils/momentPreviewImage';
 import '../components/classMoments/ClassMoments.css';
 import './ShareMomentPage.css';
@@ -31,7 +31,12 @@ export default function ShareMomentPage() {
   }, [token]);
 
   const previewPhoto = pickFirstMomentPhoto(data?.images);
+  const sharePreview =
+    token && typeof window !== 'undefined'
+      ? `${publicSiteBase()}/share/moment/${encodeURIComponent(token)}/preview.jpg`
+      : '';
   const imgSrc =
+    sharePreview ||
     data?.preview_image_url ||
     data?.image_url ||
     (previewPhoto ? momentImageUrl(previewPhoto.file_path) : '');
@@ -118,7 +123,7 @@ export default function ShareMomentPage() {
       )}
 
       <footer className="share-moment-footer">
-        <span>Photos hosted on {UPLOADS_BASE.replace(/^https?:\/\//, '')}</span>
+        <span>UClass — student.umunsi.com</span>
       </footer>
     </div>
   );

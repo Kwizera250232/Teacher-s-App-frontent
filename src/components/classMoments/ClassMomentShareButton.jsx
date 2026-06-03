@@ -22,10 +22,16 @@ export default function ClassMomentShareButton({ moment, token }) {
     setBusy(true);
     try {
       const data = await api.post(`/class-moments/${moment.id}/share`, { channel: 'social' }, token);
-      const url = data.share_url || data.app_url;
+      const url = data.app_url || data.share_url;
       const text = data.preview?.description || data.preview?.title || 'Class moment on UClass';
       const title = data.preview?.title || "Today's Class Moment";
-      const imageUrl = data.preview?.preview_image_url || data.preview?.image_url;
+      const token = data.share_token;
+      const imageUrl =
+        (token && typeof window !== 'undefined'
+          ? `${window.location.origin}/share/moment/${encodeURIComponent(token)}/preview.jpg`
+          : null) ||
+        data.preview?.preview_image_url ||
+        data.preview?.image_url;
       const shareText = data.preview?.has_photo
         ? `${text}\n📸 Link preview includes a class photo.`
         : text;
