@@ -9,6 +9,44 @@ import './GuestDashboard.css';
 import '../components/GuestUpgradeModal.css';
 import TutorialVideo from '../components/TutorialVideo';
 
+function quizzesForClass(cls) {
+  if (Array.isArray(cls.quizzes) && cls.quizzes.length > 0) return cls.quizzes;
+  return [];
+}
+
+function guestQuizGroups(hub) {
+  const fromClasses = (hub?.classes || [])
+    .map((cls) => ({
+      class_id: cls.class_id,
+      class_name: cls.class_name,
+      subject: cls.subject,
+      teacher_name: cls.teacher_name,
+      quizzes: quizzesForClass(cls),
+    }))
+    .filter((g) => g.quizzes.length > 0);
+
+  if (fromClasses.length > 0) return fromClasses;
+
+  const flat = [...(hub?.quizzes_pending || []), ...(hub?.quizzes_completed || [])];
+  if (flat.length === 0) return [];
+
+  const byClass = new Map();
+  for (const q of flat) {
+    const key = q.class_id;
+    if (!byClass.has(key)) {
+      byClass.set(key, {
+        class_id: q.class_id,
+        class_name: q.class_name,
+        subject: null,
+        teacher_name: q.teacher_name,
+        quizzes: [],
+      });
+    }
+    byClass.get(key).quizzes.push(q);
+  }
+  return [...byClass.values()];
+}
+
 export default function GuestDashboard() {
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -22,7 +60,27 @@ export default function GuestDashboard() {
     setLoading(true);
     api
       .get('/guest/hub', token)
-      .then(setHub)
+      .then(async (data) => {
+        const needsQuizFetch = (data.classes || []).some(
+          (cls) => !cls.quizzes?.length && (cls.counts?.quizzes || 0) > 0
+        );
+        if (!needsQuizFetch) {
+          setHub(data);
+          return;
+        }
+        const classes = await Promise.all(
+          (data.classes || []).map(async (cls) => {
+            if (cls.quizzes?.length) return cls;
+            try {
+              const quizzes = await api.get(`/guest/classes/${cls.class_id}/quizzes`, token);
+              return { ...cls, quizzes };
+            } catch {
+              return cls;
+            }
+          })
+        );
+        setHub({ ...data, classes });
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [token]);
@@ -30,6 +88,9 @@ export default function GuestDashboard() {
   const openQuiz = (classId, quizId) => {
     navigate(`/guest/classes/${classId}/quizzes/${quizId}`);
   };
+
+  const quizGroups = guestQuizGroups(hub);
+  const totalQuizzes = quizGroups.reduce((n, g) => n + g.quizzes.length, 0);
 
   return (
     <GuestShell title="Guest home">
@@ -45,16 +106,6 @@ export default function GuestDashboard() {
           <li>❌ No class roster, leaderboard, discussions, or homework submission</li>
           <li>❌ Not visible as a enrolled student to your teacher</li>
         </ul>
-      </div>
-
-      <div className="guest-upgrade-cta">
-        <p>
-          <strong>Are you a teacher or student?</strong> Upgrade your account to unlock the full dashboard
-          and keep your quiz scores.
-        </p>
-        <button type="button" className="btn btn-full" onClick={() => setShowUpgrade(true)}>
-          Upgrade account →
-        </button>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -79,29 +130,43 @@ export default function GuestDashboard() {
             </p>
           )}
 
-          {hub.quizzes_pending?.length > 0 && (
-            <section className="guest-quiz-section">
-              <h2>❓ Quizzes to take ({hub.quizzes_pending.length})</h2>
-              <div className="guest-quiz-list">
-                {hub.quizzes_pending.map((q) => (
-                  <div key={`${q.class_id}-${q.id}`} className="guest-quiz-row">
-                    <div className="guest-quiz-row__meta">
-                      <strong>{q.title}</strong>
-                      <small>
-                        {q.class_name}
-                        {q.teacher_name ? ` · ${q.teacher_name}` : ''}
-                      </small>
+          {totalQuizzes > 0 && (
+            <section className="guest-quiz-section guest-quiz-section--cards">
+              <h2>❓ Quizzes ({totalQuizzes})</h2>
+              <p className="guest-quiz-section__hint">
+                Same list as in each class — tap Take Quiz to start without opening the class first.
+              </p>
+              {quizGroups.map((cls) => (
+                <div key={cls.class_id} className="guest-class-quizzes">
+                  <h3 className="guest-class-quizzes__title">
+                    {cls.class_name}
+                    {cls.subject ? ` · ${cls.subject}` : ''}
+                    <span className="guest-class-quizzes__teacher">{cls.teacher_name}</span>
+                  </h3>
+                  {cls.quizzes.map((q) => (
+                    <div key={q.id} className="item-card">
+                      <div className="item-card-body">
+                        <h3>❓ {q.title}</h3>
+                        {q.description && <p>{q.description}</p>}
+                        <div className="meta">
+                          {q.created_at
+                            ? new Date(q.created_at).toLocaleDateString()
+                            : null}
+                          {q.created_at ? ' · ' : ''}
+                          {q.attempted ? '✓ Already taken' : 'Not taken yet'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => openQuiz(cls.class_id, q.id)}
+                      >
+                        {q.attempted ? 'View result' : 'Take Quiz'}
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={() => openQuiz(q.class_id, q.id)}
-                    >
-                      Take quiz →
-                    </button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ))}
             </section>
           )}
 
@@ -138,31 +203,15 @@ export default function GuestDashboard() {
             </div>
           )}
 
-          {(hub.attempts?.length > 0 || hub.quizzes_completed?.length > 0) && (
-            <section className="guest-quiz-section">
-              <h2>✅ Completed quizzes</h2>
-              <div className="guest-quiz-list">
-                {(hub.attempts || []).slice(0, 12).map((a) => (
-                  <div key={a.id} className="guest-quiz-row">
-                    <div className="guest-quiz-row__meta">
-                      <strong>{a.quiz_title}</strong>
-                      <small>
-                        {a.class_name} · {a.score}/{a.total} ·{' '}
-                        {new Date(a.attempted_at).toLocaleString()}
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => openQuiz(a.class_id, a.quiz_id)}
-                    >
-                      View
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          <div className="guest-upgrade-cta">
+            <p>
+              <strong>Are you a teacher or student?</strong> Upgrade your account to unlock the full dashboard
+              and keep your quiz scores.
+            </p>
+            <button type="button" className="btn btn-full" onClick={() => setShowUpgrade(true)}>
+              Upgrade account →
+            </button>
+          </div>
         </>
       )}
 
