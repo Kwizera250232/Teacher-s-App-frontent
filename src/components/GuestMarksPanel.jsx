@@ -17,9 +17,7 @@ export default function GuestMarksPanel({ token, classId, compact = false }) {
       .catch((e) => {
         const msg = String(e.message || '');
         if (/404/.test(msg) || /not found/i.test(msg) || /not on the server yet/i.test(msg)) {
-          setError(
-            'Guest marks need the latest API. On the VPS run: curl -fsSL https://raw.githubusercontent.com/Kwizera250232/Teacher-s-App-backend/main/scripts/hostinger-terminal-deploy.sh | bash — do not use only pm2 restart studentapi (use restart-production-api.sh).'
-          );
+          setMarks([]);
         } else {
           setError(msg);
         }
