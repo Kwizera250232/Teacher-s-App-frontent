@@ -87,6 +87,37 @@
   color: #047857;
 }
 
+.guest-quiz-section--cards {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.guest-quiz-section__hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.guest-class-quizzes {
+  margin-bottom: 20px;
+}
+
+.guest-class-quizzes__title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.guest-class-quizzes__teacher {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
 .guest-readonly-tag {
   font-size: 11px;
   color: #b45309;
