@@ -5,3 +5,9 @@ dist/
 .env.production
 .env*.local
 !.env.example
+
+# Tutorial video build artifacts (final MP4 lives in public/videos/)
+scripts/tutorial-clips/
+scripts/tutorial-build/
+scripts/tutorial-narration/
+scripts/tutorial-demo.json

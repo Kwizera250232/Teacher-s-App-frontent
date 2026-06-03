@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import GuestShell from '../components/GuestShell';
 import './Dashboard.css';
 import './GuestDashboard.css';
+import TutorialVideo from '../components/TutorialVideo';
 
 export default function GuestDashboard() {
   const { token } = useAuth();
@@ -25,6 +26,11 @@ export default function GuestDashboard() {
 
   return (
     <GuestShell title="Guest home">
+      <TutorialVideo
+        compact
+        title="How to use UClass (video)"
+        subtitle="Guest signup, shared quizzes & class materials"
+      />
       <div
         style={{
           background: '#ecfdf5',

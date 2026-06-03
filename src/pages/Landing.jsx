@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DonateSupportBanner from '../components/DonateSupportBanner';
+import TutorialVideo, { TutorialVideoDownloadLink } from '../components/TutorialVideo';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -292,6 +293,13 @@ export default function Landing() {
         </header>
 
         <DonateSupportBanner />
+
+        <TutorialVideo
+          className="landing-page"
+          title="How to use UClass — video guide"
+          subtitle="Google search, signup for every role, Dean AI, classes, notes, homework & classroom activity. Personal details are blurred for privacy."
+        />
+        <TutorialVideoDownloadLink />
 
         <section className="grid animate-fade-up gap-8 rounded-3xl bg-white p-6 shadow-xl shadow-indigo-100 ring-1 ring-indigo-100 md:grid-cols-2 md:items-center md:p-10">
           <div>
