@@ -16,9 +16,9 @@ export default function GuestMarksPanel({ token, classId, compact = false }) {
       .then((rows) => setMarks(Array.isArray(rows) ? rows : []))
       .catch((e) => {
         const msg = String(e.message || '');
-        if (/404/.test(msg) || /not found/i.test(msg)) {
+        if (/404/.test(msg) || /not found/i.test(msg) || /not on the server yet/i.test(msg)) {
           setError(
-            'Guest marks need the latest API on studentapi.umunsi.com. Ask your host to run: git pull origin main && npm ci --omit=dev && pm2 restart studentapi'
+            'Guest marks need the latest API. On the VPS run: curl -fsSL https://raw.githubusercontent.com/Kwizera250232/Teacher-s-App-backend/main/scripts/hostinger-terminal-deploy.sh | bash — do not use only pm2 restart studentapi (use restart-production-api.sh).'
           );
         } else {
           setError(msg);
