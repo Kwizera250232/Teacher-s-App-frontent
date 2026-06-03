@@ -1,45 +1,27 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import GuestShell from '../components/GuestShell';
-import DonateSupportBanner from '../components/DonateSupportBanner';
 import './Dashboard.css';
 import './GuestDashboard.css';
 
 export default function GuestDashboard() {
   const { token } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const tab = searchParams.get('tab');
   const [hub, setHub] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
+  useEffect(() => {
+    if (!token) return;
     setLoading(true);
     api
       .get('/guest/hub', token)
       .then(setHub)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    if (token) load();
   }, [token]);
-
-  if (tab === 'donate') {
-    return (
-      <GuestShell title="Support UClass">
-        <DonateSupportBanner />
-        <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.5, marginTop: 16 }}>
-          Guests can support UClass without joining a school class. Thank you for helping improve
-          learning tools for Rwanda schools.
-        </p>
-      </GuestShell>
-    );
-  }
 
   return (
     <GuestShell title="Guest home">

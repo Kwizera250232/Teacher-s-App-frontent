@@ -95,3 +95,33 @@
   border-radius: 6px;
   font-weight: 600;
 }
+
+.guest-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.guest-header-donate-desktop {
+  display: flex;
+  align-items: center;
+}
+
+.guest-donate-fab {
+  display: none;
+  position: fixed;
+  z-index: 9200;
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  right: 14px;
+}
+
+@media (max-width: 768px) {
+  .guest-header-donate-desktop {
+    display: none;
+  }
+
+  .guest-donate-fab {
+    display: block;
+  }
+}

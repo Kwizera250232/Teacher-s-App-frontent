@@ -5,7 +5,6 @@ import '../pages/GuestDashboard.css';
 
 const NAV = [
   { id: 'home', label: 'Home', icon: '🏠', path: '/guest/dashboard' },
-  { id: 'donate', label: 'Donate', icon: '💚', path: '/guest/dashboard?tab=donate' },
   { id: 'profile', label: 'Profile', icon: '👤', path: '/guest/profile' },
 ];
 
@@ -13,13 +12,8 @@ export default function GuestShell({ title, children, backTo }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const tab = new URLSearchParams(location.search).get('tab');
 
-  const isActive = (item) => {
-    if (item.id === 'donate') return tab === 'donate' && location.pathname === '/guest/dashboard';
-    if (item.id === 'home') return location.pathname === '/guest/dashboard' && tab !== 'donate';
-    return location.pathname === item.path;
-  };
+  const isActive = (item) => location.pathname === item.path;
 
   return (
     <div className="guest-shell">
@@ -40,39 +34,33 @@ export default function GuestShell({ title, children, backTo }) {
             {user?.name} · {user?.email}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          <DonateButton compact />
+        <div className="guest-header-actions">
+          <div className="guest-header-donate-desktop">
+            <DonateButton />
+          </div>
           <button type="button" className="btn btn-secondary btn-sm" onClick={logout}>
             Logout
           </button>
         </div>
       </header>
 
+      <div className="guest-donate-fab">
+        <DonateButton compact fab />
+      </div>
+
       <main className="guest-shell__main">{children}</main>
 
       <nav className="guest-nav" aria-label="Guest navigation">
-        {NAV.map((item) =>
-          item.id === 'donate' ? (
-            <button
-              key={item.id}
-              type="button"
-              className={`guest-nav__btn${isActive(item) ? ' guest-nav__btn--active' : ''}`}
-              onClick={() => navigate('/guest/dashboard?tab=donate')}
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ) : (
-            <Link
-              key={item.id}
-              to={item.path}
-              className={`guest-nav__btn${isActive(item) ? ' guest-nav__btn--active' : ''}`}
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          )
-        )}
+        {NAV.map((item) => (
+          <Link
+            key={item.id}
+            to={item.path}
+            className={`guest-nav__btn${isActive(item) ? ' guest-nav__btn--active' : ''}`}
+          >
+            <span>{item.icon}</span>
+            <span>{item.label}</span>
+          </Link>
+        ))}
       </nav>
     </div>
   );
