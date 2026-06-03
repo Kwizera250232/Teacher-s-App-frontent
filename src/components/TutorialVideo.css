@@ -28,11 +28,37 @@
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.25);
 }
 
+.tutorial-video__player-wrap {
+  position: relative;
+  width: 100%;
+  background: #000;
+}
+
 .tutorial-video__player {
   display: block;
   width: 100%;
-  max-height: min(56vw, 420px);
+  max-height: min(56vw, 520px);
   background: #000;
+}
+
+.tutorial-video__fs-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 52px;
+  z-index: 2;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.tutorial-video__fs-btn:hover {
+  background: rgba(79, 70, 229, 0.9);
 }
 
 .tutorial-video__hint {
@@ -136,19 +162,21 @@
 
 .tutorial-video__modal-body {
   position: relative;
-  width: min(960px, 100%);
+  width: min(1200px, 100%);
   z-index: 1;
 }
 
-.tutorial-video__modal-body .tutorial-video__player {
-  max-height: min(80vh, 540px);
-  border-radius: 12px;
+.tutorial-video__modal-toolbar {
+  position: absolute;
+  top: -2.75rem;
+  right: 0;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 2;
 }
 
+.tutorial-video__toolbar-btn,
 .tutorial-video__close {
-  position: absolute;
-  top: -2.5rem;
-  right: 0;
   background: rgba(255, 255, 255, 0.15);
   border: none;
   color: #fff;
@@ -157,6 +185,41 @@
   border-radius: 50%;
   cursor: pointer;
   font-size: 1rem;
+}
+
+.tutorial-video__modal-body .tutorial-video__player {
+  max-height: min(85vh, 720px);
+  border-radius: 12px;
+}
+
+.tutorial-video__modal--fullscreen {
+  padding: 0;
+}
+
+.tutorial-video__modal--fullscreen .tutorial-video__modal-body {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #000;
+}
+
+.tutorial-video__modal--fullscreen .tutorial-video__modal-toolbar {
+  top: 12px;
+  right: 12px;
+}
+
+.tutorial-video__modal--fullscreen .tutorial-video__modal-body .tutorial-video__player {
+  max-height: 100vh;
+  height: 100%;
+  border-radius: 0;
+}
+
+.tutorial-video__modal--fullscreen .tutorial-video__fs-btn {
+  bottom: 72px;
+  right: 16px;
 }
 
 .landing-page .tutorial-video {

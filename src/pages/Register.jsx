@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { dashboardPath } from '../utils/roles';
 import { schoolDomainFromName, signupEmailDomain, buildSchoolEmailPreview } from '../utils/schoolDomain';
 import { SCHOOL_EMAIL_IN_APP_HELP, STUDENT_SCHOOL_EMAIL_HELP } from '../utils/schoolEmailHelp';
+import AuthBackLink from '../components/AuthBackLink';
 import './Auth.css';
 
 export default function Register() {
@@ -196,6 +197,7 @@ export default function Register() {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        <AuthBackLink />
         <div className="auth-logo">🎓</div>
 
         {pending ? (

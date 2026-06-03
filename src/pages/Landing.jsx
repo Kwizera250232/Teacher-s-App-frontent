@@ -298,7 +298,7 @@ export default function Landing() {
         <TutorialVideo
           className="landing-page"
           title="How to use UClass — video guide"
-          subtitle="Google search, signup for every role, Dean AI, classes, notes, homework & classroom activity. Personal details are blurred for privacy."
+          subtitle="1080p · Google search, role signup (teacher, student, guest), Dean AI, classes, notes, homework & activity. Personal details are blurred for privacy."
         />
         <TutorialVideoDownloadLink />
 

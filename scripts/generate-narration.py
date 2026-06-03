@@ -31,18 +31,24 @@ SEGMENTS = [
     {
         "id": "03-home-ceo",
         "text": (
-            "The home page shows how UClass works for every role. "
-            "Scroll down to read our founder's message about helping teachers, "
-            "students, and parents stay connected."
+            "The home page shows how UClass works for Rwanda. "
+            "Scroll to the role cards — Umwarimu teacher, Umuyobozi head teacher, "
+            "Umunyeshuri student, and Guest for quiz share links."
         ),
     },
     {
         "id": "04-signup",
         "text": (
-            "Signing up is easy. Students join with a class code. "
-            "Teachers create classes and share materials. "
-            "Parents follow their child's progress from a dedicated hub. "
-            "Guests unlock shared quizzes through a link from their teacher."
+            "Tap Sign up on your role card. Teachers and head teachers create a school email login. "
+            "Students pick their school and join with a class code. "
+            "Guests use a username at guest dot umunsi dot com after opening a teacher's quiz link."
+        ),
+    },
+    {
+        "id": "04b-guest",
+        "text": (
+            "On Guest home, every shared quiz is listed with Take Quiz buttons — "
+            "the same as inside the class — so guests can start immediately without extra steps."
         ),
     },
     {

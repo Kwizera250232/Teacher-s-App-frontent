@@ -67,11 +67,67 @@ async function main() {
     }, token);
   }
 
+  let quizId = null;
+  let shareToken = null;
+  const quizzes = await req('GET', `/classes/${classId}/quizzes`, null, token).catch(() => []);
+  const demoQuiz = quizzes.find((q) => q.title === 'Demo Quiz — Ecosystems');
+  if (demoQuiz) {
+    quizId = demoQuiz.id;
+  } else {
+    const created = await req('POST', `/classes/${classId}/quizzes`, {
+      title: 'Demo Quiz — Ecosystems',
+      description: 'Quick check on ecosystems',
+      questions: [
+        {
+          question: 'Plants make food through photosynthesis.',
+          question_type: 'true_false',
+          option_a: 'True',
+          option_b: 'False',
+          correct_answer: 'a',
+        },
+      ],
+    }, token);
+    quizId = created.id;
+  }
+
+  if (quizId) {
+    const share = await req('POST', `/classes/${classId}/quizzes/${quizId}/share`, {}, token).catch(() => null);
+    shareToken = share?.share_token || null;
+  }
+
+  let guestEmail = 'demoguest@guest.umunsi.com';
+  let guestPassword = 'TutorialDemo123';
+  let guestToken = null;
+  const guest = await req('POST', '/auth/register', {
+    name: 'Demo Guest',
+    password: guestPassword,
+    role: 'guest',
+    guest_email_local: 'demoguest',
+    quiz_share_token: shareToken || undefined,
+  }).catch(async () => {
+    const login = await req('POST', '/auth/login', {
+      email: guestEmail,
+      password: guestPassword,
+    });
+    return login;
+  });
+  guestToken = guest.token;
+  guestEmail = guest.login_email || guest.user?.email || guestEmail;
+
+  if (shareToken && guestToken) {
+    await req('POST', '/guest/claim-share', { share_token: shareToken }, guestToken).catch(() => {});
+  }
+
   const out = {
     teacherEmail: teacher.login_email || teacher.user?.email || 'demoteacher@demoschool.edu',
     teacherPassword: 'TutorialDemo123',
     classId,
     className: cls.name,
+    quizId,
+    shareToken,
+    guestEmail,
+    guestPassword,
+    guestToken,
   };
   console.log(JSON.stringify(out, null, 2));
 }

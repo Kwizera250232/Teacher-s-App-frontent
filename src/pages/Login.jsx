@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { dashboardPath } from '../utils/roles';
 import AuthAppShell from '../components/AuthAppShell';
+import AuthBackLink from '../components/AuthBackLink';
 import './Auth.css';
 
 export default function Login() {
@@ -59,6 +60,7 @@ export default function Login() {
       subtitle="Injira muri konti yawe — same look as inside the app"
       footer={<p>Nta konti ufite? <Link to="/register">Iyandikishe</Link></p>}
     >
+        <AuthBackLink />
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
