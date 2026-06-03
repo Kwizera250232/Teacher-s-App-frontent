@@ -5,3 +5,8 @@ dist/
 .env.production
 .env*.local
 !.env.example
+
+scripts/tutorial-clips/
+scripts/tutorial-build/
+scripts/tutorial-narration/
+scripts/tutorial-demo.json

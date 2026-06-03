@@ -16,6 +16,7 @@ import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
 import ParentInviteModal from '../components/ParentInviteModal';
 import CompositionStatusList from '../components/CompositionStatusList';
 import ClassDeanHelp from '../components/ClassDeanHelp';
+import GuestMarksPanel from '../components/GuestMarksPanel';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 
@@ -551,6 +552,14 @@ export default function TeacherClassPage() {
               <h2>Quizzes</h2>
               <button className="btn btn-primary" onClick={() => setShowQuizModal(true)}>+ Create Quiz</button>
             </div>
+            <details style={{ marginBottom: 16, background: '#f8fafc', borderRadius: 10, padding: '10px 14px' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#075e54' }}>
+                👤 Guest marks from share links
+              </summary>
+              <div style={{ marginTop: 12 }}>
+                <GuestMarksPanel token={token} classId={id} compact />
+              </div>
+            </details>
             {data.map(q => (
               <div key={q.id} className="item-card">
                 <div className="item-card-body">
