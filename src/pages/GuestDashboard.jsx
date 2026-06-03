@@ -7,6 +7,7 @@ import GuestUpgradeModal from '../components/GuestUpgradeModal';
 import './Dashboard.css';
 import './GuestDashboard.css';
 import '../components/GuestUpgradeModal.css';
+import TutorialVideo from '../components/TutorialVideo';
 
 export default function GuestDashboard() {
   const { token } = useAuth();
@@ -32,6 +33,11 @@ export default function GuestDashboard() {
 
   return (
     <GuestShell title="Guest home">
+      <TutorialVideo
+        compact
+        title="How to use UClass (video)"
+        subtitle="Guest signup, shared quizzes & class materials"
+      />
       <div className="guest-limits-banner">
         <strong>Guest mode — limited access</strong>
         <ul>

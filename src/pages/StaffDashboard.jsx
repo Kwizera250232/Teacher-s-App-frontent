@@ -25,6 +25,7 @@ import ClassMomentsDashboardBlock from '../components/classMoments/ClassMomentsD
 import OnlineNowStrip from '../components/classMoments/OnlineNowStrip';
 import { usePresence } from '../hooks/usePresence';
 import '../components/classMoments/ClassMoments.css';
+import TutorialVideo from '../components/TutorialVideo';
 import GuestMarksPanel from '../components/GuestMarksPanel';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
@@ -142,6 +143,11 @@ export default function StaffDashboard({ roleLabel, basePath }) {
       </nav>
 
       <main className={`dash-main${hubTab === 'chats' ? ' dash-main--chats-full' : ''}`}>
+        <TutorialVideo
+          compact
+          title="How to use UClass (video)"
+          subtitle="Signup, Dean AI, classes, notes, homework & feed"
+        />
         {hubTab !== 'chats' && <SchoolRequestBanner token={token} user={user} />}
         {isHeadTeacher && hubTab === 'school' && <SchoolRequestsPanel token={token} />}
 
