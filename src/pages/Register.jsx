@@ -11,6 +11,8 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const searchRole = searchParams.get('role');
   const classCode = searchParams.get('code') || '';
+  const quizShareToken = searchParams.get('quiz_share') || '';
+  const prefSchoolId = searchParams.get('school_id') || '';
 
   // step: 'role' → 'code' (if teacher/HT) → 'form'
   const [step, setStep] = useState('role');
@@ -46,6 +48,24 @@ export default function Register() {
   useEffect(() => {
     api.get('/auth/schools').then(setSchools).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (prefSchoolId) {
+      setForm((f) => ({ ...f, school_id: prefSchoolId }));
+      setSelectedRole((r) => (r === 'student' ? r : 'student'));
+      setStep('form');
+    }
+  }, [prefSchoolId]);
+
+  useEffect(() => {
+    if (quizShareToken && ['student', 'teacher', 'head_teacher'].includes(searchRole)) {
+      setSelectedRole(searchRole);
+      setStep('form');
+    } else if (quizShareToken) {
+      setStep('form');
+      setSelectedRole('student');
+    }
+  }, [quizShareToken, searchRole]);
 
   useEffect(() => {
     if (['head_teacher', 'teacher'].includes(searchRole)) {
@@ -118,6 +138,9 @@ export default function Register() {
       if (verifiedSchool?.code) {
         payload.school_code = String(verifiedSchool.code).trim().toUpperCase();
       }
+      if (quizShareToken) {
+        payload.quiz_share_token = quizShareToken;
+      }
 
       const data = await api.post('/auth/register', payload);
 
@@ -128,6 +151,17 @@ export default function Register() {
       }
 
       login(data.token, data.user);
+      const shareRedir = data.guest_share_redirect;
+      if (shareRedir?.class_id && shareRedir?.quiz_id) {
+        if (data.user.role === 'guest') {
+          navigate(`/guest/classes/${shareRedir.class_id}/quizzes/${shareRedir.quiz_id}`, { replace: true });
+          return;
+        }
+        if (data.user.role === 'student') {
+          navigate(`/student/classes/${shareRedir.class_id}/quizzes/${shareRedir.quiz_id}`, { replace: true });
+          return;
+        }
+      }
       if (data.user.role === 'student' && classCode) {
         try {
           const joined = await api.post('/classes/join', { class_code: classCode }, data.token);
@@ -215,6 +249,23 @@ export default function Register() {
           <>
             <h2>Fungura Konti</h2>
             <p className="auth-sub">Injira mu rubuga rw'inyigisho</p>
+            {quizShareToken && (
+              <div
+                style={{
+                  background: '#ecfdf5',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: 10,
+                  padding: '10px 12px',
+                  marginBottom: 12,
+                  fontSize: 13,
+                  color: '#065f46',
+                  lineHeight: 1.45,
+                }}
+              >
+                You opened a <strong>shared quiz</strong> link. After signup you can take the quiz in your
+                dashboard (students join the class; guests use a separate guest account on the share page).
+              </div>
+            )}
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={handleSubmit}>
               <div className="form-group">
