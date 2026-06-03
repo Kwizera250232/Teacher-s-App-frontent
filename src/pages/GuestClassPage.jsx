@@ -190,7 +190,11 @@ export default function GuestClassPage() {
       )}
 
       {!loading && tab === 'Quizzes' && (
-        data.length === 0 ? (
+        <>
+          <p style={{ fontSize: 13, color: '#047857', marginBottom: 12 }}>
+            All quizzes in this class from your sharing teacher — including new ones they add later.
+          </p>
+          {data.length === 0 ? (
           <p style={{ color: '#888', textAlign: 'center', padding: 40 }}>No quizzes yet.</p>
         ) : (
           data.map((q) => (
@@ -213,7 +217,8 @@ export default function GuestClassPage() {
               </div>
             </div>
           ))
-        )
+        )}
+        </>
       )}
 
       {previewDoc && (

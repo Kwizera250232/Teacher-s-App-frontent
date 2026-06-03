@@ -46,6 +46,22 @@ export default function GuestDashboard() {
 
       {!loading && hub && (
         <>
+          {hub.quiz_access_note && (
+            <p
+              style={{
+                fontSize: 13,
+                color: '#065f46',
+                fontWeight: 600,
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                borderRadius: 10,
+                padding: '10px 12px',
+                marginBottom: 16,
+              }}
+            >
+              {hub.quiz_access_note}
+            </p>
+          )}
           <h2 style={{ fontSize: 17, marginBottom: 12 }}>Classes from shared links</h2>
           {hub.classes.length === 0 ? (
             <p style={{ color: '#64748b' }}>
