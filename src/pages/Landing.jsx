@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DonateSupportBanner from '../components/DonateSupportBanner';
+import LandingRoleSignup from '../components/LandingRoleSignup';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -367,6 +368,8 @@ export default function Landing() {
             </div>
           </div>
         </section>
+
+        <LandingRoleSignup />
 
         <section className="mt-16 animate-fade-up" style={{ animationDelay: '120ms' }}>
           <div className="mb-6 flex items-end justify-between gap-4">

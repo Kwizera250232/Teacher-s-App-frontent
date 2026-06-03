@@ -1,0 +1,62 @@
+[
+  {
+    "id": "01-intro",
+    "text": "Welcome to UClass \u2014 the platform that connects teachers, students, parents, and guests for better learning.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/01-intro.mp3",
+    "duration": 9.0
+  },
+  {
+    "id": "02-google",
+    "text": "To find UClass, open Google on your phone or computer and search for UClass Student Umunsi. You can also visit student dot umunsi dot com directly.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/02-google.mp3",
+    "duration": 11.688
+  },
+  {
+    "id": "03-home-ceo",
+    "text": "The home page shows how UClass works for every role. Scroll down to read our founder's message about helping teachers, students, and parents stay connected.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/03-home-ceo.mp3",
+    "duration": 11.232
+  },
+  {
+    "id": "04-signup",
+    "text": "Signing up is easy. Students join with a class code. Teachers create classes and share materials. Parents follow their child's progress from a dedicated hub. Guests unlock shared quizzes through a link from their teacher.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/04-signup.mp3",
+    "duration": 15.648
+  },
+  {
+    "id": "05-dean",
+    "text": "Meet Dean \u2014 your AI support assistant. Dean lives on the home page and inside every class. Ask Dean how to sign up, join a class, post homework, or use any feature.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/05-dean.mp3",
+    "duration": 13.704
+  },
+  {
+    "id": "06-create-class",
+    "text": "Teachers start from the dashboard. Tap Create Class, enter a name and subject, then share the class code so students can join instantly.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/06-create-class.mp3",
+    "duration": 10.248
+  },
+  {
+    "id": "07-notes",
+    "text": "Inside your class, open the Notes tab to upload lesson files. Students download materials anytime for revision at school or at home.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/07-notes.mp3",
+    "duration": 10.104
+  },
+  {
+    "id": "08-homework",
+    "text": "The Homework tab lets teachers post assignments with due dates. Students submit work online and teachers grade submissions in one place.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/08-homework.mp3",
+    "duration": 9.6
+  },
+  {
+    "id": "09-activity",
+    "text": "Use the Feed tab for classroom activity \u2014 daily updates, exercises, photos, and announcements that keep everyone engaged.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/09-activity.mp3",
+    "duration": 10.32
+  },
+  {
+    "id": "10-outro",
+    "text": "Parents and guests have tailored dashboards too. Start free today \u2014 create your account and transform learning with UClass.",
+    "audio": "/agent/repos/Teacher-s-App-frontent/scripts/tutorial-narration/10-outro.mp3",
+    "duration": 8.856
+  }
+]

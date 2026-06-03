@@ -17,7 +17,7 @@ export default function Register() {
   // step: 'role' → 'code' (if teacher/HT) → 'form'
   const [step, setStep] = useState('role');
   const [selectedRole, setSelectedRole] = useState(
-    ['head_teacher', 'teacher'].includes(searchRole) ? searchRole : 'student'
+    ['head_teacher', 'teacher', 'guest'].includes(searchRole) ? searchRole : 'student'
   );
   const [verifiedSchool, setVerifiedSchool] = useState(null);
 
@@ -26,6 +26,7 @@ export default function Register() {
     email: '',
     schoolEmailLocal: '',
     studentEmailLocal: '',
+    guestEmailLocal: '',
     staffSchoolName: '',
     staffSchoolId: '',
     password: '',
@@ -68,7 +69,8 @@ export default function Register() {
   }, [quizShareToken, searchRole]);
 
   useEffect(() => {
-    if (['head_teacher', 'teacher'].includes(searchRole)) {
+    if (['head_teacher', 'teacher', 'guest'].includes(searchRole)) {
+      setSelectedRole(searchRole);
       setStep('form');
     }
   }, [searchRole]);
@@ -113,6 +115,12 @@ export default function Register() {
           setLoading(false);
           return;
         }
+      } else if (selectedRole === 'guest') {
+        if (!form.guestEmailLocal.trim()) {
+          setError('Choose a guest username.');
+          setLoading(false);
+          return;
+        }
       }
 
       const payload = {
@@ -133,6 +141,8 @@ export default function Register() {
         }
       } else if (selectedRole === 'student') {
         payload.school_email_local = form.studentEmailLocal.trim();
+      } else if (selectedRole === 'guest') {
+        payload.guest_email_local = form.guestEmailLocal.trim();
       }
 
       if (verifiedSchool?.code) {
@@ -161,6 +171,10 @@ export default function Register() {
           navigate(`/student/classes/${shareRedir.class_id}/quizzes/${shareRedir.quiz_id}`, { replace: true });
           return;
         }
+      }
+      if (data.user.role === 'guest') {
+        navigate('/guest/dashboard', { replace: true });
+        return;
       }
       if (data.user.role === 'student' && classCode) {
         try {
@@ -218,8 +232,9 @@ export default function Register() {
                 style={{ fontSize: '1rem', padding: '0.6rem' }}
               >
                 <option value="student">👨‍🎓 Umunyeshuri (Student)</option>
-                <option value="head_teacher">🏫 Umuyobozi w'Ishuri (Head Teacher)</option>
+                <option value="head_teacher">🏫 Umuyobozi w'Ikigo (Head Teacher)</option>
                 <option value="teacher">👨‍🏫 Umwarimu (Teacher)</option>
+                <option value="guest">🔗 Guest (quiz share link)</option>
               </select>
             </div>
 
@@ -231,6 +246,11 @@ export default function Register() {
             {(selectedRole === 'head_teacher' || selectedRole === 'teacher') && (
               <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: 4 }}>
                 Choose or type your school, then create your login as name@schoolname.edu.
+              </p>
+            )}
+            {selectedRole === 'guest' && (
+              <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: 4 }}>
+                Guest login uses <strong>@guest.umunsi.com</strong>. Open a teacher&apos;s quiz share link to unlock classes.
               </p>
             )}
 
@@ -408,6 +428,26 @@ export default function Register() {
                     </p>
                   )}
                 </div>
+                </>
+              ) : selectedRole === 'guest' ? (
+                <>
+                  <div className="form-group">
+                    <label>Guest username (login)</label>
+                    <div className="auth-school-email-row">
+                      <input
+                        type="text"
+                        value={form.guestEmailLocal}
+                        onChange={(e) => setForm({ ...form, guestEmailLocal: e.target.value })}
+                        placeholder="yourname"
+                        required
+                        className="auth-school-email-local"
+                      />
+                      <span className="auth-school-email-domain">@guest.umunsi.com</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
+                      Use a quiz share link from your teacher to unlock classes after signup.
+                    </p>
+                  </div>
                 </>
               ) : (
                 <>

@@ -7,12 +7,33 @@ export default function AdminGuests({ token }) {
   const [guests, setGuests] = useState([]);
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState(null);
+  const [marksByGuest, setMarksByGuest] = useState({});
+  const [marksLoading, setMarksLoading] = useState(null);
   const [msg, setMsg] = useState('');
 
   const load = () => api.get('/admin/guests', token).then(setGuests).catch(() => {});
   useEffect(() => {
     load();
   }, [token]);
+
+  const loadMarks = async (guestId) => {
+    if (marksByGuest[guestId]) return;
+    setMarksLoading(guestId);
+    try {
+      const data = await api.get(`/admin/guests/${guestId}/marks`, token);
+      setMarksByGuest((prev) => ({ ...prev, [guestId]: data.attempts || [] }));
+    } catch {
+      setMarksByGuest((prev) => ({ ...prev, [guestId]: [] }));
+    } finally {
+      setMarksLoading(null);
+    }
+  };
+
+  const toggleExpand = (id) => {
+    const next = expanded === id ? null : id;
+    setExpanded(next);
+    if (next) loadMarks(next);
+  };
 
   const toggleSuspend = async (g) => {
     await fetch(`${BASE}/admin/guests/${g.id}/suspend`, {
@@ -104,7 +125,7 @@ export default function AdminGuests({ token }) {
                     <button
                       type="button"
                       className="btn-sm btn-outline"
-                      onClick={() => setExpanded(expanded === g.id ? null : g.id)}
+                      onClick={() => toggleExpand(g.id)}
                     >
                       {expanded === g.id ? 'Hide' : 'Details'}
                     </button>
@@ -136,6 +157,37 @@ export default function AdminGuests({ token }) {
                             </li>
                           ))}
                         </ul>
+                      )}
+                      <strong style={{ fontSize: 13, display: 'block', marginTop: 16 }}>Quiz marks</strong>
+                      {marksLoading === g.id ? (
+                        <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>Loading marks…</p>
+                      ) : (marksByGuest[g.id] || []).length === 0 ? (
+                        <p style={{ margin: '8px 0 0', fontSize: 13, color: '#64748b' }}>No quiz attempts yet.</p>
+                      ) : (
+                        <table className="admin-table" style={{ marginTop: 8, fontSize: 12 }}>
+                          <thead>
+                            <tr>
+                              <th>Quiz</th>
+                              <th>Class</th>
+                              <th>Teacher</th>
+                              <th>Score</th>
+                              <th>Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {marksByGuest[g.id].map((a) => (
+                              <tr key={a.attempt_id}>
+                                <td>{a.quiz_title}</td>
+                                <td>{a.class_name}</td>
+                                <td>{a.teacher_name}</td>
+                                <td>
+                                  {a.score}/{a.total}
+                                </td>
+                                <td>{a.attempted_at ? new Date(a.attempted_at).toLocaleString() : '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       )}
                     </td>
                   </tr>
