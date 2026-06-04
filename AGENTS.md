@@ -5,7 +5,8 @@
 ### Deploy (production)
 
 - **student.umunsi.com** — Vercel from this repo’s `main` (auto on push).
-- **studentapi.umunsi.com** — VPS pull + `pm2 restart` (see backend `DEPLOY.md`). UI also at `https://studentapi.umunsi.com/app/` from backend `student-web` build.
+- **studentapi.umunsi.com** — VPS pull + `restart-production-api.sh` (see backend `DEPLOY.md`). UI also at `https://studentapi.umunsi.com/app/` from backend `student-web` build.
+- **Inyandiko (commitment / school reports / quiz marks):** Teacher dashboard tab **✍️ Inyandiko** + class **Leaderboard → Inyandiko**. Requires backend routes on VPS (`GET /api/classes/inyandiko/dashboard`). If production shows “not on the server yet”, deploy the API — use Hostinger **Browser SSH** (fingerprint `SHA256:jYsWizDft9Sm+…`) and run the backend `hostinger-terminal-deploy.sh` one-liner.
 - **Class Moments UI** — `src/components/classMoments/*` + `ClassMoments.css` (`cm-soc-*` Facebook/WhatsApp hybrid feed).
 
 ### Quiz share & guests
