@@ -27,6 +27,7 @@ import { usePresence } from '../hooks/usePresence';
 import '../components/classMoments/ClassMoments.css';
 import TutorialVideo from '../components/TutorialVideo';
 import GuestMarksPanel from '../components/GuestMarksPanel';
+import StaffInyandikoDashboard from '../components/staff/StaffInyandikoDashboard';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
   const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
@@ -88,6 +89,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
     ...(isHeadTeacher ? [{ id: 'school', label: '🏫 School' }] : []),
     ...(hasSchool ? [{ id: 'chats', label: '💬 Chats' }] : []),
     { id: 'classnow', label: '📸 Class Now' },
+    { id: 'inyandiko', label: '✍️ Inyandiko' },
     { id: 'tools', label: '⚡ Tools' },
   ];
 
@@ -178,6 +180,10 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <OnlineNowStrip online={online} />
             <StaffClassNowPanel token={token} classes={classes} />
           </>
+        )}
+
+        {hubTab === 'inyandiko' && (
+          <StaffInyandikoDashboard token={token} basePath={basePath} />
         )}
 
         {hubTab === 'tools' && (
@@ -311,6 +317,9 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         </button>
         <button type="button" onClick={() => setHubTab('classnow')}>
           📸 Class Now
+        </button>
+        <button type="button" onClick={() => setHubTab('inyandiko')}>
+          ✍️ Inyandiko
         </button>
         <button type="button" onClick={() => setHubTab('tools')}>
           ✍️ C. Status

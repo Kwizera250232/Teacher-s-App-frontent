@@ -1,54 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api, uploadFile, UPLOADS_BASE } from '../api';
+import { api, uploadFile } from '../api';
+import { InyandikoDocViewer, inyandikoFileUrl } from './inyandiko/InyandikoDocViewer';
 import './InyandikoPanel.css';
-
-function fileUrl(filePath) {
-  if (!filePath) return '';
-  const clean = String(filePath).replace(/^\/+/, '');
-  return `${UPLOADS_BASE}/uploads/${clean}`;
-}
-
-function isPdf(name = '') {
-  return /\.pdf$/i.test(name);
-}
-
-function isImage(name = '') {
-  return /\.(png|jpe?g|webp|gif)$/i.test(name);
-}
-
-function DocumentViewer({ doc }) {
-  if (!doc) {
-    return <p className="iny-empty">No document uploaded yet.</p>;
-  }
-  const url = fileUrl(doc.file_path);
-  const label = doc.title || doc.file_name || 'Document';
-
-  if (isPdf(doc.file_name || doc.file_path)) {
-    return (
-      <div className="iny-doc-view">
-        <iframe title={label} src={url} className="iny-doc-frame" />
-        <a href={url} target="_blank" rel="noreferrer" className="iny-doc-link">Open full screen ↗</a>
-      </div>
-    );
-  }
-  if (isImage(doc.file_name || doc.file_path)) {
-    return (
-      <div className="iny-doc-view">
-        <img src={url} alt={label} className="iny-doc-image" />
-        <a href={url} target="_blank" rel="noreferrer" className="iny-doc-link">Open full size ↗</a>
-      </div>
-    );
-  }
-  return (
-    <div className="iny-doc-view">
-      <p className="iny-doc-filename">{label}</p>
-      <a href={url} target="_blank" rel="noreferrer" className="btn btn-primary iny-download-btn">
-        Download & read ↗
-      </a>
-    </div>
-  );
-}
 
 function UploadBox({ label, hint, onUpload, uploading, accept = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.txt' }) {
   const inputRef = useRef(null);
@@ -217,7 +171,7 @@ export default function InyandikoPanel({ classId, isTeacher }) {
                     <strong>Commitment</strong>
                     {s.commitment.length ? (
                       s.commitment.map((d) => (
-                        <a key={d.id} href={fileUrl(d.file_path)} target="_blank" rel="noreferrer" className="iny-teacher-link">
+                        <a key={d.id} href={inyandikoFileUrl(d.file_path)} target="_blank" rel="noreferrer" className="iny-teacher-link">
                           {d.title || d.file_name} ↗
                         </a>
                       ))
@@ -229,7 +183,7 @@ export default function InyandikoPanel({ classId, isTeacher }) {
                     <strong>School reports</strong>
                     {s.school_reports.length ? (
                       s.school_reports.map((d) => (
-                        <a key={d.id} href={fileUrl(d.file_path)} target="_blank" rel="noreferrer" className="iny-teacher-link">
+                        <a key={d.id} href={inyandikoFileUrl(d.file_path)} target="_blank" rel="noreferrer" className="iny-teacher-link">
                           {d.title || d.file_name} ↗
                         </a>
                       ))
@@ -265,7 +219,7 @@ export default function InyandikoPanel({ classId, isTeacher }) {
             uploading={uploading === 'commitment'}
             onUpload={(file) => handleUpload('commitment', file)}
           />
-          <DocumentViewer doc={latestCommitment} />
+          <InyandikoDocViewer doc={latestCommitment} />
           {latestCommitment && (
             <button type="button" className="iny-delete-btn" onClick={() => handleDelete(latestCommitment.id)}>
               Remove letter
@@ -288,7 +242,7 @@ export default function InyandikoPanel({ classId, isTeacher }) {
             <ul className="iny-report-list">
               {schoolReports.map((doc) => (
                 <li key={doc.id} className="iny-report-item">
-                  <a href={fileUrl(doc.file_path)} target="_blank" rel="noreferrer" className="iny-report-link">
+                  <a href={inyandikoFileUrl(doc.file_path)} target="_blank" rel="noreferrer" className="iny-report-link">
                     {doc.title || doc.file_name}
                   </a>
                   <span className="iny-report-date">
@@ -303,7 +257,7 @@ export default function InyandikoPanel({ classId, isTeacher }) {
           )}
           {schoolReports[0] && (
             <div className="iny-report-preview">
-              <DocumentViewer doc={schoolReports[0]} />
+              <InyandikoDocViewer doc={schoolReports[0]} />
             </div>
           )}
         </section>
