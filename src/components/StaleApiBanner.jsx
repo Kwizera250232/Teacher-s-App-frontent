@@ -11,7 +11,7 @@ export default function StaleApiBanner() {
       try {
         const healthRes = await fetch(`${API_BASE}/health`);
         const health = healthRes.ok ? await healthRes.json() : null;
-        if (health?.features?.class_images && health?.features?.quiz_teacher_shares) {
+        if (health?.features?.quiz_teacher_shares) {
           if (!cancelled) setStale(false);
           return;
         }
@@ -34,8 +34,7 @@ export default function StaleApiBanner() {
     >
       <strong>Server update required.</strong>{' '}
       Class photos, note sharing, and &ldquo;Share w/ teacher&rdquo; need the latest API on{' '}
-      <code>studentapi.umunsi.com</code>. Your uploads are not saved until the server is updated.
-      Ask your admin to run the Hostinger deploy script, then hard-refresh this page and upload again.
+      <code>studentapi.umunsi.com</code>. Share and note features are not available until the server is updated.
     </div>
   );
 }

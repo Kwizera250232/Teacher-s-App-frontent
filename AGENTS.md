@@ -13,7 +13,6 @@
 
 - Teacher class **Quizzes** tab → **Share w/ teacher** (colleague modal) or **Share** (public guest link).
 - Teacher class **Notes** tab → **Share w/ teacher** — same accept flow as quizzes; inbox on staff **Classes** tab.
-- Class **cover photo** + **profile image** on teacher/student class page header (`ClassProfileBanner`); teachers upload via **Change cover** / avatar edit.
 - **Leaderboard (students):** see #1 student hero + own marks only; teachers see full class list.
 
 ### Quiz share & guests (guest links)

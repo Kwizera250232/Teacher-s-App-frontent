@@ -10,7 +10,6 @@ import QuizColleagueShareModal from '../components/QuizColleagueShareModal';
 import NoteColleagueShareModal from '../components/NoteColleagueShareModal';
 import SharedNoteAttribution from '../components/SharedNoteAttribution';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
-import ClassProfileBanner from '../components/ClassProfileBanner';
 import StaleApiBanner from '../components/StaleApiBanner';
 import { buildShareItem } from '../utils/shareLinks';
 import ClassLeaderboard from '../components/ClassLeaderboard';
@@ -242,21 +241,10 @@ export default function TeacherClassPage() {
       <main className="class-main wa-chat-screen">
         <StaleApiBanner />
         {cls && (
-          <>
-            <ClassProfileBanner
-              cls={cls}
-              classId={id}
-              token={token}
-              editable
-              onUpdated={(updated) => {
-                setCls(updated);
-                try { localStorage.setItem(`class_${id}`, JSON.stringify(updated)); } catch {}
-                showSuccess('Class photo updated!');
-              }}
-              onError={(msg) => setError(msg)}
-            />
-            <div className="class-hero" style={{ marginTop: 0 }}>
+          <div className="class-hero">
             <div>
+              <h1>{cls.name}</h1>
+              {cls.subject && <div className="subject">📖 {cls.subject}</div>}
               <div className="class-dean-help-wrap">
                 <ClassDeanHelp token={token} classId={id} className={cls.name} isTeacher />
               </div>
@@ -266,7 +254,6 @@ export default function TeacherClassPage() {
               <div className="code-big">{cls.class_code}</div>
             </div>
           </div>
-          </>
         )}
 
         <div className="tabs">
