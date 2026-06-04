@@ -29,11 +29,12 @@ import { usePresence } from '../hooks/usePresence';
 import '../components/classMoments/ClassMoments.css';
 import TutorialVideo from '../components/TutorialVideo';
 import StaleApiBanner from '../components/StaleApiBanner';
+import TeacherSchoolBadge from '../components/TeacherSchoolBadge';
 import GuestMarksPanel from '../components/GuestMarksPanel';
 import StaffInyandikoDashboard from '../components/staff/StaffInyandikoDashboard';
 
 export default function StaffDashboard({ roleLabel, basePath }) {
-  const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
+  const { user, token, logout, isImpersonating, stopImpersonation, updateUser } = useAuth();
   const [classes, setClasses] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddStudents, setShowAddStudents] = useState(false);
@@ -77,6 +78,15 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   };
 
   useEffect(() => { loadClasses(); }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    api.get('/auth/me', token)
+      .then((r) => {
+        if (r?.user) updateUser(r.user);
+      })
+      .catch(() => {});
+  }, [token, updateUser]);
   useEffect(() => {
     if (!isHeadTeacher && hubTab === 'school') setHubTab('classes');
   }, [isHeadTeacher, hubTab]);
@@ -155,6 +165,11 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           subtitle="Signup, Dean AI, classes, notes, homework & feed"
         />
         {hubTab !== 'chats' && <SchoolRequestBanner token={token} user={user} />}
+        {hasSchool && hubTab !== 'chats' && (
+          <div style={{ marginBottom: 12 }}>
+            <TeacherSchoolBadge user={user} style={{ width: '100%', justifyContent: 'center' }} />
+          </div>
+        )}
         {hasSchool && hubTab === 'classes' && (
           <>
             <QuizTeacherShareInbox token={token} classes={classes} onChange={loadClasses} />
