@@ -11,6 +11,7 @@ import NoteColleagueShareModal from '../components/NoteColleagueShareModal';
 import SharedNoteAttribution from '../components/SharedNoteAttribution';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
 import ClassProfileBanner from '../components/ClassProfileBanner';
+import StaleApiBanner from '../components/StaleApiBanner';
 import { buildShareItem } from '../utils/shareLinks';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
@@ -239,6 +240,7 @@ export default function TeacherClassPage() {
       </header>
 
       <main className="class-main wa-chat-screen">
+        <StaleApiBanner />
         {cls && (
           <>
             <ClassProfileBanner
@@ -249,7 +251,9 @@ export default function TeacherClassPage() {
               onUpdated={(updated) => {
                 setCls(updated);
                 try { localStorage.setItem(`class_${id}`, JSON.stringify(updated)); } catch {}
+                showSuccess('Class photo updated!');
               }}
+              onError={(msg) => setError(msg)}
             />
             <div className="class-hero" style={{ marginTop: 0 }}>
             <div>

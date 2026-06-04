@@ -1,3 +1,11 @@
+.class-profile-upload-error {
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 13px;
+  padding: 10px 16px;
+}
+
 .class-profile-banner {
   margin: -8px -8px 20px;
   border-radius: 14px;
