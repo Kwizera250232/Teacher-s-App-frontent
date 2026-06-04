@@ -28,6 +28,7 @@ import OnlineNowStrip from '../components/classMoments/OnlineNowStrip';
 import { usePresence } from '../hooks/usePresence';
 import '../components/classMoments/ClassMoments.css';
 import TutorialVideo from '../components/TutorialVideo';
+import StaleApiBanner from '../components/StaleApiBanner';
 import GuestMarksPanel from '../components/GuestMarksPanel';
 import StaffInyandikoDashboard from '../components/staff/StaffInyandikoDashboard';
 
@@ -147,6 +148,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
       </nav>
 
       <main className={`dash-main${hubTab === 'chats' ? ' dash-main--chats-full' : ''}`}>
+        <StaleApiBanner />
         <TutorialVideo
           compact
           title="How to use UClass (video)"

@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { API_BASE } from '../api';
 
+function apiHasLatestFeatures(health) {
+  return Boolean(
+    health?.features?.quiz_teacher_shares &&
+    health?.features?.note_teacher_shares &&
+    health?.features?.login_email_edu
+  );
+}
+
 /** Warn when studentapi.umunsi.com is still on an old build (404 on new routes). */
 export default function StaleApiBanner() {
   const [stale, setStale] = useState(false);
@@ -11,12 +19,17 @@ export default function StaleApiBanner() {
       try {
         const healthRes = await fetch(`${API_BASE}/health`);
         const health = healthRes.ok ? await healthRes.json() : null;
-        if (health?.features?.quiz_teacher_shares) {
+        if (apiHasLatestFeatures(health)) {
           if (!cancelled) setStale(false);
           return;
         }
-        const probe = await fetch(`${API_BASE}/quiz-teacher-shares/colleagues`);
-        if (!cancelled) setStale(probe.status === 404);
+        const [quizProbe, noteProbe] = await Promise.all([
+          fetch(`${API_BASE}/quiz-teacher-shares/colleagues`),
+          fetch(`${API_BASE}/note-teacher-shares/colleagues`),
+        ]);
+        if (!cancelled) {
+          setStale(quizProbe.status === 404 || noteProbe.status === 404);
+        }
       } catch {
         if (!cancelled) setStale(false);
       }
@@ -32,9 +45,10 @@ export default function StaleApiBanner() {
       style={{ marginBottom: 16, lineHeight: 1.5 }}
       role="alert"
     >
-      <strong>Server update required.</strong>{' '}
-      Class photos, note sharing, and &ldquo;Share w/ teacher&rdquo; need the latest API on{' '}
-      <code>studentapi.umunsi.com</code>. Share and note features are not available until the server is updated.
+      <strong>API update needed.</strong>{' '}
+      Quiz sharing with colleagues, note sharing, and student emails like{' '}
+      <strong>name@brightschool.edu</strong> require the latest server on{' '}
+      <code>studentapi.umunsi.com</code>. Ask your admin to run the Hostinger deploy script, then hard-refresh this page.
     </div>
   );
 }
