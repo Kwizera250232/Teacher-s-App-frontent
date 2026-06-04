@@ -34,6 +34,12 @@ This workspace contains two independent repos:
 - **Frontend**: `npm run dev -- --host` in the frontend repo. The `.env` has `VITE_API_URL=http://localhost:5000/api`.
 - **Build check**: `npm run build` in the frontend repo (Vite build).
 
+### Web Push notifications
+
+- After login or PWA install, the app registers for push via `usePushNotifications` + `src/utils/pushNotifications.js`.
+- Service worker `public/sw.js` handles `push` and `notificationclick` events.
+- Backend must expose VAPID keys (`GET /api/pwa/vapid-public-key`); users must allow notifications in the browser/OS.
+
 ### Database setup gotchas
 
 - The base `schema.sql` (via `npm run init-db`) does NOT create all columns used by routes. Columns like `users.phone` and `schools.email_domain`/`schools.welcome_message` are added at runtime by route files or must be manually ALTERed. If you hit column-not-found errors on registration, run:
