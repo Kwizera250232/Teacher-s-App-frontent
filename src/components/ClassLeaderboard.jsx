@@ -16,6 +16,7 @@ export default function ClassLeaderboard({ classId }) {
   const { token, user } = useAuth();
   const [activeTab, setActiveTab] = useState('quiz');
   const [entries, setEntries] = useState([]);
+  const [topStudent, setTopStudent] = useState(null);
   const [perQuiz, setPerQuiz] = useState([]);
   const [compositionEntries, setCompositionEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,20 +33,28 @@ export default function ClassLeaderboard({ classId }) {
       api.get(`/classes/${classId}/composition-leaderboard`, token).catch(() => ({ entries: [] })),
     ])
       .then(([overall, topScorers, compositions]) => {
-        setEntries(Array.isArray(overall) ? overall : []);
-        setPerQuiz(Array.isArray(topScorers) ? topScorers : []);
+        const overallRows = overall?.student_view
+          ? (overall.entries || [])
+          : (Array.isArray(overall) ? overall : []);
+        const topFromPayload = overall?.top_student || overallRows[0];
+        setEntries(overallRows);
+        setTopStudent(topFromPayload || null);
+        setPerQuiz(isStudent ? [] : (Array.isArray(topScorers) ? topScorers : []));
         const compList = compositions?.entries ?? (Array.isArray(compositions) ? compositions : []);
         setCompositionEntries(Array.isArray(compList) ? compList : []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [classId, token]);
+  }, [classId, token, isStudent]);
 
   if (loading) return <div className="lb-loading">Gutegereza...</div>;
 
-  const top = entries[0];
+  const top = topStudent || entries.find((e) => e.is_top_student) || entries[0];
+  const tableRows = isStudent
+    ? entries.filter((e) => e.is_self || e.is_top_student)
+    : entries;
   const hasScores = top && Number(top.total_score) > 0;
-  const quizEmpty = entries.length === 0;
+  const quizEmpty = !top && tableRows.length === 0;
 
   return (
     <div className="lb-wrapper">
@@ -114,7 +123,14 @@ export default function ClassLeaderboard({ classId }) {
               </div>
             )}
 
-            <h3 className="lb-section-title" style={{ marginTop: 28 }}>📊 Urutonde Rusanzwe</h3>
+            <h3 className="lb-section-title" style={{ marginTop: 28 }}>
+              {isStudent ? '📊 Amanota yawe' : '📊 Urutonde Rusanzwe'}
+            </h3>
+            {isStudent && (
+              <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 12px' }}>
+                Ureba amanota yawe gusa. Umunyeshuri wa mbere agaragazwa hejuru.
+              </p>
+            )}
             <div className="lb-table-wrap">
               <table className="lb-table">
                 <thead>
@@ -127,15 +143,26 @@ export default function ClassLeaderboard({ classId }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((e) => (
-                    <tr key={e.student_id} className={e.rank === 1 && hasScores ? 'lb-top-row' : ''}>
+                  {tableRows.map((e) => (
+                    <tr
+                      key={e.student_id}
+                      className={
+                        e.is_top_student && hasScores ? 'lb-top-row' :
+                        e.is_self ? 'lb-self-row' :
+                        e.rank === 1 && hasScores ? 'lb-top-row' : ''
+                      }
+                    >
                       <td>
-                        {e.rank === 1 && hasScores ? '🥇' :
-                         e.rank === 2 ? '🥈' :
-                         e.rank === 3 ? '🥉' :
+                        {e.is_top_student && hasScores ? '🥇' :
+                         e.rank === 2 && !isStudent ? '🥈' :
+                         e.rank === 3 && !isStudent ? '🥉' :
                          e.rank}
                       </td>
-                      <td>{e.student_name}</td>
+                      <td>
+                        {e.student_name}
+                        {e.is_self && isStudent && e.is_top_student ? ' (Wowe — #1)' : ''}
+                        {e.is_self && isStudent && !e.is_top_student ? ' (Wowe)' : ''}
+                      </td>
                       <td>{e.quizzes_taken}</td>
                       <td>{e.total_score || 0} / {e.total_possible || 0}</td>
                       <td>
@@ -159,6 +186,11 @@ export default function ClassLeaderboard({ classId }) {
           {compositionEntries.length > 0 && (
             <div className="lb-composition" style={{ marginTop: isStudent || isTeacher ? 28 : 0 }}>
               <h3 className="lb-section-title">✍️ Inyandiko Nziza</h3>
+              {isStudent && (
+                <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 12px' }}>
+                  Ureba inyandiko yawe n&apos;uwatsinze gusa.
+                </p>
+              )}
               <div className="lb-composition-list">
                 {compositionEntries.map((entry, index) => (
                   <div key={entry.student_id || entry.composition_id} className="lb-composition-item">

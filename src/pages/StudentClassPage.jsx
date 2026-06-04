@@ -13,6 +13,8 @@ import ClassMomentsClassFold from '../components/classMoments/ClassMomentsClassF
 import '../components/classMoments/ClassMoments.css';
 import VerifiedBadge from '../components/VerifiedBadge';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
+import SharedNoteAttribution from '../components/SharedNoteAttribution';
+import ClassProfileBanner from '../components/ClassProfileBanner';
 import '../pages/Dashboard.css';
 
 const CLASSMATE_DEFAULT_AVATAR =
@@ -179,15 +181,14 @@ export default function StudentClassPage() {
 
       <main className="class-main wa-chat-screen">
         {cls && (
-          <div className="class-hero">
-            <div>
-              <h1>{cls.name}</h1>
-              {cls.subject && <div className="subject">📖 {cls.subject}</div>}
+          <>
+            <ClassProfileBanner cls={cls} classId={id} token={token} editable={false} />
+            <div className="class-hero" style={{ marginTop: 0 }}>
               <div className="class-dean-help-wrap">
                 <ClassDeanHelp token={token} classId={id} className={cls.name} />
               </div>
             </div>
-          </div>
+          </>
         )}
 
         <div className="tabs">
@@ -235,6 +236,7 @@ export default function StudentClassPage() {
               <div key={n.id} className="item-card item-card-stack">
                 <div className="item-card-body">
                   <h3>📄 {n.title}</h3>
+                  <SharedNoteAttribution note={n} />
                   {n.file_name && (
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6,
                       background: '#f0f2ff', border: '1px solid #c7d2fe', borderRadius: 6,

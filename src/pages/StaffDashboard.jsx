@@ -7,6 +7,7 @@ import AddStudentsModal from '../components/AddStudentsModal';
 import SchoolRequestBanner from '../components/SchoolRequestBanner';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import QuizTeacherShareInbox from '../components/QuizTeacherShareInbox';
+import NoteTeacherShareInbox from '../components/NoteTeacherShareInbox';
 import VerifiedBadge from '../components/VerifiedBadge';
 import StaffQuickActions from '../components/StaffQuickActions';
 import SchoolHubPanel from '../components/staff/SchoolHubPanel';
@@ -153,7 +154,10 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         />
         {hubTab !== 'chats' && <SchoolRequestBanner token={token} user={user} />}
         {hasSchool && hubTab === 'classes' && (
-          <QuizTeacherShareInbox token={token} classes={classes} onChange={loadClasses} />
+          <>
+            <QuizTeacherShareInbox token={token} classes={classes} onChange={loadClasses} />
+            <NoteTeacherShareInbox token={token} classes={classes} onChange={loadClasses} />
+          </>
         )}
         {isHeadTeacher && hubTab === 'school' && <SchoolRequestsPanel token={token} />}
 

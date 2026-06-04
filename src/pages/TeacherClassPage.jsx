@@ -7,7 +7,10 @@ import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import QuizShareModal from '../components/QuizShareModal';
 import QuizColleagueShareModal from '../components/QuizColleagueShareModal';
+import NoteColleagueShareModal from '../components/NoteColleagueShareModal';
+import SharedNoteAttribution from '../components/SharedNoteAttribution';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
+import ClassProfileBanner from '../components/ClassProfileBanner';
 import { buildShareItem } from '../utils/shareLinks';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
@@ -53,6 +56,7 @@ export default function TeacherClassPage() {
   const [quizShareModal, setQuizShareModal] = useState(null); // { quizTitle, className, shareUrl }
   const [quizShareBusy, setQuizShareBusy] = useState(null);
   const [colleagueShareQuiz, setColleagueShareQuiz] = useState(null); // { id, title }
+  const [colleagueShareNote, setColleagueShareNote] = useState(null); // { id, title }
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
   const [showNotifyParents, setShowNotifyParents] = useState(false);
   const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
@@ -236,10 +240,19 @@ export default function TeacherClassPage() {
 
       <main className="class-main wa-chat-screen">
         {cls && (
-          <div className="class-hero">
+          <>
+            <ClassProfileBanner
+              cls={cls}
+              classId={id}
+              token={token}
+              editable
+              onUpdated={(updated) => {
+                setCls(updated);
+                try { localStorage.setItem(`class_${id}`, JSON.stringify(updated)); } catch {}
+              }}
+            />
+            <div className="class-hero" style={{ marginTop: 0 }}>
             <div>
-              <h1>{cls.name}</h1>
-              {cls.subject && <div className="subject">📖 {cls.subject}</div>}
               <div className="class-dean-help-wrap">
                 <ClassDeanHelp token={token} classId={id} className={cls.name} isTeacher />
               </div>
@@ -249,6 +262,7 @@ export default function TeacherClassPage() {
               <div className="code-big">{cls.class_code}</div>
             </div>
           </div>
+          </>
         )}
 
         <div className="tabs">
@@ -345,6 +359,7 @@ export default function TeacherClassPage() {
               <div key={n.id} className="item-card">
                 <div className="item-card-body">
                   <h3>📄 {n.title}</h3>
+                  <SharedNoteAttribution note={n} />
                   {n.file_name && (
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6,
                       background: '#f0f2ff', border: '1px solid #c7d2fe', borderRadius: 6,
@@ -378,7 +393,19 @@ export default function TeacherClassPage() {
                   )}
                   <div className="meta" style={{ marginTop: 6 }}>{new Date(n.created_at).toLocaleDateString()}</div>
                 </div>
-                <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/notes/${n.id}`)}>Delete</button>
+                <div className="item-card-actions" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {!n.is_shared && (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setColleagueShareNote({ id: n.id, title: n.title })}
+                    >
+                      Share w/ teacher
+                    </button>
+                  )}
+                  {!n.is_shared && (
+                    <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/notes/${n.id}`)}>Delete</button>
+                  )}
+                </div>
               </div>
             ))}
           </>
@@ -854,6 +881,17 @@ export default function TeacherClassPage() {
           token={token}
           onClose={() => setColleagueShareQuiz(null)}
           onSent={() => showSuccess('Share request sent to your colleague.')}
+        />
+      )}
+
+      {colleagueShareNote && (
+        <NoteColleagueShareModal
+          classId={id}
+          noteId={colleagueShareNote.id}
+          noteTitle={colleagueShareNote.title}
+          token={token}
+          onClose={() => setColleagueShareNote(null)}
+          onSent={() => showSuccess('Note share request sent to your colleague.')}
         />
       )}
 
