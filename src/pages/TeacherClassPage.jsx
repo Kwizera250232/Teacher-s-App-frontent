@@ -6,6 +6,8 @@ import CreateQuizModal from '../components/CreateQuizModal';
 import DocPreviewModal from '../components/DocPreviewModal';
 import ShareModal from '../components/ShareModal';
 import QuizShareModal from '../components/QuizShareModal';
+import QuizColleagueShareModal from '../components/QuizColleagueShareModal';
+import SharedQuizAttribution from '../components/SharedQuizAttribution';
 import { buildShareItem } from '../utils/shareLinks';
 import ClassLeaderboard from '../components/ClassLeaderboard';
 import VerifiedBadge from '../components/VerifiedBadge';
@@ -50,6 +52,7 @@ export default function TeacherClassPage() {
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
   const [quizShareModal, setQuizShareModal] = useState(null); // { quizTitle, className, shareUrl }
   const [quizShareBusy, setQuizShareBusy] = useState(null);
+  const [colleagueShareQuiz, setColleagueShareQuiz] = useState(null); // { id, title }
   const [selectedStudent, setSelectedStudent] = useState(null); // popup
   const [showNotifyParents, setShowNotifyParents] = useState(false);
   const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
@@ -564,16 +567,22 @@ export default function TeacherClassPage() {
               <div key={q.id} className="item-card">
                 <div className="item-card-body">
                   <h3>❓ {q.title}</h3>
+                  <SharedQuizAttribution quiz={q} />
                   {q.description && <p>{q.description}</p>}
                   <div className="meta" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <span>{new Date(q.created_at).toLocaleDateString()}</span>
-                    {q.attempt_count > 0
-                      ? <span style={{ color: '#f59e0b', fontWeight: 600 }}>👁 {q.attempt_count} attempt{q.attempt_count > 1 ? 's' : ''} — locked</span>
-                      : <span style={{ color: '#22c55e', fontWeight: 600 }}>✏️ Editable</span>
-                    }
+                    {q.is_shared ? (
+                      <span style={{ color: '#0284c7', fontWeight: 600 }}>🔗 Shared into this class</span>
+                    ) : q.attempt_count > 0 ? (
+                      <span style={{ color: '#f59e0b', fontWeight: 600 }}>👁 {q.attempt_count} attempt{q.attempt_count > 1 ? 's' : ''} — locked</span>
+                    ) : (
+                      <span style={{ color: '#22c55e', fontWeight: 600 }}>✏️ Editable</span>
+                    )}
                   </div>
                 </div>
                 <div className="item-card-actions">
+                  {!q.is_shared && (
+                    <>
                   <button
                     className="btn btn-secondary btn-sm"
                     onClick={() => setEditQuiz(q)}
@@ -603,10 +612,19 @@ export default function TeacherClassPage() {
                     }}
                     disabled={quizShareBusy === q.id}
                   >
-                    {quizShareBusy === q.id ? '…' : 'Share'}
+                    {quizShareBusy === q.id ? '…' : 'Share link'}
                   </button>
-                  <button className="btn btn-secondary btn-sm" onClick={() => navigate(`${basePath}/classes/${id}/quizzes/${q.id}/results`)}>Results</button>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setColleagueShareQuiz({ id: q.id, title: q.title })}
+                    title="Share with another teacher at your school"
+                  >
+                    Share w/ teacher
+                  </button>
                   <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/quizzes/${q.id}`)}>Delete</button>
+                    </>
+                  )}
+                  <button className="btn btn-secondary btn-sm" onClick={() => navigate(`${basePath}/classes/${id}/quizzes/${q.id}/results`)}>Results</button>
                 </div>
               </div>
             ))}
@@ -825,6 +843,17 @@ export default function TeacherClassPage() {
           className={quizShareModal.className}
           shareUrl={quizShareModal.shareUrl}
           onClose={() => setQuizShareModal(null)}
+        />
+      )}
+
+      {colleagueShareQuiz && (
+        <QuizColleagueShareModal
+          classId={id}
+          quizId={colleagueShareQuiz.id}
+          quizTitle={colleagueShareQuiz.title}
+          token={token}
+          onClose={() => setColleagueShareQuiz(null)}
+          onSent={() => showSuccess('Share request sent to your colleague.')}
         />
       )}
 
