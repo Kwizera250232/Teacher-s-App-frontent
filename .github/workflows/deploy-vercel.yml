@@ -25,8 +25,19 @@ jobs:
         env:
           VITE_API_URL: https://studentapi.umunsi.com/api
 
+      - name: Detect Vercel token
+        id: vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy to Vercel (CLI)
-        if: ${{ secrets.VERCEL_TOKEN != '' }}
+        if: steps.vercel.outputs.has_token == 'true'
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -36,7 +47,7 @@ jobs:
           vercel-args: '--prod'
 
       - name: Vercel via Git integration
-        if: ${{ secrets.VERCEL_TOKEN == '' }}
+        if: steps.vercel.outputs.has_token != 'true'
         run: |
           echo "::notice::VERCEL_TOKEN not set — if Vercel is linked to this repo, production deploys on push to main automatically."
           echo "Check https://vercel.com/dashboard for deployment status."
