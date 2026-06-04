@@ -13,6 +13,7 @@ export default function Login() {
   const quizShare = searchParams.get('quiz_share') || '';
   const parentToken = searchParams.get('parent_token') || '';
   const [form, setForm] = useState({ email: '', password: '' });
+  const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -117,13 +118,25 @@ export default function Login() {
           </div>
           <div className="form-group">
             <label>Ijambo Banga</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
-              placeholder="••••••••"
-              required
-            />
+            <div className="auth-password-wrap">
+              <input
+                type={showPwd ? 'text' : 'password'}
+                autoComplete="current-password"
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                tabIndex={-1}
+                onClick={() => setShowPwd((v) => !v)}
+                aria-label={showPwd ? 'Hisha ijambobanga' : 'Erekana ijambobanga'}
+              >
+                {showPwd ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'Gutegereza...' : 'Injira'}
