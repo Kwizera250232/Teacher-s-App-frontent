@@ -116,6 +116,7 @@ export default function TakeGroupQuiz() {
           classId={classId}
           className={className || assignment.group_name}
           buttonClassName="class-dean-help-btn--header"
+          quizHint={assignment?.quiz_title ? `${assignment.quiz_title} (team ${assignment.group_name})` : ''}
         />
       </header>
       <main className="class-main">

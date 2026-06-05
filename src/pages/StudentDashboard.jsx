@@ -237,6 +237,13 @@ export default function StudentDashboard() {
                       <span className="arrow">→</span>
                     </div>
                   </Link>
+                  <Link
+                    to={`/student/classes/${cls.id}?tab=Groups`}
+                    className="class-card-note-btn"
+                    style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
+                  >
+                    👥 My groups
+                  </Link>
                   <button
                     type="button"
                     className="class-card-note-btn"
