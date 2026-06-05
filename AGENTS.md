@@ -38,6 +38,7 @@ This workspace contains two independent repos:
 - **Backend**: `npm run dev` (nodemon) in the backend repo. Requires PostgreSQL running and a `.env` with `DATABASE_URL`, `JWT_SECRET`, `PORT=5000`.
 - **Frontend**: `npm run dev -- --host` in the frontend repo. The `.env` has `VITE_API_URL=http://localhost:5000/api`.
 - **Build check**: `npm run build` in the frontend repo (Vite build).
+- **No `npm run lint` or automated frontend tests.** Use `npm run build` plus manual UI testing against a running backend.
 
 ### Web Push notifications
 
