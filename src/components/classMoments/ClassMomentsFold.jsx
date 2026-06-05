@@ -90,7 +90,7 @@ export default function ClassMomentsFold({
             />
           )}
           <p className="cm-fold-hint">
-            Homework and solo quizzes stay in each class card below.
+            Tap a class card above for homework, solo quizzes, and class chat.
           </p>
         </div>
       )}

@@ -222,17 +222,6 @@ export default function StudentDashboard() {
           <button type="button" onClick={() => setShowParentInvite(true)}>Get parent invite link</button>
         </div>
 
-        <div ref={classNowRef}>
-          <ClassMomentsFold
-            preview={momentPreview}
-            feedPath="/student/class-moments"
-            defaultOpen
-            token={token}
-            userRole={user?.role || 'student'}
-            classes={classes}
-          />
-        </div>
-
         <CompositionStatusFeed token={token} />
 
         {error && <div className="alert alert-error">{error}</div>}
@@ -294,6 +283,17 @@ export default function StudentDashboard() {
               ))}
             </div>
           )}
+
+          <div ref={classNowRef} className="student-class-now-under-classes">
+            <ClassMomentsFold
+              preview={momentPreview}
+              feedPath="/student/class-moments"
+              defaultOpen
+              token={token}
+              userRole={user?.role || 'student'}
+              classes={classes}
+            />
+          </div>
         </section>
 
       </main>

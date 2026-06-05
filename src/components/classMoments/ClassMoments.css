@@ -94,9 +94,13 @@
 }
 
 .cm-fold--class-now {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.student-class-now-under-classes {
+  margin-top: 0.5rem;
 }
 
 .cm-fold-body--class-now {
