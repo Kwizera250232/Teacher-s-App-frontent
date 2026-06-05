@@ -15,6 +15,7 @@ import RecordCatMarks from './pages/RecordCatMarks';
 import StudentClassPage from './pages/StudentClassPage';
 import TakeQuiz from './pages/TakeQuiz';
 import TakeGroupQuiz from './pages/TakeGroupQuiz';
+import StudentQuizReportsPage from './pages/StudentQuizReportsPage';
 import QuizResults from './pages/QuizResults';
 import AdminDashboard from './pages/AdminDashboard';
 import JoinClass from './pages/JoinClass';
@@ -156,6 +157,9 @@ function AppShell() {
                 } />
                 <Route path="/student/notes" element={
                   <ProtectedRoute role="student"><StudentNotes /></ProtectedRoute>
+                } />
+                <Route path="/student/quiz-reports" element={
+                  <ProtectedRoute role="student"><StudentQuizReportsPage /></ProtectedRoute>
                 } />
                 <Route path="/student/class-moments" element={
                   <ProtectedRoute role="student"><ClassMomentsPage backPath="/student/dashboard" /></ProtectedRoute>
