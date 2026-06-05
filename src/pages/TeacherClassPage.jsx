@@ -23,6 +23,7 @@ import CompositionStatusList from '../components/CompositionStatusList';
 import ClassDeanHelp from '../components/ClassDeanHelp';
 import GuestMarksPanel from '../components/GuestMarksPanel';
 import ClassPointsPanel from '../components/ClassPointsPanel';
+import AssignGroupQuizModal from '../components/AssignGroupQuizModal';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 
@@ -62,6 +63,8 @@ export default function TeacherClassPage() {
   const [showNotifyParents, setShowNotifyParents] = useState(false);
   const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
   const [parentInviteFor, setParentInviteFor] = useState(null);
+  const [assignGroupQuiz, setAssignGroupQuiz] = useState(null);
+  const [groupAssignments, setGroupAssignments] = useState([]);
 
   useEffect(() => {
     const urlTab = searchParams.get('tab');
@@ -86,6 +89,13 @@ export default function TeacherClassPage() {
   useEffect(() => {
     loadTab();
   }, [tab, id]);
+
+  useEffect(() => {
+    if (tab !== 'Quizzes' || !token) return;
+    api.get(`/classes/${id}/group-quizzes`, token)
+      .then((list) => setGroupAssignments(Array.isArray(list) ? list : []))
+      .catch(() => setGroupAssignments([]));
+  }, [tab, id, token, data]);
 
   const tCacheKey = (t) => `tclass_${id}_${t}`;
 
@@ -582,6 +592,25 @@ export default function TeacherClassPage() {
               <h2>Quizzes</h2>
               <button className="btn btn-primary" onClick={() => setShowQuizModal(true)}>+ Create Quiz</button>
             </div>
+            {groupAssignments.length > 0 && (
+              <div style={{ marginBottom: 16, background: '#f0f9ff', borderRadius: 10, padding: '12px 14px', border: '1px solid #bae6fd' }}>
+                <h3 style={{ margin: '0 0 10px', fontSize: 15, color: '#0369a1' }}>👥 Group quiz assignments</h3>
+                {groupAssignments.map((a) => (
+                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid #e0f2fe', fontSize: 14 }}>
+                    <span>
+                      <strong>{a.group_name}</strong> → {a.quiz_title}
+                    </span>
+                    <span style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: a.status === 'submitted' ? '#166534' : a.status === 'active' ? '#b45309' : '#64748b',
+                    }}>
+                      {a.status === 'submitted' ? `Done ${a.score}/${a.total}` : a.status === 'active' ? 'In progress' : 'Waiting'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <details style={{ marginBottom: 16, background: '#f8fafc', borderRadius: 10, padding: '10px 14px' }}>
               <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#075e54' }}>
                 👤 Guest marks from share links
@@ -647,6 +676,13 @@ export default function TeacherClassPage() {
                     title="Share with another teacher at your school"
                   >
                     Share w/ teacher
+                  </button>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setAssignGroupQuiz({ id: q.id, title: q.title })}
+                    title="Assign this quiz to student groups"
+                  >
+                    Assign to groups
                   </button>
                   <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/quizzes/${q.id}`)}>Delete</button>
                     </>
@@ -805,7 +841,12 @@ export default function TeacherClassPage() {
           token={token}
           classId={id}
           onClose={() => setShowQuizModal(false)}
-          onCreated={() => { setShowQuizModal(false); loadTab(); showSuccess('Quiz created!'); }}
+          onCreated={(quiz) => {
+            setShowQuizModal(false);
+            loadTab();
+            showSuccess('Quiz created!');
+            if (quiz?.id) setAssignGroupQuiz({ id: quiz.id, title: quiz.title });
+          }}
         />
       )}
       {editQuiz && (
@@ -841,6 +882,21 @@ export default function TeacherClassPage() {
           className={quizShareModal.className}
           shareUrl={quizShareModal.shareUrl}
           onClose={() => setQuizShareModal(null)}
+        />
+      )}
+
+      {assignGroupQuiz && (
+        <AssignGroupQuizModal
+          classId={id}
+          token={token}
+          quiz={assignGroupQuiz}
+          onClose={() => setAssignGroupQuiz(null)}
+          onAssigned={() => {
+            showSuccess('Quiz assigned to selected groups.');
+            api.get(`/classes/${id}/group-quizzes`, token)
+              .then((list) => setGroupAssignments(Array.isArray(list) ? list : []))
+              .catch(() => {});
+          }}
         />
       )}
 
