@@ -11,7 +11,8 @@ import MobileBottomBar from '../components/MobileBottomBar';
 import CompositionStatusPanel from '../components/CompositionStatusPanel';
 import CompositionStatusFeed from '../components/CompositionStatusFeed';
 import ClassMomentsFold from '../components/classMoments/ClassMomentsFold';
-import StudentGroupWorkFold, { groupWorkCountByClass } from '../components/StudentGroupWorkFold';
+import { groupWorkCountByClass } from '../components/StudentGroupWorkFold';
+import StudentNotificationsBell from '../components/StudentNotificationsBell';
 import { useClassMomentAlerts } from '../hooks/useClassMomentAlerts';
 import { classMomentDetailPath } from '../utils/classMomentPaths';
 import '../components/classMoments/ClassMoments.css';
@@ -20,7 +21,7 @@ import './MobileDashboard.css';
 
 const QUICK_NAV = (handlers) => [
   { id: 'classes', icon: '📚', label: 'Classes', onClick: handlers.scrollClasses, active: true },
-  { id: 'groups', icon: '👥', label: 'Groups', onClick: handlers.scrollGroups },
+  { id: 'classnow', icon: '📸', label: 'Class Now', onClick: handlers.scrollClassNow },
   { id: 'status', icon: '✍️', label: 'C. Status', onClick: handlers.openStatus },
   { id: 'notes', icon: '📝', label: 'Notes', to: '/student/notes' },
   { id: 'parent', icon: '👪', label: 'Parent', onClick: handlers.openParent },
@@ -43,7 +44,7 @@ export default function StudentDashboard() {
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
   const [groupAssignments, setGroupAssignments] = useState([]);
   const classesRef = useRef(null);
-  const groupWorkRef = useRef(null);
+  const classNowRef = useRef(null);
 
   const openStatus = () => {
     setStatusPickerOpen(false);
@@ -52,7 +53,7 @@ export default function StudentDashboard() {
 
   const navHandlers = {
     scrollClasses: () => classesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-    scrollGroups: () => groupWorkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    scrollClassNow: () => classNowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     openStatus,
     openParent: () => setShowParentInvite(true),
   };
@@ -174,6 +175,7 @@ export default function StudentDashboard() {
           <button type="button" className="btn btn-secondary btn-sm" onClick={openStatus}>✍️ C. Status</button>
           <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <Link to="/student/notes" className="btn btn-secondary btn-sm">📝 My Notes</Link>
+          <StudentNotificationsBell className="student-notif-bell--header" />
           <DonateButton />
           <button type="button" className="btn btn-sm btn-logout" onClick={logout}>Logout</button>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowParentInvite(true)}>
@@ -220,11 +222,18 @@ export default function StudentDashboard() {
           <button type="button" onClick={() => setShowParentInvite(true)}>Get parent invite link</button>
         </div>
 
-        <CompositionStatusFeed token={token} />
-
-        <div ref={groupWorkRef}>
-          <StudentGroupWorkFold token={token} classes={classes} />
+        <div ref={classNowRef}>
+          <ClassMomentsFold
+            preview={momentPreview}
+            feedPath="/student/class-moments"
+            defaultOpen
+            token={token}
+            userRole={user?.role || 'student'}
+            classes={classes}
+          />
         </div>
+
+        <CompositionStatusFeed token={token} />
 
         {error && <div className="alert alert-error">{error}</div>}
 
@@ -286,14 +295,6 @@ export default function StudentDashboard() {
             </div>
           )}
         </section>
-
-        <ClassMomentsFold
-          preview={momentPreview}
-          feedPath="/student/class-moments"
-          defaultOpen={false}
-          token={token}
-          userRole={user?.role || 'student'}
-        />
 
       </main>
 

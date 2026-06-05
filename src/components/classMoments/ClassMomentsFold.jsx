@@ -2,18 +2,20 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ClassMomentsHero from './ClassMomentsHero';
 import ClassMomentsDashboardBlock from './ClassMomentsDashboardBlock';
+import { StudentGroupWorkInside } from '../StudentGroupWorkFold';
 
 const STORAGE_KEY = 'student_class_updates_fold_open';
 
 /**
- * Collapsible classroom updates — kept below classes so it does not interrupt lesson work.
+ * Class Now — photos + group work in one fold, shown at top of student dashboard.
  */
 export default function ClassMomentsFold({
   preview,
   feedPath = '/student/class-moments',
-  defaultOpen = false,
+  defaultOpen = true,
   token,
   userRole = 'student',
+  classes = [],
 }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(() => {
@@ -38,13 +40,13 @@ export default function ClassMomentsFold({
     }
   }, [open]);
 
-  const summary =
-    count > 0
-      ? `${count} update${count === 1 ? '' : 's'} today`
-      : 'Photos and stories from your classes';
+  const summaryParts = [];
+  if (count > 0) summaryParts.push(`${count} moment${count === 1 ? '' : 's'} today`);
+  else summaryParts.push('Class photos & stories');
+  summaryParts.push('group work inside');
 
   return (
-    <section className="cm-fold" aria-label="Classroom updates">
+    <section className="cm-fold cm-fold--class-now" id="student-class-now" aria-label="Class Now">
       <div className="cm-fold-header">
         <button
           type="button"
@@ -56,8 +58,8 @@ export default function ClassMomentsFold({
             {open ? '▼' : '▶'}
           </span>
           <span className="cm-fold-toggle-text">
-            <span className="cm-fold-title">📸 Classroom updates</span>
-            <span className="cm-fold-sub">{summary}</span>
+            <span className="cm-fold-title">📸 Class Now</span>
+            <span className="cm-fold-sub">{summaryParts.join(' · ')}</span>
           </span>
           {unread > 0 && (
             <span className="cm-fold-badge">{unread} new</span>
@@ -72,11 +74,11 @@ export default function ClassMomentsFold({
         </button>
       </div>
       {open && (
-        <div className="cm-fold-body">
-          <p className="cm-fold-hint">
-            Optional — check when class is done. Homework and quizzes stay above in each class.
-          </p>
+        <div className="cm-fold-body cm-fold-body--class-now">
           <ClassMomentsHero preview={preview} feedPath={feedPath} />
+          {token && classes?.length > 0 && (
+            <StudentGroupWorkInside token={token} classes={classes} />
+          )}
           {token && (
             <ClassMomentsDashboardBlock
               token={token}
@@ -87,6 +89,9 @@ export default function ClassMomentsFold({
               showOpenAll={false}
             />
           )}
+          <p className="cm-fold-hint">
+            Homework and solo quizzes stay in each class card below.
+          </p>
         </div>
       )}
     </section>

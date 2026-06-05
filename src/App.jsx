@@ -34,7 +34,6 @@ import Footer from './components/Footer';
 import OfflineBanner from './components/OfflineBanner';
 import { InstallProvider } from './components/InstallPrompt';
 import { usePushNotifications } from './hooks/usePushNotifications';
-import StudentNotificationsBell from './components/StudentNotificationsBell';
 import './components/Footer.css';
 import './styles/WaAppShell.css';
 import './styles/WaChatShell.css';
@@ -58,7 +57,7 @@ function HomeRedirect() {
 function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   usePushNotifications(token);
   const hideFooter = /\/messages(\/|$)|\/parent\/dashboard|\/guest\//.test(location.pathname);
 
@@ -75,7 +74,6 @@ function AppShell() {
 
   return (
     <div className={`app-wa-shell${hideFooter ? ' app-wa-shell--chat-fullscreen' : ''}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {user?.role === 'student' && <StudentNotificationsBell className="student-notif-bell--fixed" />}
       <OfflineBanner />
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <Routes>

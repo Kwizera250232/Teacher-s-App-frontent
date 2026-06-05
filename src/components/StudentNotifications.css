@@ -190,21 +190,25 @@
   font-size: 14px;
 }
 
-/* Fixed bell on class pages (App shell) */
-.student-notif-bell--fixed {
-  position: fixed;
-  top: max(10px, env(safe-area-inset-top));
-  right: 12px;
-  z-index: 1100;
+.student-notif-bell--header .student-notif-panel {
+  z-index: 1300;
+}
+
+.wa-class-header .student-notif-bell--header {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.wa-class-header .student-notif-bell-btn {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.wa-class-header .student-notif-bell-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
 }
 
 @media (max-width: 640px) {
-  .student-notif-bell--fixed {
-    top: auto;
-    bottom: calc(72px + env(safe-area-inset-bottom));
-    right: 12px;
-  }
-
   .student-notif-backdrop {
     display: block;
     position: fixed;

@@ -126,6 +126,88 @@ export default function StudentGroupWorkFold({ token, classes }) {
   );
 }
 
+/** Group quizzes embedded inside Class Now fold (no separate outer section). */
+export function StudentGroupWorkInside({ token, classes, loading: parentLoading }) {
+  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!token || !classes?.length) {
+      setAssignments([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    Promise.all(
+      classes.map((cls) =>
+        api
+          .get(`/classes/${cls.id}/my-groups`, token)
+          .then((groups) => {
+            const rows = [];
+            for (const g of Array.isArray(groups) ? groups : []) {
+              for (const a of g.assignments || []) {
+                rows.push({
+                  ...a,
+                  class_id: cls.id,
+                  class_name: cls.name,
+                  group_name: g.name,
+                  members: g.members,
+                });
+              }
+            }
+            return rows;
+          })
+          .catch(() =>
+            api
+              .get(`/classes/${cls.id}/my-group-quizzes`, token)
+              .then((list) =>
+                (Array.isArray(list) ? list : []).map((a) => ({
+                  ...a,
+                  class_id: cls.id,
+                  class_name: cls.name,
+                }))
+              )
+              .catch(() => [])
+          )
+      )
+    )
+      .then((rows) => {
+        if (!cancelled) setAssignments(rows.flat());
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, classes]);
+
+  const busy = loading || parentLoading;
+  if (!busy && assignments.length === 0) return null;
+
+  const pending = assignments.filter((a) => a.status !== 'submitted').length;
+
+  return (
+    <div className="cm-fold-inner-block student-group-inside">
+      <div className="cm-fold-inner-head">
+        <h3 className="cm-fold-inner-title">👥 Group work</h3>
+        {pending > 0 && (
+          <span className="cm-fold-badge cm-fold-badge--amber">{pending} to do</span>
+        )}
+      </div>
+      {busy ? (
+        <p className="cm-fold-inner-muted">Loading group work…</p>
+      ) : (
+        <StudentGroupQuizCards
+          assignments={assignments}
+          showClassName
+          emptyMessage="No group quizzes assigned yet."
+        />
+      )}
+    </div>
+  );
+}
+
 export function groupWorkCountByClass(assignments) {
   const map = {};
   for (const a of assignments || []) {
