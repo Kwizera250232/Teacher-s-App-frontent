@@ -27,6 +27,13 @@
 - Teacher class **Students** tab: `ClassPointsPanel.jsx` — award +1 skills, whole class / groups, activity feed, random, timer, select-multiple.
 - Uses existing UClass avatar roster styling (`Dashboard.css` `.class-roster-*`); requires backend `classroom_points` on VPS.
 
+### Student achievements (Hall of Fame)
+
+- Earn titles on quiz submit; **AchievementCelebrateModal** picks a crown visible on leaderboard/profile.
+- **Group room only:** `GroupAchievementHub` (feed, applaud/congratulate/celebrate, weekly/monthly Hall of Fame).
+- **CrownPickerSection** inside team detail + profile to change worn title anytime.
+- Hard-refresh after deploy for latest `sw.js` cache version.
+
 ### Architecture
 
 This workspace contains two independent repos:
