@@ -14,12 +14,13 @@ import '../components/classMoments/ClassMoments.css';
 import VerifiedBadge from '../components/VerifiedBadge';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
 import SharedNoteAttribution from '../components/SharedNoteAttribution';
+import StudentGroupQuizCards from '../components/StudentGroupQuizCards';
 import '../pages/Dashboard.css';
 
 const CLASSMATE_DEFAULT_AVATAR =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2325d366'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
 
-const TABS = ['Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Groups', 'Leaderboard', 'Discussion', 'Classmates'];
+const TABS = ['Feed', 'Groups', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Classmates'];
 
 export default function StudentClassPage() {
   const { id } = useParams();
@@ -428,48 +429,11 @@ export default function StudentClassPage() {
         )}
 
         {tab === 'Groups' && (
-          groupQuizzes.length === 0
-            ? (
-              <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>
-                <p>No group quizzes assigned yet.</p>
-                <p style={{ fontSize: 13, marginTop: 8 }}>When your teacher assigns a quiz to your group, open it here and start working together.</p>
-              </div>
-            )
-            : groupQuizzes.map((a) => (
-              <div key={a.id} className="item-card" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                <div className="item-card-body">
-                  <h3>👥 {a.group_name}</h3>
-                  <p style={{ margin: '4px 0', fontWeight: 600 }}>❓ {a.quiz_title}</p>
-                  {a.quiz_description && <p style={{ fontSize: 14, color: '#64748b' }}>{a.quiz_description}</p>}
-                  <div className="meta" style={{ marginTop: 8 }}>
-                    {a.status === 'submitted' && (
-                      <span style={{ color: '#166534', fontWeight: 700 }}>Submitted · {a.score}/{a.total}</span>
-                    )}
-                    {a.status === 'active' && (
-                      <span style={{ color: '#b45309', fontWeight: 700 }}>
-                        In progress{a.started_by_name ? ` · started by ${a.started_by_name.split(' ')[0]}` : ''}
-                      </span>
-                    )}
-                    {a.status === 'assigned' && (
-                      <span style={{ color: '#64748b', fontWeight: 600 }}>Ready — open and start as a group</span>
-                    )}
-                  </div>
-                  {a.members?.length > 0 && (
-                    <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
-                      Members: {a.members.map((m) => m.name.split(' ')[0]).join(', ')}
-                    </p>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  style={{ alignSelf: 'flex-start', marginTop: 8 }}
-                  onClick={() => navigate(`/student/classes/${id}/group-quizzes/${a.id}`)}
-                >
-                  {a.status === 'submitted' ? 'View result' : a.status === 'active' ? 'Continue group work' : 'Open group & start'}
-                </button>
-              </div>
-            ))
+          <StudentGroupQuizCards
+            assignments={groupQuizzes}
+            classId={id}
+            emptyMessage="No group quizzes assigned yet. When your teacher assigns a quiz to your group, it will appear here."
+          />
         )}
 
         {tab === 'Quizzes' && (
