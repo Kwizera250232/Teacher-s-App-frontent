@@ -39,5 +39,9 @@ export function studentNotificationPath(n, role = 'student') {
     group_quiz: 'Groups',
   };
   const tab = tabMap[n.type];
+  const groupId = payload.group_id;
+  if (tab === 'Groups' && groupId) {
+    return `/student/classes/${classId}?tab=Groups&group=${groupId}`;
+  }
   return tab ? `/student/classes/${classId}?tab=${encodeURIComponent(tab)}` : `/student/classes/${classId}`;
 }

@@ -11,7 +11,6 @@ import MobileBottomBar from '../components/MobileBottomBar';
 import CompositionStatusPanel from '../components/CompositionStatusPanel';
 import CompositionStatusFeed from '../components/CompositionStatusFeed';
 import ClassMomentsFold from '../components/classMoments/ClassMomentsFold';
-import { groupWorkCountByClass } from '../components/StudentGroupWorkFold';
 import StudentNotificationsBell from '../components/StudentNotificationsBell';
 import { useClassMomentAlerts } from '../hooks/useClassMomentAlerts';
 import { classMomentDetailPath } from '../utils/classMomentPaths';
@@ -42,7 +41,6 @@ export default function StudentDashboard() {
   const [showParentInvite, setShowParentInvite] = useState(false);
   const [showCompositionStatus, setShowCompositionStatus] = useState(false);
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
-  const [groupAssignments, setGroupAssignments] = useState([]);
   const classesRef = useRef(null);
   const classNowRef = useRef(null);
 
@@ -82,35 +80,6 @@ export default function StudentDashboard() {
   useEffect(() => { loadClasses(); }, []);
 
   useEffect(() => {
-    if (!token || !classes.length) {
-      setGroupAssignments([]);
-      return;
-    }
-    Promise.all(
-      classes.map((cls) =>
-        api
-          .get(`/classes/${cls.id}/my-groups`, token)
-          .then((groups) => {
-            const rows = [];
-            for (const g of Array.isArray(groups) ? groups : []) {
-              for (const a of g.assignments || []) {
-                rows.push({ ...a, class_id: cls.id, class_name: cls.name, group_name: g.name, members: g.members });
-              }
-            }
-            return rows;
-          })
-          .catch(() =>
-            api
-              .get(`/classes/${cls.id}/my-group-quizzes`, token)
-              .then((list) =>
-                (Array.isArray(list) ? list : []).map((a) => ({ ...a, class_id: cls.id, class_name: cls.name }))
-              )
-              .catch(() => [])
-          )
-      )
-    ).then((rows) => setGroupAssignments(rows.flat()));
-  }, [token, classes]);
-  useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
   }, []);
   useEffect(() => {
@@ -147,8 +116,6 @@ export default function StudentDashboard() {
   };
 
   const quickNavItems = QUICK_NAV(navHandlers);
-  const groupWorkByClass = groupWorkCountByClass(groupAssignments);
-
   return (
     <div className="dashboard student-dashboard-classic">
       <header className="dash-header dash-header--student">
@@ -250,9 +217,7 @@ export default function StudentDashboard() {
               {classes.map(cls => (
                 <div key={cls.id} className="class-card-wrap class-card-wrap--square">
                   <Link
-                    to={groupWorkByClass[cls.id]
-                      ? `/student/classes/${cls.id}?tab=Groups`
-                      : `/student/classes/${cls.id}`}
+                    to={`/student/classes/${cls.id}`}
                     className="class-card class-card--square"
                   >
                     <div className="class-card-icon">{(cls.name || 'C').slice(0, 1)}</div>
@@ -268,7 +233,7 @@ export default function StudentDashboard() {
                     )}
                     <p className="class-teacher">👨‍🏫 {cls.teacher_name || 'Teacher'}</p>
                     <div className="class-card-footer">
-                      <span>{groupWorkByClass[cls.id] ? `👥 ${groupWorkByClass[cls.id]} group quiz` : 'Open'}</span>
+                      <span>Open class</span>
                       <span className="arrow">→</span>
                     </div>
                   </Link>
@@ -291,7 +256,6 @@ export default function StudentDashboard() {
               defaultOpen
               token={token}
               userRole={user?.role || 'student'}
-              classes={classes}
             />
           </div>
         </section>

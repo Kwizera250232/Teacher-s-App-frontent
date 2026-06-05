@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ClassMomentsHero from './ClassMomentsHero';
 import ClassMomentsDashboardBlock from './ClassMomentsDashboardBlock';
-import { StudentGroupWorkInside } from '../StudentGroupWorkFold';
 
 const STORAGE_KEY = 'student_class_updates_fold_open';
 
@@ -15,7 +14,6 @@ export default function ClassMomentsFold({
   defaultOpen = true,
   token,
   userRole = 'student',
-  classes = [],
 }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(() => {
@@ -40,10 +38,10 @@ export default function ClassMomentsFold({
     }
   }, [open]);
 
-  const summaryParts = [];
-  if (count > 0) summaryParts.push(`${count} moment${count === 1 ? '' : 's'} today`);
-  else summaryParts.push('Class photos & stories');
-  summaryParts.push('group work inside');
+  const summary =
+    count > 0
+      ? `${count} moment${count === 1 ? '' : 's'} today`
+      : 'Class photos & stories from your school';
 
   return (
     <section className="cm-fold cm-fold--class-now" id="student-class-now" aria-label="Class Now">
@@ -59,7 +57,7 @@ export default function ClassMomentsFold({
           </span>
           <span className="cm-fold-toggle-text">
             <span className="cm-fold-title">📸 Class Now</span>
-            <span className="cm-fold-sub">{summaryParts.join(' · ')}</span>
+            <span className="cm-fold-sub">{summary}</span>
           </span>
           {unread > 0 && (
             <span className="cm-fold-badge">{unread} new</span>
@@ -76,9 +74,6 @@ export default function ClassMomentsFold({
       {open && (
         <div className="cm-fold-body cm-fold-body--class-now">
           <ClassMomentsHero preview={preview} feedPath={feedPath} />
-          {token && classes?.length > 0 && (
-            <StudentGroupWorkInside token={token} classes={classes} />
-          )}
           {token && (
             <ClassMomentsDashboardBlock
               token={token}
@@ -90,7 +85,7 @@ export default function ClassMomentsFold({
             />
           )}
           <p className="cm-fold-hint">
-            Tap a class card above for homework, solo quizzes, and class chat.
+            Group quizzes are inside each class → <strong>Groups</strong> tab. Homework and solo quizzes are on each class card.
           </p>
         </div>
       )}
