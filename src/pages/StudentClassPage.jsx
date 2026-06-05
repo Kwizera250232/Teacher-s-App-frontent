@@ -15,6 +15,7 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
 import SharedNoteAttribution from '../components/SharedNoteAttribution';
 import StudentMyGroupsPanel from '../components/StudentMyGroupsPanel';
+import StudentNotificationsBell from '../components/StudentNotificationsBell';
 import '../pages/Dashboard.css';
 
 const CLASSMATE_DEFAULT_AVATAR =
@@ -225,6 +226,7 @@ export default function StudentClassPage() {
           <strong>{cls?.name || 'Class'}</strong>
           <span>{cls?.subject || 'UClass'}</span>
         </div>
+        <StudentNotificationsBell className="student-notif-bell--header wa-class-notif" />
       </header>
 
       <main className="class-main wa-chat-screen">
