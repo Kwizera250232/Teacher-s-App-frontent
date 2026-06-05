@@ -35,6 +35,7 @@ export default function ClassPointsPanel({
   onSuccess,
   onStudentClick,
   onParentInvite,
+  onAssignWorkToGroup,
 }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -289,6 +290,11 @@ export default function ClassPointsPanel({
         <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowGroupModal(true)}>
           Add group
         </button>
+        {onAssignWorkToGroup && (
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => onAssignWorkToGroup()}>
+            Assign work to group
+          </button>
+        )}
         <button type="button" className="btn btn-outline btn-sm" onClick={resetPoints}>
           Reset points
         </button>
@@ -350,18 +356,33 @@ export default function ClassPointsPanel({
           {view === 'groups' && (
             <div className="class-roster-grid">
               {groups.map((g) => (
-                <div
-                  key={g.id}
-                  className="class-roster-card"
-                  onClick={() => setGroupAward(g)}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <div className="class-roster-avatar class-roster-avatar--group">
-                    {(g.points || 0) > 0 && <span className="class-roster-point-badge">{g.points}</span>}
-                    {g.student_ids?.length || 0}
+                <div key={g.id} className="class-roster-card" style={{ position: 'relative' }}>
+                  <div
+                    onClick={() => setGroupAward(g)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(ev) => ev.key === 'Enter' && setGroupAward(g)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="class-roster-avatar class-roster-avatar--group">
+                      {(g.points || 0) > 0 && <span className="class-roster-point-badge">{g.points}</span>}
+                      {g.student_ids?.length || 0}
+                    </div>
+                    <div className="class-roster-name">{g.name}</div>
                   </div>
-                  <div className="class-roster-name">{g.name}</div>
+                  {onAssignWorkToGroup && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      style={{ fontSize: 10, padding: '2px 6px', marginTop: 4, width: '100%' }}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        onAssignWorkToGroup(g);
+                      }}
+                    >
+                      Assign quiz
+                    </button>
+                  )}
                 </div>
               ))}
               {!groups.length && (

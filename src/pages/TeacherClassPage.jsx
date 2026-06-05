@@ -23,7 +23,7 @@ import CompositionStatusList from '../components/CompositionStatusList';
 import ClassDeanHelp from '../components/ClassDeanHelp';
 import GuestMarksPanel from '../components/GuestMarksPanel';
 import ClassPointsPanel from '../components/ClassPointsPanel';
-import AssignGroupQuizModal from '../components/AssignGroupQuizModal';
+import AssignWorkToGroupModal from '../components/AssignWorkToGroupModal';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 
@@ -63,7 +63,7 @@ export default function TeacherClassPage() {
   const [showNotifyParents, setShowNotifyParents] = useState(false);
   const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
   const [parentInviteFor, setParentInviteFor] = useState(null);
-  const [assignGroupQuiz, setAssignGroupQuiz] = useState(null);
+  const [assignWorkToGroup, setAssignWorkToGroup] = useState(null); // null | { quiz?, groupIds? }
   const [groupAssignments, setGroupAssignments] = useState([]);
 
   useEffect(() => {
@@ -588,13 +588,18 @@ export default function TeacherClassPage() {
         {/* Quizzes */}
         {tab === 'Quizzes' && (
           <>
-            <div className="section-header">
+            <div className="section-header" style={{ flexWrap: 'wrap', gap: 8 }}>
               <h2>Quizzes</h2>
-              <button className="btn btn-primary" onClick={() => setShowQuizModal(true)}>+ Create Quiz</button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setAssignWorkToGroup({})}>
+                  👥 Assign work to group
+                </button>
+                <button type="button" className="btn btn-primary" onClick={() => setShowQuizModal(true)}>+ Create Quiz</button>
+              </div>
             </div>
             {groupAssignments.length > 0 && (
               <div style={{ marginBottom: 16, background: '#f0f9ff', borderRadius: 10, padding: '12px 14px', border: '1px solid #bae6fd' }}>
-                <h3 style={{ margin: '0 0 10px', fontSize: 15, color: '#0369a1' }}>👥 Group quiz assignments</h3>
+                <h3 style={{ margin: '0 0 10px', fontSize: 15, color: '#0369a1' }}>👥 Group work assigned</h3>
                 {groupAssignments.map((a) => (
                   <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid #e0f2fe', fontSize: 14 }}>
                     <span>
@@ -679,10 +684,10 @@ export default function TeacherClassPage() {
                   </button>
                   <button
                     className="btn btn-secondary btn-sm"
-                    onClick={() => setAssignGroupQuiz({ id: q.id, title: q.title })}
-                    title="Assign this quiz to student groups"
+                    onClick={() => setAssignWorkToGroup({ quiz: { id: q.id, title: q.title } })}
+                    title="Assign this quiz to a group to do and submit together"
                   >
-                    Assign to groups
+                    Assign work to group
                   </button>
                   <button className="btn btn-danger btn-sm" onClick={() => deleteItem(`/classes/${id}/quizzes/${q.id}`)}>Delete</button>
                     </>
@@ -755,6 +760,9 @@ export default function TeacherClassPage() {
               onSuccess={(msg) => showSuccess(msg)}
               onStudentClick={setSelectedStudent}
               onParentInvite={setParentInviteFor}
+              onAssignWorkToGroup={(group) => setAssignWorkToGroup({
+                groupIds: group ? [group.id] : undefined,
+              })}
             />
           </div>
         )}
@@ -845,7 +853,7 @@ export default function TeacherClassPage() {
             setShowQuizModal(false);
             loadTab();
             showSuccess('Quiz created!');
-            if (quiz?.id) setAssignGroupQuiz({ id: quiz.id, title: quiz.title });
+            if (quiz?.id) setAssignWorkToGroup({ quiz: { id: quiz.id, title: quiz.title } });
           }}
         />
       )}
@@ -885,14 +893,20 @@ export default function TeacherClassPage() {
         />
       )}
 
-      {assignGroupQuiz && (
-        <AssignGroupQuizModal
+      {assignWorkToGroup && (
+        <AssignWorkToGroupModal
           classId={id}
           token={token}
-          quiz={assignGroupQuiz}
-          onClose={() => setAssignGroupQuiz(null)}
+          quiz={assignWorkToGroup.quiz}
+          presetGroupIds={assignWorkToGroup.groupIds}
+          onClose={() => setAssignWorkToGroup(null)}
+          onCreateQuiz={() => {
+            setAssignWorkToGroup(null);
+            setTab('Quizzes');
+            setShowQuizModal(true);
+          }}
           onAssigned={() => {
-            showSuccess('Quiz assigned to selected groups.');
+            showSuccess('Work assigned to selected groups.');
             api.get(`/classes/${id}/group-quizzes`, token)
               .then((list) => setGroupAssignments(Array.isArray(list) ? list : []))
               .catch(() => {});
