@@ -122,7 +122,12 @@ export default function StudentMyGroupsPanel({
             {g && <GroupStatsBar group={g} />}
 
             <div className="student-group-dean-wrap">
-              <ClassDeanHelp token={token} classId={classId} className={className} />
+              <ClassDeanHelp
+                token={token}
+                classId={classId}
+                className={className}
+                quizHint={g?.name ? `Team ${g.name} — ask about group quiz work` : ''}
+              />
             </div>
 
             {detailError && <div className="alert alert-error">{detailError}</div>}
