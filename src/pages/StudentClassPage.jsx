@@ -81,31 +81,10 @@ export default function StudentClassPage() {
         setGroupsError('');
       } catch (e) {
         if (/404|not found/i.test(String(e.message))) {
-          try {
-            const legacy = await api.get(`/classes/${id}/my-group-quizzes`, token);
-            const list = Array.isArray(legacy) ? legacy : [];
-            const byGroup = {};
-            for (const a of list) {
-              const gid = a.group_id;
-              if (!byGroup[gid]) {
-                byGroup[gid] = {
-                  id: gid,
-                  name: a.group_name || `Group ${gid}`,
-                  members: a.members || [],
-                  assignments: [],
-                };
-              }
-              byGroup[gid].assignments.push(a);
-            }
-            setMyGroups(Object.values(byGroup));
-            setGroupsError('');
-          } catch (e2) {
-            if (navigator.onLine) setGroupsError(e2.message);
-            setMyGroups([]);
-          }
-        } else if (navigator.onLine) {
-          setGroupsError(e.message);
+          setGroupsError('Groups are not on the server yet — ask your teacher to deploy the latest API.');
           setMyGroups([]);
+        } else {
+          setGroupsError(e.message);
         }
       } finally {
         setGroupsLoading(false);
@@ -465,8 +444,11 @@ export default function StudentClassPage() {
           <StudentMyGroupsPanel
             groups={myGroups}
             classId={id}
+            className={cls?.name}
+            token={token}
             loading={groupsLoading}
             error={groupsError}
+            initialGroupId={searchParams.get('group')}
           />
         )}
 
