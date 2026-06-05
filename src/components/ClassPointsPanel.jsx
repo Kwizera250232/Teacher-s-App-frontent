@@ -158,6 +158,10 @@ export default function ClassPointsPanel({
   const createGroup = async (e) => {
     e.preventDefault();
     if (!groupName.trim()) return;
+    if (!groupPick.size) {
+      onError?.('Select at least one student for this group.');
+      return;
+    }
     setBusy(true);
     try {
       await api.post(
@@ -489,8 +493,8 @@ export default function ClassPointsPanel({
               <div className="class-roster-grid" style={{ marginBottom: 12 }}>
                 {students.map((s, i) => renderStudentCard(s, i, { showParentInvite: false, pickForGroup: true }))}
               </div>
-              <button type="submit" className="btn btn-primary" disabled={busy || !groupName.trim()}>
-                Create group
+              <button type="submit" className="btn btn-primary" disabled={busy || !groupName.trim() || !groupPick.size}>
+                Create group ({groupPick.size} selected)
               </button>
             </form>
           </div>

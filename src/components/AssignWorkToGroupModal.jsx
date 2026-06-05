@@ -156,31 +156,37 @@ export default function AssignWorkToGroupModal({
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
-                  {groups.map((g) => (
-                    <label
-                      key={g.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        padding: '10px 12px',
-                        border: selectedGroups.has(g.id) ? '2px solid #667eea' : '1px solid #e5e7eb',
-                        borderRadius: 10,
-                        cursor: 'pointer',
-                        background: selectedGroups.has(g.id) ? '#f8f9ff' : '#fff',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedGroups.has(g.id)}
-                        onChange={() => toggleGroup(g.id)}
-                      />
-                      <span style={{ fontWeight: 600 }}>{g.name}</span>
-                      <span style={{ fontSize: 12, color: '#888' }}>
-                        {g.student_ids?.length || 0} students
-                      </span>
-                    </label>
-                  ))}
+                  {groups.map((g) => {
+                    const memberCount = g.student_ids?.length || 0;
+                    const empty = memberCount === 0;
+                    return (
+                      <label
+                        key={g.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '10px 12px',
+                          border: selectedGroups.has(g.id) ? '2px solid #667eea' : '1px solid #e5e7eb',
+                          borderRadius: 10,
+                          cursor: empty ? 'not-allowed' : 'pointer',
+                          background: selectedGroups.has(g.id) ? '#f8f9ff' : '#fff',
+                          opacity: empty ? 0.55 : 1,
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedGroups.has(g.id)}
+                          disabled={empty}
+                          onChange={() => !empty && toggleGroup(g.id)}
+                        />
+                        <span style={{ fontWeight: 600 }}>{g.name}</span>
+                        <span style={{ fontSize: 12, color: empty ? '#dc2626' : '#888' }}>
+                          {empty ? 'No students — add members first' : `${memberCount} students`}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -88,11 +88,24 @@ export default function StudentDashboard() {
     Promise.all(
       classes.map((cls) =>
         api
-          .get(`/classes/${cls.id}/my-group-quizzes`, token)
-          .then((list) =>
-            (Array.isArray(list) ? list : []).map((a) => ({ ...a, class_id: cls.id, class_name: cls.name }))
+          .get(`/classes/${cls.id}/my-groups`, token)
+          .then((groups) => {
+            const rows = [];
+            for (const g of Array.isArray(groups) ? groups : []) {
+              for (const a of g.assignments || []) {
+                rows.push({ ...a, class_id: cls.id, class_name: cls.name, group_name: g.name, members: g.members });
+              }
+            }
+            return rows;
+          })
+          .catch(() =>
+            api
+              .get(`/classes/${cls.id}/my-group-quizzes`, token)
+              .then((list) =>
+                (Array.isArray(list) ? list : []).map((a) => ({ ...a, class_id: cls.id, class_name: cls.name }))
+              )
+              .catch(() => [])
           )
-          .catch(() => [])
       )
     ).then((rows) => setGroupAssignments(rows.flat()));
   }, [token, classes]);

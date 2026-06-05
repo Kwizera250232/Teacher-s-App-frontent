@@ -14,7 +14,7 @@ import '../components/classMoments/ClassMoments.css';
 import VerifiedBadge from '../components/VerifiedBadge';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
 import SharedNoteAttribution from '../components/SharedNoteAttribution';
-import StudentGroupQuizCards from '../components/StudentGroupQuizCards';
+import StudentMyGroupsPanel from '../components/StudentMyGroupsPanel';
 import '../pages/Dashboard.css';
 
 const CLASSMATE_DEFAULT_AVATAR =
@@ -40,7 +40,9 @@ export default function StudentClassPage() {
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
   const [classmates, setClassmates] = useState([]);
   const [selectedPerson, setSelectedPerson] = useState(null);
-  const [groupQuizzes, setGroupQuizzes] = useState([]);
+  const [myGroups, setMyGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState('');
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
 
   useEffect(() => {
@@ -71,12 +73,41 @@ export default function StudentClassPage() {
     setError('');
     if (tab === 'Leaderboard' || tab === 'Feed') return;
     if (tab === 'Groups') {
+      setGroupsLoading(true);
       try {
-        const res = await api.get(`/classes/${id}/my-group-quizzes`, token);
-        setGroupQuizzes(Array.isArray(res) ? res : []);
+        const res = await api.get(`/classes/${id}/my-groups`, token);
+        setMyGroups(Array.isArray(res) ? res : []);
+        setGroupsError('');
       } catch (e) {
-        if (navigator.onLine) setError(e.message);
-        setGroupQuizzes([]);
+        if (/404|not found/i.test(String(e.message))) {
+          try {
+            const legacy = await api.get(`/classes/${id}/my-group-quizzes`, token);
+            const list = Array.isArray(legacy) ? legacy : [];
+            const byGroup = {};
+            for (const a of list) {
+              const gid = a.group_id;
+              if (!byGroup[gid]) {
+                byGroup[gid] = {
+                  id: gid,
+                  name: a.group_name || `Group ${gid}`,
+                  members: a.members || [],
+                  assignments: [],
+                };
+              }
+              byGroup[gid].assignments.push(a);
+            }
+            setMyGroups(Object.values(byGroup));
+            setGroupsError('');
+          } catch (e2) {
+            if (navigator.onLine) setGroupsError(e2.message);
+            setMyGroups([]);
+          }
+        } else if (navigator.onLine) {
+          setGroupsError(e.message);
+          setMyGroups([]);
+        }
+      } finally {
+        setGroupsLoading(false);
       }
       return;
     }
@@ -429,10 +460,11 @@ export default function StudentClassPage() {
         )}
 
         {tab === 'Groups' && (
-          <StudentGroupQuizCards
-            assignments={groupQuizzes}
+          <StudentMyGroupsPanel
+            groups={myGroups}
             classId={id}
-            emptyMessage="No group quizzes assigned yet. When your teacher assigns a quiz to your group, it will appear here."
+            loading={groupsLoading}
+            error={groupsError}
           />
         )}
 
