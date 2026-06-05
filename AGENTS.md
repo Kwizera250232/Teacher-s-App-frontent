@@ -22,6 +22,11 @@
 - Guest profile: `/guest/profile` — avatar, phone, quiz stats, donate banner (not full student profile).
 - Guests are not on class roster, leaderboard, discussions, or classmates.
 
+### Class behavior points (Students tab)
+
+- Teacher class **Students** tab: `ClassPointsPanel.jsx` — award +1 skills, whole class / groups, activity feed, random, timer, select-multiple.
+- Uses existing UClass avatar roster styling (`Dashboard.css` `.class-roster-*`); requires backend `classroom_points` on VPS.
+
 ### Architecture
 
 This workspace contains two independent repos:
