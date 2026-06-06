@@ -42,9 +42,10 @@ This workspace contains two independent repos:
 
 ### Running the apps
 
-- **Backend**: `npm run dev` (nodemon) in the backend repo. Requires PostgreSQL running and a `.env` with `DATABASE_URL`, `JWT_SECRET`, `PORT=5000`.
-- **Frontend**: `npm run dev -- --host` in the frontend repo. The `.env` has `VITE_API_URL=http://localhost:5000/api`.
+- **Backend**: `npm run dev` (nodemon) in the backend repo. Requires PostgreSQL running and a `.env` with `DATABASE_URL`, `JWT_SECRET`, `PORT=5000`. See backend `AGENTS.md` for Postgres startup (Docker vs system service).
+- **Frontend**: `npm run dev -- --host` in the frontend repo. The `.env` has `VITE_API_URL=http://localhost:5000/api`. Start the backend first so login/API calls succeed.
 - **Build check**: `npm run build` in the frontend repo (Vite build).
+- **Smoke test**: `npm test` in the backend repo (module load + `/api/health` when the server is running).
 
 ### Web Push notifications
 
