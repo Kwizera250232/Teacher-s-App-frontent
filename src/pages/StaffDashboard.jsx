@@ -117,7 +117,6 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           <span className="phub-logo">UClass</span>
           <span className="phub-sub">{roleLabel}</span>
         </div>
-        <AppNotificationsBell className="student-notif-bell--header staff-header-bell-mobile" basePath={basePath} />
         <MobileStaffHeader
           basePath={basePath}
           user={user}
