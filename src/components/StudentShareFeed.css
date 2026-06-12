@@ -1,5 +1,5 @@
 /* ── Student Share Feed ───────────────────────────────── */
-.sf-feed { max-width: 580px; margin: 0 auto; }
+.sf-feed { max-width: none; width: 100%; margin: 0; }
 
 /* Tabs */
 .sf-tabs {

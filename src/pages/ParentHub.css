@@ -74,7 +74,7 @@
   max-width: none;
   height: calc(100dvh - 128px);
 }
-.phub-panel { padding: 16px 20px; max-width: 720px; margin: 0 auto; overflow-y: auto; height: calc(100dvh - 120px); }
+.phub-panel { padding: 16px 20px; max-width: none; width: 100%; margin: 0; overflow-y: auto; height: calc(100dvh - 120px); box-sizing: border-box; }
 
 .phub-card {
   background: #fff;
@@ -171,9 +171,9 @@
 
 .staff-hub-page .dash-main {
   flex: 1;
-  max-width: 960px;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .staff-hub-nav {

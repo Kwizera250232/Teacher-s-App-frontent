@@ -1,9 +1,11 @@
 /* Today's Class Moments — premium story feed */
 
 .cm-page {
-  max-width: 560px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
   padding: 0 0 5rem;
+  box-sizing: border-box;
 }
 
 .cm-hero {
@@ -598,8 +600,10 @@
 
 .phub-moments-hero-wrap {
   padding: 0 12px 8px;
-  max-width: 720px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
@@ -635,7 +639,7 @@
 }
 .cm-wa-header h1 { margin: 8px 0 0; font-size: 1.1rem; font-weight: 700; }
 .cm-wa-header .btn-secondary { background: rgba(255, 255, 255, 0.2); color: #fff; border: none; }
-.cm-wa-feed-wrap { max-width: 420px; margin: 0 auto; width: 100%; }
+.cm-wa-feed-wrap { max-width: none; margin: 0; width: 100%; }
 .cm-wa-feed { display: flex; flex-direction: column; gap: 10px; padding-bottom: 1rem; }
 .cm-wa-row { display: flex; align-items: flex-start; gap: 8px; animation: cmWaFade 0.35s ease both; }
 .cm-wa-row--pending { opacity: 0.95; }
@@ -783,8 +787,8 @@
 /* —— Facebook feed + WhatsApp photo hybrid —— */
 .cm-soc-feed-wrap,
 .cm-wa-feed-wrap {
-  max-width: 480px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   width: 100%;
   padding: 4px 0 12px;
 }
