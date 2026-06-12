@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { dashboardPath } from '../utils/roles';
-import { schoolDomainFromName, signupEmailDomain, buildSchoolEmailPreview } from '../utils/schoolDomain';
+import { signupEmailDomain, buildSchoolEmailPreview } from '../utils/schoolDomain';
 import { SCHOOL_EMAIL_IN_APP_HELP, STUDENT_SCHOOL_EMAIL_HELP } from '../utils/schoolEmailHelp';
 import AuthBackLink from '../components/AuthBackLink';
 import './Auth.css';
@@ -25,9 +25,7 @@ export default function Register() {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    schoolEmailLocal: '',
     studentEmailLocal: '',
-    guestEmailLocal: '',
     staffSchoolName: '',
     staffSchoolId: '',
     password: '',
@@ -95,8 +93,8 @@ export default function Register() {
       const isStaff = selectedRole === 'teacher' || selectedRole === 'head_teacher';
 
       if (isStaff) {
-        if (!form.schoolEmailLocal.trim()) {
-          setError('Create your school email username.');
+        if (!form.email.trim()) {
+          setError('Andika imeyili yawe (e.g. Gmail).');
           setLoading(false);
           return;
         }
@@ -117,8 +115,8 @@ export default function Register() {
           return;
         }
       } else if (selectedRole === 'guest') {
-        if (!form.guestEmailLocal.trim()) {
-          setError('Choose a guest username.');
+        if (!form.email.trim()) {
+          setError('Andika imeyili yawe (e.g. Gmail).');
           setLoading(false);
           return;
         }
@@ -133,7 +131,7 @@ export default function Register() {
       };
 
       if (isStaff) {
-        payload.school_email_local = form.schoolEmailLocal.trim();
+        payload.email = form.email.trim().toLowerCase();
         if (!verifiedSchool && form.staffSchoolId) {
           payload.school_id = parseInt(form.staffSchoolId, 10) || null;
         }
@@ -143,7 +141,7 @@ export default function Register() {
       } else if (selectedRole === 'student') {
         payload.school_email_local = form.studentEmailLocal.trim();
       } else if (selectedRole === 'guest') {
-        payload.guest_email_local = form.guestEmailLocal.trim();
+        payload.email = form.email.trim().toLowerCase();
       }
 
       if (verifiedSchool?.code) {
@@ -247,12 +245,12 @@ export default function Register() {
             )}
             {(selectedRole === 'head_teacher' || selectedRole === 'teacher') && (
               <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: 4 }}>
-                Choose or type your school, then create your login as name@schoolname.edu.
+                Choose or type your school, then sign up with your personal email (e.g. Gmail).
               </p>
             )}
             {selectedRole === 'guest' && (
               <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: 4 }}>
-                Guest login uses <strong>@guest.umunsi.com</strong>. Open a teacher&apos;s quiz share link to unlock classes.
+                Sign up with your personal email. Open a teacher&apos;s quiz share link to unlock classes.
               </p>
             )}
 
@@ -316,10 +314,6 @@ export default function Register() {
                           staffSchoolName: picked ? picked.name : form.staffSchoolName,
                         });
                         setSchoolEmailStatus('');
-                        if (form.schoolEmailLocal.trim() && picked) {
-                          const dom = signupEmailDomain(picked);
-                          if (dom) setSchoolEmailPreview(buildSchoolEmailPreview(form.schoolEmailLocal, dom));
-                        }
                       }}
                     >
                       <option value="">— cyangwa wandike izina hepfo —</option>
@@ -340,10 +334,6 @@ export default function Register() {
                       if (verifiedSchool) return;
                       setForm({ ...form, staffSchoolName: e.target.value, staffSchoolId: '' });
                       setSchoolEmailStatus('');
-                      const dom = schoolDomainFromName(e.target.value);
-                      if (form.schoolEmailLocal.trim() && dom) {
-                        setSchoolEmailPreview(buildSchoolEmailPreview(form.schoolEmailLocal, dom));
-                      }
                     }}
                     readOnly={Boolean(verifiedSchool)}
                     placeholder="e.g. Green Hills Academy"
@@ -352,102 +342,34 @@ export default function Register() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Imeyili y&apos;ishuri (login)</label>
-                  <div className="auth-school-email-row">
-                    <input
-                      type="text"
-                      value={form.schoolEmailLocal}
-                      onChange={(e) => {
-                        const local = e.target.value;
-                        setForm({ ...form, schoolEmailLocal: local });
-                        setSchoolEmailStatus('');
-                        const pickedSchool = form.staffSchoolId
-                          ? schools.find((s) => String(s.id) === form.staffSchoolId)
-                          : null;
-                        const dom =
-                          signupEmailDomain(verifiedSchool || pickedSchool || { name: form.staffSchoolName });
-                        if (local.trim() && dom) {
-                          setSchoolEmailPreview(buildSchoolEmailPreview(local, dom));
-                        }
-                      }}
-                      onBlur={async () => {
-                        const local = form.schoolEmailLocal.trim();
-                        if (!local) return;
-                        const pickedSchool = form.staffSchoolId
-                          ? schools.find((s) => String(s.id) === form.staffSchoolId)
-                          : null;
-                        const schoolName = verifiedSchool?.name || pickedSchool?.name || form.staffSchoolName.trim();
-                        if (!schoolName && !pickedSchool && !verifiedSchool) {
-                          setSchoolEmailStatus('Andika izina ry\'ishuri cyangwa uhitemo mu rutonde.');
-                          return;
-                        }
-                        try {
-                          const params = new URLSearchParams({ local });
-                          if (verifiedSchool?.code) {
-                            params.set('code', String(verifiedSchool.code).trim().toUpperCase());
-                          } else if (pickedSchool?.id) {
-                            params.set('school_id', String(pickedSchool.id));
-                          } else {
-                            params.set('school_name', schoolName);
-                          }
-                          const r = await api.get(`/auth/check-school-email?${params}`);
-                          setSchoolEmailPreview(r.email);
-                          setSchoolEmailStatus(
-                            r.available
-                              ? `✓ ${r.email} — login + UClass messages`
-                              : `✗ ${r.email} is already taken`
-                          );
-                        } catch (err) {
-                          setSchoolEmailStatus(err.message);
-                        }
-                      }}
-                      placeholder="john.doe"
-                      required
-                      className="auth-school-email-local"
-                    />
-                    <span className="auth-school-email-domain">
-                      @
-                      {signupEmailDomain(
-                        verifiedSchool
-                          || (form.staffSchoolId
-                            ? schools.find((s) => String(s.id) === form.staffSchoolId)
-                            : null)
-                          || { name: form.staffSchoolName }
-                      ) || 'schoolname.edu'}
-                    </span>
-                  </div>
+                  <label>Imeyili yawe (login)</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="yourname@gmail.com"
+                    required
+                    autoComplete="email"
+                  />
                   <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-                    {SCHOOL_EMAIL_IN_APP_HELP}
+                    Koresha imeyili yawe bwite (e.g. Gmail). Uzayikoresha winjira muri app.
                   </p>
-                  {schoolEmailPreview && (
-                    <p style={{ fontSize: 12, marginTop: 4, color: '#0f766e' }}>
-                      Imeyili yo kwinjira: <strong>{schoolEmailPreview}</strong>
-                    </p>
-                  )}
-                  {schoolEmailStatus && (
-                    <p style={{ fontSize: 12, marginTop: 4, color: schoolEmailStatus.startsWith('✓') ? '#059669' : '#dc2626' }}>
-                      {schoolEmailStatus}
-                    </p>
-                  )}
                 </div>
                 </>
               ) : selectedRole === 'guest' ? (
                 <>
                   <div className="form-group">
-                    <label>Guest username (login)</label>
-                    <div className="auth-school-email-row">
-                      <input
-                        type="text"
-                        value={form.guestEmailLocal}
-                        onChange={(e) => setForm({ ...form, guestEmailLocal: e.target.value })}
-                        placeholder="yourname"
-                        required
-                        className="auth-school-email-local"
-                      />
-                      <span className="auth-school-email-domain">@guest.umunsi.com</span>
-                    </div>
+                    <label>Imeyili yawe (login)</label>
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="yourname@gmail.com"
+                      required
+                      autoComplete="email"
+                    />
                     <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-                      Use a quiz share link from your teacher to unlock classes after signup.
+                      Use your personal email. Open a quiz share link from your teacher to unlock classes after signup.
                     </p>
                   </div>
                 </>

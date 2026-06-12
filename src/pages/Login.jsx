@@ -97,18 +97,18 @@ export default function Login() {
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Imeyili y&apos;ishuri</label>
+            <label>Imeyili</label>
             <input
               type="text"
               autoComplete="username"
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value.trim().toLowerCase() })}
-              placeholder="amazina@schoolname.edu"
+              placeholder="imeyili yawe"
               required
             />
             <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-              Umwarimu, Umunyeshuri, cyangwa Umuyobozi w&apos;ishuri — injira ukoresheje imeyili yawe @schoolname.edu.
-              Guests use <strong>@guest.umunsi.com</strong>.
+              Umwarimu, Umuyobozi w&apos;ishuri, na Guest — injira ukoresheje imeyili yawe bwite (e.g. Gmail).
+              Abanyeshuri bakoresha imeyili y&apos;ishuri <strong>@schoolname.edu</strong>.
             </p>
             {quizShare && (
               <p style={{ fontSize: 12, color: '#0f766e', marginTop: 8, lineHeight: 1.4 }}>
