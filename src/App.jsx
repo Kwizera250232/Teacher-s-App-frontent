@@ -33,6 +33,8 @@ import Profile from './pages/Profile';
 import Messages from './pages/Messages';
 import Footer from './components/Footer';
 import OfflineBanner from './components/OfflineBanner';
+import EmailConfirmBanner from './components/EmailConfirmBanner';
+import EmailConfirmed from './pages/EmailConfirmed';
 import { InstallProvider } from './components/InstallPrompt';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import './components/Footer.css';
@@ -76,6 +78,7 @@ function AppShell() {
   return (
     <div className={`app-wa-shell${hideFooter ? ' app-wa-shell--chat-fullscreen' : ''}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <OfflineBanner />
+      <EmailConfirmBanner />
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <Routes>
                 <Route path="/" element={<HomeRedirect />} />
@@ -183,6 +186,7 @@ function AppShell() {
 
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/email-confirmed" element={<EmailConfirmed />} />
 
                 <Route path="/profile" element={
                   <ProtectedRoute><Profile /></ProtectedRoute>
