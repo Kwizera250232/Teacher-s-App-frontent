@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -25,15 +25,36 @@ const STATUS_CONTENT = {
     title: 'Habaye ikibazo — Something went wrong',
     body: 'We could not confirm your email right now. Please try the link again in a moment, or resend a new email from the app.',
   },
+  loading: {
+    icon: '⏳',
+    title: 'Tegereza... — Confirming...',
+    body: 'Please wait while we confirm your email address.',
+  },
 };
 
 export default function EmailConfirmed() {
   const [searchParams] = useSearchParams();
-  const status = searchParams.get('status') || 'ok';
   const { user, token, updateUser } = useAuth();
-  const content = STATUS_CONTENT[status] || STATUS_CONTENT.error;
 
-  // If the user is logged in in this browser, refresh their confirmed flag
+  const rawToken = searchParams.get('token');
+  const rawStatus = searchParams.get('status');
+
+  const [status, setStatus] = useState(rawToken ? 'loading' : (rawStatus || 'ok'));
+
+  useEffect(() => {
+    if (!rawToken) return;
+    const apiBase = (window.location.hostname === 'student.umunsi.com' || window.location.hostname.endsWith('.vercel.app'))
+      ? 'https://studentapi.umunsi.com/api'
+      : `${window.location.origin}/api`;
+    fetch(
+      `${apiBase}/auth/confirm-email?token=${encodeURIComponent(rawToken)}&json=1`
+    )
+      .then((res) => res.json())
+      .then((data) => setStatus(data.status || 'ok'))
+      .catch(() => setStatus('error'));
+  }, [rawToken]);
+
+  // If the user is logged in and confirmation succeeded, refresh their flag
   useEffect(() => {
     if (status !== 'ok' || !token || !user) return;
     api
@@ -45,6 +66,8 @@ export default function EmailConfirmed() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, token]);
 
+  const content = STATUS_CONTENT[status] || STATUS_CONTENT.error;
+
   return (
     <div className="auth-container">
       <div className="auth-card" style={{ textAlign: 'center' }}>
@@ -53,22 +76,24 @@ export default function EmailConfirmed() {
         <p className="auth-sub" style={{ marginTop: 12, lineHeight: 1.6 }}>
           {content.body}
         </p>
-        <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {user ? (
-            <Link to="/" className="btn btn-primary btn-full">
-              Komeza muri UClass →
-            </Link>
-          ) : (
-            <Link to="/login" className="btn btn-primary btn-full">
-              Injira — Sign in
-            </Link>
-          )}
-          <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>
-            “Technology in Rwandan Education is possible together. Let's Support it”
-            <br />
-            <strong>— KWIZERA Jean de Dieu</strong>, UMUNSI SITE LTD CEO / Founder
-          </p>
-        </div>
+        {status !== 'loading' && (
+          <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {user ? (
+              <Link to="/" className="btn btn-primary btn-full">
+                Komeza muri UClass →
+              </Link>
+            ) : (
+              <Link to="/login" className="btn btn-primary btn-full">
+                Injira — Sign in
+              </Link>
+            )}
+            <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>
+              "Technology in Rwandan Education is possible together. Let's Support it"
+              <br />
+              <strong>— KWIZERA Jean de Dieu</strong>, UMUNSI SITE LTD CEO / Founder
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
