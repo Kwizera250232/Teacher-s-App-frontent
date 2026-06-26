@@ -12,6 +12,7 @@ import CompositionStatusPanel from '../components/CompositionStatusPanel';
 import CompositionStatusFeed from '../components/CompositionStatusFeed';
 import ClassMomentsFold from '../components/classMoments/ClassMomentsFold';
 import StudentNotificationsBell from '../components/StudentNotificationsBell';
+import QuizTeacherCommentPopup from '../components/quizReflection/QuizTeacherCommentPopup';
 import AlumniOnboarding from '../pages/alumni/AlumniOnboarding';
 import { useClassMomentAlerts } from '../hooks/useClassMomentAlerts';
 import { classMomentDetailPath } from '../utils/classMomentPaths';
@@ -41,6 +42,7 @@ export default function StudentDashboard() {
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   const [quickNote, setQuickNote] = useState(null);
   const [showParentInvite, setShowParentInvite] = useState(false);
+  const [showCompositionStatus, setShowCompositionStatus] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
   const classesRef = useRef(null);

@@ -65,7 +65,7 @@ function ProtectedRoute({ children, role }) {
 
 function HomeRedirect() {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>;
   if (!user) return <Navigate to="/welcome" replace />;
   return <Navigate to={dashboardPath(user.role)} replace />;
 }

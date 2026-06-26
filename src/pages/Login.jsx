@@ -62,12 +62,12 @@ export default function Login() {
       if (data.user.role === 'student' && classCode) {
         try {
           const joined = await api.post('/classes/join', { class_code: classCode }, data.token);
-          navigate(`/student/classes/${joined.class.id}`);
+          navigate(`/student/classes/${joined.class.id}`, { replace: true });
         } catch {
-          navigate('/student/dashboard');
+          navigate('/student/dashboard', { replace: true });
         }
       } else {
-        navigate(dashboardPath(data.user.role));
+        navigate(dashboardPath(data.user.role), { replace: true });
       }
     } catch (err) {
       setError(err.message);

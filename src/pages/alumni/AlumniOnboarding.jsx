@@ -136,9 +136,6 @@ export default function AlumniOnboarding({ onClose, onComplete }) {
               <button className="btn btn-primary" disabled={loading} onClick={handleJoin}>
                 {loading ? 'Joining...' : '🌸 Join Alumni'}
               </button>
-              <button className="btn btn-secondary" onClick={onClose} disabled={loading}>
-                Maybe Later
-              </button>
             </div>
           </div>
         )}
