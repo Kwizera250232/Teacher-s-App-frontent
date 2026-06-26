@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -41,6 +42,15 @@ import './components/Footer.css';
 import './styles/WaAppShell.css';
 import './styles/WaChatShell.css';
 import './styles/AppFullscreen.css';
+
+// ── Alumni Module (lazy loaded) ───────────────────────────────────────────────
+const AlumniDashboard = lazy(() => import('./pages/alumni/AlumniDashboard'));
+const AlumniProfile = lazy(() => import('./pages/alumni/AlumniProfile'));
+const AlumniDirectory = lazy(() => import('./pages/alumni/AlumniDirectory'));
+const AlumniCompose = lazy(() => import('./pages/alumni/AlumniCompose'));
+const AlumniComposition = lazy(() => import('./pages/alumni/AlumniComposition'));
+const AlumniWallet = lazy(() => import('./pages/alumni/AlumniWallet'));
+const GraduationManager = lazy(() => import('./pages/alumni/GraduationManager'));
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -193,6 +203,32 @@ function AppShell() {
                 } />
                 <Route path="/messages" element={
                   <ProtectedRoute><Messages /></ProtectedRoute>
+                } />
+
+                {/* ── Alumni Module Routes ───────────────────────── */}
+                <Route path="/alumni/dashboard" element={
+                  <ProtectedRoute role="alumni"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniDashboard /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/profile/:identifier" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniProfile /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/directory" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniDirectory /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/compose" element={
+                  <ProtectedRoute role="alumni"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniCompose /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/compose/:id" element={
+                  <ProtectedRoute role="alumni"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniCompose /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/composition/:slug" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniComposition /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/wallet" element={
+                  <ProtectedRoute role="alumni"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniWallet /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/graduation" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><GraduationManager /></Suspense></ProtectedRoute>
                 } />
         </Routes>
       </div>

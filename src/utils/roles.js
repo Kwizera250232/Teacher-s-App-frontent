@@ -4,6 +4,10 @@ export function isStaff(role) {
   return role === 'teacher' || role === 'head_teacher';
 }
 
+export function isAlumni(role) {
+  return role === 'alumni';
+}
+
 export function dashboardPath(role) {
   if (role === 'admin') return '/admin';
   if (role === 'head_teacher') return '/head-teacher/dashboard';
@@ -11,6 +15,7 @@ export function dashboardPath(role) {
   if (role === 'parent') return '/parent/dashboard';
   if (role === 'student') return '/student/dashboard';
   if (role === 'guest') return '/guest/dashboard';
+  if (role === 'alumni') return '/alumni/dashboard';
   return '/welcome';
 }
 
@@ -26,6 +31,7 @@ export function roleLabel(role) {
     student: 'Student',
     parent: 'Parent',
     guest: 'Guest',
+    alumni: 'Alumni',
   };
   return map[role] || 'User';
 }
