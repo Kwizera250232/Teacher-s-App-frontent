@@ -51,6 +51,9 @@ const AlumniCompose = lazy(() => import('./pages/alumni/AlumniCompose'));
 const AlumniComposition = lazy(() => import('./pages/alumni/AlumniComposition'));
 const AlumniWallet = lazy(() => import('./pages/alumni/AlumniWallet'));
 const GraduationManager = lazy(() => import('./pages/alumni/GraduationManager'));
+const AlumniGroups = lazy(() => import('./pages/alumni/AlumniGroups'));
+const AlumniGroupChat = lazy(() => import('./pages/alumni/AlumniGroupChat'));
+const AlumniFeed = lazy(() => import('./pages/alumni/AlumniFeed'));
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -229,6 +232,15 @@ function AppShell() {
                 } />
                 <Route path="/alumni/graduation" element={
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><GraduationManager /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/groups" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniGroups /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/groups/:id" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniGroupChat /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/feed" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniFeed /></Suspense></ProtectedRoute>
                 } />
         </Routes>
       </div>

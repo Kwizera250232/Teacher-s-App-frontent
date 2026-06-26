@@ -105,6 +105,12 @@ export default function AlumniDashboard() {
         <button className="btn btn-secondary" onClick={() => navigate('/alumni/directory')}>
           🔍 Alumni Directory
         </button>
+        <button className="btn btn-secondary" onClick={() => navigate('/alumni/groups')}>
+          👥 U-Class Groups
+        </button>
+        <button className="btn btn-secondary" onClick={() => navigate('/alumni/feed')}>
+          📰 Alumni Feed
+        </button>
         <button className="btn btn-secondary" onClick={() => navigate('/alumni/wallet')}>
           💰 Wallet
         </button>

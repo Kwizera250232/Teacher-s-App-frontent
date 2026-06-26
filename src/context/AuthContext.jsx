@@ -50,6 +50,23 @@ export function AuthProvider({ children }) {
     setUser(nextUser);
   };
 
+  const refreshUser = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/me`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setUser(data.user);
+        }
+      }
+    } catch (e) {
+      // silently ignore network errors
+    }
+  };
+
   const startImpersonation = (nextToken, nextUser) => {
     if (!nextToken || !nextUser) return;
     if (!isImpersonating && user?.role === 'admin' && token) {
@@ -82,7 +99,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, updateUser, loading, isImpersonating, startImpersonation, stopImpersonation }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, refreshUser, loading, isImpersonating, startImpersonation, stopImpersonation }}>
       {children}
     </AuthContext.Provider>
   );

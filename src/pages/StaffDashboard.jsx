@@ -140,6 +140,9 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
             💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
           </Link>
+          <Link to="/alumni/directory" className="btn btn-secondary btn-sm" style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', color: '#fff', border: 'none' }}>
+            🎓 Alumni
+          </Link>
           <DonateButton />
           <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
           <button type="button" className="btn btn-sm btn-logout" onClick={logout}>Logout</button>

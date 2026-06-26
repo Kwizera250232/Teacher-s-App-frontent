@@ -12,7 +12,7 @@ import CompositionStatusPanel from '../components/CompositionStatusPanel';
 import CompositionStatusFeed from '../components/CompositionStatusFeed';
 import ClassMomentsFold from '../components/classMoments/ClassMomentsFold';
 import StudentNotificationsBell from '../components/StudentNotificationsBell';
-import QuizTeacherCommentPopup from '../components/quizReflection/QuizTeacherCommentPopup';
+import AlumniOnboarding from '../pages/alumni/AlumniOnboarding';
 import { useClassMomentAlerts } from '../hooks/useClassMomentAlerts';
 import { classMomentDetailPath } from '../utils/classMomentPaths';
 import '../components/classMoments/ClassMoments.css';
@@ -41,7 +41,7 @@ export default function StudentDashboard() {
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
   const [quickNote, setQuickNote] = useState(null);
   const [showParentInvite, setShowParentInvite] = useState(false);
-  const [showCompositionStatus, setShowCompositionStatus] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
   const classesRef = useRef(null);
   const classNowRef = useRef(null);
@@ -88,13 +88,16 @@ export default function StudentDashboard() {
     api.get('/class-moments/preview', token).then(setMomentPreview).catch(() => {});
   }, [token]);
   useEffect(() => {
+    if (user?.role === 'student' && !localStorage.getItem('alumni_dismissed')) {
+      setShowOnboarding(true);
+    }
     const params = new URLSearchParams(window.location.search);
     if (params.get('status') === '1') {
       setShowCompositionStatus(true);
       setStatusPickerOpen(true);
       window.history.replaceState({}, '', '/student/dashboard');
     }
-  }, []);
+  }, [user]);
   useEffect(() => {
     const momentId = searchParams.get('moment');
     if (momentId) {
@@ -279,6 +282,9 @@ export default function StudentDashboard() {
       )}
       {showParentInvite && user?.name && (
         <ParentInviteModal token={token} selfStudentId={user.id} studentName={user.name} onClose={() => setShowParentInvite(false)} />
+      )}
+      {showOnboarding && (
+        <AlumniOnboarding onClose={() => { setShowOnboarding(false); localStorage.setItem('alumni_dismissed', '1'); }} onComplete={() => setShowOnboarding(false)} />
       )}
       {showCompositionStatus && (
         <CompositionStatusPanel token={token} openPickerInitially={statusPickerOpen} onClose={() => setShowCompositionStatus(false)} />
