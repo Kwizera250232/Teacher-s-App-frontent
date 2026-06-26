@@ -45,7 +45,7 @@ function FlowerParticles({ active }) {
 }
 
 export default function AlumniOnboarding({ onClose, onComplete }) {
-  const { user, refreshUser } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1); // 1=welcome, 2=flowers, 3=profile, 4=done
   const [loading, setLoading] = useState(false);
@@ -65,7 +65,7 @@ export default function AlumniOnboarding({ onClose, onComplete }) {
   const handleJoin = async () => {
     setLoading(true);
     try {
-      await api.post('/alumni/join');
+      await api.post('/alumni/join', {}, token);
       setStep(2);
       setTimeout(() => setStep(3), 3500);
     } catch (err) {
@@ -83,7 +83,7 @@ export default function AlumniOnboarding({ onClose, onComplete }) {
         skills: profile.skills.split(',').map(s => s.trim()).filter(Boolean),
         interests: profile.interests.split(',').map(s => s.trim()).filter(Boolean),
       };
-      await api.put('/alumni/profile/me', payload);
+      await api.put('/alumni/profile/me', payload, token);
       await refreshUser();
       setStep(4);
       setTimeout(() => {
