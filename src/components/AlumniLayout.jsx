@@ -17,8 +17,6 @@ const NAV_ITEMS = [
   { icon: '🌟', label: 'Opportunities', path: '/alumni/opportunities' },
 ];
 
-const ADMIN_ITEM = { icon: '⚙️', label: 'Admin', path: '/alumni/admin' };
-
 export default function AlumniLayout({ children, showTopWriters = true }) {
   const { user } = useAuth();
   const location = useLocation();
@@ -57,12 +55,6 @@ export default function AlumniLayout({ children, showTopWriters = true }) {
             </Link>
           );
         })}
-        {(user?.role === 'admin' || user?.role === 'head_teacher') && (
-          <Link to="/alumni/admin" onClick={() => setSidebarOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, textDecoration: 'none', color: currentPath === '/alumni/admin' ? '#667eea' : '#475569', fontWeight: currentPath === '/alumni/admin' ? 700 : 500, fontSize: 14, background: currentPath === '/alumni/admin' ? '#f0f7ff' : 'transparent', transition: 'all 0.2s' }}>
-            <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{ADMIN_ITEM.icon}</span>
-            {ADMIN_ITEM.label}
-          </Link>
-        )}
       </nav>
 
       {/* User Mini Profile */}

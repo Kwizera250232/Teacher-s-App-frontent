@@ -107,6 +107,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
     ...(hasSchool ? [{ id: 'chats', label: '💬 Chats' }] : []),
     { id: 'classnow', label: '📸 Class Now' },
     { id: 'inyandiko', label: '✍️ Inyandiko' },
+    { id: 'alumni', label: '🎓 Alumni' },
     { id: 'tools', label: '⚡ Tools' },
   ];
 
@@ -218,6 +219,22 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
         {hubTab === 'inyandiko' && (
           <StaffInyandikoDashboard token={token} basePath={basePath} />
+        )}
+
+        {hubTab === 'alumni' && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ background: '#fff', borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+              <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 800 }}>🎓 Alumni Management</h3>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <button onClick={() => window.open('/alumni/admin', '_blank')} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+                  ⚙️ Manage Alumni Content
+                </button>
+                <button onClick={() => window.open('/teacher/graduate', '_blank')} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#059669', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+                  🎓 Graduate Students
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {hubTab === 'tools' && (
