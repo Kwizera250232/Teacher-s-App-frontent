@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 
 export default function GraduationManager() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [students, setStudents] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [graduationYear, setGraduationYear] = useState(new Date().getFullYear());
@@ -16,16 +16,28 @@ export default function GraduationManager() {
   const canGraduate = user?.role === 'admin' || user?.role === 'head_teacher' || user?.role === 'teacher';
 
   useEffect(() => {
-    api.get('/auth/schools').then(setSchools).catch(() => {});
+    if (!token) return;
+    api.get('/auth/schools', token).then(setSchools).catch(() => {});
     loadStudents();
-  }, [schoolId]);
+  }, [schoolId, token]);
 
   const loadStudents = async () => {
     setLoading(true);
     try {
+      // Get teacher's classes first
+      const classes = await api.get('/classes', token).catch(() => []);
+      const myClassIds = (Array.isArray(classes) ? classes : []).map(c => c.id);
+      
       const params = schoolId ? `?school_id=${schoolId}` : '';
-      const data = await api.get(`/alumni/students-for-graduation${params}`);
-      setStudents(data || []);
+      const data = await api.get(`/alumni/students-for-graduation${params}`, token);
+      let allStudents = data || [];
+      
+      // Filter to show only students from teacher's own classes
+      if (user?.role === 'teacher' && myClassIds.length > 0) {
+        allStudents = allStudents.filter(s => myClassIds.includes(s.class_id));
+      }
+      
+      setStudents(allStudents);
       setSelected(new Set());
     } catch (err) {
       console.error(err);
@@ -54,9 +66,9 @@ export default function GraduationManager() {
     try {
       if (selected.size === 1) {
         const studentId = Array.from(selected)[0];
-        await api.post('/alumni/graduate', { student_id: studentId, graduation_year: graduationYear });
+        await api.post('/alumni/graduate', { student_id: studentId, graduation_year: graduationYear }, token);
       } else {
-        await api.post('/alumni/graduate-bulk', { student_ids: Array.from(selected), graduation_year: graduationYear });
+        await api.post('/alumni/graduate-bulk', { student_ids: Array.from(selected), graduation_year: graduationYear }, token);
       }
       setMessage(`✅ Successfully graduated ${selected.size} student(s)!`);
       setSelected(new Set());
@@ -95,12 +107,19 @@ export default function GraduationManager() {
       )}
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-        <select value={schoolId} onChange={(e) => setSchoolId(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-          <option value="">All Schools</option>
-          {schools.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
+        {user?.role === 'admin' && (
+          <select value={schoolId} onChange={(e) => setSchoolId(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+            <option value="">All Schools</option>
+            {schools.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        )}
+        {user?.role === 'teacher' && (
+          <span style={{ padding: '8px 12px', borderRadius: 8, background: '#f0fdf4', color: '#166534', fontWeight: 600, fontSize: 14 }}>
+            👨‍🏫 Your Class Students Only
+          </span>
+        )}
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           Graduation Year:
           <input
@@ -141,7 +160,7 @@ export default function GraduationManager() {
                   />
                 </th>
                 <th style={{ padding: '12px 16px', textAlign: 'left' }}>Name</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left' }}>Email</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left' }}>Class</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left' }}>School</th>
               </tr>
             </thead>
@@ -158,7 +177,7 @@ export default function GraduationManager() {
                     />
                   </td>
                   <td style={{ padding: '12px 16px', fontWeight: 500 }}>{s.name}</td>
-                  <td style={{ padding: '12px 16px', color: '#64748b', fontSize: 14 }}>{s.email}</td>
+                  <td style={{ padding: '12px 16px', color: '#64748b', fontSize: 14 }}>{s.class_name || '—'}</td>
                   <td style={{ padding: '12px 16px', color: '#64748b', fontSize: 14 }}>{s.school_name}</td>
                 </tr>
               ))}
