@@ -58,23 +58,20 @@ export default function AlumniDean() {
         grade = `Primary ${num}`;
       }
 
-      // Search for quizzes
+      // Search for quizzes using dean-quizzes endpoint
       let quizzes = [];
       try {
-        const searchRes = await api.get(`/alumni/dean-quizzes?grade=${encodeURIComponent(grade || '')}&subject=${encodeURIComponent(subject || '')}`, token);
+        const searchRes = await api.get(`/alumni/dean-quizzes/search?grade=${encodeURIComponent(grade || '')}&subject=${encodeURIComponent(subject || '')}`, token);
         quizzes = searchRes.quizzes || [];
       } catch (e) {
-        // Fallback: try to get user's class quizzes
+        // Fallback: get all visible quizzes
         try {
-          const profile = await api.get('/alumni/profile/me', token);
-          if (profile.class_id) {
-            const classRes = await api.get(`/classes/${profile.class_id}/quizzes`, token);
-            quizzes = (classRes.quizzes || []).filter(q => {
-              if (!subject) return true;
-              const qSubject = (q.subject || q.title || '').toLowerCase();
-              return qSubject.includes(subject);
-            });
-          }
+          const allRes = await api.get('/alumni/dean-quizzes', token);
+          quizzes = (allRes.quizzes || []).filter(q => {
+            if (!subject) return true;
+            const qSubject = (q.subject || q.title || q.category || '').toLowerCase();
+            return qSubject.includes(subject);
+          });
         } catch (e2) {}
       }
 
@@ -108,22 +105,10 @@ export default function AlumniDean() {
     setAnswers({});
     setResult(null);
     try {
-      let quizId = quiz.id;
-      let classId = quiz.class_id;
-
-      if (!classId) {
-        const profile = await api.get('/alumni/profile/me', token);
-        classId = profile.class_id;
-      }
-
-      if (classId && quizId) {
-        const data = await api.get(`/classes/${classId}/quizzes/${quizId}/questions`, token);
-        setQuestions(data.questions || []);
-      } else {
-        // Try alumni quiz endpoint
-        const data = await api.get(`/alumni/quizzes/${quizId}/questions`, token);
-        setQuestions(data.questions || []);
-      }
+      // Use dean-quizzes endpoint
+      const data = await api.get(`/alumni/dean-quizzes/${quiz.id}`, token);
+      setSelectedQuiz(data.quiz || quiz);
+      setQuestions(data.questions || []);
     } catch (e) {
       alert('Failed to load quiz questions');
       setSelectedQuiz(null);
@@ -153,10 +138,7 @@ export default function AlumniDean() {
     setResult({ score, correct, total: questions.length, feedback });
 
     try {
-      const profile = await api.get('/alumni/profile/me', token);
-      if (profile.class_id && selectedQuiz.id) {
-        await api.post(`/classes/${profile.class_id}/quizzes/${selectedQuiz.id}/submit`, { answers }, token);
-      }
+      await api.post('/alumni/dean-quizzes/submit', { quiz_id: selectedQuiz.id, answers, score }, token);
     } catch (e) { console.error('Save result failed:', e); }
   };
 
