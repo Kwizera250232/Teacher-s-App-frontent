@@ -24,20 +24,9 @@ export default function GraduationManager() {
   const loadStudents = async () => {
     setLoading(true);
     try {
-      // Get teacher's classes first
-      const classes = await api.get('/classes', token).catch(() => []);
-      const myClassIds = (Array.isArray(classes) ? classes : []).map(c => c.id);
-      
       const params = schoolId ? `?school_id=${schoolId}` : '';
       const data = await api.get(`/alumni/students-for-graduation${params}`, token);
-      let allStudents = data || [];
-      
-      // Filter to show only students from teacher's own classes
-      if (user?.role === 'teacher' && myClassIds.length > 0) {
-        allStudents = allStudents.filter(s => myClassIds.includes(s.class_id));
-      }
-      
-      setStudents(allStudents);
+      setStudents(data || []);
       setSelected(new Set());
     } catch (err) {
       console.error(err);
