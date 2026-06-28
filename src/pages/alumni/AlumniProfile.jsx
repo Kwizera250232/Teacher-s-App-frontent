@@ -2,39 +2,53 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import AlumniLayout from '../../components/AlumniLayout';
 
 export default function AlumniProfile() {
   const { identifier } = useParams();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const isMe = !identifier || identifier === 'me' || identifier === String(user?.id);
   const [profile, setProfile] = useState(null);
   const [compositions, setCompositions] = useState([]);
   const [recognitions, setRecognitions] = useState([]);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [follows, setFollows] = useState({ followers: 0, following: 0 });
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const isOwnProfile = user?.id === profile?.user_id;
+  const [form, setForm] = useState({
+    bio: '', current_school_or_uni: '', current_occupation: '', dream_career: '',
+    skills: '', interests: '', favorite_subject: '', favorite_teacher: '', personal_motto: '', avatar_url: '',
+  });
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
       try {
-        const p = await api.get(`/alumni/profile/${identifier}`);
+        const id = isMe ? 'me' : identifier;
+        const p = await api.get(`/alumni/profile/${id}`, token);
         setProfile(p);
+        setForm({
+          bio: p.bio || '',
+          current_school_or_uni: p.current_school_or_uni || '',
+          current_occupation: p.current_occupation || '',
+          dream_career: p.dream_career || '',
+          skills: (p.skills || []).join(', '),
+          interests: (p.interests || []).join(', '),
+          favorite_subject: p.favorite_subject || '',
+          favorite_teacher: p.favorite_teacher || '',
+          personal_motto: p.personal_motto || '',
+          avatar_url: p.avatar_url || '',
+        });
 
-        // Load compositions by this alumni
-        const comps = await api.get(`/alumni/compositions?author_id=${p.user_id || p.id}&limit=10`);
+        const comps = await api.get(`/alumni/compositions?author_id=${p.user_id || p.id}&limit=10`, token);
         setCompositions(comps.compositions || []);
 
-        // Load recognitions
-        const recs = await api.get(`/alumni/recognitions/${p.user_id || p.id}`);
+        const recs = await api.get(`/alumni/recognitions/${p.user_id || p.id}`, token);
         setRecognitions(recs || []);
 
-        // Check if current user follows this alumni
-        if (user?.id && !isOwnProfile) {
-          const follows = await api.get(`/alumni/follows/${p.user_id || p.id}`);
-          setIsFollowing(follows.followers?.some((f) => f.follower_id === user.id));
-        }
+        const f = await api.get(`/alumni/follows/${p.user_id || p.id}`, token);
+        setFollows(f || { followers: 0, following: 0 });
       } catch (err) {
         console.error(err);
       } finally {
@@ -42,202 +56,188 @@ export default function AlumniProfile() {
       }
     };
     load();
-  }, [identifier, user?.id]);
+  }, [identifier, token, isMe]);
 
-  const handleFollow = async () => {
-    if (!profile || isOwnProfile) return;
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      const id = profile.user_id || profile.id;
-      if (isFollowing) {
-        await api.delete(`/alumni/follow/${id}`);
-        setIsFollowing(false);
-      } else {
-        await api.post(`/alumni/follow/${id}`);
-        setIsFollowing(true);
-      }
+      const payload = {
+        ...form,
+        skills: form.skills.split(',').map(s => s.trim()).filter(Boolean),
+        interests: form.interests.split(',').map(s => s.trim()).filter(Boolean),
+      };
+      await api.put('/alumni/profile/me', payload, token);
+      setEditing(false);
+      // Reload
+      window.location.reload();
     } catch (err) {
-      console.error(err);
+      alert(err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading profile...</div>;
-  if (!profile) return <div style={{ padding: 40, textAlign: 'center' }}>Profile not found.</div>;
+  const handleFollow = async () => {
+    try {
+      if (profile.is_following) {
+        await api.delete(`/alumni/follow/${profile.user_id || profile.id}`, token);
+      } else {
+        await api.post(`/alumni/follow/${profile.user_id || profile.id}`, {}, token);
+      }
+      window.location.reload();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  if (loading) return <AlumniLayout showTopWriters={false}><div style={{ padding: 40, textAlign: 'center' }}>Loading profile...</div></AlumniLayout>;
+  if (!profile) return <AlumniLayout showTopWriters={false}><div style={{ padding: 40, textAlign: 'center' }}>Profile not found.</div></AlumniLayout>;
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 24 }}>
-      {/* Cover */}
-      <div style={{
-        height: 200,
-        background: profile.cover_photo_path
-          ? `url(${profile.cover_photo_path}) center/cover`
-          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        borderRadius: '12px 12px 0 0',
-      }} />
+    <AlumniLayout showTopWriters={false}>
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        {/* Cover */}
+        <div style={{
+          height: 200,
+          background: profile.cover_photo_path
+            ? `url(${profile.cover_photo_path}) center/cover`
+            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: 16,
+          marginBottom: -50,
+        }} />
 
-      {/* Profile Card */}
-      <div style={{
-        background: '#fff',
-        borderRadius: '0 0 12px 12px',
-        padding: '0 24px 24px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        marginBottom: 24,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, marginTop: -40, marginBottom: 16 }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: '50%',
-            background: '#f1f5f9', border: '4px solid white',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 32, boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}>
-            {profile.name?.[0] || '?'}
-          </div>
-          <div style={{ marginBottom: 4, flex: 1 }}>
-            <h2 style={{ margin: 0, fontSize: 22 }}>
-              {profile.name}
-              {profile.is_verified && <span style={{ color: '#2563eb', marginLeft: 8, fontSize: 16 }}>✓ Verified</span>}
-            </h2>
-            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
-              {profile.username && `@${profile.username}`}
-              {profile.graduation_year && ` · Class of ${profile.graduation_year}`}
-            </p>
-          </div>
-          {!isOwnProfile && (
-            <button
-              className={isFollowing ? 'btn btn-secondary' : 'btn btn-primary'}
-              onClick={handleFollow}
-              style={{ marginBottom: 8 }}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
-          )}
-          {isOwnProfile && (
-            <button className="btn btn-secondary" onClick={() => navigate('/alumni/dashboard')} style={{ marginBottom: 8 }}>
-              Edit Profile
-            </button>
-          )}
-        </div>
-
-        {/* Bio */}
-        {profile.bio && (
-          <p style={{ color: '#374151', lineHeight: 1.6, marginBottom: 16 }}>{profile.bio}</p>
-        )}
-
-        {/* Stats */}
-        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-          {[
-            { label: 'Compositions', value: profile.total_compositions || 0 },
-            { label: 'Followers', value: profile.followers_count || 0 },
-            { label: 'Following', value: profile.following_count || 0 },
-            { label: 'Rewards', value: profile.total_rewards || 0 },
-          ].map((s) => (
-            <div key={s.label} style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#64748b' }}>{s.label}</div>
+        {/* Profile Card */}
+        <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, marginBottom: 16 }}>
+            <div style={{
+              width: 100, height: 100, borderRadius: '50%',
+              background: profile.avatar_url ? `url(${profile.avatar_url}) center/cover` : `hsl(${(profile.id * 137) % 360}, 60%, 50%)`,
+              border: '4px solid #fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 40, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              color: '#fff', fontWeight: 700,
+              overflow: 'hidden',
+            }}>
+              {!profile.avatar_url && (profile.name?.[0] || 'K')}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Details Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-        {profile.current_occupation && (
-          <DetailCard icon="💼" label="Occupation" value={profile.current_occupation} />
-        )}
-        {profile.current_school_or_uni && (
-          <DetailCard icon="🎓" label="School/University" value={profile.current_school_or_uni} />
-        )}
-        {profile.dream_career && (
-          <DetailCard icon="⭐" label="Dream Career" value={profile.dream_career} />
-        )}
-        {profile.current_location && (
-          <DetailCard icon="📍" label="Location" value={profile.current_location} />
-        )}
-        {profile.favorite_subject && (
-          <DetailCard icon="📚" label="Favorite Subject" value={profile.favorite_subject} />
-        )}
-        {profile.favorite_teacher && (
-          <DetailCard icon="👨‍🏫" label="Favorite Teacher" value={profile.favorite_teacher} />
-        )}
-        {profile.favorite_club && (
-          <DetailCard icon="🏆" label="Favorite Club" value={profile.favorite_club} />
-        )}
-        {profile.personal_motto && (
-          <DetailCard icon="💬" label="Motto" value={profile.personal_motto} />
-        )}
-      </div>
-
-      {/* Skills & Interests */}
-      {(profile.skills?.length > 0 || profile.interests?.length > 0) && (
-        <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-          {profile.skills?.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#94a3b8', textTransform: 'uppercase' }}>Skills</h4>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {profile.skills.map((s) => (
-                  <span key={s} style={{ background: '#e0e7ff', color: '#3730a3', padding: '4px 12px', borderRadius: 20, fontSize: 12 }}>{s}</span>
-                ))}
+            <div style={{ flex: 1, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{profile.name}</h2>
+                <span style={{ background: '#2563eb', color: '#fff', padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 700 }}>✓ VERIFIED ALUMNI</span>
               </div>
+              <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
+                @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role || 'Alumni'} · {profile.current_occupation || profile.dream_career || 'Student'}
+              </p>
             </div>
-          )}
-          {profile.interests?.length > 0 && (
-            <div>
-              <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#94a3b8', textTransform: 'uppercase' }}>Interests</h4>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {profile.interests.map((i) => (
-                  <span key={i} style={{ background: '#f1f5f9', color: '#475569', padding: '4px 12px', borderRadius: 20, fontSize: 12 }}>{i}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Compositions */}
-      <h3 style={{ marginBottom: 12 }}>Compositions</h3>
-      {compositions.length === 0 ? (
-        <div style={{ background: '#f8fafc', borderRadius: 10, padding: 24, textAlign: 'center', color: '#64748b' }}>
-          No compositions yet.
-        </div>
-      ) : (
-        compositions.map((c) => (
-          <div key={c.id} style={{
-            background: '#fff', borderRadius: 10, padding: 16, marginBottom: 12,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.06)', cursor: 'pointer',
-          }} onClick={() => navigate(`/alumni/composition/${c.slug}`)}>
-            <h4 style={{ margin: '0 0 6px', fontSize: 16 }}>{c.title}</h4>
-            <p style={{ margin: 0, color: '#64748b', fontSize: 13 }}>
-              {c.read_count} reads · {c.likes_count} likes · {c.comments_count} comments
-            </p>
           </div>
-        ))
-      )}
 
-      {/* Recognitions */}
-      {recognitions.length > 0 && (
-        <>
-          <h3 style={{ marginBottom: 12, marginTop: 24 }}>Recognitions</h3>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {recognitions.map((r) => (
-              <div key={r.id} style={{
-                background: '#fff', borderRadius: 10, padding: 14,
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)', borderLeft: '4px solid #f59e0b',
-              }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{r.title}</div>
-                <div style={{ fontSize: 12, color: '#64748b' }}>{r.badge_type.replace(/_/g, ' ')}</div>
+          {/* Stats */}
+          <div style={{ display: 'flex', gap: 24, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div><strong>{follows.followers || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Followers</span></div>
+            <div><strong>{follows.following || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Following</span></div>
+            <div><strong>{profile.total_compositions || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Articles</span></div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            {isMe ? (
+              <button onClick={() => setEditing(!editing)} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #667eea', background: editing ? '#667eea' : '#fff', color: editing ? '#fff' : '#667eea', fontWeight: 700, cursor: 'pointer' }}>
+                {editing ? 'Cancel' : '✏️ Edit Profile'}
+              </button>
+            ) : (
+              <button onClick={handleFollow} style={{ padding: '8px 20px', borderRadius: 20, border: 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 700, cursor: 'pointer', border: profile.is_following ? '1.5px solid #e2e8f0' : 'none' }}>
+                {profile.is_following ? 'Subscribed' : '🔔 Subscribe'}
+              </button>
+            )}
+          </div>
+
+          {/* Bio */}
+          <p style={{ margin: '0 0 12px', lineHeight: 1.6, color: '#374151' }}>{profile.bio || 'No bio yet.'}</p>
+
+          {/* Details */}
+          {profile.graduation_year && (
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, color: '#64748b' }}>
+              {profile.graduation_year && <span>🎓 Class of {profile.graduation_year}</span>}
+              {profile.current_school_or_uni && <span>🏫 {profile.current_school_or_uni}</span>}
+              {profile.favorite_subject && <span>📚 {profile.favorite_subject}</span>}
+              {profile.personal_motto && <span>💭 "{profile.personal_motto}"</span>}
+            </div>
+          )}
+        </div>
+
+        {/* EDIT FORM */}
+        {editing && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800 }}>Edit Profile</h3>
+            {[
+              { key: 'current_school_or_uni', label: 'Current School / University', placeholder: 'Where are you studying now?' },
+              { key: 'current_occupation', label: 'Current Occupation', placeholder: 'Student, Developer, etc.' },
+              { key: 'dream_career', label: 'Dream Career', placeholder: 'What do you aspire to be?' },
+              { key: 'favorite_subject', label: 'Favorite Subject', placeholder: 'Math, Science, History...' },
+              { key: 'favorite_teacher', label: 'Favorite Teacher', placeholder: 'Who inspired you most?' },
+              { key: 'personal_motto', label: 'Personal Motto', placeholder: 'Your life motto or quote' },
+            ].map(field => (
+              <div key={field.key} style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>{field.label}</label>
+                <input
+                  type="text"
+                  placeholder={field.placeholder}
+                  value={form[field.key]}
+                  onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14 }}
+                />
               </div>
             ))}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>Bio</label>
+              <textarea
+                value={form.bio}
+                onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, minHeight: 80, resize: 'vertical' }}
+              />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>Profile Photo URL</label>
+              <input type="text" value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://example.com/photo.jpg" style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14 }} />
+              {form.avatar_url && <img src={form.avatar_url} alt="Preview" style={{ width: 60, height: 60, borderRadius: '50%', marginTop: 8, objectFit: 'cover' }} />}
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>Skills (comma separated)</label>
+              <input type="text" value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14 }} />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>Interests (comma separated)</label>
+              <input type="text" value={form.interests} onChange={(e) => setForm({ ...form, interests: e.target.value })} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14 }} />
+            </div>
+            <button onClick={handleSave} disabled={saving} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+              {saving ? 'Saving...' : '💾 Save Changes'}
+            </button>
           </div>
-        </>
-      )}
-    </div>
-  );
-}
+        )}
 
-function DetailCard({ icon, label, value }) {
-  return (
-    <div style={{ background: '#fff', borderRadius: 10, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-      <div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontWeight: 600, fontSize: 15 }}>{icon} {value}</div>
-    </div>
+        {/* Articles */}
+        <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800 }}>✍️ Articles</h3>
+          {compositions.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>📝</div>
+              <p>No articles yet.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {compositions.map((comp) => (
+                <div key={comp.id} onClick={() => navigate(`/alumni/composition/${comp.slug}`)} style={{ padding: 16, borderRadius: 12, border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'box-shadow 0.2s' }}>
+                  <h4 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700 }}>{comp.title}</h4>
+                  <p style={{ margin: '0 0 8px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{comp.excerpt || comp.content?.substring(0, 120)}...</p>
+                  <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                    {new Date(comp.created_at).toLocaleDateString()} · {comp.reads || 0} reads · {comp.likes || 0} likes
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </AlumniLayout>
   );
 }

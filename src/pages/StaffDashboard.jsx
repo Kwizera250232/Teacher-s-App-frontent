@@ -274,6 +274,9 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <button className="btn btn-secondary" onClick={() => setShowAddStudents(true)} disabled={user?.role === 'teacher' && !hasSchool}>
               👤 Add Students
             </button>
+            <Link to="/teacher/classes" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+              🎓 Graduate Students
+            </Link>
           </div>
         </div>
 

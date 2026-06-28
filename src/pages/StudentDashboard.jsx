@@ -13,7 +13,7 @@ import CompositionStatusFeed from '../components/CompositionStatusFeed';
 import ClassMomentsFold from '../components/classMoments/ClassMomentsFold';
 import StudentNotificationsBell from '../components/StudentNotificationsBell';
 import QuizTeacherCommentPopup from '../components/quizReflection/QuizTeacherCommentPopup';
-import AlumniOnboarding from '../pages/alumni/AlumniOnboarding';
+import AlumniWelcome from '../pages/alumni/AlumniWelcome';
 import { useClassMomentAlerts } from '../hooks/useClassMomentAlerts';
 import { classMomentDetailPath } from '../utils/classMomentPaths';
 import '../components/classMoments/ClassMoments.css';
@@ -90,7 +90,7 @@ export default function StudentDashboard() {
     api.get('/class-moments/preview', token).then(setMomentPreview).catch(() => {});
   }, [token]);
   useEffect(() => {
-    if (user?.role === 'student' && !localStorage.getItem('alumni_dismissed')) {
+    if (user?.role === 'student' && user?.is_alumni && !localStorage.getItem('alumni_welcomed')) {
       setShowOnboarding(true);
     }
     const params = new URLSearchParams(window.location.search);
@@ -286,7 +286,7 @@ export default function StudentDashboard() {
         <ParentInviteModal token={token} selfStudentId={user.id} studentName={user.name} onClose={() => setShowParentInvite(false)} />
       )}
       {showOnboarding && (
-        <AlumniOnboarding onClose={() => { setShowOnboarding(false); localStorage.setItem('alumni_dismissed', '1'); }} onComplete={() => setShowOnboarding(false)} />
+        <AlumniWelcome onComplete={() => { setShowOnboarding(false); localStorage.setItem('alumni_welcomed', '1'); }} />
       )}
       {showCompositionStatus && (
         <CompositionStatusPanel token={token} openPickerInitially={statusPickerOpen} onClose={() => setShowCompositionStatus(false)} />

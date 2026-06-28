@@ -1,71 +1,55 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import AlumniLayout from '../../components/AlumniLayout';
+
+const REACTIONS = ['👍','❤️','😂','😮','🔥','🎉'];
+
+function getTitle(content) {
+  if (!content) return 'Untitled';
+  const lines = content.split('\n').filter(l => l.trim());
+  if (!lines.length) return 'Untitled';
+  const first = lines[0].replace(/^#+\s*/, '').trim();
+  return first.length > 80 ? first.slice(0, 80) + '...' : first;
+}
+function getPreview(content) {
+  if (!content) return '';
+  const lines = content.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return '';
+  const rest = lines.slice(1).join(' ').trim();
+  return rest.length > 140 ? rest.slice(0, 140) + '...' : rest;
+}
 
 export default function AlumniFeed() {
-  const { user, token } = useAuth();
+  const navigate = useNavigate();
+  const { token, user } = useAuth();
   const [posts, setPosts] = useState([]);
+  const [compositions, setCompositions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showComposer, setShowComposer] = useState(false);
-  const [composerContent, setComposerContent] = useState('');
-  const [composerImages, setComposerImages] = useState([]);
-  const [posting, setPosting] = useState(false);
+  const [showReactions, setShowReactions] = useState(null);
   const [commentOpen, setCommentOpen] = useState(null);
   const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState({});
+  const [commentsMap, setCommentsMap] = useState({});
+  const [sendingPost, setSendingPost] = useState(false);
+  const [composeText, setComposeText] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
   const fileInputRef = useRef(null);
 
-  const loadFeed = async () => {
+  useEffect(() => { loadPosts(); }, [token]);
+
+  const loadPosts = async () => {
     try {
-      const data = await api.get('/alumni/feed', token);
-      setPosts(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { loadFeed(); }, []);
-
-  const handleImageUpload = async (files) => {
-    const uploaded = [];
-    for (const file of files) {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch(`${UPLOADS_BASE}/api/upload`, {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        });
-        const data = await res.json();
-        uploaded.push(data.url || data.path);
-      } catch (e) {
-        console.error('Upload failed', e);
-      }
-    }
-    setComposerImages([...composerImages, ...uploaded]);
-  };
-
-  const handlePost = async () => {
-    if (!composerContent.trim() && composerImages.length === 0) return;
-    setPosting(true);
-    try {
-      const post = await api.post('/alumni/feed', {
-        content: composerContent,
-        image_paths: composerImages,
-        post_type: composerImages.length > 0 && !composerContent.trim() ? 'image' : 'text',
-      }, token);
-      setPosts([post, ...posts]);
-      setShowComposer(false);
-      setComposerContent('');
-      setComposerImages([]);
-    } catch (e) {
-      alert(e.message);
-    } finally {
-      setPosting(false);
-    }
+      const [feedData, compData] = await Promise.all([
+        api.get('/alumni/feed', token).catch(() => ({ posts: [] })),
+        api.get('/alumni/compositions?status=published', token).catch(() => ({ compositions: [] })),
+      ]);
+      const feedPosts = (feedData.posts || []).map(p => ({ ...p, itemType: 'post' }));
+      const comps = (compData.compositions || []).map(c => ({ ...c, itemType: 'composition' }));
+      const allItems = [...feedPosts, ...comps].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setPosts(allItems);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
   const toggleLike = async (post) => {
@@ -75,151 +59,252 @@ export default function AlumniFeed() {
       } else {
         await api.post(`/alumni/feed/${post.id}/like`, {}, token);
       }
-      loadFeed();
-    } catch (e) {
-      console.error(e);
-    }
+      loadPosts();
+    } catch (e) { console.error(e); }
+  };
+
+  const addReaction = async (postId, emoji) => {
+    try {
+      await api.post(`/alumni/feed/${postId}/reaction`, { emoji }, token);
+      setShowReactions(null);
+      loadPosts();
+    } catch (e) { alert(e.message); }
   };
 
   const loadComments = async (postId) => {
     try {
       const data = await api.get(`/alumni/feed/${postId}/comments`, token);
-      setComments({ ...comments, [postId]: data });
-    } catch (e) {
-      console.error(e);
-    }
+      setCommentsMap(prev => ({ ...prev, [postId]: data.comments || [] }));
+    } catch (e) { console.error(e); }
   };
 
-  const addComment = async (postId) => {
+  const submitComment = async (postId) => {
     if (!commentText.trim()) return;
     try {
       await api.post(`/alumni/feed/${postId}/comments`, { content: commentText }, token);
       setCommentText('');
       loadComments(postId);
-      loadFeed();
-    } catch (e) {
-      alert(e.message);
-    }
+      loadPosts();
+    } catch (e) { alert(e.message); }
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading feed...</div>;
+  const handlePost = async () => {
+    if (!composeText.trim() && !selectedImage) return;
+    setSendingPost(true);
+    try {
+      let media_url = null;
+      if (selectedImage) {
+        const fd = new FormData();
+        fd.append('file', selectedImage);
+        const upload = await uploadFile('/upload', fd, token);
+        media_url = upload.url;
+      }
+      await api.post('/alumni/feed', { content: composeText, media_url }, token);
+      setComposeText('');
+      setSelectedImage(null);
+      loadPosts();
+    } catch (e) { alert(e.message); }
+    finally { setSendingPost(false); }
+  };
 
-  return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '16px' }}>
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: 22 }}>Alumni Feed</h2>
-        <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>Share what you learned, achievements, and moments</p>
+  // Render a Composition card (Substack-style)
+  const renderComposition = (comp) => (
+    <div key={`comp-${comp.id}`} style={{ background: '#fff', borderRadius: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      {/* Author Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px 8px' }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: `hsl(${(comp.user_id || comp.author_id || 1) * 137 % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+          {(comp.author_name || comp.name || 'U')[0]}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{comp.author_name || comp.name || 'Alumni'}</span>
+            <span style={{ color: '#3b82f6', fontSize: 13 }}>✓</span>
+            <span style={{ color: '#94a3b8', fontSize: 13 }}>· {new Date(comp.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+          </div>
+        </div>
+        <span style={{ background: '#f59e0b', color: '#fff', padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 700 }}>✍️ Composition</span>
       </div>
 
-      {/* Composer */}
-      <div style={{ background: '#fff', borderRadius: 16, padding: 16, marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        {!showComposer ? (
-          <div
-            onClick={() => setShowComposer(true)}
-            style={{ padding: '12px 16px', background: '#f1f5f9', borderRadius: 24, cursor: 'pointer', color: '#64748b', fontSize: 14 }}
-          >
-            💡 Share what you learned today...
+      {/* Title */}
+      <div onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)} style={{ padding: '0 16px 8px', cursor: 'pointer' }}>
+        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#1e293b', lineHeight: 1.3 }}>{comp.title}</h3>
+      </div>
+
+      {/* Featured Image */}
+      {comp.featured_image && (
+        <div onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)} style={{ cursor: 'pointer' }}>
+          <img src={comp.featured_image.startsWith('http') ? comp.featured_image : `${UPLOADS_BASE}${comp.featured_image}`} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'cover' }} />
+        </div>
+      )}
+
+      {/* Preview */}
+      <div onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)} style={{ padding: '12px 16px', cursor: 'pointer' }}>
+        <p style={{ margin: 0, fontSize: 15, color: '#475569', lineHeight: 1.5 }}>{comp.excerpt || (comp.content && comp.content.length > 180 ? comp.content.slice(0, 180) + '...' : comp.content)}</p>
+        <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: 13 }}>Read more →</span>
+      </div>
+
+      {/* Action Bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '8px 16px 12px', borderTop: '1px solid #f1f5f9' }}>
+        <button onClick={() => toggleLike(comp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: comp.liked_by_me ? '#ef4444' : '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 18 }}>{comp.liked_by_me ? '❤️' : '🤍'}</span>
+          <span style={{ fontWeight: 600 }}>{comp.likes || ''}</span>
+        </button>
+        <button onClick={() => { setCommentOpen(commentOpen === comp.id ? null : comp.id); if (commentOpen !== comp.id) loadComments(comp.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 18 }}>💬</span>
+          <span style={{ fontWeight: 600 }}>{comp.comments_count || ''}</span>
+        </button>
+        <button onClick={() => alert('Repost feature coming soon!')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 18 }}>🔄</span>
+        </button>
+        <button onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/alumni/composition/${comp.slug || comp.id}`); alert('Link copied!'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 18 }}>↗️</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render a Quick Post card
+  const renderPost = (post) => (
+    <div key={`post-${post.id}`} style={{ background: '#fff', borderRadius: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      {/* Author Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px 8px' }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: `hsl(${(post.user_id || 1) * 137 % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+          {(post.author_name || 'U')[0]}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{post.author_name}</span>
+            <span style={{ color: '#3b82f6', fontSize: 13 }}>✓</span>
+            <span style={{ color: '#94a3b8', fontSize: 13 }}>· {new Date(post.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
           </div>
-        ) : (
-          <div>
-            <textarea
-              autoFocus
-              placeholder="What did you learn today? Share your thoughts, achievements, or moments..."
-              value={composerContent}
-              onChange={(e) => setComposerContent(e.target.value)}
-              rows={3}
-              style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
-            />
-            {composerImages.length > 0 && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                {composerImages.map((img, i) => (
-                  <div key={i} style={{ position: 'relative' }}>
-                    <img src={img.startsWith('http') ? img : `${UPLOADS_BASE}${img}`} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} />
-                    <button onClick={() => setComposerImages(composerImages.filter((_, idx) => idx !== i))} style={{ position: 'absolute', top: -4, right: -4, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, fontSize: 12, cursor: 'pointer' }}>×</button>
+        </div>
+        <span style={{ background: '#e2e8f0', color: '#475569', padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 700 }}>📝 Post</span>
+      </div>
+
+      {/* Title */}
+      <div onClick={() => navigate(`/alumni/post/${post.id}`)} style={{ padding: '0 16px 8px', cursor: 'pointer' }}>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#1e293b', lineHeight: 1.3 }}>{getTitle(post.content)}</h3>
+      </div>
+
+      {/* Featured Image */}
+      {post.media_url && (
+        <div onClick={() => navigate(`/alumni/post/${post.id}`)} style={{ cursor: 'pointer' }}>
+          <img src={post.media_url.startsWith('http') ? post.media_url : `${UPLOADS_BASE}${post.media_url}`} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'cover' }} />
+        </div>
+      )}
+
+      {/* Preview */}
+      <div onClick={() => navigate(`/alumni/post/${post.id}`)} style={{ padding: '12px 16px', cursor: 'pointer' }}>
+        <p style={{ margin: 0, fontSize: 15, color: '#475569', lineHeight: 1.5 }}>{getPreview(post.content)}</p>
+      </div>
+
+      {/* Action Bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '8px 16px 12px', borderTop: '1px solid #f1f5f9' }}>
+        <button onClick={() => toggleLike(post)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: post.liked_by_me ? '#ef4444' : '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 18 }}>{post.liked_by_me ? '❤️' : '🤍'}</span>
+          <span style={{ fontWeight: 600 }}>{post.likes || ''}</span>
+        </button>
+        <button onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); if (commentOpen !== post.id) loadComments(post.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 18 }}>💬</span>
+          <span style={{ fontWeight: 600 }}>{post.comments_count || ''}</span>
+        </button>
+        <button onClick={() => alert('Repost feature coming soon!')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 18 }}>🔄</span>
+        </button>
+        <div style={{ position: 'relative', marginLeft: 'auto' }}>
+          <button onClick={() => setShowReactions(showReactions === post.id ? null : post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#64748b' }}>😊</button>
+          {showReactions === post.id && (
+            <div style={{ position: 'absolute', bottom: 32, right: 0, display: 'flex', gap: 4, background: '#fff', padding: '6px 10px', borderRadius: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100 }}>
+              {REACTIONS.map((emoji) => (
+                <button key={emoji} onClick={() => addReaction(post.id, emoji)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', padding: 4 }}>{emoji}</button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/alumni/post/${post.id}`); alert('Link copied!'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 18 }}>↗️</span>
+        </button>
+      </div>
+
+      {/* Inline Comments */}
+      {commentOpen === post.id && (
+        <div style={{ padding: '0 16px 16px', borderTop: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', gap: 10, margin: '12px 0' }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: `hsl(${(user?.id || 1) * 137 % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 12, flexShrink: 0 }}>{(user?.name || 'U')[0]}</div>
+            <input type="text" placeholder="Write a comment..." value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitComment(post.id)} style={{ flex: 1, padding: '10px 14px', borderRadius: 20, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none' }} />
+            <button onClick={() => submitComment(post.id)} style={{ padding: '8px 16px', borderRadius: 20, border: 'none', background: '#f59e0b', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>Reply</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {(commentsMap[post.id] || []).map((c) => (
+              <div key={c.id} style={{ display: 'flex', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: `hsl(${(c.user_id || 1) * 137 % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 12, flexShrink: 0 }}>{(c.author_name || 'U')[0]}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                      <strong style={{ fontSize: 13, color: '#1e293b' }}>{c.author_name}</strong>
+                      <span style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 14, color: '#475569', lineHeight: 1.5 }}>{c.content}</p>
                   </div>
-                ))}
+                </div>
               </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input type="file" accept="image/*" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={(e) => handleImageUpload([...e.target.files])} />
-                <button onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>📷</button>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn btn-outline btn-sm" onClick={() => { setShowComposer(false); setComposerContent(''); setComposerImages([]); }}>Cancel</button>
-                <button className="btn btn-primary btn-sm" onClick={handlePost} disabled={posting || (!composerContent.trim() && composerImages.length === 0)}>
-                  {posting ? 'Posting...' : 'Post'}
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <AlumniLayout>
+      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        {/* Compose Box - Quick Post */}
+        <div style={{ background: '#fff', borderRadius: 16, padding: 16, marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: `hsl(${(user?.id || 1) * 137 % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
+              {(user?.name || 'U')[0]}
+            </div>
+            <div style={{ flex: 1 }}>
+              <textarea
+                placeholder="What's on your mind?"
+                value={composeText}
+                onChange={(e) => setComposeText(e.target.value)}
+                style={{ width: '100%', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: 12, fontSize: 15, resize: 'vertical', minHeight: 60, outline: 'none' }}
+              />
+              {selectedImage && (
+                <div style={{ position: 'relative', marginTop: 8 }}>
+                  <img src={URL.createObjectURL(selectedImage)} alt="" style={{ maxHeight: 120, borderRadius: 8, objectFit: 'cover' }} />
+                  <button onClick={() => setSelectedImage(null)} style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 12 }}>✕</button>
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <button onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#64748b' }}>🖼️</button>
+                <input type="file" ref={fileInputRef} onChange={(e) => setSelectedImage(e.target.files?.[0] || null)} accept="image/*" style={{ display: 'none' }} />
+                <button onClick={() => navigate('/alumni/compose')} style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 20, border: '1.5px solid #f59e0b', background: '#fff', color: '#f59e0b', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
+                  ✍️ Write Article
+                </button>
+                <button onClick={handlePost} disabled={sendingPost} style={{ padding: '8px 20px', borderRadius: 20, border: 'none', background: '#f59e0b', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+                  {sendingPost ? 'Posting...' : 'Post'}
                 </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Posts */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {posts.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 60, background: '#f8fafc', borderRadius: 16 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📰</div>
-            <h3 style={{ margin: '0 0 8px' }}>No posts yet</h3>
-            <p style={{ color: '#64748b' }}>Be the first to share something!</p>
-          </div>
-        )}
+        {loading && <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>Loading...</div>}
 
-        {posts.map((post) => (
-          <div key={post.id} style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: `hsl(${(post.author_id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600 }}>
-                {post.author_name?.[0] || '?'}
-              </div>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{post.author_name}</div>
-                <div style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(post.created_at).toLocaleDateString()}</div>
-              </div>
-            </div>
-
-            {post.content && <p style={{ margin: '0 0 12px', lineHeight: 1.5, fontSize: 15 }}>{post.content}</p>}
-
-            {post.image_paths && post.image_paths.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: post.image_paths.length === 1 ? '1fr' : 'repeat(2, 1fr)', gap: 8, marginBottom: 12 }}>
-                {post.image_paths.map((img, i) => (
-                  <img key={i} src={img.startsWith('http') ? img : `${UPLOADS_BASE}${img}`} alt="" style={{ width: '100%', borderRadius: 12, objectFit: 'cover', maxHeight: 400 }} />
-                ))}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 16, paddingTop: 12, borderTop: '1px solid #f1f5f9' }}>
-              <button onClick={() => toggleLike(post)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: post.liked_by_me ? '#ef4444' : '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
-                {post.liked_by_me ? '❤️' : '🤍'} {post.likes_count || 0}
-              </button>
-              <button onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); loadComments(post.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
-                💬 {post.comments_count || 0}
-              </button>
-            </div>
-
-            {commentOpen === post.id && (
-              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #f1f5f9' }}>
-                {(comments[post.id] || []).map((c) => (
-                  <div key={c.id} style={{ marginBottom: 8, fontSize: 13 }}>
-                    <strong>{c.author_name}</strong>: {c.content}
-                  </div>
-                ))}
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addComment(post.id)}
-                    style={{ flex: 1, padding: '8px 12px', borderRadius: 20, border: '1px solid #e2e8f0', fontSize: 13 }}
-                  />
-                  <button className="btn btn-primary btn-sm" onClick={() => addComment(post.id)}>Reply</button>
-                </div>
-              </div>
-            )}
-          </div>
+        {posts.map((item) => (
+          item.itemType === 'composition' ? renderComposition(item) : renderPost(item)
         ))}
+
+        {!loading && posts.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>📝</div>
+            <p>No posts yet. Be the first to share!</p>
+            <button onClick={() => navigate('/alumni/compose')} style={{ marginTop: 16, padding: '10px 24px', borderRadius: 20, border: 'none', background: '#f59e0b', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>✍️ Write Your First Article</button>
+          </div>
+        )}
       </div>
-    </div>
+    </AlumniLayout>
   );
 }

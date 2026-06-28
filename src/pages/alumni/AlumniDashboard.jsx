@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
+import AlumniLayout from '../../components/AlumniLayout';
 
 export default function AlumniDashboard() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [compositions, setCompositions] = useState([]);
@@ -16,10 +17,10 @@ export default function AlumniDashboard() {
     const load = async () => {
       try {
         const [p, myComp, trend, w] = await Promise.all([
-          api.get('/alumni/profile/me'),
-          api.get('/alumni/my-compositions?limit=5'),
-          api.get('/alumni/compositions/trending'),
-          api.get('/alumni/wallet').catch(() => ({ wallet: null })),
+          api.get('/alumni/profile/me', token),
+          api.get('/alumni/my-compositions?limit=5', token),
+          api.get('/alumni/compositions/trending', token),
+          api.get('/alumni/wallet', token).catch(() => ({ wallet: null })),
         ]);
         setProfile(p);
         setCompositions(myComp || []);
@@ -34,10 +35,11 @@ export default function AlumniDashboard() {
     load();
   }, []);
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
+  if (loading) return <AlumniLayout><div style={{ padding: 40, textAlign: 'center' }}>Loading...</div></AlumniLayout>;
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: 24 }}>
+    <AlumniLayout>
+    <div>
       {/* Cover & Profile Header */}
       <div style={{ position: 'relative', marginBottom: 60 }}>
         <div style={{
@@ -167,5 +169,6 @@ export default function AlumniDashboard() {
         </div>
       </div>
     </div>
+    </AlumniLayout>
   );
 }

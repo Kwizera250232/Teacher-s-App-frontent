@@ -54,6 +54,18 @@ const GraduationManager = lazy(() => import('./pages/alumni/GraduationManager'))
 const AlumniGroups = lazy(() => import('./pages/alumni/AlumniGroups'));
 const AlumniGroupChat = lazy(() => import('./pages/alumni/AlumniGroupChat'));
 const AlumniFeed = lazy(() => import('./pages/alumni/AlumniFeed'));
+const AlumniPostDetail = lazy(() => import('./pages/alumni/AlumniPostDetail'));
+const AlumniPrimaryThings = lazy(() => import('./pages/alumni/AlumniPrimaryThings'));
+const AlumniNotes = lazy(() => import('./pages/alumni/AlumniNotes'));
+const AlumniQuizzes = lazy(() => import('./pages/alumni/AlumniQuizzes'));
+const AlumniHomework = lazy(() => import('./pages/alumni/AlumniHomework'));
+const AlumniLibrary = lazy(() => import('./pages/alumni/AlumniLibrary'));
+const AlumniPastPapers = lazy(() => import('./pages/alumni/AlumniPastPapers'));
+const AlumniColleagues = lazy(() => import('./pages/alumni/AlumniColleagues'));
+const AlumniDirectChat = lazy(() => import('./pages/alumni/AlumniDirectChat'));
+const AlumniDean = lazy(() => import('./pages/alumni/AlumniDean'));
+const AlumniOpportunities = lazy(() => import('./pages/alumni/AlumniOpportunities'));
+const AlumniAdmin = lazy(() => import('./pages/alumni/AlumniAdmin'));
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -241,6 +253,42 @@ function AppShell() {
                 } />
                 <Route path="/alumni/feed" element={
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniFeed /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/post/:postId" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniPostDetail /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/primary-things" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniPrimaryThings /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/notes" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniNotes /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/quizzes" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniQuizzes /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/homework" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniHomework /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/library" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniLibrary /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/past-papers" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniPastPapers /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/colleagues" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniColleagues /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/chat/:userId" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniDirectChat /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/dean" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniDean /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/opportunities" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniOpportunities /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/admin" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniAdmin /></Suspense></ProtectedRoute>
                 } />
         </Routes>
       </div>
