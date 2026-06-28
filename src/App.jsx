@@ -135,6 +135,9 @@ function AppShell() {
                 <Route path="/head-teacher/dashboard" element={
                   <ProtectedRoute role="head_teacher"><HeadTeacherDashboard /></ProtectedRoute>
                 } />
+                <Route path="/head-teacher/classes" element={
+                  <ProtectedRoute role="head_teacher"><HeadTeacherDashboard /></ProtectedRoute>
+                } />
                 <Route path="/head-teacher/classes/:id" element={
                   <ProtectedRoute role="head_teacher"><TeacherClassPage /></ProtectedRoute>
                 } />
@@ -146,6 +149,9 @@ function AppShell() {
                 } />
 
                 <Route path="/teacher/dashboard" element={
+                  <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
+                } />
+                <Route path="/teacher/classes" element={
                   <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
                 } />
                 <Route path="/teacher/classes/:id" element={

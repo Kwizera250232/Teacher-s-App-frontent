@@ -833,6 +833,22 @@ export default function TeacherClassPage() {
               >
                 👪 Parent invite link
               </button>
+              <button
+                type="button"
+                style={{ marginTop: '0.5rem', width: '100%', padding: '0.6rem', borderRadius: 10, border: 'none', background: '#f59e0b', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                onClick={async () => {
+                  if (!window.confirm(`Graduate ${popName} to Alumni?`)) return;
+                  try {
+                    await api.post('/alumni/graduate', { student_id: selectedStudent.id, graduation_year: new Date().getFullYear() }, token);
+                    alert(`✅ ${popName} graduated to Alumni!`);
+                    setSelectedStudent(null);
+                  } catch (err) {
+                    alert('❌ ' + (err.message || 'Failed to graduate'));
+                  }
+                }}
+              >
+                🎓 Graduate to Alumni
+              </button>
               <button onClick={() => setSelectedStudent(null)} style={{ marginTop: '0.75rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: 10, padding: '0.6rem 2rem', cursor: 'pointer', fontWeight: 600 }}>Funga</button>
             </div>
           </div>
