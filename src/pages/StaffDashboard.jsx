@@ -229,7 +229,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
                 <button onClick={() => window.open('/alumni/admin', '_blank')} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
                   ⚙️ Manage Alumni Content
                 </button>
-                <button onClick={() => window.open('/teacher/graduate', '_blank')} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#059669', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={() => window.open('/alumni/graduation', '_blank')} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#059669', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
                   🎓 Graduate Students
                 </button>
               </div>
@@ -291,7 +291,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <button className="btn btn-secondary" onClick={() => setShowAddStudents(true)} disabled={user?.role === 'teacher' && !hasSchool}>
               👤 Add Students
             </button>
-            <Link to="/teacher/classes" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+            <Link to="/alumni/graduation" className="btn btn-primary" style={{ textDecoration: 'none' }}>
               🎓 Graduate Students
             </Link>
           </div>

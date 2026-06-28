@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../api';
+import { api, uploadFile } from '../../api';
+import { useRef } from 'react';
 
 const TABS = [
   { key: 'books', label: '📚 Books', icon: '📚' },
@@ -13,6 +14,8 @@ export default function AdminAlumni({ token }) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({});
   const [editing, setEditing] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const loadItems = async () => {
     setLoading(true);
@@ -30,6 +33,22 @@ export default function AdminAlumni({ token }) {
   };
 
   useEffect(() => { loadItems(); }, [activeTab]);
+
+  const handleUpload = async (file) => {
+    if (!file) return null;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await uploadFile('/upload', fd, token);
+      return res.url;
+    } catch (err) {
+      alert('Upload failed: ' + err.message);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,10 +94,20 @@ export default function AdminAlumni({ token }) {
             {['Primary Books','Secondary Books','Past Papers','Revision Notes','Teacher Resources','University Resources','Research Papers','Career Guides','Government Documents'].map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <input placeholder="Cover Image URL" value={form.cover_url || ''} onChange={(e) => setForm({...form, cover_url: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
-          <input placeholder="PDF/Download URL" value={form.download_url || ''} onChange={(e) => setForm({...form, download_url: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <input placeholder="PDF/Download URL" value={form.download_url || ''} onChange={(e) => setForm({...form, download_url: e.target.value})} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
+            <button type="button" onClick={() => fileInputRef.current?.click()} style={{ padding: '10px 16px', borderRadius: 8, border: '1.5px solid #667eea', background: '#fff', color: '#667eea', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {uploading ? 'Uploading...' : '📁 Upload PDF'}
+            </button>
+            <input type="file" ref={fileInputRef} accept=".pdf,.epub,.doc,.docx" style={{ display: 'none' }} onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) { const url = await handleUpload(file); if (url) setForm(prev => ({ ...prev, download_url: url })); }
+            }} />
+          </div>
+          {form.download_url && <div style={{ fontSize: 13, color: '#059669', padding: '6px 10px', background: '#f0fdf4', borderRadius: 6 }}>✅ File ready: {form.download_url.split('/').pop()}</div>}
           <textarea placeholder="Description" value={form.description || ''} onChange={(e) => setForm({...form, description: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0', minHeight: 60 }} />
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="submit" style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Book'}</button>
+            <button type="submit" disabled={uploading} style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Book'}</button>
             {editing && <button type="button" onClick={() => { setEditing(null); setForm({}); }} style={{ padding: '10px 20px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer' }}>Cancel</button>}
           </div>
         </form>
@@ -115,9 +144,19 @@ export default function AdminAlumni({ token }) {
           <select value={form.year || '2024'} onChange={(e) => setForm({...form, year: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
             {['2024','2023','2022','2021','2020','2019'].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <input placeholder="PDF URL" value={form.pdf_url || ''} onChange={(e) => setForm({...form, pdf_url: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <input placeholder="PDF URL" value={form.pdf_url || ''} onChange={(e) => setForm({...form, pdf_url: e.target.value})} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
+            <button type="button" onClick={() => fileInputRef.current?.click()} style={{ padding: '10px 16px', borderRadius: 8, border: '1.5px solid #667eea', background: '#fff', color: '#667eea', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {uploading ? 'Uploading...' : '📁 Upload PDF'}
+            </button>
+            <input type="file" ref={fileInputRef} accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) { const url = await handleUpload(file); if (url) setForm(prev => ({ ...prev, pdf_url: url })); }
+            }} />
+          </div>
+          {form.pdf_url && <div style={{ fontSize: 13, color: '#059669', padding: '6px 10px', background: '#f0fdf4', borderRadius: 6 }}>✅ File ready: {form.pdf_url.split('/').pop()}</div>}
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="submit" style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Past Paper'}</button>
+            <button type="submit" disabled={uploading} style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Past Paper'}</button>
             {editing && <button type="button" onClick={() => { setEditing(null); setForm({}); }} style={{ padding: '10px 20px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer' }}>Cancel</button>}
           </div>
         </form>
