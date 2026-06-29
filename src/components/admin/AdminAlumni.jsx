@@ -40,7 +40,7 @@ export default function AdminAlumni({ token }) {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await uploadFile('/upload', fd, token);
+      const res = await uploadFile('/alumni/upload', fd, token);
       return res.url;
     } catch (err) {
       alert('Upload failed: ' + err.message);
