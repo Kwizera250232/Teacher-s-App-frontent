@@ -21,9 +21,9 @@ export default function AdminAlumni({ token }) {
     setLoading(true);
     try {
       let endpoint = '';
-      if (activeTab === 'books') endpoint = '/alumni/library';
-      else if (activeTab === 'opportunities') endpoint = '/alumni/opportunities';
-      else if (activeTab === 'pastpapers') endpoint = '/alumni/past-papers';
+      if (activeTab === 'books') endpoint = '/alumni/admin/books';
+      else if (activeTab === 'opportunities') endpoint = '/alumni/admin/opportunities';
+      else if (activeTab === 'pastpapers') endpoint = '/alumni/admin/past-papers';
       const data = await api.get(endpoint, token);
       if (activeTab === 'books') setItems(data.books || []);
       else if (activeTab === 'opportunities') setItems(data.opportunities || []);
@@ -54,9 +54,9 @@ export default function AdminAlumni({ token }) {
     e.preventDefault();
     try {
       let endpoint = '';
-      if (activeTab === 'books') endpoint = '/admin/alumni/books';
-      else if (activeTab === 'opportunities') endpoint = '/admin/alumni/opportunities';
-      else if (activeTab === 'pastpapers') endpoint = '/admin/alumni/past-papers';
+      if (activeTab === 'books') endpoint = '/alumni/admin/books';
+      else if (activeTab === 'opportunities') endpoint = '/alumni/admin/opportunities';
+      else if (activeTab === 'pastpapers') endpoint = '/alumni/admin/past-papers';
 
       if (editing) {
         await api.put(`${endpoint}/${editing}`, form, token);
@@ -75,9 +75,9 @@ export default function AdminAlumni({ token }) {
     if (!window.confirm('Delete this item?')) return;
     try {
       let endpoint = '';
-      if (activeTab === 'books') endpoint = `/admin/alumni/books/${id}`;
-      else if (activeTab === 'opportunities') endpoint = `/admin/alumni/opportunities/${id}`;
-      else if (activeTab === 'pastpapers') endpoint = `/admin/alumni/past-papers/${id}`;
+      if (activeTab === 'books') endpoint = `/alumni/admin/books/${id}`;
+      else if (activeTab === 'opportunities') endpoint = `/alumni/admin/opportunities/${id}`;
+      else if (activeTab === 'pastpapers') endpoint = `/alumni/admin/past-papers/${id}`;
       await api.delete(endpoint, token);
       loadItems();
     } catch (e) { alert('Failed to delete'); }
