@@ -3,6 +3,15 @@ import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
+const SUGGESTIONS = [
+  { icon: '📚', text: 'Prepare me a quiz on Mathematics for Primary 6' },
+  { icon: '🔬', text: 'Give me a Science quiz for Primary 5' },
+  { icon: '🌍', text: 'Quiz me on Social Studies for Primary 4' },
+  { icon: '🗣️', text: 'Help me practice English for Primary 3' },
+  { icon: '🧮', text: 'Prepare a Math quiz on fractions' },
+  { icon: '🇷🇼', text: 'Quiz me on Kinyarwanda grammar' },
+];
+
 export default function AlumniDean() {
   const { user, token } = useAuth();
   const [messages, setMessages] = useState([]);
@@ -12,14 +21,15 @@ export default function AlumniDean() {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
+  const [currentQ, setCurrentQ] = useState(0);
+  const [showReview, setShowReview] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    // Initial greeting
     setMessages([
       {
         from: 'dean',
-        text: `Hello ${user?.name || 'there'}! I'm Dean AI. I can prepare quizzes for you and give you marks instantly with feedback!\n\nJust tell me what subject and grade you want to practice. For example:\n"Prepare me a quiz on Mathematics for Primary 6"`,
+        text: `Murakaza neza ${user?.name || ''}! 👋\n\nI'm Dean AI — your learning companion on UClass. I help you:\n\n📚 Prepare quizzes on any subject & grade\n🎯 Practice and get instant marks with feedback\n💡 Ask questions about your school subjects\n\nWhat would you like to learn today?`,
         time: new Date(),
       },
     ]);
@@ -27,44 +37,53 @@ export default function AlumniDean() {
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, selectedQuiz]);
+  }, [messages, selectedQuiz, currentQ]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg = input.trim();
+  const sendMessage = async (overrideMsg) => {
+    const userMsg = (overrideMsg || input).trim();
+    if (!userMsg || loading) return;
     setInput('');
     setMessages(prev => [...prev, { from: 'user', text: userMsg, time: new Date() }]);
     setLoading(true);
 
     try {
-      // Parse the request - extract subject and grade
       const lower = userMsg.toLowerCase();
       let subject = null;
       let grade = null;
 
-      // Common subjects
-      const subjects = ['mathematics', 'math', 'english', 'kinyarwanda', 'science', 'social studies', 'french', 'ict', 'religion', 'geography', 'history', 'biology', 'chemistry', 'physics'];
+      const subjects = ['mathematics', 'math', 'english', 'kinyarwanda', 'science', 'social studies', 'social', 'french', 'ict', 'religion', 'geography', 'history', 'biology', 'chemistry', 'physics', 'entrepreneurship'];
       for (const s of subjects) {
         if (lower.includes(s)) {
-          subject = s === 'math' ? 'mathematics' : s;
+          subject = s === 'math' ? 'mathematics' : s === 'social' ? 'social studies' : s;
           break;
         }
       }
 
-      // Common grades
       const gradeMatch = lower.match(/primary\s*(\d+)|p(\d+)|grade\s*(\d+)|level\s*(\d+)|(\d+)(?:th|rd|nd|st)?\s*grade/i);
       if (gradeMatch) {
         const num = gradeMatch[1] || gradeMatch[2] || gradeMatch[3] || gradeMatch[4] || gradeMatch[5];
         grade = `Primary ${num}`;
       }
 
-      // Search for quizzes using dean-quizzes endpoint
+      // Check if it's a question (not a quiz request)
+      const isQuizRequest = /quiz|test|practice|prepare|exam|questions|exercise/i.test(userMsg);
+
+      if (!isQuizRequest && !subject) {
+        // General learning help
+        setMessages(prev => [...prev, {
+          from: 'dean',
+          text: `Great question! I'm here to help you learn better. 📖\n\nI can:\n• Prepare quizzes on any subject (Math, Science, English, Social Studies, Kinyarwanda, etc.)\n• Help you practice for your grade level\n• Give you instant feedback with explanations\n\nTry saying: "Prepare me a quiz on Mathematics for Primary 6" or ask about a specific subject!`,
+          time: new Date(),
+        }]);
+        setLoading(false);
+        return;
+      }
+
       let quizzes = [];
       try {
         const searchRes = await api.get(`/alumni/dean-quizzes/search?grade=${encodeURIComponent(grade || '')}&subject=${encodeURIComponent(subject || '')}`, token);
         quizzes = searchRes.quizzes || [];
       } catch (e) {
-        // Fallback: get all visible quizzes
         try {
           const allRes = await api.get('/alumni/dean-quizzes', token);
           quizzes = (allRes.quizzes || []).filter(q => {
@@ -78,21 +97,21 @@ export default function AlumniDean() {
       if (quizzes.length > 0) {
         setMessages(prev => [...prev, {
           from: 'dean',
-          text: `Great! I found ${quizzes.length} quiz${quizzes.length > 1 ? 'zes' : ''} for you. Click on any quiz below to start!`,
+          text: `I found ${quizzes.length} quiz${quizzes.length > 1 ? 'zes' : ''} for you${subject ? ` on ${subject}` : ''}${grade ? ` · ${grade}` : ''}. 🎯\n\nClick a quiz below to start. You'll see questions one by one, just like in UClass!`,
           quizzes: quizzes.slice(0, 5),
           time: new Date(),
         }]);
       } else {
         setMessages(prev => [...prev, {
           from: 'dean',
-          text: `I couldn't find any quizzes matching "${subject || 'that subject'}" ${grade ? `for ${grade}` : ''} in our database right now.\n\nTry asking with a different subject like:\n"Prepare me a quiz on Science for Primary 5"`,
+          text: `I couldn't find quizzes for "${subject || 'that'}"${grade ? ` for ${grade}` : ''} right now. 😔\n\nTry:\n• "Prepare me a quiz on Science for Primary 5"\n• "Quiz me on Mathematics"\n• "Give me an English quiz"`,
           time: new Date(),
         }]);
       }
     } catch (err) {
       setMessages(prev => [...prev, {
         from: 'dean',
-        text: 'Sorry, I had trouble searching for quizzes. Please try again!',
+        text: 'Sorry, I had trouble. Please try again! 🙏',
         time: new Date(),
       }]);
     } finally {
@@ -104,8 +123,9 @@ export default function AlumniDean() {
     setSelectedQuiz(quiz);
     setAnswers({});
     setResult(null);
+    setCurrentQ(0);
+    setShowReview(false);
     try {
-      // Use dean-quizzes endpoint
       const data = await api.get(`/alumni/dean-quizzes/${quiz.id}`, token);
       setSelectedQuiz(data.quiz || quiz);
       setQuestions(data.questions || []);
@@ -117,6 +137,13 @@ export default function AlumniDean() {
 
   const selectAnswer = (qId, answer) => {
     setAnswers(prev => ({ ...prev, [qId]: answer }));
+  };
+
+  const goNext = () => {
+    if (currentQ < questions.length - 1) setCurrentQ(currentQ + 1);
+  };
+  const goPrev = () => {
+    if (currentQ > 0) setCurrentQ(currentQ - 1);
   };
 
   const submitQuiz = async () => {
@@ -133,9 +160,11 @@ export default function AlumniDean() {
       correctAnswer: q.correct_answer,
       isCorrect: answers[q.id] === q.correct_answer,
       explanation: q.explanation || 'Keep learning!',
+      options: q.options || [],
     }));
 
     setResult({ score, correct, total: questions.length, feedback });
+    setShowReview(true);
 
     try {
       await api.post('/alumni/dean-quizzes/submit', { quiz_id: selectedQuiz.id, answers, score }, token);
@@ -147,54 +176,239 @@ export default function AlumniDean() {
     setQuestions([]);
     setAnswers({});
     setResult(null);
+    setCurrentQ(0);
+    setShowReview(false);
   };
 
-  return (
-    <AlumniLayout showTopWriters={false}>
-      <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)' }}>
+  const answeredCount = Object.keys(answers).length;
+  const allAnswered = answeredCount === questions.length;
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: '1px solid #e2e8f0' }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🤖</div>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Dean AI</h2>
-            <p style={{ margin: 0, fontSize: 13, color: '#94a3b8' }}>Quiz preparation assistant</p>
+  // ── RESULT SCREEN (UClass style) ──
+  const renderResult = () => {
+    const pct = result.score;
+    const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🎉' : pct >= 40 ? '👍' : '📚';
+    const msg = pct >= 80 ? 'Superbe! Excellent work!' : pct >= 60 ? 'Wabigenje neza! Good job!' : pct >= 40 ? 'Gerageza cyane! Keep trying!' : 'Komeza wihatire! Study more!';
+    const color = pct >= 70 ? '#27ae60' : pct >= 50 ? '#f59e0b' : '#e74c3c';
+    const bgColor = pct >= 70 ? '#f0fff4' : pct >= 50 ? '#fffbeb' : '#fff0f0';
+
+    return (
+      <div style={DStyles.resultCard}>
+        <div style={{ fontSize: 64, textAlign: 'center', marginBottom: 12 }}>{emoji}</div>
+        <h2 style={DStyles.resultTitle}>{selectedQuiz?.title || 'Quiz'}</h2>
+        <p style={DStyles.resultSub}>Dean AI Quiz · {result.total} questions</p>
+
+        <div style={{ ...DStyles.scoreBox, background: bgColor, border: `3px solid ${color}` }}>
+          <span style={{ fontSize: 48, fontWeight: 900, color: '#222' }}>{result.correct}</span>
+          <span style={{ fontSize: 24, color: '#888', margin: '0 6px' }}>/</span>
+          <span style={{ fontSize: 32, fontWeight: 700, color: '#555' }}>{result.total}</span>
+        </div>
+
+        <div style={{ fontSize: 28, fontWeight: 800, color, marginBottom: 6 }}>{pct}%</div>
+        <div style={{ fontSize: 16, color: '#666', marginBottom: 24 }}>{msg}</div>
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}>
+          <button onClick={() => setShowReview(r => !r)} style={DStyles.reviewBtn}>
+            {showReview ? '▲ Hide Review' : '📋 Review My Answers'}
+          </button>
+          <button onClick={resetChat} style={DStyles.tryAgainBtn}>
+            🔄 Try Another Quiz
+          </button>
+        </div>
+
+        {showReview && (
+          <div style={{ marginTop: 16, textAlign: 'left' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14, color: '#1e293b' }}>
+              📋 Answer Review ({result.correct}/{result.total})
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {result.feedback.map((f, i) => (
+                <div key={i} style={{
+                  background: '#fff', borderRadius: 12, padding: '16px 18px',
+                  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                  borderLeft: `4px solid ${f.isCorrect ? '#27ae60' : '#e74c3c'}`,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <strong style={{ fontSize: 14 }}>Q{i + 1}: {f.question}</strong>
+                    <span style={{ fontSize: 20 }}>{f.isCorrect ? '✅' : '❌'}</span>
+                  </div>
+                  {f.options.length > 0 ? f.options.map((opt) => {
+                    const isCorrect = opt === f.correctAnswer;
+                    const isGiven = opt === f.yourAnswer;
+                    let bg = 'transparent', border = '#eee';
+                    if (isCorrect) { bg = '#f0fff4'; border = '#27ae60'; }
+                    else if (isGiven && !isCorrect) { bg = '#fff0f0'; border = '#e74c3c'; }
+                    return (
+                      <div key={opt} style={{ padding: '8px 12px', borderRadius: 7, background: bg, border: `1px solid ${border}`, marginBottom: 4, fontSize: 13 }}>
+                        {opt}
+                        {isCorrect && <span style={{ float: 'right', color: '#27ae60', fontWeight: 700 }}>✓ Correct</span>}
+                        {isGiven && !isCorrect && <span style={{ float: 'right', color: '#e74c3c', fontWeight: 700 }}>✗ Your answer</span>}
+                      </div>
+                    );
+                  }) : (
+                    <div style={{ fontSize: 13, marginTop: 6 }}>
+                      <div style={{ padding: '7px 12px', borderRadius: 7, background: f.isCorrect ? '#f0fff4' : '#fff0f0', border: `1px solid ${f.isCorrect ? '#27ae60' : '#e74c3c'}`, marginBottom: 4 }}>
+                        Your answer: <strong>{f.yourAnswer}</strong>
+                      </div>
+                      {!f.isCorrect && (
+                        <div style={{ padding: '7px 12px', borderRadius: 7, background: '#f0fff4', border: '1px solid #27ae60' }}>
+                          Correct answer: <strong>{f.correctAnswer}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 8, fontStyle: 'italic' }}>💡 {f.explanation}</div>
+                </div>
+              ))}
+            </div>
           </div>
-          {selectedQuiz && (
-            <button onClick={resetChat} style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-              ← Back to Chat
+        )}
+      </div>
+    );
+  };
+
+  // ── QUIZ TAKING VIEW (UClass style - one question at a time) ──
+  const renderQuizTaking = () => {
+    const q = questions[currentQ];
+    if (!q) return null;
+    const answered = !!answers[q.id];
+    const progress = ((currentQ + 1) / questions.length) * 100;
+
+    return (
+      <div style={DStyles.quizContainer}>
+        {/* Quiz Header */}
+        <div style={DStyles.quizHeader}>
+          <div>
+            <h3 style={DStyles.quizTitle}>{selectedQuiz?.title || 'Quiz'}</h3>
+            <p style={DStyles.quizMeta}>Dean AI · {questions.length} questions</p>
+          </div>
+          <button onClick={resetChat} style={DStyles.exitBtn}>✕ Exit</button>
+        </div>
+
+        {/* Progress Bar */}
+        <div style={DStyles.progressBar}>
+          <div style={{ ...DStyles.progressFill, width: `${progress}%` }} />
+        </div>
+
+        {/* Progress Text */}
+        <div style={DStyles.progressText}>
+          Question {currentQ + 1} of {questions.length} · {answeredCount} answered
+        </div>
+
+        {/* Question Card */}
+        <div style={DStyles.questionCard}>
+          <div style={DStyles.questionNumber}>Q{currentQ + 1}</div>
+          <h3 style={DStyles.questionText}>{q.question_text || q.question}</h3>
+          <div style={DStyles.optionsList}>
+            {(q.options || []).map((opt, idx) => {
+              const isSelected = answers[q.id] === opt;
+              const letter = String.fromCharCode(65 + idx);
+              return (
+                <button
+                  key={opt}
+                  onClick={() => selectAnswer(q.id, opt)}
+                  style={{
+                    ...DStyles.optionBtn,
+                    border: isSelected ? '2.5px solid #667eea' : '2px solid #e2e8f0',
+                    background: isSelected ? '#eff6ff' : '#fff',
+                  }}
+                >
+                  <span style={{
+                    ...DStyles.optionLetter,
+                    background: isSelected ? '#667eea' : '#f1f5f9',
+                    color: isSelected ? '#fff' : '#64748b',
+                  }}>{letter}</span>
+                  <span style={{ fontSize: 15, color: '#1e293b' }}>{opt}</span>
+                  {isSelected && <span style={{ marginLeft: 'auto', color: '#667eea', fontSize: 18 }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div style={DStyles.navBar}>
+          <button onClick={goPrev} disabled={currentQ === 0} style={{ ...DStyles.navBtn, opacity: currentQ === 0 ? 0.4 : 1, cursor: currentQ === 0 ? 'not-allowed' : 'pointer' }}>
+            ← Previous
+          </button>
+          {currentQ < questions.length - 1 ? (
+            <button onClick={goNext} disabled={!answered} style={{ ...DStyles.navBtnPrimary, opacity: !answered ? 0.4 : 1, cursor: !answered ? 'not-allowed' : 'pointer' }}>
+              Next →
+            </button>
+          ) : (
+            <button onClick={submitQuiz} disabled={!allAnswered} style={{ ...DStyles.submitBtn, opacity: !allAnswered ? 0.5 : 1, cursor: !allAnswered ? 'not-allowed' : 'pointer' }}>
+              {allAnswered ? '✓ Submit Quiz' : `${answeredCount}/${questions.length} answered`}
             </button>
           )}
         </div>
 
-        {/* Chat / Quiz Area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 0' }}>
+        {/* Question Dots */}
+        <div style={DStyles.dotsRow}>
+          {questions.map((qq, i) => (
+            <button
+              key={qq.id}
+              onClick={() => setCurrentQ(i)}
+              style={{
+                ...DStyles.dot,
+                background: i === currentQ ? '#667eea' : answers[qq.id] ? '#27ae60' : '#e2e8f0',
+                width: i === currentQ ? 28 : 10,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <AlumniLayout showTopWriters={false}>
+      <div style={DStyles.container}>
+        {/* Header */}
+        <div style={DStyles.header}>
+          <div style={DStyles.headerAvatar}>🤖</div>
+          <div>
+            <h2 style={DStyles.headerTitle}>Dean AI</h2>
+            <p style={DStyles.headerSub}>Your UClass learning companion</p>
+          </div>
+          {selectedQuiz && (
+            <button onClick={resetChat} style={DStyles.backBtn}>← Back to Chat</button>
+          )}
+        </div>
+
+        {/* Content Area */}
+        <div style={DStyles.contentArea}>
           {!selectedQuiz ? (
             <>
               {messages.map((msg, i) => (
-                <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'flex-start' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: msg.from === 'dean' ? 'linear-gradient(135deg, #667eea, #764ba2)' : `hsl(${(user?.id || 1) * 137 % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+                <div key={i} style={DStyles.msgRow}>
+                  <div style={{ ...DStyles.msgAvatar, background: msg.from === 'dean' ? 'linear-gradient(135deg, #667eea, #764ba2)' : `hsl(${(user?.id || 1) * 137 % 360}, 60%, 50%)` }}>
                     {msg.from === 'dean' ? '🤖' : (user?.name || 'U')[0]}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <div style={DStyles.msgMeta}>
                       <strong style={{ fontSize: 14 }}>{msg.from === 'dean' ? 'Dean AI' : user?.name || 'You'}</strong>
                       <span style={{ fontSize: 12, color: '#94a3b8' }}>{msg.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <div style={{ background: msg.from === 'dean' ? '#f8fafc' : '#fff', borderRadius: 12, padding: '12px 16px', border: `1px solid ${msg.from === 'dean' ? '#e2e8f0' : '#667eea'}`, whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.6, color: '#1e293b' }}>
+                    <div style={{
+                      ...DStyles.msgBubble,
+                      background: msg.from === 'dean' ? '#f8fafc' : '#eff6ff',
+                      border: `1px solid ${msg.from === 'dean' ? '#e2e8f0' : '#bfdbfe'}`,
+                    }}>
                       {msg.text}
                     </div>
-                    {/* Quiz Cards */}
                     {msg.quizzes && msg.quizzes.length > 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                      <div style={DStyles.quizList}>
                         {msg.quizzes.map((quiz) => (
-                          <button key={quiz.id} onClick={() => startQuiz(quiz)} style={{ textAlign: 'left', padding: 14, borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18, flexShrink: 0 }}>📝</div>
+                          <button key={quiz.id} onClick={() => startQuiz(quiz)} style={DStyles.quizCard}>
+                            <div style={DStyles.quizIcon}>🎯</div>
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{quiz.title || 'Quiz'}</div>
-                              <div style={{ fontSize: 12, color: '#94a3b8' }}>{quiz.subject || 'General'} · {quiz.grade || 'All levels'} · {quiz.questions_count || '?'} questions</div>
+                              <div style={DStyles.quizCardTitle}>{quiz.title || quiz.subject || 'Quiz'}</div>
+                              <div style={DStyles.quizCardMeta}>
+                                {quiz.subject && <span>📚 {quiz.subject}</span>}
+                                {quiz.grade_level && <span> · {quiz.grade_level}</span>}
+                                {quiz.question_count && <span> · {quiz.question_count} questions</span>}
+                              </div>
                             </div>
-                            <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: 13 }}>Start →</span>
+                            <span style={DStyles.quizStartBtn}>Start →</span>
                           </button>
                         ))}
                       </div>
@@ -202,77 +416,38 @@ export default function AlumniDean() {
                   </div>
                 </div>
               ))}
+
               {loading && (
-                <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'flex-start' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, flexShrink: 0 }}>🤖</div>
-                  <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 16px', border: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#94a3b8', animation: 'pulse 1s infinite' }} />
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#94a3b8', animation: 'pulse 1s infinite 0.2s' }} />
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#94a3b8', animation: 'pulse 1s infinite 0.4s' }} />
-                    </div>
+                <div style={DStyles.msgRow}>
+                  <div style={{ ...DStyles.msgAvatar, background: 'linear-gradient(135deg, #667eea, #764ba2)' }}>🤖</div>
+                  <div style={DStyles.typingBubble}>
+                    <div style={DStyles.typingDot} />
+                    <div style={{ ...DStyles.typingDot, animationDelay: '0.2s' }} />
+                    <div style={{ ...DStyles.typingDot, animationDelay: '0.4s' }} />
                   </div>
                 </div>
               )}
+
+              {/* Suggestions */}
+              {messages.length <= 1 && !loading && (
+                <div style={DStyles.suggestionsWrap}>
+                  <p style={DStyles.suggestionsTitle}>💡 Try asking Dean AI:</p>
+                  <div style={DStyles.suggestionsGrid}>
+                    {SUGGESTIONS.map((s, i) => (
+                      <button key={i} onClick={() => sendMessage(s.text)} style={DStyles.suggestionBtn}>
+                        <span style={{ fontSize: 20 }}>{s.icon}</span>
+                        <span style={{ fontSize: 13, color: '#475569' }}>{s.text}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div ref={scrollRef} />
             </>
           ) : (
             <>
-              {/* Quiz Taking View */}
-              <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-                {result ? (
-                  <div>
-                    <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                      <div style={{ fontSize: 56, marginBottom: 12 }}>{result.score >= 70 ? '🎉' : result.score >= 50 ? '👍' : '📚'}</div>
-                      <h3 style={{ margin: '0 0 8px', fontSize: 24 }}>You scored {result.score}%</h3>
-                      <p style={{ color: '#64748b' }}>{result.correct} out of {result.total} correct</p>
-                      <div style={{ display: 'inline-block', marginTop: 8, padding: '6px 16px', borderRadius: 20, background: result.score >= 70 ? '#dcfce7' : result.score >= 50 ? '#fef3c7' : '#fee2e2', color: result.score >= 70 ? '#166534' : result.score >= 50 ? '#92400e' : '#991b1b', fontWeight: 700 }}>
-                        {result.score >= 70 ? 'Excellent!' : result.score >= 50 ? 'Good effort!' : 'Keep studying!'}
-                      </div>
-                    </div>
-                    <h4 style={{ margin: '20px 0 12px', fontSize: 16 }}>📋 Review Your Answers</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {result.feedback.map((f, i) => (
-                        <div key={i} style={{ padding: 14, borderRadius: 12, background: f.isCorrect ? '#f0fdf4' : '#fef2f2', border: `1.5px solid ${f.isCorrect ? '#86efac' : '#fecaca'}` }}>
-                          <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 14 }}>{i + 1}. {f.question}</div>
-                          <div style={{ fontSize: 13, color: f.isCorrect ? '#166534' : '#991b1b' }}>Your answer: {f.yourAnswer} {f.isCorrect ? '✅' : '❌'}</div>
-                          {!f.isCorrect && <div style={{ fontSize: 13, color: '#166534', marginTop: 4 }}>Correct: {f.correctAnswer}</div>}
-                          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4, fontStyle: 'italic' }}>💡 {f.explanation}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 24 }}>
-                      <button onClick={resetChat} style={{ padding: '12px 24px', borderRadius: 12, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
-                        Try Another Quiz
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{selectedQuiz.title || 'Quiz'}</h3>
-                      <span style={{ fontSize: 13, color: '#94a3b8' }}>{Object.keys(answers).length}/{questions.length} answered</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                      {questions.map((q, i) => (
-                        <div key={q.id} style={{ padding: 16, borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fafafa' }}>
-                          <div style={{ fontWeight: 700, marginBottom: 12, fontSize: 15 }}>{i + 1}. {q.question_text || q.question}</div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {(q.options || []).map((opt) => (
-                              <button key={opt} onClick={() => selectAnswer(q.id, opt)} style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 8, border: answers[q.id] === opt ? '2px solid #667eea' : '1.5px solid #e2e8f0', background: answers[q.id] === opt ? '#eff6ff' : '#fff', cursor: 'pointer', fontSize: 14, color: '#1e293b' }}>
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <button onClick={submitQuiz} disabled={Object.keys(answers).length < questions.length} style={{ width: '100%', marginTop: 20, padding: '14px', borderRadius: 12, border: 'none', background: Object.keys(answers).length < questions.length ? '#cbd5e1' : '#667eea', color: '#fff', fontWeight: 700, fontSize: 16, cursor: Object.keys(answers).length < questions.length ? 'not-allowed' : 'pointer' }}>
-                      {Object.keys(answers).length < questions.length ? `Answer all questions (${Object.keys(answers).length}/${questions.length})` : 'Submit Quiz'}
-                    </button>
-                  </>
-                )}
-              </div>
+              {result ? renderResult() : renderQuizTaking()}
               <div ref={scrollRef} />
             </>
           )}
@@ -280,17 +455,17 @@ export default function AlumniDean() {
 
         {/* Input */}
         {!selectedQuiz && (
-          <div style={{ display: 'flex', gap: 10, padding: '12px 0', borderTop: '1px solid #e2e8f0' }}>
+          <div style={DStyles.inputBar}>
             <input
               type="text"
-              placeholder="Ask Dean to prepare a quiz..."
+              placeholder="Ask Dean AI to prepare a quiz or help you learn..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-              style={{ flex: 1, padding: '12px 16px', borderRadius: 24, border: '1.5px solid #e2e8f0', fontSize: 15, outline: 'none' }}
+              style={DStyles.input}
             />
-            <button onClick={sendMessage} disabled={loading} style={{ padding: '12px 24px', borderRadius: 24, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
-              {loading ? '...' : 'Send'}
+            <button onClick={() => sendMessage()} disabled={loading || !input.trim()} style={DStyles.sendBtn}>
+              {loading ? '⏳' : '🚀'}
             </button>
           </div>
         )}
@@ -298,3 +473,73 @@ export default function AlumniDean() {
     </AlumniLayout>
   );
 }
+
+const DStyles = {
+  container: { maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' },
+
+  header: { display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid #f1f5f9', background: 'linear-gradient(135deg, #f8fafc, #fff)' },
+  headerAvatar: { width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 },
+  headerTitle: { margin: 0, fontSize: 18, fontWeight: 800, color: '#1e293b' },
+  headerSub: { margin: 0, fontSize: 13, color: '#94a3b8' },
+  backBtn: { marginLeft: 'auto', padding: '8px 16px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#64748b' },
+
+  contentArea: { flex: 1, overflowY: 'auto', padding: 20 },
+
+  msgRow: { display: 'flex', gap: 12, marginBottom: 20, alignItems: 'flex-start' },
+  msgAvatar: { width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0 },
+  msgMeta: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 },
+  msgBubble: { borderRadius: 16, padding: '14px 18px', whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.6, color: '#1e293b' },
+
+  quizList: { display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 },
+  quizCard: { display: 'flex', alignItems: 'center', gap: 14, padding: 16, borderRadius: 14, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' },
+  quizIcon: { width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #f59e0b, #d97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 },
+  quizCardTitle: { fontWeight: 700, fontSize: 15, color: '#1e293b', marginBottom: 4 },
+  quizCardMeta: { fontSize: 12, color: '#94a3b8' },
+  quizStartBtn: { color: '#667eea', fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap' },
+
+  typingBubble: { background: '#f8fafc', borderRadius: 16, padding: '14px 18px', border: '1px solid #e2e8f0', display: 'flex', gap: 5, alignItems: 'center' },
+  typingDot: { width: 8, height: 8, borderRadius: '50%', background: '#94a3b8', animation: 'pulse 1s infinite' },
+
+  suggestionsWrap: { marginTop: 12, padding: 16, background: '#f8fafc', borderRadius: 14 },
+  suggestionsTitle: { fontSize: 13, fontWeight: 700, color: '#64748b', marginBottom: 12 },
+  suggestionsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 },
+  suggestionBtn: { display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', textAlign: 'left' },
+
+  inputBar: { display: 'flex', gap: 10, padding: 16, borderTop: '1px solid #f1f5f9', background: '#fff' },
+  input: { flex: 1, padding: '14px 18px', borderRadius: 24, border: '1.5px solid #e2e8f0', fontSize: 15, outline: 'none' },
+  sendBtn: { padding: '14px 20px', borderRadius: 24, border: 'none', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 18 },
+
+  // Quiz Taking Styles
+  quizContainer: { maxWidth: 640, margin: '0 auto' },
+  quizHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  quizTitle: { margin: 0, fontSize: 20, fontWeight: 800, color: '#1e293b' },
+  quizMeta: { margin: 0, fontSize: 13, color: '#94a3b8' },
+  exitBtn: { padding: '8px 14px', borderRadius: 20, border: '1.5px solid #fecaca', background: '#fff', color: '#e74c3c', cursor: 'pointer', fontSize: 13, fontWeight: 600 },
+
+  progressBar: { height: 6, background: '#f1f5f9', borderRadius: 3, marginBottom: 8, overflow: 'hidden' },
+  progressFill: { height: '100%', background: 'linear-gradient(90deg, #667eea, #764ba2)', borderRadius: 3, transition: 'width 0.3s' },
+  progressText: { fontSize: 13, color: '#64748b', marginBottom: 20, textAlign: 'center' },
+
+  questionCard: { background: '#fff', borderRadius: 16, padding: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', marginBottom: 20 },
+  questionNumber: { display: 'inline-block', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', padding: '4px 14px', borderRadius: 16, fontSize: 13, fontWeight: 700, marginBottom: 14 },
+  questionText: { fontSize: 18, fontWeight: 700, color: '#1e293b', lineHeight: 1.5, margin: '0 0 20px' },
+  optionsList: { display: 'flex', flexDirection: 'column', gap: 10 },
+  optionBtn: { display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' },
+  optionLetter: { width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 },
+
+  navBar: { display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 20 },
+  navBtn: { padding: '12px 24px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 600, fontSize: 14 },
+  navBtnPrimary: { padding: '12px 24px', borderRadius: 12, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, fontSize: 14 },
+  submitBtn: { padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #27ae60, #219a52)', color: '#fff', fontWeight: 700, fontSize: 15 },
+
+  dotsRow: { display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center' },
+  dot: { height: 10, borderRadius: 5, border: 'none', cursor: 'pointer', transition: 'all 0.2s' },
+
+  // Result Styles
+  resultCard: { maxWidth: 580, margin: '0 auto', background: '#fff', borderRadius: 16, padding: '32px 28px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'center' },
+  resultTitle: { margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#1e293b' },
+  resultSub: { color: '#888', fontSize: 13, marginBottom: 20 },
+  scoreBox: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 20, padding: '18px 40px', marginBottom: 16 },
+  reviewBtn: { padding: '10px 20px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 600, cursor: 'pointer', fontSize: 14 },
+  tryAgainBtn: { padding: '10px 20px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 14 },
+};
