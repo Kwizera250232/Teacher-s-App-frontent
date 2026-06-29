@@ -10,6 +10,8 @@ const SUGGESTIONS = [
   { icon: '🗣️', text: 'Help me practice English for Primary 3' },
   { icon: '🧮', text: 'Prepare a Math quiz on fractions' },
   { icon: '🇷🇼', text: 'Quiz me on Kinyarwanda grammar' },
+  { icon: '💡', text: 'Explain photosynthesis in simple terms' },
+  { icon: '📖', text: 'What is the water cycle?' },
 ];
 
 export default function AlumniDean() {
@@ -23,13 +25,14 @@ export default function AlumniDean() {
   const [result, setResult] = useState(null);
   const [currentQ, setCurrentQ] = useState(0);
   const [showReview, setShowReview] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
     setMessages([
       {
         from: 'dean',
-        text: `Murakaza neza ${user?.name || ''}! 👋\n\nI'm Dean AI — your learning companion on UClass. I help you:\n\n📚 Prepare quizzes on any subject & grade\n🎯 Practice and get instant marks with feedback\n💡 Ask questions about your school subjects\n\nWhat would you like to learn today?`,
+        text: `Murakaza neza ${user?.name || ''}! 👋\n\nI'm Dean AI — your smart learning companion on UClass. I can:\n\n📚 Answer any question about your subjects\n🎯 Prepare quizzes on any topic & grade\n💡 Explain concepts simply\n📖 Help with homework step by step\n\nAsk me anything or try a suggestion below!`,
         time: new Date(),
       },
     ]);
@@ -48,10 +51,14 @@ export default function AlumniDean() {
 
     try {
       const lower = userMsg.toLowerCase();
+      const isQuizRequest = /quiz|test|practice|prepare|exam|exercise|questions/i.test(userMsg);
+
+      // Extract subject and grade
       let subject = null;
       let grade = null;
+      let topic = null;
 
-      const subjects = ['mathematics', 'math', 'english', 'kinyarwanda', 'science', 'social studies', 'social', 'french', 'ict', 'religion', 'geography', 'history', 'biology', 'chemistry', 'physics', 'entrepreneurship'];
+      const subjects = ['mathematics', 'math', 'english', 'kinyarwanda', 'science', 'social studies', 'social', 'french', 'ict', 'religion', 'geography', 'history', 'biology', 'chemistry', 'physics', 'entrepreneurship', 'photosynthesis', 'fractions', 'grammar', 'water cycle'];
       for (const s of subjects) {
         if (lower.includes(s)) {
           subject = s === 'math' ? 'mathematics' : s === 'social' ? 'social studies' : s;
@@ -65,57 +72,107 @@ export default function AlumniDean() {
         grade = `Primary ${num}`;
       }
 
-      // Check if it's a question (not a quiz request)
-      const isQuizRequest = /quiz|test|practice|prepare|exam|questions|exercise/i.test(userMsg);
+      // Extract topic (e.g., "on fractions", "about photosynthesis")
+      const topicMatch = userMsg.match(/(?:on|about|regarding)\s+([a-z\s]+)/i);
+      if (topicMatch) topic = topicMatch[1].trim();
 
-      if (!isQuizRequest && !subject) {
-        // General learning help
+      if (isQuizRequest) {
+        // ── QUIZ FLOW: First search teacher quizzes, then generate with AI ──
+        setGenerating(true);
         setMessages(prev => [...prev, {
           from: 'dean',
-          text: `Great question! I'm here to help you learn better. 📖\n\nI can:\n• Prepare quizzes on any subject (Math, Science, English, Social Studies, Kinyarwanda, etc.)\n• Help you practice for your grade level\n• Give you instant feedback with explanations\n\nTry saying: "Prepare me a quiz on Mathematics for Primary 6" or ask about a specific subject!`,
+          text: `Let me find the best quiz for you${subject ? ` on ${subject}` : ''}${grade ? ` · ${grade}` : ''}... 🔍\n\nSearching UClass teacher quizzes first, then I'll generate one with AI if needed!`,
           time: new Date(),
         }]);
-        setLoading(false);
-        return;
-      }
 
-      let quizzes = [];
-      try {
-        const searchRes = await api.get(`/alumni/dean-quizzes/search?grade=${encodeURIComponent(grade || '')}&subject=${encodeURIComponent(subject || '')}`, token);
-        quizzes = searchRes.quizzes || [];
-      } catch (e) {
+        // 1. Search existing teacher quizzes
+        let teacherQuizzes = [];
         try {
-          const allRes = await api.get('/alumni/dean-quizzes', token);
-          quizzes = (allRes.quizzes || []).filter(q => {
-            if (!subject) return true;
-            const qSubject = (q.subject || q.title || q.category || '').toLowerCase();
-            return qSubject.includes(subject);
-          });
-        } catch (e2) {}
-      }
+          const searchRes = await api.get(`/dean-ai/search-quizzes?subject=${encodeURIComponent(subject || '')}&grade=${encodeURIComponent(grade || '')}`, token);
+          teacherQuizzes = searchRes.quizzes || [];
+        } catch (e) { console.error('Search failed:', e.message); }
 
-      if (quizzes.length > 0) {
-        setMessages(prev => [...prev, {
-          from: 'dean',
-          text: `I found ${quizzes.length} quiz${quizzes.length > 1 ? 'zes' : ''} for you${subject ? ` on ${subject}` : ''}${grade ? ` · ${grade}` : ''}. 🎯\n\nClick a quiz below to start. You'll see questions one by one, just like in UClass!`,
-          quizzes: quizzes.slice(0, 5),
-          time: new Date(),
-        }]);
+        if (teacherQuizzes.length > 0) {
+          setGenerating(false);
+          setMessages(prev => [...prev, {
+            from: 'dean',
+            text: `I found ${teacherQuizzes.length} quiz${teacherQuizzes.length > 1 ? 'zes' : ''} from UClass teachers! 🎯\n\nYou can take one of these, or I can generate a new AI quiz for you:`,
+            quizzes: teacherQuizzes.slice(0, 4),
+            canGenerate: true,
+            genSubject: subject,
+            genGrade: grade,
+            genTopic: topic,
+            time: new Date(),
+          }]);
+        } else {
+          // No teacher quizzes found — generate with AI
+          await generateAIQuiz(subject, grade, topic);
+        }
       } else {
-        setMessages(prev => [...prev, {
-          from: 'dean',
-          text: `I couldn't find quizzes for "${subject || 'that'}"${grade ? ` for ${grade}` : ''} right now. 😔\n\nTry:\n• "Prepare me a quiz on Science for Primary 5"\n• "Quiz me on Mathematics"\n• "Give me an English quiz"`,
-          time: new Date(),
-        }]);
+        // ── CHAT FLOW: Answer any question with AI ──
+        try {
+          const res = await api.post('/dean-ai/chat', { message: userMsg, history: messages.slice(-5).map(m => ({ role: m.from === 'dean' ? 'assistant' : 'user', content: m.text })) }, token);
+          setMessages(prev => [...prev, {
+            from: 'dean',
+            text: res.reply || 'Sorry, I could not generate an answer. Please try again!',
+            time: new Date(),
+          }]);
+        } catch (err) {
+          setMessages(prev => [...prev, {
+            from: 'dean',
+            text: `I had trouble connecting to my AI brain. 😔\n\nPlease try again, or ask me to "Prepare a quiz" instead!`,
+            time: new Date(),
+          }]);
+        }
       }
     } catch (err) {
       setMessages(prev => [...prev, {
         from: 'dean',
-        text: 'Sorry, I had trouble. Please try again! 🙏',
+        text: 'Sorry, something went wrong. Please try again! 🙏',
         time: new Date(),
       }]);
     } finally {
       setLoading(false);
+      setGenerating(false);
+    }
+  };
+
+  // ── Generate AI Quiz ──
+  const generateAIQuiz = async (subject, grade, topic) => {
+    setGenerating(true);
+    try {
+      setMessages(prev => [...prev, {
+        from: 'dean',
+        text: `No teacher quizzes found — I'll generate a smart quiz for you using AI! ✨\n\nCreating questions${subject ? ` on ${subject}` : ''}${grade ? ` for ${grade}` : ''}${topic ? ` · topic: ${topic}` : ''}...`,
+        time: new Date(),
+      }]);
+
+      const res = await api.post('/dean-ai/generate-quiz', {
+        subject: subject || 'General Knowledge',
+        grade: grade || 'Primary 6',
+        topic: topic || null,
+        count: 5,
+      }, token);
+
+      if (res.quiz && res.questions) {
+        setMessages(prev => [...prev, {
+          from: 'dean',
+          text: `✅ Your AI quiz is ready! 🎉\n\n"${res.quiz.title}"\n${res.questions.length} questions · ${subject || 'General'}${grade ? ` · ${grade}` : ''}\n\nClick below to start!`,
+          aiQuiz: res.quiz,
+          aiQuestions: res.questions,
+          time: new Date(),
+        }]);
+      } else {
+        throw new Error('No quiz returned');
+      }
+    } catch (err) {
+      setMessages(prev => [...prev, {
+        from: 'dean',
+        text: `I couldn't generate a quiz right now. 😔\n\nError: ${err.message}\n\nPlease try again with a different subject!`,
+        time: new Date(),
+      }]);
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -126,7 +183,7 @@ export default function AlumniDean() {
     setCurrentQ(0);
     setShowReview(false);
     try {
-      const data = await api.get(`/alumni/dean-quizzes/${quiz.id}`, token);
+      const data = await api.get(`/dean-ai/quiz/${quiz.id}/questions`, token);
       setSelectedQuiz(data.quiz || quiz);
       setQuestions(data.questions || []);
     } catch (e) {
@@ -135,40 +192,46 @@ export default function AlumniDean() {
     }
   };
 
+  // Start AI-generated quiz (questions already in message)
+  const startAIQuiz = (quiz, quizQuestions) => {
+    setSelectedQuiz(quiz);
+    setQuestions(quizQuestions);
+    setAnswers({});
+    setResult(null);
+    setCurrentQ(0);
+    setShowReview(false);
+  };
+
   const selectAnswer = (qId, answer) => {
     setAnswers(prev => ({ ...prev, [qId]: answer }));
   };
 
-  const goNext = () => {
-    if (currentQ < questions.length - 1) setCurrentQ(currentQ + 1);
-  };
-  const goPrev = () => {
-    if (currentQ > 0) setCurrentQ(currentQ - 1);
-  };
+  const goNext = () => { if (currentQ < questions.length - 1) setCurrentQ(currentQ + 1); };
+  const goPrev = () => { if (currentQ > 0) setCurrentQ(currentQ - 1); };
 
   const submitQuiz = async () => {
     if (!selectedQuiz) return;
     let correct = 0;
     questions.forEach((q) => {
-      if (answers[q.id] === q.correct_answer) correct++;
+      const correctAns = q.correct_answer || q.correctAnswer;
+      if (answers[q.id] === correctAns) correct++;
     });
     const score = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0;
 
-    const feedback = questions.map((q) => ({
-      question: q.question_text || q.question,
-      yourAnswer: answers[q.id] || 'No answer',
-      correctAnswer: q.correct_answer,
-      isCorrect: answers[q.id] === q.correct_answer,
-      explanation: q.explanation || 'Keep learning!',
-      options: q.options || [],
-    }));
+    const feedback = questions.map((q) => {
+      const correctAns = q.correct_answer || q.correctAnswer;
+      return {
+        question: q.question_text || q.question,
+        yourAnswer: answers[q.id] || 'No answer',
+        correctAnswer: correctAns,
+        isCorrect: answers[q.id] === correctAns,
+        explanation: q.explanation || 'Keep learning!',
+        options: q.options || [],
+      };
+    });
 
     setResult({ score, correct, total: questions.length, feedback });
     setShowReview(true);
-
-    try {
-      await api.post('/alumni/dean-quizzes/submit', { quiz_id: selectedQuiz.id, answers, score }, token);
-    } catch (e) { console.error('Save result failed:', e); }
   };
 
   const resetChat = () => {
@@ -183,7 +246,7 @@ export default function AlumniDean() {
   const answeredCount = Object.keys(answers).length;
   const allAnswered = answeredCount === questions.length;
 
-  // ── RESULT SCREEN (UClass style) ──
+  // ── RESULT SCREEN ──
   const renderResult = () => {
     const pct = result.score;
     const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🎉' : pct >= 40 ? '👍' : '📚';
@@ -266,7 +329,7 @@ export default function AlumniDean() {
     );
   };
 
-  // ── QUIZ TAKING VIEW (UClass style - one question at a time) ──
+  // ── QUIZ TAKING VIEW ──
   const renderQuizTaking = () => {
     const q = questions[currentQ];
     if (!q) return null;
@@ -275,26 +338,22 @@ export default function AlumniDean() {
 
     return (
       <div style={DStyles.quizContainer}>
-        {/* Quiz Header */}
         <div style={DStyles.quizHeader}>
           <div>
             <h3 style={DStyles.quizTitle}>{selectedQuiz?.title || 'Quiz'}</h3>
-            <p style={DStyles.quizMeta}>Dean AI · {questions.length} questions</p>
+            <p style={DStyles.quizMeta}>{selectedQuiz?.is_ai_generated ? '✨ AI Generated' : 'Teacher Quiz'} · {questions.length} questions</p>
           </div>
           <button onClick={resetChat} style={DStyles.exitBtn}>✕ Exit</button>
         </div>
 
-        {/* Progress Bar */}
         <div style={DStyles.progressBar}>
           <div style={{ ...DStyles.progressFill, width: `${progress}%` }} />
         </div>
 
-        {/* Progress Text */}
         <div style={DStyles.progressText}>
           Question {currentQ + 1} of {questions.length} · {answeredCount} answered
         </div>
 
-        {/* Question Card */}
         <div style={DStyles.questionCard}>
           <div style={DStyles.questionNumber}>Q{currentQ + 1}</div>
           <h3 style={DStyles.questionText}>{q.question_text || q.question}</h3>
@@ -325,7 +384,6 @@ export default function AlumniDean() {
           </div>
         </div>
 
-        {/* Navigation */}
         <div style={DStyles.navBar}>
           <button onClick={goPrev} disabled={currentQ === 0} style={{ ...DStyles.navBtn, opacity: currentQ === 0 ? 0.4 : 1, cursor: currentQ === 0 ? 'not-allowed' : 'pointer' }}>
             ← Previous
@@ -341,7 +399,6 @@ export default function AlumniDean() {
           )}
         </div>
 
-        {/* Question Dots */}
         <div style={DStyles.dotsRow}>
           {questions.map((qq, i) => (
             <button
@@ -367,7 +424,7 @@ export default function AlumniDean() {
           <div style={DStyles.headerAvatar}>🤖</div>
           <div>
             <h2 style={DStyles.headerTitle}>Dean AI</h2>
-            <p style={DStyles.headerSub}>Your UClass learning companion</p>
+            <p style={DStyles.headerSub}>Your UClass smart learning companion ✨</p>
           </div>
           {selectedQuiz && (
             <button onClick={resetChat} style={DStyles.backBtn}>← Back to Chat</button>
@@ -395,6 +452,8 @@ export default function AlumniDean() {
                     }}>
                       {msg.text}
                     </div>
+
+                    {/* Teacher Quiz Cards */}
                     {msg.quizzes && msg.quizzes.length > 0 && (
                       <div style={DStyles.quizList}>
                         {msg.quizzes.map((quiz) => (
@@ -404,13 +463,37 @@ export default function AlumniDean() {
                               <div style={DStyles.quizCardTitle}>{quiz.title || quiz.subject || 'Quiz'}</div>
                               <div style={DStyles.quizCardMeta}>
                                 {quiz.subject && <span>📚 {quiz.subject}</span>}
-                                {quiz.grade_level && <span> · {quiz.grade_level}</span>}
                                 {quiz.question_count && <span> · {quiz.question_count} questions</span>}
+                                {quiz.class_name && <span> · {quiz.class_name}</span>}
                               </div>
                             </div>
                             <span style={DStyles.quizStartBtn}>Start →</span>
                           </button>
                         ))}
+                        {msg.canGenerate && (
+                          <button onClick={() => generateAIQuiz(msg.genSubject, msg.genGrade, msg.genTopic)} style={{ ...DStyles.quizCard, border: '1.5px solid #a78bfa', background: '#f5f3ff' }}>
+                            <div style={{ ...DStyles.quizIcon, background: 'linear-gradient(135deg, #a78bfa, #7c3aed)' }}>✨</div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ ...DStyles.quizCardTitle, color: '#6d28d9' }}>Generate AI Quiz</div>
+                              <div style={DStyles.quizCardMeta}>Let Dean AI create a custom quiz for you</div>
+                            </div>
+                            <span style={{ ...DStyles.quizStartBtn, color: '#7c3aed' }}>Generate →</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* AI Generated Quiz Card */}
+                    {msg.aiQuiz && msg.aiQuestions && (
+                      <div style={DStyles.quizList}>
+                        <button onClick={() => startAIQuiz(msg.aiQuiz, msg.aiQuestions)} style={{ ...DStyles.quizCard, border: '2px solid #a78bfa', background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
+                          <div style={{ ...DStyles.quizIcon, background: 'linear-gradient(135deg, #a78bfa, #7c3aed)' }}>✨</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ ...DStyles.quizCardTitle, color: '#6d28d9' }}>{msg.aiQuiz.title}</div>
+                            <div style={DStyles.quizCardMeta}>🤖 AI Generated · {msg.aiQuestions.length} questions</div>
+                          </div>
+                          <span style={{ ...DStyles.quizStartBtn, color: '#7c3aed' }}>Start →</span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -421,9 +504,15 @@ export default function AlumniDean() {
                 <div style={DStyles.msgRow}>
                   <div style={{ ...DStyles.msgAvatar, background: 'linear-gradient(135deg, #667eea, #764ba2)' }}>🤖</div>
                   <div style={DStyles.typingBubble}>
-                    <div style={DStyles.typingDot} />
-                    <div style={{ ...DStyles.typingDot, animationDelay: '0.2s' }} />
-                    <div style={{ ...DStyles.typingDot, animationDelay: '0.4s' }} />
+                    {generating ? (
+                      <span style={{ fontSize: 14, color: '#64748b' }}>✨ Generating with AI...</span>
+                    ) : (
+                      <>
+                        <div style={DStyles.typingDot} />
+                        <div style={{ ...DStyles.typingDot, animationDelay: '0.2s' }} />
+                        <div style={{ ...DStyles.typingDot, animationDelay: '0.4s' }} />
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -458,7 +547,7 @@ export default function AlumniDean() {
           <div style={DStyles.inputBar}>
             <input
               type="text"
-              placeholder="Ask Dean AI to prepare a quiz or help you learn..."
+              placeholder="Ask Dean AI anything, or say 'Prepare a quiz on Math'..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
@@ -509,7 +598,6 @@ const DStyles = {
   input: { flex: 1, padding: '14px 18px', borderRadius: 24, border: '1.5px solid #e2e8f0', fontSize: 15, outline: 'none' },
   sendBtn: { padding: '14px 20px', borderRadius: 24, border: 'none', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 18 },
 
-  // Quiz Taking Styles
   quizContainer: { maxWidth: 640, margin: '0 auto' },
   quizHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   quizTitle: { margin: 0, fontSize: 20, fontWeight: 800, color: '#1e293b' },
@@ -535,7 +623,6 @@ const DStyles = {
   dotsRow: { display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center' },
   dot: { height: 10, borderRadius: 5, border: 'none', cursor: 'pointer', transition: 'all 0.2s' },
 
-  // Result Styles
   resultCard: { maxWidth: 580, margin: '0 auto', background: '#fff', borderRadius: 16, padding: '32px 28px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'center' },
   resultTitle: { margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#1e293b' },
   resultSub: { color: '#888', fontSize: 13, marginBottom: 20 },
