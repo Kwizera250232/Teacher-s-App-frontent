@@ -15,7 +15,7 @@ export function dashboardPath(role) {
   if (role === 'parent') return '/parent/dashboard';
   if (role === 'student') return '/student/dashboard';
   if (role === 'guest') return '/guest/dashboard';
-  if (role === 'alumni') return '/alumni/dashboard';
+  if (role === 'alumni') return '/alumni/feed';
   return '/welcome';
 }
 

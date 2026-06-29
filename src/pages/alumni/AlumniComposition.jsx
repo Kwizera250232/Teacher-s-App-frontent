@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../../api';
+import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
+
+function avatarColor(id) {
+  return `hsl(${(id || 1) * 137 % 360}, 65%, 48%)`;
+}
 
 export default function AlumniComposition() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [comp, setComp] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -17,9 +21,9 @@ export default function AlumniComposition() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await api.get(`/alumni/compositions/${slug}`);
+        const data = await api.get(`/alumni/compositions/${slug}`, token);
         setComp(data);
-        const c = await api.get(`/alumni/compositions/${data.id}/comments`);
+        const c = await api.get(`/alumni/compositions/${data.id}/comments`, token);
         setComments(c || []);
       } catch (err) {
         console.error(err);
@@ -28,7 +32,7 @@ export default function AlumniComposition() {
       }
     };
     load();
-  }, [slug]);
+  }, [slug, token]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,10 +48,10 @@ export default function AlumniComposition() {
     if (!comp) return;
     try {
       if (comp.user_reaction === type) {
-        await api.delete(`/alumni/compositions/${comp.id}/react`);
+        await api.delete(`/alumni/compositions/${comp.id}/react`, token);
         setComp({ ...comp, user_reaction: null, likes_count: comp.likes_count - 1 });
       } else {
-        await api.post(`/alumni/compositions/${comp.id}/react`, { reaction_type: type });
+        await api.post(`/alumni/compositions/${comp.id}/react`, { reaction_type: type }, token);
         setComp({ ...comp, user_reaction: type, likes_count: comp.likes_count + (comp.user_reaction ? 0 : 1) });
       }
     } catch (err) {
@@ -59,10 +63,10 @@ export default function AlumniComposition() {
     if (!comp) return;
     try {
       if (comp.is_bookmarked) {
-        await api.delete(`/alumni/compositions/${comp.id}/bookmark`);
+        await api.delete(`/alumni/compositions/${comp.id}/bookmark`, token);
         setComp({ ...comp, is_bookmarked: false, bookmarks_count: comp.bookmarks_count - 1 });
       } else {
-        await api.post(`/alumni/compositions/${comp.id}/bookmark`);
+        await api.post(`/alumni/compositions/${comp.id}/bookmark`, {}, token);
         setComp({ ...comp, is_bookmarked: true, bookmarks_count: comp.bookmarks_count + 1 });
       }
     } catch (err) {
@@ -74,7 +78,7 @@ export default function AlumniComposition() {
     if (!newComment.trim() || !comp) return;
     setCommentLoading(true);
     try {
-      const c = await api.post(`/alumni/compositions/${comp.id}/comments`, { content: newComment.trim() });
+      const c = await api.post(`/alumni/compositions/${comp.id}/comments`, { content: newComment.trim() }, token);
       setComments([...comments, c]);
       setNewComment('');
       setComp({ ...comp, comments_count: comp.comments_count + 1 });
@@ -85,122 +89,194 @@ export default function AlumniComposition() {
     }
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading composition...</div>;
-  if (!comp) return <div style={{ padding: 40, textAlign: 'center' }}>Composition not found.</div>;
+  if (loading) return <div style={{ padding: 60, textAlign: 'center', fontSize: 16, color: '#64748b' }}>Loading article...</div>;
+  if (!comp) return <div style={{ padding: 60, textAlign: 'center', fontSize: 16, color: '#64748b' }}>Article not found.</div>;
+
+  const authorId = comp.user_id || comp.author_id || 1;
+  const featuredImg = comp.featured_image
+    ? (comp.featured_image.startsWith('http') ? comp.featured_image : `${UPLOADS_BASE}${comp.featured_image}`)
+    : null;
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: 24 }}>
-      {/* Reading Progress */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, height: 3, background: '#e2e8f0', zIndex: 100,
-      }}>
-        <div style={{
-          width: `${readProgress}%`, height: '100%', background: '#2563eb', transition: 'width 0.2s',
-        }} />
+    <div style={{ minHeight: '100vh', background: '#fff' }}>
+      {/* Reading Progress Bar */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 3, background: '#f1f5f9', zIndex: 200 }}>
+        <div style={{ width: `${readProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #d97706)', transition: 'width 0.2s' }} />
       </div>
 
-      {/* Author Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <div style={{
-          width: 44, height: 44, borderRadius: '50%',
-          background: comp.author_avatar ? `url(${comp.author_avatar}) center/cover` : '#e2e8f0',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-        }}>
-          {!comp.author_avatar && (comp.author_name?.[0] || '?')}
-        </div>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: 15 }}>{comp.author_name}</div>
-          <div style={{ fontSize: 13, color: '#64748b' }}>
-            {comp.author_username && `@${comp.author_username}`} · {new Date(comp.published_at || comp.created_at).toLocaleDateString()}
-            {comp.estimated_read_minutes && ` · ${comp.estimated_read_minutes} min read`}
-          </div>
-        </div>
+      {/* Back Button */}
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px 0' }}>
+        <button onClick={() => navigate('/alumni/feed')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          ← Back to Feed
+        </button>
       </div>
 
-      {/* Title */}
-      <h1 style={{ fontSize: 32, lineHeight: 1.2, marginBottom: 16 }}>{comp.title}</h1>
-
-      {/* Category & Tags */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+      {/* Article Header - Substack style */}
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px 0' }}>
+        {/* Category */}
         {comp.category && (
-          <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
-            {comp.category}
-          </span>
-        )}
-        {(comp.tags || []).map((tag) => (
-          <span key={tag} style={{ background: '#f1f5f9', color: '#475569', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>
-            #{tag}
-          </span>
-        ))}
-      </div>
-
-      {/* Content */}
-      <div
-        style={{ lineHeight: 1.8, fontSize: 17, color: '#1e293b', marginBottom: 32 }}
-        dangerouslySetInnerHTML={{ __html: comp.content }}
-      />
-
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: 12, padding: '16px 0', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', marginBottom: 24 }}>
-        {['like', 'love', 'celebrate', 'support'].map((type) => (
-          <button
-            key={type}
-            onClick={() => handleReaction(type)}
-            style={{
-              padding: '8px 14px', borderRadius: 20, border: '1px solid #e2e8f0',
-              background: comp.user_reaction === type ? '#e0e7ff' : '#fff',
-              color: comp.user_reaction === type ? '#3730a3' : '#64748b',
-              fontSize: 14, cursor: 'pointer',
-            }}
-          >
-            {type === 'like' && '👍'} {type === 'love' && '❤️'} {type === 'celebrate' && '🎉'} {type === 'support' && '🙌'}
-            {' '}{type}
-          </button>
-        ))}
-        <button
-          onClick={handleBookmark}
-          style={{
-            padding: '8px 14px', borderRadius: 20, border: '1px solid #e2e8f0',
-            background: comp.is_bookmarked ? '#ecfdf5' : '#fff',
-            color: comp.is_bookmarked ? '#059669' : '#64748b',
-            fontSize: 14, cursor: 'pointer', marginLeft: 'auto',
-          }}
-        >
-          {comp.is_bookmarked ? '🔖 Bookmarked' : '🔖 Bookmark'}
-        </button>
-      </div>
-
-      <div style={{ color: '#64748b', fontSize: 13, marginBottom: 24 }}>
-        {comp.likes_count} likes · {comp.comments_count} comments · {comp.read_count} reads · {comp.bookmarks_count} bookmarks
-      </div>
-
-      {/* Comments */}
-      <h3 style={{ marginBottom: 16 }}>Comments ({comp.comments_count})</h3>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-        <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Write a comment..."
-          style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', minHeight: 60, resize: 'vertical' }}
-        />
-        <button className="btn btn-primary" disabled={commentLoading} onClick={handleComment}>
-          {commentLoading ? 'Posting...' : 'Post'}
-        </button>
-      </div>
-
-      {comments.length === 0 ? (
-        <div style={{ color: '#94a3b8', textAlign: 'center', padding: 24 }}>No comments yet. Be the first!</div>
-      ) : (
-        comments.map((c) => (
-          <div key={c.id} style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <strong style={{ fontSize: 14 }}>{c.author_name}</strong>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(c.created_at).toLocaleDateString()}</span>
-            </div>
-            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>{c.content}</p>
+          <div style={{ marginBottom: 12 }}>
+            <span style={{ background: 'linear-gradient(135deg, #fef3c7, #fde68a)', color: '#92400e', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {comp.category}
+            </span>
           </div>
-        ))
+        )}
+
+        {/* Title */}
+        <h1 style={{ fontSize: 36, fontWeight: 900, lineHeight: 1.15, color: '#0f172a', margin: '0 0 16px', letterSpacing: -0.8, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+          {comp.title}
+        </h1>
+
+        {/* Author Row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid #f1f5f9', marginBottom: 24 }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: avatarColor(authorId), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 18 }}>
+            {(comp.author_name || 'U')[0]}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>{comp.author_name}</span>
+              <span style={{ color: '#3b82f6', fontSize: 15 }}>✓</span>
+            </div>
+            <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>
+              {new Date(comp.published_at || comp.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+              {comp.estimated_read_minutes && ` · ${comp.estimated_read_minutes} min read`}
+              {comp.read_count > 0 && ` · ${comp.read_count} reads`}
+            </div>
+          </div>
+          <button onClick={handleBookmark} style={{
+            padding: '8px 16px', borderRadius: 20, border: comp.is_bookmarked ? '1.5px solid #059669' : '1.5px solid #e2e8f0',
+            background: comp.is_bookmarked ? '#ecfdf5' : '#fff', color: comp.is_bookmarked ? '#059669' : '#64748b',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}>
+            {comp.is_bookmarked ? '🔖 Saved' : '🔖 Save'}
+          </button>
+        </div>
+      </div>
+
+      {/* Featured Image - Full width Substack style */}
+      {featuredImg && (
+        <div style={{ width: '100%', maxHeight: 480, overflow: 'hidden', marginBottom: 32 }}>
+          <img src={featuredImg} alt={comp.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        </div>
       )}
+
+      {/* Article Content */}
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: featuredImg ? '0 16px 32px' : '0 16px 32px' }}>
+        <div
+          style={{
+            lineHeight: 1.85, fontSize: 18, color: '#1e293b',
+            fontFamily: 'Georgia, "Times New Roman", serif',
+          }}
+          dangerouslySetInnerHTML={{ __html: comp.content }}
+        />
+
+        {/* Tags */}
+        {(comp.tags || []).length > 0 && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 32, flexWrap: 'wrap' }}>
+            {(comp.tags || []).map((tag) => (
+              <span key={tag} style={{ background: '#f1f5f9', color: '#64748b', padding: '4px 12px', borderRadius: 16, fontSize: 13 }}>
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Reaction Bar */}
+        <div style={{ display: 'flex', gap: 10, padding: '24px 0', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', margin: '32px 0', alignItems: 'center' }}>
+          {[
+            { type: 'like', emoji: '👍', label: 'Like' },
+            { type: 'love', emoji: '❤️', label: 'Love' },
+            { type: 'celebrate', emoji: '🎉', label: 'Celebrate' },
+            { type: 'support', emoji: '🙌', label: 'Support' },
+          ].map(({ type, emoji, label }) => (
+            <button
+              key={type}
+              onClick={() => handleReaction(type)}
+              style={{
+                padding: '8px 16px', borderRadius: 24, border: comp.user_reaction === type ? '2px solid #f59e0b' : '1.5px solid #e2e8f0',
+                background: comp.user_reaction === type ? '#fef3c7' : '#fff',
+                color: comp.user_reaction === type ? '#92400e' : '#64748b',
+                fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              {emoji} {label}
+            </button>
+          ))}
+          <button
+            onClick={() => { navigator.clipboard?.writeText(window.location.href); alert('Link copied!'); }}
+            style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 24, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+          >
+            ↗️ Share
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div style={{ color: '#94a3b8', fontSize: 14, marginBottom: 28, textAlign: 'center' }}>
+          {comp.likes_count || 0} likes · {comp.comments_count || 0} comments · {comp.read_count || 0} reads
+        </div>
+
+        {/* Comments Section */}
+        <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 16, fontFamily: 'Georgia, serif' }}>
+          Comments ({comp.comments_count || 0})
+        </h3>
+
+        {/* Comment Input */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 28, background: '#f8fafc', borderRadius: 14, padding: 14 }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', background: avatarColor(user?.id), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+            {(user?.name || 'U')[0]}
+          </div>
+          <div style={{ flex: 1 }}>
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Share your thoughts..."
+              style={{ width: '100%', padding: 12, borderRadius: 10, border: '1.5px solid #e2e8f0', minHeight: 56, resize: 'vertical', fontSize: 15, outline: 'none', fontFamily: 'inherit', background: '#fff' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <button
+                onClick={handleComment}
+                disabled={commentLoading || !newComment.trim()}
+                style={{ padding: '8px 20px', borderRadius: 20, border: 'none', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 14, opacity: commentLoading || !newComment.trim() ? 0.5 : 1 }}
+              >
+                {commentLoading ? 'Posting...' : 'Post Comment'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Comments List */}
+        {comments.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 32, color: '#94a3b8', fontSize: 15 }}>
+            No comments yet. Start the conversation!
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {comments.map((c) => (
+              <div key={c.id} style={{ display: 'flex', gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: avatarColor(c.user_id), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+                  {(c.author_name || 'U')[0]}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ background: '#f8fafc', borderRadius: 14, padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <strong style={{ fontSize: 14, color: '#1e293b' }}>{c.author_name}</strong>
+                      <span style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 15, color: '#475569', lineHeight: 1.5 }}>{c.content}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Back to Feed */}
+        <div style={{ textAlign: 'center', marginTop: 40, paddingBottom: 40 }}>
+          <button onClick={() => navigate('/alumni/feed')} style={{ background: 'none', border: '1.5px solid #e2e8f0', borderRadius: 24, padding: '10px 24px', fontSize: 14, fontWeight: 600, color: '#64748b', cursor: 'pointer' }}>
+            ← Back to Feed
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

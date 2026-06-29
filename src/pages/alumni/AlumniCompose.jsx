@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api, UPLOADS_BASE } from '../../api';
+import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
@@ -46,16 +46,11 @@ export default function AlumniCompose() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${UPLOADS_BASE}/api/upload`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      const data = await res.json();
+      const data = await uploadFile('/alumni/upload', formData, token);
       setFeaturedImage(data.url || data.path || '');
     } catch (e) {
       console.error('Upload failed', e);
-      alert('Image upload failed');
+      alert('Image upload failed: ' + (e.message || ''));
     }
   };
 
