@@ -145,7 +145,7 @@ export default function AlumniProfile() {
                 {editing ? 'Cancel' : '✏️ Edit Profile'}
               </button>
             ) : (
-              <button onClick={handleFollow} style={{ padding: '8px 20px', borderRadius: 20, border: 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 700, cursor: 'pointer', border: profile.is_following ? '1.5px solid #e2e8f0' : 'none' }}>
+              <button onClick={handleFollow} style={{ padding: '8px 20px', borderRadius: 20, border: profile.is_following ? '1.5px solid #e2e8f0' : 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 700, cursor: 'pointer' }}>
                 {profile.is_following ? 'Subscribed' : '🔔 Subscribe'}
               </button>
             )}
