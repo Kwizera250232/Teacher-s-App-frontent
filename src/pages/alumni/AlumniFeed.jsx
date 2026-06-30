@@ -110,8 +110,13 @@ export default function AlumniFeed() {
     finally { setSendingPost(false); }
   };
 
-  // ── Substack-style Composition Card ──
-  const renderComposition = (comp) => (
+  // ── X-style Composition Link Card ──
+  const renderComposition = (comp) => {
+    const compUrl = `/alumni/composition/${comp.slug || comp.id}`;
+    const featuredImg = comp.featured_image_path
+      ? (comp.featured_image_path.startsWith('http') ? comp.featured_image_path : `${UPLOADS_BASE}${comp.featured_image_path}`)
+      : null;
+    return (
     <article key={`comp-${comp.id}`} style={styles.articleCard}>
       <div style={styles.articleHeader}>
         <div style={{ ...styles.avatar, background: avatarColor(comp.user_id || comp.author_id) }}>
@@ -125,50 +130,43 @@ export default function AlumniFeed() {
           </div>
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
             {comp.category && <span style={styles.categoryTag}>{comp.category}</span>}
-            {comp.read_count > 0 && <span> · {comp.read_count} reads</span>}
+            <span> · {comp.estimated_read_minutes || 1} min read</span>
           </div>
         </div>
         <span style={styles.compositionBadge}>✍️ Article</span>
       </div>
 
-      <div onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)} style={styles.clickable}>
-        <h2 style={styles.articleTitle}>{comp.title}</h2>
-      </div>
-
-      {comp.featured_image_path && (
-        <div onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)} style={styles.imageWrapper}>
-          <img
-            src={comp.featured_image_path.startsWith('http') ? comp.featured_image_path : `${UPLOADS_BASE}${comp.featured_image_path}`}
-            alt={comp.title}
-            style={styles.featuredImage}
-          />
+      {/* X-style link card: image + title in a bordered clickable card */}
+      <div onClick={() => navigate(compUrl)} style={styles.linkCard}>
+        {featuredImg && (
+          <img src={featuredImg} alt={comp.title} style={styles.linkCardImage} />
+        )}
+        <div style={styles.linkCardBody}>
+          <h2 style={styles.linkCardTitle}>{comp.title}</h2>
+          <span style={styles.linkCardDomain}>umunsi.com · Read article</span>
         </div>
-      )}
-
-      <div style={styles.readMoreBar}>
-        <span style={styles.readMore} onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)}>
-          Read more →
-        </span>
-        <span style={styles.readTime}>
-          {comp.estimated_read_minutes || 1} min read
-        </span>
       </div>
 
       <div style={styles.actionBar}>
         <button onClick={() => toggleLike(comp)} style={styles.actionBtn}>
           <span style={{ fontSize: 18 }}>{comp.liked_by_me ? '❤️' : '🤍'}</span>
-          <span style={styles.actionCount}>{comp.likes || ''}</span>
+          <span style={styles.actionCount}>{comp.likes_count || ''}</span>
         </button>
         <button onClick={() => { setCommentOpen(commentOpen === comp.id ? null : comp.id); if (commentOpen !== comp.id) loadComments(comp.id); }} style={styles.actionBtn}>
           <span style={{ fontSize: 18 }}>💬</span>
           <span style={styles.actionCount}>{comp.comments_count || ''}</span>
         </button>
-        <button onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/alumni/composition/${comp.slug || comp.id}`); alert('Link copied!'); }} style={{ ...styles.actionBtn, marginLeft: 'auto' }}>
+        <span style={{ ...styles.actionBtn, cursor: 'default' }}>
+          <span style={{ fontSize: 18 }}>👁️</span>
+          <span style={styles.actionCount}>{comp.read_count || 0}</span>
+        </span>
+        <button onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}${compUrl}`); alert('Link copied!'); }} style={{ ...styles.actionBtn, marginLeft: 'auto' }}>
           <span style={{ fontSize: 18 }}>↗️</span>
         </button>
       </div>
     </article>
   );
+  };
 
   // ── Quick Post Card (image-first style) ──
   const renderPost = (post) => (
@@ -187,10 +185,10 @@ export default function AlumniFeed() {
         <span style={styles.postBadge}>📝 Post</span>
       </div>
 
-      {post.image_paths && (
+      {post.image_paths && post.image_paths.length > 0 && (
         <div onClick={() => navigate(`/alumni/post/${post.id}`)} style={styles.imageWrapper}>
           <img
-            src={post.image_paths.startsWith('http') ? post.image_paths : `${UPLOADS_BASE}${post.image_paths}`}
+            src={(Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths).startsWith('http') ? (Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths) : `${UPLOADS_BASE}${Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths}`}
             alt=""
             style={styles.featuredImage}
           />
@@ -205,12 +203,16 @@ export default function AlumniFeed() {
       <div style={styles.actionBar}>
         <button onClick={() => toggleLike(post)} style={styles.actionBtn}>
           <span style={{ fontSize: 18 }}>{post.liked_by_me ? '❤️' : '🤍'}</span>
-          <span style={styles.actionCount}>{post.likes || ''}</span>
+          <span style={styles.actionCount}>{post.likes_count || ''}</span>
         </button>
         <button onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); if (commentOpen !== post.id) loadComments(post.id); }} style={styles.actionBtn}>
           <span style={{ fontSize: 18 }}>💬</span>
           <span style={styles.actionCount}>{post.comments_count || ''}</span>
         </button>
+        <span style={{ ...styles.actionBtn, cursor: 'default' }}>
+          <span style={{ fontSize: 18 }}>👁️</span>
+          <span style={styles.actionCount}>{post.views_count || 0}</span>
+        </span>
         <div style={{ position: 'relative', marginLeft: 'auto' }}>
           <button onClick={() => setShowReactions(showReactions === post.id ? null : post.id)} style={{ ...styles.actionBtn, position: 'relative' }}>
             <span style={{ fontSize: 18 }}>😊</span>
@@ -344,6 +346,13 @@ const styles = {
   articleExcerpt: { margin: 0, padding: '0 18px 12px', fontSize: 16, color: '#475569', lineHeight: 1.6 },
   postTitle: { margin: 0, padding: '0 18px 6px', fontSize: 17, fontWeight: 700, color: '#1e293b', lineHeight: 1.3 },
   postExcerpt: { margin: 0, padding: '0 18px 12px', fontSize: 15, color: '#64748b', lineHeight: 1.5 },
+
+  // X-style link card for compositions
+  linkCard: { margin: '0 18px 4px', borderRadius: 16, overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'background 0.15s', background: '#f8fafc' },
+  linkCardImage: { width: '100%', maxHeight: 300, objectFit: 'cover', display: 'block' },
+  linkCardBody: { padding: '12px 16px' },
+  linkCardTitle: { margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a', lineHeight: 1.35 },
+  linkCardDomain: { fontSize: 13, color: '#94a3b8', marginTop: 4, display: 'block' },
 
   imageWrapper: { cursor: 'pointer', overflow: 'hidden', margin: '0 0 4px' },
   featuredImage: { width: '100%', maxHeight: 400, objectFit: 'cover', display: 'block' },

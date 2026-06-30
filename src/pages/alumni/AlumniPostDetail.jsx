@@ -84,8 +84,8 @@ export default function AlumniPostDetail() {
           </div>
 
           {/* Featured Image */}
-          {post.media_url && (
-            <img src={post.media_url.startsWith('http') ? post.media_url : `${UPLOADS_BASE}${post.media_url}`} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover' }} />
+          {post.image_paths && post.image_paths.length > 0 && (
+            <img src={(Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths).startsWith('http') ? (Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths) : `${UPLOADS_BASE}${Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths}`} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover' }} />
           )}
 
           {/* Content */}
@@ -97,11 +97,15 @@ export default function AlumniPostDetail() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '12px 24px', borderTop: '1px solid #f1f5f9' }}>
             <button onClick={toggleLike} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: post.liked_by_me ? '#ef4444' : '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 20 }}>{post.liked_by_me ? '❤️' : '🤍'}</span>
-              <span style={{ fontWeight: 600 }}>{post.likes || 0}</span>
+              <span style={{ fontWeight: 600 }}>{post.likes_count || 0}</span>
             </button>
             <span style={{ fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 20 }}>💬</span>
               <span style={{ fontWeight: 600 }}>{post.comments_count || 0}</span>
+            </span>
+            <span style={{ fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 20 }}>👁️</span>
+              <span style={{ fontWeight: 600 }}>{post.views_count || 0} views</span>
             </span>
             <button onClick={() => alert('Repost feature coming soon!')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 20 }}>🔄</span>
