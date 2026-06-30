@@ -5,14 +5,14 @@ import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
 const TABS = [
-  { key: 'quizzes', label: '🎯 Quizzes & Marks', icon: '🎯' },
-  { key: 'homework', label: '📋 Homework', icon: '📋' },
-  { key: 'notes', label: '📝 Notes', icon: '📝' },
-  { key: 'announcements', label: '📢 Announcements', icon: '📢' },
-  { key: 'classmates', label: '👥 Classmates', icon: '👥' },
-  { key: 'leaderboard', label: '🏆 Leaderboard', icon: '🏆' },
-  { key: 'discussion', label: '💬 Discussion', icon: '💬' },
-  { key: 'cstatus', label: '✍️ C. Status', icon: '✍️' },
+  { key: 'quizzes', label: 'Quizzes & Marks', icon: '🎯' },
+  { key: 'homework', label: 'Homework', icon: '📋' },
+  { key: 'notes', label: 'Notes', icon: '📝' },
+  { key: 'announcements', label: 'Announcements', icon: '📢' },
+  { key: 'leaderboard', label: 'Leaderboard', icon: '🏆' },
+  { key: 'discussion', label: 'Discussion', icon: '💬' },
+  { key: 'cstatus', label: 'C. Status', icon: '✍️' },
+  { key: 'inyandiko', label: 'Inyandiko', icon: '📄' },
 ];
 
 export default function AlumniPrimaryThings() {
@@ -22,7 +22,7 @@ export default function AlumniPrimaryThings() {
   const [loading, setLoading] = useState(true);
   const [classData, setClassData] = useState({
     quizzes: [], homework: [], notes: [], announcements: [],
-    classmates: [], leaderboard: [], discussions: [], cstatus: [],
+    leaderboard: [], discussions: [], cstatus: [], inyandiko: [],
   });
   const [classInfo, setClassInfo] = useState(null);
 
@@ -32,37 +32,17 @@ export default function AlumniPrimaryThings() {
 
   const loadAllData = async () => {
     try {
-      // Get user's class_id from their profile
-      const userRes = await api.get('/alumni/profile/me', token);
-      const classId = userRes.class_id || userRes.school_id;
-      setClassInfo({ name: userRes.class_name || 'My Class', grade: userRes.grade_level });
-
-      if (!classId) {
-        setLoading(false);
-        return;
-      }
-
-      // Fetch all data in parallel
-      const [quizzes, homework, notes, announcements, classmates, leaderboard, discussions, cstatus] = await Promise.allSettled([
-        api.get(`/classes/${classId}/quizzes`, token).catch(() => ({ quizzes: [] })),
-        api.get(`/classes/${classId}/homework`, token).catch(() => ({ homework: [] })),
-        api.get(`/classes/${classId}/notes`, token).catch(() => ({ notes: [] })),
-        api.get(`/classes/${classId}/announcements`, token).catch(() => ({ announcements: [] })),
-        api.get(`/classes/${classId}/students`, token).catch(() => ({ students: [] })),
-        api.get(`/classes/${classId}/leaderboard`, token).catch(() => ({ entries: [] })),
-        api.get(`/classes/${classId}/discussions`, token).catch(() => ({ discussions: [] })),
-        api.get(`/classes/${classId}/composition-status`, token).catch(() => ({ statuses: [] })),
-      ]);
-
+      const data = await api.get('/alumni/primary-things', token);
+      setClassInfo(data.classInfo);
       setClassData({
-        quizzes: quizzes.status === 'fulfilled' ? (quizzes.value.quizzes || []) : [],
-        homework: homework.status === 'fulfilled' ? (homework.value.homework || []) : [],
-        notes: notes.status === 'fulfilled' ? (notes.value.notes || []) : [],
-        announcements: announcements.status === 'fulfilled' ? (announcements.value.announcements || []) : [],
-        classmates: classmates.status === 'fulfilled' ? (classmates.value.students || []) : [],
-        leaderboard: leaderboard.status === 'fulfilled' ? (leaderboard.value.entries || []) : [],
-        discussions: discussions.status === 'fulfilled' ? (discussions.value.discussions || []) : [],
-        cstatus: cstatus.status === 'fulfilled' ? (cstatus.value.statuses || []) : [],
+        quizzes: data.quizzes || [],
+        homework: data.homework || [],
+        notes: data.notes || [],
+        announcements: data.announcements || [],
+        leaderboard: data.leaderboard || [],
+        discussions: data.discussions || [],
+        cstatus: data.cstatus || [],
+        inyandiko: data.inyandiko || [],
       });
     } catch (e) {
       console.error(e);
@@ -82,31 +62,35 @@ export default function AlumniPrimaryThings() {
                 <p style={{ color: '#94a3b8' }}>No quizzes found from your class</p>
               </div>
             ) : (
-              classData.quizzes.map((q) => (
+              classData.quizzes.map((q) => {
+                const pct = q.my_total ? Math.round((q.my_score / q.my_total) * 100) : null;
+                return (
                 <div key={q.id} style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <h4 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700 }}>{q.title}</h4>
-                      <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>{q.description}</p>
+                      {q.description && <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>{q.description}</p>}
                     </div>
-                    {q.my_score !== undefined && (
+                    {pct !== null && (
                       <div style={{
                         padding: '6px 14px', borderRadius: 20,
-                        background: q.my_score >= 70 ? '#dcfce7' : q.my_score >= 50 ? '#fef3c7' : '#fee2e2',
-                        color: q.my_score >= 70 ? '#166534' : q.my_score >= 50 ? '#92400e' : '#991b1b',
+                        background: pct >= 70 ? '#dcfce7' : pct >= 50 ? '#fef3c7' : '#fee2e2',
+                        color: pct >= 70 ? '#166534' : pct >= 50 ? '#92400e' : '#991b1b',
                         fontWeight: 700, fontSize: 13,
                       }}>
-                        {q.my_score}%
+                        {pct}%
                       </div>
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: '#94a3b8' }}>
+                    {q.my_score !== null && <span>Score: {q.my_score}/{q.my_total}</span>}
                     <span>{q.attempt_count || 0} attempts</span>
+                    {q.question_count > 0 && <span>{q.question_count} questions</span>}
                     <span>{new Date(q.created_at).toLocaleDateString()}</span>
-                    {q.locked && <span style={{ color: '#ef4444' }}>🔒 Locked</span>}
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         );
@@ -123,11 +107,15 @@ export default function AlumniPrimaryThings() {
               classData.homework.map((hw) => (
                 <div key={hw.id} style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                   <h4 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700 }}>{hw.title}</h4>
-                  <p style={{ margin: '0 0 8px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{hw.description}</p>
-                  {hw.my_grade !== undefined && (
-                    <div style={{ fontSize: 13, fontWeight: 700, color: hw.my_grade >= 70 ? '#059669' : '#d97706' }}>
-                      Grade: {hw.my_grade}%
+                  {hw.description && <p style={{ margin: '0 0 8px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{hw.description}</p>}
+                  {hw.grade !== null && hw.grade !== undefined && (
+                    <div style={{ fontSize: 13, fontWeight: 700, color: hw.grade >= 70 ? '#059669' : '#d97706' }}>
+                      Grade: {hw.grade}
+                      {hw.feedback && <span style={{ fontWeight: 400, color: '#64748b' }}> — {hw.feedback}</span>}
                     </div>
+                  )}
+                  {hw.submitted_at && (
+                    <div style={{ fontSize: 12, color: '#059669', marginTop: 4 }}>Submitted: {new Date(hw.submitted_at).toLocaleDateString()}</div>
                   )}
                   <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
                     Due: {hw.due_date ? new Date(hw.due_date).toLocaleDateString() : 'No due date'}
@@ -150,8 +138,12 @@ export default function AlumniPrimaryThings() {
               classData.notes.map((n) => (
                 <div key={n.id} style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                   <h4 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700 }}>{n.title}</h4>
-                  <p style={{ margin: '0 0 8px', fontSize: 13, color: '#475569', lineHeight: 1.6 }}>{n.content}</p>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                  {n.file_path && (
+                    <a href={`${(n.file_path.startsWith('http') ? '' : 'https://studentapi.umunsi.com/uploads/')}${n.file_path}`} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#667eea', textDecoration: 'none', fontWeight: 600 }}>
+                      📎 {n.file_name || 'Download'}
+                    </a>
+                  )}
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 8 }}>
                     By {n.teacher_name || 'Teacher'} · {new Date(n.created_at).toLocaleDateString()}
                   </div>
                 </div>
@@ -171,41 +163,9 @@ export default function AlumniPrimaryThings() {
             ) : (
               classData.announcements.map((a) => (
                 <div key={a.id} style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', borderLeft: '4px solid #667eea' }}>
-                  <h4 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700 }}>{a.title}</h4>
-                  <p style={{ margin: '0 0 8px', fontSize: 13, color: '#475569', lineHeight: 1.6 }}>{a.content}</p>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</div>
-                </div>
-              ))
-            )}
-          </div>
-        );
-
-      case 'classmates':
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {classData.classmates.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 40, background: '#fff', borderRadius: 16 }}>
-                <div style={{ fontSize: 36, marginBottom: 8 }}>👥</div>
-                <p style={{ color: '#94a3b8' }}>No classmates found</p>
-              </div>
-            ) : (
-              classData.classmates.map((s) => (
-                <div key={s.id} onClick={() => navigate(`/alumni/profile/${s.id}`)} style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: 12, background: '#fff', borderRadius: 12, cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: '50%',
-                    background: `hsl(${(s.id * 137) % 360}, 60%, 50%)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontWeight: 700, fontSize: 16,
-                  }}>
-                    {s.name?.[0] || '?'}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: '#94a3b8' }}>{s.email}</div>
+                  <p style={{ margin: '0 0 8px', fontSize: 14, color: '#475569', lineHeight: 1.6 }}>{a.content}</p>
+                  <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                    {a.teacher_name && `By ${a.teacher_name} · `}{new Date(a.created_at).toLocaleDateString()}
                   </div>
                 </div>
               ))
@@ -232,6 +192,7 @@ export default function AlumniPrimaryThings() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{entry.student_name}</div>
+                      {entry.quizzes_taken > 0 && <div style={{ fontSize: 11, color: '#94a3b8' }}>{entry.quizzes_taken} quizzes</div>}
                     </div>
                     <div style={{ fontWeight: 800, fontSize: 15, color: '#667eea' }}>{entry.total_points || entry.score || 0} pts</div>
                   </div>
@@ -284,6 +245,37 @@ export default function AlumniPrimaryThings() {
           </div>
         );
 
+      case 'inyandiko':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {classData.inyandiko.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, background: '#fff', borderRadius: 16 }}>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>📄</div>
+                <p style={{ color: '#94a3b8' }}>No documents found</p>
+              </div>
+            ) : (
+              classData.inyandiko.map((doc) => (
+                <div key={doc.id} style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700 }}>{doc.title || doc.doc_type}</h4>
+                      <span style={{ fontSize: 12, color: '#94a3b8', textTransform: 'capitalize' }}>{doc.doc_type?.replace('_', ' ')}</span>
+                    </div>
+                    {doc.file_path && (
+                      <a href={`${(doc.file_path.startsWith('http') ? '' : 'https://studentapi.umunsi.com/uploads/')}${doc.file_path}`} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: '#667eea', textDecoration: 'none', fontWeight: 600 }}>
+                        📎 {doc.file_name || 'Download'}
+                      </a>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 8 }}>
+                    {doc.student_name && `By ${doc.student_name} · `}{new Date(doc.uploaded_at).toLocaleDateString()}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        );
+
       default:
         return null;
     }
@@ -315,7 +307,7 @@ export default function AlumniPrimaryThings() {
                 whiteSpace: 'nowrap',
               }}
             >
-              {tab.icon} {tab.label.split(' ')[1]}
+              {tab.icon} {tab.label}
             </button>
           ))}
         </div>
