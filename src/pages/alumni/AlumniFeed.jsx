@@ -102,7 +102,7 @@ export default function AlumniFeed() {
         const upload = await uploadFile('/alumni/upload', fd, token);
         media_url = upload.url;
       }
-      await api.post('/alumni/feed', { content: composeText, media_url }, token);
+      await api.post('/alumni/feed', { content: composeText, image_paths: media_url }, token);
       setComposeText('');
       setSelectedImage(null);
       loadPosts();
@@ -133,15 +133,12 @@ export default function AlumniFeed() {
 
       <div onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)} style={styles.clickable}>
         <h2 style={styles.articleTitle}>{comp.title}</h2>
-        <p style={styles.articleExcerpt}>
-          {comp.excerpt || (comp.content && comp.content.length > 200 ? comp.content.slice(0, 200) + '...' : comp.content)}
-        </p>
       </div>
 
-      {comp.featured_image && (
+      {comp.featured_image_path && (
         <div onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)} style={styles.imageWrapper}>
           <img
-            src={comp.featured_image.startsWith('http') ? comp.featured_image : `${UPLOADS_BASE}${comp.featured_image}`}
+            src={comp.featured_image_path.startsWith('http') ? comp.featured_image_path : `${UPLOADS_BASE}${comp.featured_image_path}`}
             alt={comp.title}
             style={styles.featuredImage}
           />
@@ -153,7 +150,7 @@ export default function AlumniFeed() {
           Read more →
         </span>
         <span style={styles.readTime}>
-          {comp.content ? Math.max(1, Math.round(comp.content.split(/\s+/).length / 200)) : 1} min read
+          {comp.estimated_read_minutes || 1} min read
         </span>
       </div>
 
@@ -190,10 +187,10 @@ export default function AlumniFeed() {
         <span style={styles.postBadge}>📝 Post</span>
       </div>
 
-      {post.media_url && (
+      {post.image_paths && (
         <div onClick={() => navigate(`/alumni/post/${post.id}`)} style={styles.imageWrapper}>
           <img
-            src={post.media_url.startsWith('http') ? post.media_url : `${UPLOADS_BASE}${post.media_url}`}
+            src={post.image_paths.startsWith('http') ? post.image_paths : `${UPLOADS_BASE}${post.image_paths}`}
             alt=""
             style={styles.featuredImage}
           />

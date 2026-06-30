@@ -31,7 +31,7 @@ export default function AlumniCompose() {
         if (comp) {
           setTitle(comp.title || '');
           setContent(comp.content || '');
-          setFeaturedImage(comp.featured_image || '');
+          setFeaturedImage(comp.featured_image_path || '');
           setCategory(comp.category || '');
           setTags((comp.tags || []).join(', '));
           setStatus(comp.status || 'draft');
@@ -61,7 +61,7 @@ export default function AlumniCompose() {
       const payload = {
         title: title.trim(),
         content,
-        featured_image: featuredImage || null,
+        featured_image_path: featuredImage || null,
         category: category || null,
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
         status: publish ? 'published' : (silent ? 'draft' : status),

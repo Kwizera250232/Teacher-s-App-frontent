@@ -93,8 +93,8 @@ export default function AlumniComposition() {
   if (!comp) return <div style={{ padding: 60, textAlign: 'center', fontSize: 16, color: '#64748b' }}>Article not found.</div>;
 
   const authorId = comp.user_id || comp.author_id || 1;
-  const featuredImg = comp.featured_image
-    ? (comp.featured_image.startsWith('http') ? comp.featured_image : `${UPLOADS_BASE}${comp.featured_image}`)
+  const featuredImg = comp.featured_image_path
+    ? (comp.featured_image_path.startsWith('http') ? comp.featured_image_path : `${UPLOADS_BASE}${comp.featured_image_path}`)
     : null;
 
   return (
