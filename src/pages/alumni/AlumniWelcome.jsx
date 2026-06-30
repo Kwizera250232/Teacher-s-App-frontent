@@ -61,6 +61,15 @@ export default function AlumniWelcome({ onComplete }) {
     if (joining) return;
     setJoining(true);
     try {
+      // If already alumni (graduated by teacher), skip join and just refresh
+      if (user.role === 'alumni') {
+        setStep(2);
+        setTimeout(() => {
+          onComplete?.();
+          navigate('/alumni/feed');
+        }, 2500);
+        return;
+      }
       const res = await api.post('/alumni/join', {}, token);
       if (res.token && res.user) {
         login(res.token, res.user);
@@ -72,7 +81,7 @@ export default function AlumniWelcome({ onComplete }) {
       }, 2500);
     } catch (err) {
       console.error('Auto join failed:', err);
-      // Still proceed
+      // Still proceed to alumni feed
       setStep(2);
       setTimeout(() => {
         onComplete?.();
@@ -81,7 +90,7 @@ export default function AlumniWelcome({ onComplete }) {
     }
   };
 
-  if (!user || user.role !== 'student') return null;
+  if (!user || (user.role !== 'student' && user.role !== 'alumni')) return null;
 
   return (
     <div style={{

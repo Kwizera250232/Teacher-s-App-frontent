@@ -90,7 +90,7 @@ export default function StudentDashboard() {
     api.get('/class-moments/preview', token).then(setMomentPreview).catch(() => {});
   }, [token]);
   useEffect(() => {
-    if (user?.role === 'student' && user?.is_alumni && !localStorage.getItem('alumni_welcomed')) {
+    if (user?.is_alumni && !localStorage.getItem('alumni_welcomed')) {
       setShowOnboarding(true);
     }
     const params = new URLSearchParams(window.location.search);
