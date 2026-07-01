@@ -1,12 +1,26 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../api';
+import { api, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
 const TABS = [
   { key: 'books', label: '📚 Books', icon: '📚' },
+  { key: 'library', label: '📖 Digital Library', icon: '📖' },
   { key: 'opportunities', label: '🌟 Opportunities', icon: '🌟' },
   { key: 'pastpapers', label: '📄 Past Papers', icon: '📄' },
+];
+
+const LIBRARY_CATEGORIES = [
+  { value: 'primary_book', label: 'Primary Book' },
+  { value: 'secondary_book', label: 'Secondary Book' },
+  { value: 'past_paper', label: 'Past Paper' },
+  { value: 'revision_note', label: 'Revision Note' },
+  { value: 'teacher_resource', label: 'Teacher Resource' },
+  { value: 'university_resource', label: 'University Resource' },
+  { value: 'research_paper', label: 'Research Paper' },
+  { value: 'career_guide', label: 'Career Guide' },
+  { value: 'government_doc', label: 'Government Document' },
+  { value: 'other', label: 'Other' },
 ];
 
 export default function AlumniAdmin() {
@@ -36,11 +50,13 @@ export default function AlumniAdmin() {
     try {
       let endpoint = '';
       if (activeTab === 'books') endpoint = '/alumni/library';
+      else if (activeTab === 'library') endpoint = '/alumni/admin/library-items';
       else if (activeTab === 'opportunities') endpoint = '/alumni/opportunities';
       else if (activeTab === 'pastpapers') endpoint = '/alumni/past-papers';
       else if (activeTab === 'quizzes') endpoint = '/alumni/dean-quizzes';
       const data = await api.get(endpoint, token);
       if (activeTab === 'books') setItems(data.books || []);
+      else if (activeTab === 'library') setItems(data.items || []);
       else if (activeTab === 'opportunities') setItems(data.opportunities || []);
       else if (activeTab === 'pastpapers') setItems(data.papers || []);
       else if (activeTab === 'quizzes') setItems(data.quizzes || []);
@@ -55,13 +71,23 @@ export default function AlumniAdmin() {
     try {
       let endpoint = '';
       if (activeTab === 'books') endpoint = '/admin/alumni/books';
+      else if (activeTab === 'library') endpoint = '/admin/alumni/library-items';
       else if (activeTab === 'opportunities') endpoint = '/admin/alumni/opportunities';
       else if (activeTab === 'pastpapers') endpoint = '/admin/alumni/past-papers';
 
-      if (editing) {
-        await api.put(`${endpoint}/${editing}`, form, token);
+      if (activeTab === 'library' && form._file) {
+        const fd = new FormData();
+        Object.keys(form).forEach((key) => {
+          if (key !== '_file' && form[key] !== undefined && form[key] !== '') fd.append(key, form[key]);
+        });
+        fd.append('file', form._file);
+        await uploadFile(endpoint, fd, token);
       } else {
-        await api.post(endpoint, form, token);
+        if (editing) {
+          await api.put(`${endpoint}/${editing}`, form, token);
+        } else {
+          await api.post(endpoint, form, token);
+        }
       }
       setForm({});
       setEditing(null);
@@ -76,6 +102,7 @@ export default function AlumniAdmin() {
     try {
       let endpoint = '';
       if (activeTab === 'books') endpoint = `/admin/alumni/books/${id}`;
+      else if (activeTab === 'library') endpoint = `/admin/alumni/library-items/${id}`;
       else if (activeTab === 'opportunities') endpoint = `/admin/alumni/opportunities/${id}`;
       else if (activeTab === 'pastpapers') endpoint = `/admin/alumni/past-papers/${id}`;
       await api.delete(endpoint, token);
@@ -98,6 +125,36 @@ export default function AlumniAdmin() {
           <textarea placeholder="Description" value={form.description || ''} onChange={(e) => setForm({...form, description: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0', minHeight: 60 }} />
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="submit" style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Book'}</button>
+            {editing && <button type="button" onClick={() => { setEditing(null); setForm({}); }} style={{ padding: '10px 20px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer' }}>Cancel</button>}
+          </div>
+        </form>
+      );
+    }
+    if (activeTab === 'library') {
+      return (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+          <h4 style={{ margin: '0 0 8px' }}>{editing ? 'Edit Library Item' : 'Add New Library Item'}</h4>
+          <input placeholder="Title" value={form.title || ''} onChange={(e) => setForm({...form, title: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} required />
+          <select value={form.category || 'primary_book'} onChange={(e) => setForm({...form, category: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
+            {LIBRARY_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+          <input placeholder="Subject (e.g. Mathematics)" value={form.subject || ''} onChange={(e) => setForm({...form, subject: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
+          <select value={form.grade_level || ''} onChange={(e) => setForm({...form, grade_level: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
+            <option value="">Select grade level</option>
+            <option value="primary">Primary</option>
+            <option value="secondary">Secondary</option>
+            <option value="university">University</option>
+            <option value="all">All Levels</option>
+          </select>
+          <select value={form.language || 'English'} onChange={(e) => setForm({...form, language: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
+            {['English','Kinyarwanda','French','Swahili','Other'].map((l) => <option key={l} value={l}>{l}</option>)}
+          </select>
+          <input placeholder="Cover Image URL (optional)" value={form.cover_image_path || ''} onChange={(e) => setForm({...form, cover_image_path: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
+          <textarea placeholder="Description (optional)" value={form.description || ''} onChange={(e) => setForm({...form, description: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0', minHeight: 60 }} />
+          <input type="file" onChange={(e) => setForm({...form, _file: e.target.files[0]})} style={{ fontSize: 13 }} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.txt" />
+          <div style={{ fontSize: 12, color: '#94a3b8' }}>Upload a file (PDF, DOC, image) — this will appear in every alumni's Digital Library</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="submit" style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Library Item'}</button>
             {editing && <button type="button" onClick={() => { setEditing(null); setForm({}); }} style={{ padding: '10px 20px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer' }}>Cancel</button>}
           </div>
         </form>

@@ -1,23 +1,45 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../api';
+import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
 const SECTIONS = ['Primary Books', 'Secondary Books', 'Past Papers', 'Revision Notes', 'Teacher Resources', 'University Resources', 'Research Papers', 'Career Guides', 'Government Documents'];
 
+const CATEGORY_LABELS = {
+  primary_book: 'Primary Books',
+  secondary_book: 'Secondary Books',
+  past_paper: 'Past Papers',
+  revision_note: 'Revision Notes',
+  teacher_resource: 'Teacher Resources',
+  university_resource: 'University Resources',
+  research_paper: 'Research Papers',
+  career_guide: 'Career Guides',
+  government_doc: 'Government Documents',
+  other: 'Other',
+};
+
 export default function AlumniLibrary() {
   const { token } = useAuth();
   const [books, setBooks] = useState([]);
+  const [libraryItems, setLibraryItems] = useState([]);
   const [activeSection, setActiveSection] = useState('Primary Books');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/alumni/library', token)
-      .then((data) => { setBooks(data.books || []); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      api.get('/alumni/library', token).catch(() => ({ books: [] })),
+      api.get('/alumni/library-items', token).catch(() => ({ items: [] })),
+    ]).then(([data1, data2]) => {
+      setBooks(data1.books || []);
+      setLibraryItems(data2.items || []);
+      setLoading(false);
+    });
   }, [token]);
 
-  const filtered = books.filter((b) => b.section === activeSection);
+  // Merge old books and new library items, filtered by active section
+  const oldFiltered = books.filter((b) => b.section === activeSection);
+  const newFiltered = libraryItems.filter((item) => (CATEGORY_LABELS[item.category] || 'Other') === activeSection);
+  const filtered = [...oldFiltered, ...newFiltered];
 
   return (
     <AlumniLayout showTopWriters={false}>
@@ -58,18 +80,32 @@ export default function AlumniLibrary() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
-            {filtered.map((book) => (
-              <div key={book.id} style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                <div style={{ fontSize: 40, marginBottom: 8 }}>📖</div>
-                <h4 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700 }}>{book.title}</h4>
-                <p style={{ margin: '0 0 12px', fontSize: 13, color: '#64748b' }}>{book.author || 'Unknown'}</p>
-                {book.file_url && (
-                  <a href={book.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#667eea', fontWeight: 700, textDecoration: 'none' }}>
+            {filtered.map((item) => {
+              const isLibraryItem = !!item.category;
+              const fileUrl = isLibraryItem
+                ? (item.file_path ? (item.file_path.startsWith('http') ? item.file_path : `${UPLOADS_BASE}${item.file_path}`) : null)
+                : item.file_url;
+              const cover = isLibraryItem && item.cover_image_path
+                ? (item.cover_image_path.startsWith('http') ? item.cover_image_path : `${UPLOADS_BASE}${item.cover_image_path}`)
+                : null;
+              return (
+              <div key={item.id} style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                {cover ? (
+                  <img src={cover} alt={item.title} style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 10, marginBottom: 10 }} />
+                ) : (
+                  <div style={{ fontSize: 40, marginBottom: 8 }}>📖</div>
+                )}
+                <h4 style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700 }}>{item.title}</h4>
+                <p style={{ margin: '0 0 8px', fontSize: 13, color: '#64748b' }}>{item.author || item.uploader_name || 'Unknown'}</p>
+                {item.subject && <span style={{ fontSize: 11, color: '#94a3b8', display: 'block', marginBottom: 8 }}>{item.subject}</span>}
+                {fileUrl && (
+                  <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#667eea', fontWeight: 700, textDecoration: 'none' }}>
                     📥 Download
                   </a>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
