@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
+import VerifiedBadge from '../../components/VerifiedBadge';
 
 export default function AlumniDirectChat() {
   const { userId } = useParams();
@@ -13,11 +14,15 @@ export default function AlumniDirectChat() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    api.get(`/alumni/profile/${userId}`, token).then((p) => setColleague(p)).catch(console.error);
+    api.get(`/alumni/profile/${userId}`, token).then((p) => {
+      setColleague(p);
+      setIsFollowing(!!p.is_following);
+    }).catch(console.error);
     loadMessages();
     const interval = setInterval(loadMessages, 5000);
     return () => clearInterval(interval);
@@ -72,9 +77,41 @@ export default function AlumniDirectChat() {
     }
   };
 
+  const handleSubscribe = async () => {
+    try {
+      await api.post(`/alumni/follow/${userId}`, {}, token);
+      setIsFollowing(true);
+      const p = await api.get(`/alumni/profile/${userId}`, token);
+      setColleague(p);
+    } catch (e) { alert(e.message); }
+  };
+
   return (
     <AlumniLayout showTopWriters={false}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        {/* Subscribe gate */}
+        {colleague && !isFollowing && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: 40, textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <div style={{
+              width: 80, height: 80, borderRadius: '50%',
+              background: `hsl(${(Number(userId) * 137) % 360}, 60%, 50%)`,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 32, fontWeight: 700, color: '#fff', marginBottom: 16,
+            }}>{colleague.name?.[0] || '?'}</div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              {colleague.name}
+              <VerifiedBadge size={18} userId={Number(userId)} />
+            </h3>
+            <p style={{ color: '#64748b', fontSize: 15, margin: '0 0 20px' }}>Subscribe to {colleague.name} to start chatting and view their full profile.</p>
+            <button onClick={handleSubscribe} style={{ padding: '12px 32px', borderRadius: 24, border: 'none', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', boxShadow: '0 4px 14px rgba(102,126,234,0.4)' }}>
+              🔔 Subscribe to {colleague.name}
+            </button>
+          </div>
+        )}
+
+        {/* Chat — only when subscribed */}
+        {colleague && isFollowing && (
+        <>
         {/* WhatsApp-style Header */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
@@ -90,7 +127,7 @@ export default function AlumniDirectChat() {
             {colleague?.name?.[0] || '?'}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>{colleague?.name || 'Chat'}</div>
+            <div style={{ fontWeight: 600, fontSize: 16, display: 'flex', alignItems: 'center', gap: 4 }}>{colleague?.name || 'Chat'}<VerifiedBadge size={14} userId={Number(userId)} /></div>
             <div style={{ fontSize: 12, opacity: 0.8 }}>{colleague?.current_occupation || 'UClass Alumni'}</div>
           </div>
         </div>
@@ -163,6 +200,8 @@ export default function AlumniDirectChat() {
             opacity: sending || !newMessage.trim() ? 0.5 : 1,
           }}>➤</button>
         </div>
+        </>
+        )}
       </div>
     </AlumniLayout>
   );

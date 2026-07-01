@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 function BadgeSvg({ sz }) {
   return (
@@ -9,9 +11,31 @@ function BadgeSvg({ sz }) {
   );
 }
 
-export default function VerifiedBadge({ size = 16, info = null, onViewProfile = null }) {
+export default function VerifiedBadge({ size = 16, userId = null, info = null, onViewProfile = null }) {
+  const { token } = useAuth();
   const [open, setOpen] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [cachedInfo, setCachedInfo] = useState(info);
   const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!open || !userId || cachedInfo || fetching) return;
+    setFetching(true);
+    api.get(`/alumni/verify-info/${userId}`, token)
+      .then((data) => {
+        const items = [
+          { icon: '🏫', label: 'School', value: data.school_name || '—' },
+          { icon: '🎓', label: 'Class Joined', value: data.class_name || '—' },
+          { icon: '👨‍🏫', label: 'Teacher', value: data.teacher_name || '—' },
+          { icon: '⭐', label: 'Points', value: String(data.points || 0) },
+          { icon: '✍️', label: 'Articles', value: String(data.total_compositions || 0) },
+          { icon: '👥', label: 'Followers', value: String(data.followers_count || 0) },
+        ];
+        setCachedInfo({ items });
+      })
+      .catch(() => setCachedInfo({ items: [] }))
+      .finally(() => setFetching(false));
+  }, [open, userId, cachedInfo, fetching, token]);
 
   useEffect(() => {
     if (!open) return;
@@ -21,14 +45,6 @@ export default function VerifiedBadge({ size = 16, info = null, onViewProfile = 
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
-
-  if (!info) {
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 4, flexShrink: 0, verticalAlign: 'middle' }}>
-        <BadgeSvg sz={size} />
-      </span>
-    );
-  }
 
   return (
     <span
@@ -59,7 +75,6 @@ export default function VerifiedBadge({ size = 16, info = null, onViewProfile = 
             textAlign: 'left',
           }}
         >
-          {/* down-pointing arrow */}
           <div style={{
             position: 'absolute', bottom: -6, left: '50%',
             transform: 'translateX(-50%) rotate(45deg)',
@@ -68,26 +83,28 @@ export default function VerifiedBadge({ size = 16, info = null, onViewProfile = 
             boxShadow: '2px 2px 6px rgba(0,0,0,0.1)',
           }} />
 
-          {/* header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <BadgeSvg sz={20} />
-            <strong style={{ fontSize: 14, color: '#0f1419' }}>Verified account</strong>
+            <strong style={{ fontSize: 14, color: '#0f1419' }}>Verified UClass Alumni</strong>
           </div>
 
-          {/* info rows */}
-          {(info.items || []).map((item, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'flex-start', gap: 10,
-              padding: '7px 0',
-              borderTop: '1px solid #eff3f4',
-            }}>
-              <span style={{ fontSize: 16, lineHeight: 1.2 }}>{item.icon}</span>
-              <div>
-                <div style={{ fontSize: 10, color: '#536471', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{item.label}</div>
-                <div style={{ fontSize: 13, color: '#0f1419', fontWeight: 500, marginTop: 1 }}>{item.value || '—'}</div>
+          {fetching ? (
+            <div style={{ padding: '12px 0', textAlign: 'center', color: '#536471', fontSize: 13 }}>Loading...</div>
+          ) : (
+            (cachedInfo?.items || []).map((item, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                padding: '7px 0',
+                borderTop: '1px solid #eff3f4',
+              }}>
+                <span style={{ fontSize: 16, lineHeight: 1.2 }}>{item.icon}</span>
+                <div>
+                  <div style={{ fontSize: 10, color: '#536471', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{item.label}</div>
+                  <div style={{ fontSize: 13, color: '#0f1419', fontWeight: 500, marginTop: 1 }}>{item.value || '—'}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
 
           {onViewProfile && (
             <button

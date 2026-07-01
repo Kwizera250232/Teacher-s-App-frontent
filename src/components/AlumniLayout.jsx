@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
+import VerifiedBadge from './VerifiedBadge';
 
 const NAV_ITEMS = [
   { icon: '🏠', label: 'Home', path: '/alumni/feed' },
@@ -64,7 +65,10 @@ export default function AlumniLayout({ children, showTopWriters = true }) {
             {(user.name || '?')[0]}
           </div>
           <div style={{ overflow: 'hidden', minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
+            <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 4 }}>
+              {user.name}
+              <VerifiedBadge size={12} userId={user.id} onViewProfile={() => navigate(getProfilePath())} />
+            </div>
             <div style={{ fontSize: 11, color: '#94a3b8' }}>@{user.email?.split('@')[0]}</div>
           </div>
         </div>
@@ -164,7 +168,7 @@ function TopWriters({ token }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{w.name}</span>
-              <span style={{ color: '#3b82f6', fontSize: 11 }}>✓</span>
+              <VerifiedBadge size={14} userId={w.id} onViewProfile={() => navigate(`/alumni/profile/${w.id}`)} />
             </div>
             <div style={{ fontSize: 11, color: '#94a3b8' }}>{w.school || 'UClass'} · {w.articles} articles</div>
           </div>

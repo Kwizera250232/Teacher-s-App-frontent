@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
+import VerifiedBadge from '../../components/VerifiedBadge';
 
 const REACTIONS = ['👍','❤️','😂','😮','🔥','🎉'];
 
@@ -37,9 +38,24 @@ export default function AlumniFeed() {
   const [sendingPost, setSendingPost] = useState(false);
   const [composeText, setComposeText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [suggested, setSuggested] = useState([]);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { loadPosts(); }, [token]);
+  useEffect(() => { loadPosts(); loadSuggested(); }, [token]);
+
+  const loadSuggested = async () => {
+    try {
+      const data = await api.get('/alumni/suggested-alumni', token);
+      setSuggested(data.suggested || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleSubscribe = async (alumniId) => {
+    try {
+      await api.post(`/alumni/follow/${alumniId}`, {}, token);
+      loadSuggested();
+    } catch (e) { alert(e.message); }
+  };
 
   const loadPosts = async () => {
     try {
@@ -125,7 +141,7 @@ export default function AlumniFeed() {
         <div style={{ flex: 1 }}>
           <div style={styles.authorRow}>
             <span style={styles.authorName}>{comp.author_name || comp.name || 'Alumni'}</span>
-            <span style={styles.verifiedBadge}>✓</span>
+            <VerifiedBadge size={16} userId={comp.user_id || comp.author_id} onViewProfile={() => navigate(`/alumni/profile/${comp.user_id || comp.author_id}`)} />
             <span style={styles.dateText}>· {new Date(comp.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
           </div>
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
@@ -178,7 +194,7 @@ export default function AlumniFeed() {
         <div style={{ flex: 1 }}>
           <div style={styles.authorRow}>
             <span style={styles.authorName}>{post.author_name}</span>
-            <span style={styles.verifiedBadge}>✓</span>
+            <VerifiedBadge size={16} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
             <span style={styles.dateText}>· {new Date(post.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
           </div>
         </div>
@@ -308,6 +324,35 @@ export default function AlumniFeed() {
         ) : (
           posts.map((item) => item.itemType === 'composition' ? renderComposition(item) : renderPost(item))
         )}
+
+        {/* Suggested Alumni */}
+        {suggested.length > 0 && (
+          <div style={styles.suggestedSection}>
+            <h3 style={styles.suggestedTitle}>✨ Suggested Alumni</h3>
+            <div style={styles.suggestedGrid}>
+              {suggested.map((s) => (
+                <div key={s.id} style={styles.suggestedCard}>
+                  <div style={{ ...styles.avatar, ...styles.avatarMd, background: avatarColor(s.id), cursor: 'pointer' }} onClick={() => navigate(`/alumni/profile/${s.id}`)}>
+                    {(s.name || 'U')[0]}
+                  </div>
+                  <div style={styles.suggestedInfo}>
+                    <div style={styles.suggestedNameRow}>
+                      <span style={styles.suggestedName} onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
+                      <VerifiedBadge size={14} userId={s.id} onViewProfile={() => navigate(`/alumni/profile/${s.id}`)} />
+                    </div>
+                    <div style={styles.suggestedMeta}>{s.school_name || 'UClass'} · {s.total_compositions || 0} articles</div>
+                    <button
+                      onClick={() => handleSubscribe(s.id)}
+                      style={s.is_following ? styles.subscribedBtn : styles.subscribeBtn}
+                    >
+                      {s.is_following ? '✓ Subscribed' : '🔔 Subscribe'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </AlumniLayout>
   );
@@ -382,4 +427,17 @@ const styles = {
   emptyTitle: { fontSize: 20, fontWeight: 800, color: '#1e293b', margin: '12px 0 6px' },
   emptyText: { color: '#94a3b8', fontSize: 15, margin: '0 0 16px' },
   ctaBtn: { background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer' },
+
+  // Suggested Alumni
+  suggestedSection: { marginTop: 32, marginBottom: 24 },
+  suggestedTitle: { fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '0 0 16px' },
+  suggestedGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 },
+  suggestedCard: { background: '#fff', borderRadius: 14, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' },
+  avatarMd: { width: 48, height: 48, fontSize: 18 },
+  suggestedInfo: { flex: 1, minWidth: 0 },
+  suggestedNameRow: { display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 },
+  suggestedName: { fontWeight: 700, fontSize: 14, color: '#1e293b', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  suggestedMeta: { fontSize: 12, color: '#94a3b8', marginBottom: 8 },
+  subscribeBtn: { background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', border: 'none', borderRadius: 16, padding: '6px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer' },
+  subscribedBtn: { background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: 16, padding: '6px 16px', fontSize: 12, fontWeight: 700, cursor: 'default' },
 };

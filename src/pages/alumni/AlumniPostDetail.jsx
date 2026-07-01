@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
+import VerifiedBadge from '../../components/VerifiedBadge';
 
 export default function AlumniPostDetail() {
   const { postId } = useParams();
@@ -77,7 +78,7 @@ export default function AlumniPostDetail() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontWeight: 700, fontSize: 15, color: '#1e293b' }}>{post.author_name}</span>
-                <span style={{ color: '#3b82f6', fontSize: 14 }}>✓</span>
+                <VerifiedBadge size={16} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
               </div>
               <div style={{ fontSize: 13, color: '#94a3b8' }}>{new Date(post.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</div>
             </div>

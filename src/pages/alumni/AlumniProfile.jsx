@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../../api';
+import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
+import VerifiedBadge from '../../components/VerifiedBadge';
 
 export default function AlumniProfile() {
   const { identifier } = useParams();
@@ -16,6 +17,8 @@ export default function AlumniProfile() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarFileRef = useRef(null);
 
   const [form, setForm] = useState({
     bio: '', current_school_or_uni: '', current_occupation: '', dream_career: '',
@@ -84,14 +87,40 @@ export default function AlumniProfile() {
       } else {
         await api.post(`/alumni/follow/${profile.user_id || profile.id}`, {}, token);
       }
-      window.location.reload();
+      // Reload profile to update is_following
+      const p = await api.get(`/alumni/profile/${profile.user_id || profile.id}`, token);
+      setProfile(p);
     } catch (e) {
       alert(e.message);
     }
   };
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const data = await uploadFile('/alumni/profile/avatar', fd, token);
+      // Also save avatar_url in profile
+      await api.put('/alumni/profile/me', { avatar_url: data.url }, token);
+      setProfile({ ...profile, avatar_url: data.url, cover_photo_path: data.url });
+    } catch (err) {
+      alert(err.message || 'Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading) return <AlumniLayout showTopWriters={false}><div style={{ padding: 40, textAlign: 'center' }}>Loading profile...</div></AlumniLayout>;
   if (!profile) return <AlumniLayout showTopWriters={false}><div style={{ padding: 40, textAlign: 'center' }}>Profile not found.</div></AlumniLayout>;
+
+  const profileId = profile.user_id || profile.id;
+  const canViewFull = isMe || profile.is_following;
+  const avatarSrc = profile.avatar_url
+    ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : `${UPLOADS_BASE}${profile.avatar_url}`)
+    : null;
 
   return (
     <AlumniLayout showTopWriters={false}>
@@ -100,33 +129,43 @@ export default function AlumniProfile() {
         <div style={{
           height: 200,
           background: profile.cover_photo_path
-            ? `url(${profile.cover_photo_path}) center/cover`
+            ? `url(${profile.cover_photo_path.startsWith('http') ? profile.cover_photo_path : `${UPLOADS_BASE}${profile.cover_photo_path}`}) center/cover`
             : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           borderRadius: 16,
           marginBottom: -50,
-        }} />
+          position: 'relative',
+        }}>
+          {isMe && (
+            <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8 }}>
+              <button onClick={() => avatarFileRef.current?.click()} disabled={uploadingAvatar} style={{ padding: '8px 14px', borderRadius: 20, border: 'none', background: 'rgba(0,0,0,0.5)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
+                {uploadingAvatar ? 'Uploading...' : '📸 Upload Photo'}
+              </button>
+              <input ref={avatarFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+            </div>
+          )}
+        </div>
 
         {/* Profile Card */}
         <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
             <div style={{
               width: 100, height: 100, borderRadius: '50%',
-              background: profile.avatar_url ? `url(${profile.avatar_url}) center/cover` : `hsl(${(profile.id * 137) % 360}, 60%, 50%)`,
+              background: avatarSrc ? `url(${avatarSrc}) center/cover` : `hsl(${(profile.id * 137) % 360}, 60%, 50%)`,
               border: '4px solid #fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 40, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
               color: '#fff', fontWeight: 700,
-              overflow: 'hidden',
+              overflow: 'hidden', flexShrink: 0,
             }}>
-              {!profile.avatar_url && (profile.name?.[0] || 'K')}
+              {!avatarSrc && (profile.name?.[0] || 'K')}
             </div>
-            <div style={{ flex: 1, marginBottom: 8 }}>
+            <div style={{ flex: 1, marginBottom: 8, minWidth: 200 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{profile.name}</h2>
-                <span style={{ background: '#2563eb', color: '#fff', padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 700 }}>✓ VERIFIED ALUMNI</span>
+                <VerifiedBadge size={20} userId={profileId} onViewProfile={null} />
               </div>
               <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
-                @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role || 'Alumni'} · {profile.current_occupation || profile.dream_career || 'Student'}
+                @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role || 'Alumni'}
               </p>
             </div>
           </div>
@@ -139,22 +178,34 @@ export default function AlumniProfile() {
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
             {isMe ? (
-              <button onClick={() => setEditing(!editing)} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #667eea', background: editing ? '#667eea' : '#fff', color: editing ? '#fff' : '#667eea', fontWeight: 700, cursor: 'pointer' }}>
-                {editing ? 'Cancel' : '✏️ Edit Profile'}
-              </button>
+              <>
+                <button onClick={() => setEditing(!editing)} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #667eea', background: editing ? '#667eea' : '#fff', color: editing ? '#fff' : '#667eea', fontWeight: 700, cursor: 'pointer' }}>
+                  {editing ? 'Cancel' : '✏️ Edit Profile'}
+                </button>
+                <button onClick={() => avatarFileRef.current?.click()} disabled={uploadingAvatar} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontWeight: 700, cursor: 'pointer' }}>
+                  {uploadingAvatar ? 'Uploading...' : '📸 Change Photo'}
+                </button>
+              </>
             ) : (
-              <button onClick={handleFollow} style={{ padding: '8px 20px', borderRadius: 20, border: profile.is_following ? '1.5px solid #e2e8f0' : 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 700, cursor: 'pointer' }}>
-                {profile.is_following ? 'Subscribed' : '🔔 Subscribe'}
-              </button>
+              <>
+                <button onClick={handleFollow} style={{ padding: '8px 20px', borderRadius: 20, border: profile.is_following ? '1.5px solid #e2e8f0' : 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 700, cursor: 'pointer' }}>
+                  {profile.is_following ? '✓ Subscribed' : '🔔 Subscribe'}
+                </button>
+                {profile.is_following && (
+                  <button onClick={() => navigate(`/alumni/chat/${profileId}`)} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #667eea', background: '#fff', color: '#667eea', fontWeight: 700, cursor: 'pointer' }}>
+                    💬 Chat
+                  </button>
+                )}
+              </>
             )}
           </div>
 
-          {/* Bio */}
+          {/* Bio — always visible */}
           <p style={{ margin: '0 0 12px', lineHeight: 1.6, color: '#374151' }}>{profile.bio || 'No bio yet.'}</p>
 
-          {/* Details */}
+          {/* Details — always visible */}
           {profile.graduation_year && (
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, color: '#64748b' }}>
               {profile.graduation_year && <span>🎓 Class of {profile.graduation_year}</span>}
@@ -164,6 +215,18 @@ export default function AlumniProfile() {
             </div>
           )}
         </div>
+
+        {/* SUBSCRIBE GATE — when viewing someone else's profile and not following */
+        {!canViewFull && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: 40, textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 20 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800 }}>Subscribe to {profile.name}</h3>
+            <p style={{ color: '#64748b', fontSize: 15, margin: '0 0 20px' }}>Subscribe to view their full profile, articles, and start chatting.</p>
+            <button onClick={handleFollow} style={{ padding: '12px 32px', borderRadius: 24, border: 'none', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', boxShadow: '0 4px 14px rgba(102,126,234,0.4)' }}>
+              🔔 Subscribe to {profile.name}
+            </button>
+          </div>
+        )}
 
         {/* EDIT FORM */}
         {editing && (
@@ -215,7 +278,8 @@ export default function AlumniProfile() {
           </div>
         )}
 
-        {/* Articles */}
+        {/* Articles — only visible if canViewFull */}
+        {canViewFull && (
         <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800 }}>✍️ Articles</h3>
           {compositions.length === 0 ? (
@@ -237,6 +301,7 @@ export default function AlumniProfile() {
             </div>
           )}
         </div>
+        )}
       </div>
     </AlumniLayout>
   );

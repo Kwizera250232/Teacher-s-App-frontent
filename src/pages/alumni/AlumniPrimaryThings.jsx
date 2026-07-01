@@ -93,7 +93,7 @@ export default function AlumniPrimaryThings() {
         <div style={{ background: '#fff', borderRadius: 16, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 16 }}>
           <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800 }}>{quiz.title}</h3>
           {quiz.description && <p style={{ margin: '0 0 12px', fontSize: 14, color: '#64748b' }}>{quiz.description}</p>}
-          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#94a3b8' }}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#94a3b8', flexWrap: 'wrap' }}>
             {quiz.class_name && <span>Class: {quiz.class_name}</span>}
             <span>{questions.length} questions</span>
             {attempt ? (
@@ -162,7 +162,7 @@ export default function AlumniPrimaryThings() {
         <div style={{ background: '#fff', borderRadius: 16, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 16 }}>
           <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800 }}>{homework.title}</h3>
           {homework.description && <p style={{ margin: '0 0 12px', fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>{homework.description}</p>}
-          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#94a3b8' }}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#94a3b8', flexWrap: 'wrap' }}>
             {homework.class_name && <span>Class: {homework.class_name}</span>}
             <span>Due: {homework.due_date ? new Date(homework.due_date).toLocaleDateString() : 'No due date'}</span>
           </div>
@@ -263,7 +263,7 @@ export default function AlumniPrimaryThings() {
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: '#94a3b8' }}>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: '#94a3b8', flexWrap: 'wrap' }}>
                     {q.my_score !== null && <span>Score: {q.my_score}/{q.my_total}</span>}
                     <span>{q.attempt_count || 0} attempts</span>
                     {q.question_count > 0 && <span>{q.question_count} questions</span>}
@@ -304,7 +304,7 @@ export default function AlumniPrimaryThings() {
                       {hw.feedback && <span style={{ fontWeight: 400, color: '#64748b' }}> — {hw.feedback}</span>}
                     </div>
                   )}
-                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, display: 'flex', gap: 12 }}>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <span>Due: {hw.due_date ? new Date(hw.due_date).toLocaleDateString() : 'No due date'}</span>
                     <span style={{ color: '#667eea', fontWeight: 600 }}>→ View details</span>
                   </div>
@@ -478,28 +478,29 @@ export default function AlumniPrimaryThings() {
 
   return (
     <AlumniLayout showTopWriters={false}>
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 4px' }}>
         <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800 }}>🎒 Primary Things</h2>
-        <p style={{ color: '#64748b', marginBottom: 20 }}>
+        <p style={{ color: '#64748b', marginBottom: 20, fontSize: 14 }}>
           Everything from your school days — {classInfo?.name || 'your class'}
         </p>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+        {/* Tabs — scrollable on mobile */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
           {TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               style={{
-                padding: '8px 14px',
+                padding: '8px 12px',
                 borderRadius: 20,
                 border: 'none',
                 background: activeTab === tab.key ? '#667eea' : '#e2e8f0',
                 color: activeTab === tab.key ? '#fff' : '#475569',
                 fontWeight: 700,
-                fontSize: 13,
+                fontSize: 12,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               {tab.icon} {tab.label}
