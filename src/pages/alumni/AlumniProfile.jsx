@@ -216,7 +216,7 @@ export default function AlumniProfile() {
           )}
         </div>
 
-        {/* SUBSCRIBE GATE — when viewing someone else's profile and not following */
+        {/* SUBSCRIBE GATE — when viewing someone else's profile and not following */}
         {!canViewFull && (
           <div style={{ background: '#fff', borderRadius: 16, padding: 40, textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 20 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>

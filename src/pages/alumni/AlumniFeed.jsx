@@ -4,6 +4,7 @@ import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import DailyCompositionChallenge from '../../components/DailyCompositionChallenge';
 
 const REACTIONS = ['👍','❤️','😂','😮','🔥','🎉'];
 
@@ -275,6 +276,9 @@ export default function AlumniFeed() {
   return (
     <AlumniLayout>
       <div style={styles.container}>
+        {/* Daily Composition Challenge */}
+        <DailyCompositionChallenge token={token} />
+
         {/* Hero Header */}
         <div style={styles.heroHeader}>
           <h1 style={styles.heroTitle}>U-Class Alumni</h1>
