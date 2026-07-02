@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import VerifiedBadge from './VerifiedBadge';
+import './AlumniLayout.css';
 
 const NAV_ITEMS = [
   { icon: '🏠', label: 'Home', path: '/alumni/feed' },
@@ -83,16 +84,37 @@ export default function AlumniLayout({ children, showTopWriters = true }) {
     </>
   );
 
+  const mobileNavItems = [
+    { icon: '🏠', label: 'Home', path: '/alumni/feed' },
+    { icon: '👥', label: 'Connections', path: '/alumni/colleagues' },
+    { icon: '💬', label: 'Group', path: '/alumni/groups' },
+    { icon: '🌟', label: 'Opportunities', path: '/alumni/opportunities' },
+    { icon: '☰', label: 'Menu', action: () => setSidebarOpen(true) },
+  ];
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f0f2f5' }}>
-      {/* MOBILE: Hamburger */}
+    <div className="alumni-layout">
+      {/* MOBILE: Top bar */}
       {isMobile && (
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ position: 'fixed', top: 12, left: 12, zIndex: 3000, width: 40, height: 40, borderRadius: '50%', border: 'none', background: '#667eea', color: '#fff', fontSize: 18, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>☰</button>
+        <div className="alumni-mobile-header">
+          <button className="alumni-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
+          <div className="alumni-mobile-logo">
+            <span className="alumni-mobile-logo-mark">U</span>
+            <span>Student.umunsi</span>
+          </div>
+          <div className="alumni-mobile-actions">
+            <button onClick={() => navigate('/alumni/search')}>🔍</button>
+            <button onClick={() => navigate('/alumni/notifications')}>🔔</button>
+            <div className="alumni-mobile-profile" onClick={() => navigate(getProfilePath())}>
+              {(user?.name || 'U')[0]}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* LEFT SIDEBAR - Desktop */}
       {!isMobile && (
-        <aside style={{ width: 240, background: '#fff', borderRight: '1px solid #e2e8f0', padding: '20px 12px', position: 'fixed', left: 0, top: 0, bottom: 0, overflowY: 'auto', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
+        <aside className="alumni-desktop-sidebar">
           {sidebarContent}
         </aside>
       )}
@@ -100,21 +122,21 @@ export default function AlumniLayout({ children, showTopWriters = true }) {
       {/* MOBILE SIDEBAR OVERLAY */}
       {isMobile && sidebarOpen && (
         <>
-          <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000 }} />
-          <aside style={{ width: 260, background: '#fff', padding: '20px 12px', position: 'fixed', left: 0, top: 0, bottom: 0, overflowY: 'auto', zIndex: 2100, display: 'flex', flexDirection: 'column', boxShadow: '4px 0 20px rgba(0,0,0,0.15)' }}>
+          <div onClick={() => setSidebarOpen(false)} className="alumni-sidebar-backdrop" />
+          <aside className="alumni-mobile-sidebar">
             {sidebarContent}
           </aside>
         </>
       )}
 
       {/* MAIN CONTENT */}
-      <main style={{ flex: 1, marginLeft: isMobile ? 0 : 240, marginRight: isMobile || !showTopWriters ? 0 : 300, padding: isMobile ? '60px 12px 20px' : '20px 24px', minWidth: 0 }}>
+      <main className={`alumni-main ${isMobile ? 'alumni-main-mobile' : ''}`}>
         {children}
       </main>
 
       {/* RIGHT SIDEBAR - Desktop */}
       {!isMobile && showTopWriters && (
-        <aside style={{ width: 280, padding: '20px 12px', position: 'fixed', right: 0, top: 0, bottom: 0, overflowY: 'auto', borderLeft: '1px solid #e2e8f0', background: '#f8fafc' }}>
+        <aside className="alumni-desktop-rightbar">
           {/* Search */}
           <div style={{ background: '#fff', borderRadius: 24, padding: '10px 16px', marginBottom: 16, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ color: '#94a3b8', fontSize: 16 }}>🔍</span>
@@ -135,6 +157,25 @@ export default function AlumniLayout({ children, showTopWriters = true }) {
             ))}
           </div>
         </aside>
+      )}
+
+      {/* MOBILE BOTTOM NAV */}
+      {isMobile && (
+        <nav className="alumni-mobile-nav">
+          {mobileNavItems.map((item) => {
+            const isActive = item.path && (currentPath === item.path || currentPath.startsWith(item.path));
+            return (
+              <button
+                key={item.label}
+                className={`alumni-mobile-nav-item ${isActive ? 'alumni-mobile-nav-active' : ''}`}
+                onClick={() => item.action ? item.action() : navigate(item.path)}
+              >
+                <span className="alumni-mobile-nav-icon">{item.icon}</span>
+                <span className="alumni-mobile-nav-label">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       )}
     </div>
   );

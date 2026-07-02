@@ -18,6 +18,8 @@ export default function DailyCompositionChallenge({ token }) {
   const [content, setContent] = useState('');
   const [gmail, setGmail] = useState('');
   const [momo, setMomo] = useState('');
+  const [names, setNames] = useState('');
+  const [noCopyPaste, setNoCopyPaste] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -40,7 +42,7 @@ export default function DailyCompositionChallenge({ token }) {
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
   const minWords = challenge?.min_words || 150;
   const maxWords = challenge?.max_words || 500;
-  const isValid = content.trim().length >= 50 && wordCount >= minWords && wordCount <= maxWords;
+  const isValid = content.trim().length >= 50 && wordCount >= minWords && wordCount <= maxWords && noCopyPaste;
 
   const handleSubmit = async () => {
     if (!challenge || !isValid) return;
@@ -52,6 +54,7 @@ export default function DailyCompositionChallenge({ token }) {
         content,
         gmail_address: gmail.trim() || null,
         momo_number: momo.trim() || null,
+        names: names.trim() || null,
       }, token);
       setAlreadySubmitted(res.submission || { status: 'pending' });
       setSubmitSuccess(true);
@@ -69,7 +72,7 @@ export default function DailyCompositionChallenge({ token }) {
 
   return (
     <>
-      <div className="dcc-card">
+      <div className="dcc-card" id="daily-composition-challenge">
         <div className="dcc-left-accent" />
 
         <div className="dcc-header">
@@ -194,8 +197,9 @@ export default function DailyCompositionChallenge({ token }) {
               <ul>
                 <li>Minimum {minWords} words, maximum {maxWords} words.</li>
                 <li>Submit before the time limit expires.</li>
-                <li>Winners are chosen daily and rewarded.</li>
-                <li>Provide a valid Gmail address and MoMo number if you want to receive rewards.</li>
+                <li>Winners are chosen daily and rewarded in <strong>RWF</strong>.</li>
+                <li>Provide a valid Gmail address, MoMo number and your names to receive the reward if your article wins.</li>
+                <li><strong>No copy-paste</strong> — original work only.</li>
               </ul>
             </div>
             <button className="dcc-btn-primary" onClick={() => setShowGuidelines(false)}>Got it</button>
@@ -229,9 +233,24 @@ export default function DailyCompositionChallenge({ token }) {
               {wordCount} / {maxWords} words {wordCount < minWords && `(min ${minWords})`}
             </div>
 
+            <div className="dcc-reward-info">
+              <span>💰</span>
+              <p>Provide a valid Gmail address, MoMo number and your names to receive the reward in case your article wins.</p>
+            </div>
+
             <div className="dcc-reward-fields">
               <div>
-                <label className="dcc-label">Gmail address (for rewards)</label>
+                <label className="dcc-label">Full names</label>
+                <input
+                  className="dcc-input"
+                  type="text"
+                  placeholder="Your full names"
+                  value={names}
+                  onChange={(e) => setNames(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="dcc-label">Gmail address</label>
                 <input
                   className="dcc-input"
                   type="email"
@@ -241,7 +260,7 @@ export default function DailyCompositionChallenge({ token }) {
                 />
               </div>
               <div>
-                <label className="dcc-label">MoMo number (for rewards)</label>
+                <label className="dcc-label">MoMo number</label>
                 <input
                   className="dcc-input"
                   type="text"
@@ -251,6 +270,15 @@ export default function DailyCompositionChallenge({ token }) {
                 />
               </div>
             </div>
+
+            <label className="dcc-checkbox">
+              <input
+                type="checkbox"
+                checked={noCopyPaste}
+                onChange={(e) => setNoCopyPaste(e.target.checked)}
+              />
+              <span>I confirm this is my original work — <strong>no copy-paste</strong>.</span>
+            </label>
 
             {submitError && <div className="dcc-alert">{submitError}</div>}
 

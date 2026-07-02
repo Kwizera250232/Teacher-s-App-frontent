@@ -5,8 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import DailyCompositionChallenge from '../../components/DailyCompositionChallenge';
+import './AlumniFeed.css';
 
-const REACTIONS = ['👍','❤️','😂','😮','🔥','🎉'];
+const REACTIONS = ['👍', '❤️', '😂', '😮', '🔥', '🎉'];
 
 function getTitle(content) {
   if (!content) return 'Untitled';
@@ -26,6 +27,26 @@ function getPreview(content) {
 function avatarColor(id) {
   return `hsl(${(id || 1) * 137 % 360}, 65%, 48%)`;
 }
+function timeAgo(date) {
+  const seconds = Math.floor((Date.now() - new Date(date)) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+const STORIES = [
+  { key: 'add', label: 'Add Story', icon: '➕', action: 'add' },
+  { key: 'yours', label: 'Your Story', icon: '👤', action: 'profile' },
+  { key: 'class2024', label: 'Class of 2024', icon: '🎓', action: 'filter' },
+  { key: 'news', label: 'School News', icon: '🏫', action: 'news' },
+  { key: 'writers', label: 'Top Writers', icon: '🏆', action: 'writers' },
+  { key: 'events', label: 'Events', icon: '📅', action: 'events' },
+];
 
 export default function AlumniFeed() {
   const navigate = useNavigate();
@@ -40,6 +61,7 @@ export default function AlumniFeed() {
   const [composeText, setComposeText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [suggested, setSuggested] = useState([]);
+  const [showComposer, setShowComposer] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => { loadPosts(); loadSuggested(); }, [token]);
@@ -122,148 +144,140 @@ export default function AlumniFeed() {
       await api.post('/alumni/feed', { content: composeText, image_paths: media_url }, token);
       setComposeText('');
       setSelectedImage(null);
+      setShowComposer(false);
       loadPosts();
     } catch (e) { alert(e.message); }
     finally { setSendingPost(false); }
   };
 
-  // ── X-style Composition Link Card ──
-  const renderComposition = (comp) => {
-    const compUrl = `/alumni/composition/${comp.slug || comp.id}`;
-    const featuredImg = comp.featured_image_path
-      ? (comp.featured_image_path.startsWith('http') ? comp.featured_image_path : `${UPLOADS_BASE}${comp.featured_image_path}`)
-      : null;
-    return (
-    <article key={`comp-${comp.id}`} style={styles.articleCard}>
-      <div style={styles.articleHeader}>
-        <div style={{ ...styles.avatar, background: avatarColor(comp.user_id || comp.author_id) }}>
-          {(comp.author_name || comp.name || 'U')[0]}
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={styles.authorRow}>
-            <span style={styles.authorName}>{comp.author_name || comp.name || 'Alumni'}</span>
-            <VerifiedBadge size={16} userId={comp.user_id || comp.author_id} onViewProfile={() => navigate(`/alumni/profile/${comp.user_id || comp.author_id}`)} />
-            <span style={styles.dateText}>· {new Date(comp.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-          </div>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-            {comp.category && <span style={styles.categoryTag}>{comp.category}</span>}
-            <span> · {comp.estimated_read_minutes || 1} min read</span>
-          </div>
-        </div>
-        <span style={styles.compositionBadge}>✍️ Article</span>
-      </div>
-
-      {/* X-style link card: image + title in a bordered clickable card */}
-      <div onClick={() => navigate(compUrl)} style={styles.linkCard}>
-        {featuredImg && (
-          <img src={featuredImg} alt={comp.title} style={styles.linkCardImage} />
-        )}
-        <div style={styles.linkCardBody}>
-          <h2 style={styles.linkCardTitle}>{comp.title}</h2>
-          <span style={styles.linkCardDomain}>umunsi.com · Read article</span>
-        </div>
-      </div>
-
-      <div style={styles.actionBar}>
-        <button onClick={() => toggleLike(comp)} style={styles.actionBtn}>
-          <span style={{ fontSize: 18 }}>{comp.liked_by_me ? '❤️' : '🤍'}</span>
-          <span style={styles.actionCount}>{comp.likes_count || ''}</span>
-        </button>
-        <button onClick={() => { setCommentOpen(commentOpen === comp.id ? null : comp.id); if (commentOpen !== comp.id) loadComments(comp.id); }} style={styles.actionBtn}>
-          <span style={{ fontSize: 18 }}>💬</span>
-          <span style={styles.actionCount}>{comp.comments_count || ''}</span>
-        </button>
-        <span style={{ ...styles.actionBtn, cursor: 'default' }}>
-          <span style={{ fontSize: 18 }}>👁️</span>
-          <span style={styles.actionCount}>{comp.read_count || 0}</span>
-        </span>
-        <button onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}${compUrl}`); alert('Link copied!'); }} style={{ ...styles.actionBtn, marginLeft: 'auto' }}>
-          <span style={{ fontSize: 18 }}>↗️</span>
-        </button>
-      </div>
-    </article>
-  );
+  const handleStoryClick = (action) => {
+    if (action === 'profile') navigate(`/alumni/profile/${user?.id || 'me'}`);
+    else if (action === 'writers') navigate('/alumni/colleagues');
+    else if (action === 'events') navigate('/alumni/opportunities');
+    else if (action === 'news') navigate('/alumni/primary-things');
+    else if (action === 'add') setShowComposer(true);
   };
 
-  // ── Quick Post Card (image-first style) ──
+  const renderStoryCircles = () => (
+    <div className="af-stories">
+      {STORIES.map((s) => (
+        <button key={s.key} className="af-story" onClick={() => handleStoryClick(s.action)}>
+          <div className={`af-story-ring ${s.key === 'add' ? 'af-story-add' : ''}`}>
+            <div className="af-story-avatar">{s.icon}</div>
+          </div>
+          <span className="af-story-label">{s.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderPostImages = (post) => {
+    const paths = post.image_paths ? (Array.isArray(post.image_paths) ? post.image_paths : [post.image_paths]) : [];
+    if (paths.length === 0) return null;
+    return (
+      <div className={`af-post-images af-post-images-${Math.min(paths.length, 3)}`}>
+        {paths.slice(0, 3).map((img, i) => (
+          <img
+            key={i}
+            src={img.startsWith('http') ? img : `${UPLOADS_BASE}${img}`}
+            alt=""
+            className="af-post-img"
+            onClick={() => navigate(`/alumni/post/${post.id}`)}
+          />
+        ))}
+      </div>
+    );
+  };
+
   const renderPost = (post) => (
-    <article key={`post-${post.id}`} style={styles.articleCard}>
-      <div style={styles.articleHeader}>
-        <div style={{ ...styles.avatar, background: avatarColor(post.user_id) }}>
+    <article key={`post-${post.id}`} className="af-card">
+      <div className="af-card-header">
+        <div
+          className="af-avatar"
+          style={{ background: avatarColor(post.user_id) }}
+          onClick={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)}
+        >
           {(post.author_name || 'U')[0]}
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={styles.authorRow}>
-            <span style={styles.authorName}>{post.author_name}</span>
-            <VerifiedBadge size={16} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
-            <span style={styles.dateText}>· {new Date(post.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+        <div className="af-card-meta">
+          <div className="af-name-row">
+            <span className="af-name" onClick={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)}>
+              {post.author_name}
+            </span>
+            <VerifiedBadge size={14} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
+          </div>
+          <div className="af-sub-meta">
+            <span>{post.graduation_year ? `Class of ${post.graduation_year}` : 'UClass Alumni'}</span>
+            <span className="af-dot">·</span>
+            <span>{timeAgo(post.created_at)}</span>
           </div>
         </div>
-        <span style={styles.postBadge}>📝 Post</span>
       </div>
 
-      {post.image_paths && post.image_paths.length > 0 && (
-        <div onClick={() => navigate(`/alumni/post/${post.id}`)} style={styles.imageWrapper}>
-          <img
-            src={(Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths).startsWith('http') ? (Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths) : `${UPLOADS_BASE}${Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths}`}
-            alt=""
-            style={styles.featuredImage}
-          />
-        </div>
-      )}
-
-      <div onClick={() => navigate(`/alumni/post/${post.id}`)} style={styles.clickable}>
-        <h3 style={styles.postTitle}>{getTitle(post.content)}</h3>
-        {getPreview(post.content) && <p style={styles.postExcerpt}>{getPreview(post.content)}</p>}
+      <div className="af-card-body" onClick={() => navigate(`/alumni/post/${post.id}`)}>
+        <h3 className="af-card-title">{getTitle(post.content)}</h3>
+        {getPreview(post.content) && <p className="af-card-text">{getPreview(post.content)}</p>}
       </div>
 
-      <div style={styles.actionBar}>
-        <button onClick={() => toggleLike(post)} style={styles.actionBtn}>
-          <span style={{ fontSize: 18 }}>{post.liked_by_me ? '❤️' : '🤍'}</span>
-          <span style={styles.actionCount}>{post.likes_count || ''}</span>
+      {renderPostImages(post)}
+
+      <div className="af-card-stats">
+        <span>{post.likes_count || 0} likes</span>
+        <span>{post.comments_count || 0} comments</span>
+      </div>
+
+      <div className="af-card-actions">
+        <button className={`af-action ${post.liked_by_me ? 'af-action-active' : ''}`} onClick={() => toggleLike(post)}>
+          <span>{post.liked_by_me ? '❤️' : '👍'}</span>
+          <span>Like</span>
         </button>
-        <button onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); if (commentOpen !== post.id) loadComments(post.id); }} style={styles.actionBtn}>
-          <span style={{ fontSize: 18 }}>💬</span>
-          <span style={styles.actionCount}>{post.comments_count || ''}</span>
+        <button className="af-action" onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); if (commentOpen !== post.id) loadComments(post.id); }}>
+          <span>💬</span>
+          <span>Comment</span>
         </button>
-        <span style={{ ...styles.actionBtn, cursor: 'default' }}>
-          <span style={{ fontSize: 18 }}>👁️</span>
-          <span style={styles.actionCount}>{post.views_count || 0}</span>
-        </span>
-        <div style={{ position: 'relative', marginLeft: 'auto' }}>
-          <button onClick={() => setShowReactions(showReactions === post.id ? null : post.id)} style={{ ...styles.actionBtn, position: 'relative' }}>
-            <span style={{ fontSize: 18 }}>😊</span>
+        <div className="af-action-wrap">
+          <button className="af-action" onClick={() => setShowReactions(showReactions === post.id ? null : post.id)}>
+            <span>😊</span>
+            <span>Celebrate</span>
           </button>
           {showReactions === post.id && (
-            <div style={styles.reactionPicker}>
+            <div className="af-reaction-picker">
               {REACTIONS.map((emoji) => (
-                <button key={emoji} onClick={() => addReaction(post.id, emoji)} style={styles.reactionBtn}>{emoji}</button>
+                <button key={emoji} onClick={() => addReaction(post.id, emoji)} className="af-reaction-btn">{emoji}</button>
               ))}
             </div>
           )}
         </div>
-        <button onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/alumni/post/${post.id}`); alert('Link copied!'); }} style={styles.actionBtn}>
-          <span style={{ fontSize: 18 }}>↗️</span>
+        <button className="af-action" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/alumni/post/${post.id}`); alert('Link copied!'); }}>
+          <span>↗️</span>
+          <span>Share</span>
         </button>
       </div>
 
       {commentOpen === post.id && (
-        <div style={styles.commentSection}>
-          <div style={styles.commentInputRow}>
-            <div style={{ ...styles.avatar, ...styles.avatarSm, background: avatarColor(user?.id) }}>{(user?.name || 'U')[0]}</div>
-            <input type="text" placeholder="Write a comment..." value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitComment(post.id)} style={styles.commentInput} />
-            <button onClick={() => submitComment(post.id)} style={styles.commentBtn}>Reply</button>
+        <div className="af-comments">
+          <div className="af-comment-input-row">
+            <div className="af-avatar af-avatar-sm" style={{ background: avatarColor(user?.id) }}>{(user?.name || 'U')[0]}</div>
+            <input
+              type="text"
+              placeholder="Write a comment..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && submitComment(post.id)}
+              className="af-comment-input"
+            />
+            <button onClick={() => submitComment(post.id)} className="af-comment-btn">Post</button>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="af-comment-list">
             {(commentsMap[post.id] || []).map((c) => (
-              <div key={c.id} style={styles.commentItem}>
-                <div style={{ ...styles.avatar, ...styles.avatarSm, background: avatarColor(c.user_id) }}>{(c.author_name || 'U')[0]}</div>
-                <div style={styles.commentBody}>
-                  <div style={styles.commentMeta}>
-                    <strong style={styles.commentAuthor}>{c.author_name}</strong>
-                    <span style={styles.dateText}>{new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+              <div key={c.id} className="af-comment">
+                <div className="af-avatar af-avatar-sm" style={{ background: avatarColor(c.user_id) }}>{(c.author_name || 'U')[0]}</div>
+                <div className="af-comment-content">
+                  <div className="af-comment-meta">
+                    <strong>{c.author_name}</strong>
+                    <span>{timeAgo(c.created_at)}</span>
                   </div>
-                  <p style={styles.commentText}>{c.content}</p>
+                  <p>{c.content}</p>
                 </div>
               </div>
             ))}
@@ -273,81 +287,143 @@ export default function AlumniFeed() {
     </article>
   );
 
+  const renderComposition = (comp) => {
+    const featuredImg = comp.featured_image_path
+      ? (comp.featured_image_path.startsWith('http') ? comp.featured_image_path : `${UPLOADS_BASE}${comp.featured_image_path}`)
+      : null;
+    return (
+      <article key={`comp-${comp.id}`} className="af-card">
+        <div className="af-card-header">
+          <div
+            className="af-avatar"
+            style={{ background: avatarColor(comp.user_id || comp.author_id) }}
+            onClick={() => navigate(`/alumni/profile/${comp.user_id || comp.author_id}`)}
+          >
+            {(comp.author_name || comp.name || 'U')[0]}
+          </div>
+          <div className="af-card-meta">
+            <div className="af-name-row">
+              <span className="af-name" onClick={() => navigate(`/alumni/profile/${comp.user_id || comp.author_id}`)}>
+                {comp.author_name || comp.name || 'Alumni'}
+              </span>
+              <VerifiedBadge size={14} userId={comp.user_id || comp.author_id} onViewProfile={() => navigate(`/alumni/profile/${comp.user_id || comp.author_id}`)} />
+              <span className="af-article-badge">✍️ Article</span>
+            </div>
+            <div className="af-sub-meta">
+              <span>{comp.category || 'UClass Alumni'}</span>
+              <span className="af-dot">·</span>
+              <span>{timeAgo(comp.created_at)}</span>
+              <span className="af-dot">·</span>
+              <span>{comp.estimated_read_minutes || 1} min read</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="af-link-card" onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)}>
+          {featuredImg && <img src={featuredImg} alt={comp.title} className="af-link-img" />}
+          <div className="af-link-body">
+            <h3 className="af-link-title">{comp.title}</h3>
+            <p className="af-link-desc">{comp.category ? `${comp.category} · ` : ''}{comp.read_count || 0} reads</p>
+          </div>
+        </div>
+
+        <div className="af-card-stats">
+          <span>{comp.likes_count || 0} likes</span>
+          <span>{comp.comments_count || 0} comments</span>
+        </div>
+
+        <div className="af-card-actions">
+          <button className={`af-action ${comp.liked_by_me ? 'af-action-active' : ''}`} onClick={() => toggleLike(comp)}>
+            <span>{comp.liked_by_me ? '❤️' : '👍'}</span>
+            <span>Like</span>
+          </button>
+          <button className="af-action" onClick={() => { setCommentOpen(commentOpen === comp.id ? null : comp.id); if (commentOpen !== comp.id) loadComments(comp.id); }}>
+            <span>💬</span>
+            <span>Comment</span>
+          </button>
+          <button className="af-action" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/alumni/composition/${comp.slug || comp.id}`); alert('Link copied!'); }}>
+            <span>↗️</span>
+            <span>Share</span>
+          </button>
+        </div>
+
+        {commentOpen === comp.id && (
+          <div className="af-comments">
+            <div className="af-comment-input-row">
+              <div className="af-avatar af-avatar-sm" style={{ background: avatarColor(user?.id) }}>{(user?.name || 'U')[0]}</div>
+              <input
+                type="text"
+                placeholder="Write a comment..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submitComment(comp.id)}
+                className="af-comment-input"
+              />
+              <button onClick={() => submitComment(comp.id)} className="af-comment-btn">Post</button>
+            </div>
+            <div className="af-comment-list">
+              {(commentsMap[comp.id] || []).map((c) => (
+                <div key={c.id} className="af-comment">
+                  <div className="af-avatar af-avatar-sm" style={{ background: avatarColor(c.user_id) }}>{(c.author_name || 'U')[0]}</div>
+                  <div className="af-comment-content">
+                    <div className="af-comment-meta">
+                      <strong>{c.author_name}</strong>
+                      <span>{timeAgo(c.created_at)}</span>
+                    </div>
+                    <p>{c.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </article>
+    );
+  };
+
   return (
     <AlumniLayout>
-      <div style={styles.container}>
-        {/* Daily Composition Challenge */}
+      <div className="af-feed">
+        {renderStoryCircles()}
+
         <DailyCompositionChallenge token={token} />
 
-        {/* Hero Header */}
-        <div style={styles.heroHeader}>
-          <h1 style={styles.heroTitle}>U-Class Alumni</h1>
-          <p style={styles.heroSubtitle}>Stories, ideas & compositions from our graduates</p>
-        </div>
-
-        {/* Compose Box */}
-        <div style={styles.composeBox}>
-          <div style={styles.composeRow}>
-            <div style={{ ...styles.avatar, background: avatarColor(user?.id) }}>{(user?.name || 'U')[0]}</div>
-            <textarea
-              placeholder="Share something with the alumni community..."
-              value={composeText}
-              onChange={(e) => setComposeText(e.target.value)}
-              style={styles.composeTextarea}
-            />
-          </div>
-          {selectedImage && (
-            <div style={styles.previewImageWrap}>
-              <img src={URL.createObjectURL(selectedImage)} alt="" style={styles.previewImage} />
-              <button onClick={() => setSelectedImage(null)} style={styles.removeImageBtn}>✕</button>
-            </div>
-          )}
-          <div style={styles.composeActions}>
-            <button onClick={() => fileInputRef.current?.click()} style={styles.iconBtn}>🖼️ Photo</button>
-            <button onClick={() => navigate('/alumni/compose')} style={styles.iconBtn}>✍️ Write Article</button>
-            <button onClick={handlePost} disabled={sendingPost || (!composeText.trim() && !selectedImage)} style={styles.postBtn}>
-              {sendingPost ? 'Posting...' : 'Post'}
-            </button>
-          </div>
-          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSelectedImage(e.target.files[0])} />
-        </div>
-
-        {/* Feed */}
         {loading ? (
-          <div style={styles.emptyState}>
+          <div className="af-empty">
             <div style={{ fontSize: 36 }}>⏳</div>
-            <p style={styles.emptyText}>Loading feed...</p>
+            <p>Loading feed...</p>
           </div>
         ) : posts.length === 0 ? (
-          <div style={styles.emptyState}>
+          <div className="af-empty">
             <div style={{ fontSize: 48 }}>📰</div>
-            <h3 style={styles.emptyTitle}>No posts yet</h3>
-            <p style={styles.emptyText}>Be the first to share something with the alumni community!</p>
-            <button onClick={() => navigate('/alumni/compose')} style={styles.ctaBtn}>Write an Article</button>
+            <h3>No posts yet</h3>
+            <p>Be the first to share something with the alumni community!</p>
+            <button onClick={() => setShowComposer(true)} className="af-cta-btn">Share an update</button>
           </div>
         ) : (
-          posts.map((item) => item.itemType === 'composition' ? renderComposition(item) : renderPost(item))
+          <div className="af-posts">
+            {posts.map((item) => item.itemType === 'composition' ? renderComposition(item) : renderPost(item))}
+          </div>
         )}
 
-        {/* Suggested Alumni */}
         {suggested.length > 0 && (
-          <div style={styles.suggestedSection}>
-            <h3 style={styles.suggestedTitle}>✨ Suggested Alumni</h3>
-            <div style={styles.suggestedGrid}>
+          <div className="af-suggested">
+            <h3>✨ Suggested Alumni</h3>
+            <div className="af-suggested-grid">
               {suggested.map((s) => (
-                <div key={s.id} style={styles.suggestedCard}>
-                  <div style={{ ...styles.avatar, ...styles.avatarMd, background: avatarColor(s.id), cursor: 'pointer' }} onClick={() => navigate(`/alumni/profile/${s.id}`)}>
+                <div key={s.id} className="af-suggested-card">
+                  <div className="af-avatar af-avatar-md" style={{ background: avatarColor(s.id) }} onClick={() => navigate(`/alumni/profile/${s.id}`)}>
                     {(s.name || 'U')[0]}
                   </div>
-                  <div style={styles.suggestedInfo}>
-                    <div style={styles.suggestedNameRow}>
-                      <span style={styles.suggestedName} onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
+                  <div className="af-suggested-info">
+                    <div className="af-suggested-name-row">
+                      <span onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
                       <VerifiedBadge size={14} userId={s.id} onViewProfile={() => navigate(`/alumni/profile/${s.id}`)} />
                     </div>
-                    <div style={styles.suggestedMeta}>{s.school_name || 'UClass'} · {s.total_compositions || 0} articles</div>
+                    <div className="af-suggested-meta">{s.school_name || 'UClass'} · {s.total_compositions || 0} articles</div>
                     <button
                       onClick={() => handleSubscribe(s.id)}
-                      style={s.is_following ? styles.subscribedBtn : styles.subscribeBtn}
+                      className={s.is_following ? 'af-suggested-subscribed' : 'af-suggested-subscribe'}
                     >
                       {s.is_following ? '✓ Subscribed' : '🔔 Subscribe'}
                     </button>
@@ -358,90 +434,46 @@ export default function AlumniFeed() {
           </div>
         )}
       </div>
+
+      <button className="af-fab" onClick={() => setShowComposer(true)} aria-label="New post">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 19l7-7 3 3-7 7-3-3z" />
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+          <path d="M2 2l7.586 7.586" />
+          <circle cx="11" cy="11" r="2" />
+        </svg>
+      </button>
+
+      {showComposer && (
+        <div className="af-composer-overlay" onClick={() => setShowComposer(false)}>
+          <div className="af-composer" onClick={(e) => e.stopPropagation()}>
+            <h3>✍️ Share an update</h3>
+            <div className="af-composer-row">
+              <div className="af-avatar" style={{ background: avatarColor(user?.id) }}>{(user?.name || 'U')[0]}</div>
+              <textarea
+                placeholder="What's on your mind?"
+                value={composeText}
+                onChange={(e) => setComposeText(e.target.value)}
+                className="af-composer-textarea"
+              />
+            </div>
+            {selectedImage && (
+              <div className="af-preview-wrap">
+                <img src={URL.createObjectURL(selectedImage)} alt="" className="af-preview-img" />
+                <button onClick={() => setSelectedImage(null)} className="af-preview-remove">✕</button>
+              </div>
+            )}
+            <div className="af-composer-actions">
+              <button onClick={() => fileInputRef.current?.click()} className="af-composer-icon">🖼️ Photo</button>
+              <button onClick={() => { setShowComposer(false); navigate('/alumni/compose'); }} className="af-composer-icon">📄 Article</button>
+              <button onClick={handlePost} disabled={sendingPost || (!composeText.trim() && !selectedImage)} className="af-composer-post">
+                {sendingPost ? 'Posting...' : 'Post'}
+              </button>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSelectedImage(e.target.files[0])} />
+          </div>
+        </div>
+      )}
     </AlumniLayout>
   );
 }
-
-const styles = {
-  container: { maxWidth: 680, margin: '0 auto', padding: '0 12px' },
-  heroHeader: { textAlign: 'center', padding: '28px 0 24px' },
-  heroTitle: { fontSize: 32, fontWeight: 900, color: '#0f172a', margin: '0 0 6px', letterSpacing: -0.5 },
-  heroSubtitle: { fontSize: 15, color: '#64748b', margin: 0 },
-
-  composeBox: { background: '#fff', borderRadius: 16, padding: 16, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' },
-  composeRow: { display: 'flex', gap: 12 },
-  composeTextarea: { flex: 1, border: '1.5px solid #e2e8f0', borderRadius: 12, padding: 12, fontSize: 15, resize: 'vertical', minHeight: 56, outline: 'none', fontFamily: 'inherit' },
-  previewImageWrap: { position: 'relative', marginTop: 10 },
-  previewImage: { maxHeight: 140, borderRadius: 10, objectFit: 'cover', width: '100%' },
-  removeImageBtn: { position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontSize: 13 },
-  composeActions: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 },
-  iconBtn: { background: '#f1f5f9', border: 'none', borderRadius: 20, padding: '8px 14px', fontSize: 14, fontWeight: 600, color: '#475569', cursor: 'pointer' },
-  postBtn: { marginLeft: 'auto', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: 20, padding: '9px 22px', fontSize: 14, fontWeight: 700, cursor: 'pointer' },
-
-  articleCard: { background: '#fff', borderRadius: 16, marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', overflow: 'hidden', border: '1px solid #f1f5f9' },
-  articleHeader: { display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px 10px' },
-  avatar: { width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0 },
-  avatarSm: { width: 32, height: 32, fontSize: 13 },
-  authorRow: { display: 'flex', alignItems: 'center', gap: 6 },
-  authorName: { fontWeight: 700, fontSize: 15, color: '#1e293b' },
-  verifiedBadge: { color: '#3b82f6', fontSize: 14 },
-  dateText: { color: '#94a3b8', fontSize: 13 },
-  categoryTag: { background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 700 },
-  compositionBadge: { background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 700 },
-  postBadge: { background: '#e2e8f0', color: '#475569', padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 700 },
-
-  clickable: { cursor: 'pointer' },
-  articleTitle: { margin: 0, padding: '0 18px 8px', fontSize: 22, fontWeight: 800, color: '#0f172a', lineHeight: 1.3, letterSpacing: -0.3 },
-  articleExcerpt: { margin: 0, padding: '0 18px 12px', fontSize: 16, color: '#475569', lineHeight: 1.6 },
-  postTitle: { margin: 0, padding: '0 18px 6px', fontSize: 17, fontWeight: 700, color: '#1e293b', lineHeight: 1.3 },
-  postExcerpt: { margin: 0, padding: '0 18px 12px', fontSize: 15, color: '#64748b', lineHeight: 1.5 },
-
-  // X-style link card for compositions
-  linkCard: { margin: '0 18px 4px', borderRadius: 16, overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'background 0.15s', background: '#f8fafc' },
-  linkCardImage: { width: '100%', maxHeight: 300, objectFit: 'cover', display: 'block' },
-  linkCardBody: { padding: '12px 16px' },
-  linkCardTitle: { margin: 0, fontSize: 17, fontWeight: 700, color: '#0f172a', lineHeight: 1.35 },
-  linkCardDomain: { fontSize: 13, color: '#94a3b8', marginTop: 4, display: 'block' },
-
-  imageWrapper: { cursor: 'pointer', overflow: 'hidden', margin: '0 0 4px' },
-  featuredImage: { width: '100%', maxHeight: 400, objectFit: 'cover', display: 'block' },
-
-  readMoreBar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 18px 10px' },
-  readMore: { color: '#d97706', fontWeight: 700, fontSize: 14, cursor: 'pointer' },
-  readTime: { color: '#94a3b8', fontSize: 13 },
-
-  actionBar: { display: 'flex', alignItems: 'center', gap: 16, padding: '10px 18px 14px', borderTop: '1px solid #f1f5f9' },
-  actionBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 },
-  actionCount: { fontWeight: 600, fontSize: 14 },
-
-  reactionPicker: { position: 'absolute', bottom: 36, right: 0, display: 'flex', gap: 4, background: '#fff', padding: '8px 12px', borderRadius: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 100 },
-  reactionBtn: { background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', padding: 4 },
-
-  commentSection: { padding: '0 18px 16px', borderTop: '1px solid #f1f5f9' },
-  commentInputRow: { display: 'flex', gap: 10, margin: '12px 0' },
-  commentInput: { flex: 1, padding: '10px 14px', borderRadius: 20, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none' },
-  commentBtn: { padding: '8px 16px', borderRadius: 20, border: 'none', background: '#f59e0b', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13 },
-  commentItem: { display: 'flex', gap: 10 },
-  commentBody: { flex: 1 },
-  commentMeta: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 },
-  commentAuthor: { fontSize: 13, color: '#1e293b' },
-  commentText: { margin: 0, fontSize: 14, color: '#475569', lineHeight: 1.5, background: '#f8fafc', borderRadius: 12, padding: '10px 14px' },
-
-  emptyState: { textAlign: 'center', padding: 60, background: '#fff', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
-  emptyTitle: { fontSize: 20, fontWeight: 800, color: '#1e293b', margin: '12px 0 6px' },
-  emptyText: { color: '#94a3b8', fontSize: 15, margin: '0 0 16px' },
-  ctaBtn: { background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer' },
-
-  // Suggested Alumni
-  suggestedSection: { marginTop: 32, marginBottom: 24 },
-  suggestedTitle: { fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '0 0 16px' },
-  suggestedGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 },
-  suggestedCard: { background: '#fff', borderRadius: 14, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' },
-  avatarMd: { width: 48, height: 48, fontSize: 18 },
-  suggestedInfo: { flex: 1, minWidth: 0 },
-  suggestedNameRow: { display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 },
-  suggestedName: { fontWeight: 700, fontSize: 14, color: '#1e293b', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-  suggestedMeta: { fontSize: 12, color: '#94a3b8', marginBottom: 8 },
-  subscribeBtn: { background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', border: 'none', borderRadius: 16, padding: '6px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer' },
-  subscribedBtn: { background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: 16, padding: '6px 16px', fontSize: 12, fontWeight: 700, cursor: 'default' },
-};
