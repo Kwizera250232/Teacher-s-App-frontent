@@ -236,16 +236,21 @@ export default function AlumniFeed() {
   const renderPostImages = (post) => {
     const paths = post.image_paths ? (Array.isArray(post.image_paths) ? post.image_paths : [post.image_paths]) : [];
     if (paths.length === 0) return null;
+    const visibleCount = Math.min(paths.length, 4);
     return (
-      <div className={`af-post-images af-post-images-${Math.min(paths.length, 3)}`}>
-        {paths.slice(0, 3).map((img, i) => (
-          <img
-            key={i}
-            src={img.startsWith('http') ? img : `${UPLOADS_BASE}${img}`}
-            alt=""
-            className="af-post-img"
-            onClick={() => navigate(`/alumni/post/${post.id}`)}
-          />
+      <div className={`af-post-images af-post-images-${visibleCount}`}>
+        {paths.slice(0, 4).map((img, i) => (
+          <div key={i} className={`af-post-img-wrap ${i === 3 && paths.length > 4 ? 'af-post-img-more' : ''}`}>
+            <img
+              src={img.startsWith('http') ? img : `${UPLOADS_BASE}${img}`}
+              alt=""
+              className="af-post-img"
+              onClick={() => navigate(`/alumni/post/${post.id}`)}
+            />
+            {i === 3 && paths.length > 4 && (
+              <div className="af-post-img-overlay">+{paths.length - 4}</div>
+            )}
+          </div>
         ))}
       </div>
     );

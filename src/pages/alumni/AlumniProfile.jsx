@@ -21,6 +21,8 @@ export default function AlumniProfile() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
+  const [showSubscribers, setShowSubscribers] = useState(false);
+  const [subscribers, setSubscribers] = useState([]);
   const avatarFileRef = useRef(null);
 
   const [form, setForm] = useState({
@@ -98,11 +100,38 @@ export default function AlumniProfile() {
       } else {
         await api.post(`/alumni/follow/${profile.user_id || profile.id}`, {}, token);
       }
-      // Reload profile to update is_following
+      // Reload profile and follows to update is_following
       const p = await api.get(`/alumni/profile/${profile.user_id || profile.id}`, token);
       setProfile(p);
+      const f = await api.get(`/alumni/follows/${profile.user_id || profile.id}`, token);
+      setFollows(f || { followers: 0, following: 0 });
+      if (showSubscribers) {
+        const subs = (f?.followers || []).map(u => ({
+          id: u.follower_id,
+          name: u.name,
+          username: u.username,
+          avatar: u.avatar,
+        }));
+        setSubscribers(subs);
+      }
     } catch (e) {
       alert(e.message);
+    }
+  };
+
+  const loadSubscribers = async () => {
+    try {
+      const f = await api.get(`/alumni/follows/${profile.user_id || profile.id}`, token);
+      const subs = (f?.followers || []).map(u => ({
+        id: u.follower_id,
+        name: u.name,
+        username: u.username,
+        avatar: u.avatar,
+      }));
+      setSubscribers(subs);
+      setShowSubscribers(true);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -183,7 +212,9 @@ export default function AlumniProfile() {
 
           {/* Stats */}
           <div style={{ display: 'flex', gap: 24, marginBottom: 16, flexWrap: 'wrap' }}>
-            <div><strong>{follows.followers || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Followers</span></div>
+            <div style={{ cursor: 'pointer' }} onClick={loadSubscribers}>
+              <strong>{follows.followers || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Subscribers</span>
+            </div>
             <div><strong>{follows.following || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Following</span></div>
             <div><strong>{profile.total_compositions || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Articles</span></div>
             <div><strong>{mediaCount}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Media</span></div>
@@ -340,6 +371,40 @@ export default function AlumniProfile() {
         {selectedMedia && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: 20 }} onClick={() => setSelectedMedia(null)}>
             <img src={selectedMedia.url} alt="" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: 12, objectFit: 'contain' }} />
+          </div>
+        )}
+
+        {/* Subscribers modal */}
+        {showSubscribers && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: 20 }} onClick={() => setShowSubscribers(false)}>
+            <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Subscribers ({subscribers.length})</h3>
+                <button onClick={() => setShowSubscribers(false)} style={{ background: 'none', border: 'none', fontSize: 22, color: '#64748b', cursor: 'pointer' }}>✕</button>
+              </div>
+              <div style={{ overflowY: 'auto', padding: 12, flex: 1 }}>
+                {subscribers.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+                    <div style={{ fontSize: 36, marginBottom: 8 }}>👥</div>
+                    <p>No subscribers yet.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {subscribers.map((s) => (
+                      <div key={s.id} onClick={() => { navigate(`/alumni/profile/${s.id}`); setShowSubscribers(false); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10, borderRadius: 10, cursor: 'pointer', transition: 'background 0.15s', ':hover': { background: '#f8fafc' } }}>
+                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: s.avatar ? `url(${s.avatar.startsWith('http') ? s.avatar : `${UPLOADS_BASE}${s.avatar}`}) center/cover` : `hsl(${(s.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, flexShrink: 0 }}>
+                          {!s.avatar && (s.name?.[0] || 'K')}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 15, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
+                          {s.username && <div style={{ fontSize: 13, color: '#64748b' }}>@{s.username}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

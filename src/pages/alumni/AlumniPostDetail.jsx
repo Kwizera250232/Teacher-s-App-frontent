@@ -4,6 +4,7 @@ import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import './AlumniFeed.css';
 
 export default function AlumniPostDetail() {
   const { postId } = useParams();
@@ -84,9 +85,23 @@ export default function AlumniPostDetail() {
             </div>
           </div>
 
-          {/* Featured Image */}
+          {/* Featured Images */}
           {post.image_paths && post.image_paths.length > 0 && (
-            <img src={(Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths).startsWith('http') ? (Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths) : `${UPLOADS_BASE}${Array.isArray(post.image_paths) ? post.image_paths[0] : post.image_paths}`} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover' }} />
+            <div className={`af-post-images af-post-images-${Math.min(post.image_paths.length, 4)}`} style={{ margin: '0 -24px 16px', width: 'calc(100% + 48px)' }}>
+              {post.image_paths.slice(0, 4).map((img, i) => (
+                <div key={i} className="af-post-img-wrap">
+                  <img
+                    src={img.startsWith('http') ? img : `${UPLOADS_BASE}${img}`}
+                    alt=""
+                    className="af-post-img"
+                    style={{ borderRadius: 0 }}
+                  />
+                  {i === 3 && post.image_paths.length > 4 && (
+                    <div className="af-post-img-overlay">+{post.image_paths.length - 4}</div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
 
           {/* Content */}
