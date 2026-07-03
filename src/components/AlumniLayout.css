@@ -5,7 +5,7 @@
 }
 
 .alumni-desktop-sidebar {
-  width: 240px;
+  width: 220px;
   background: #fff;
   border-right: 1px solid #e2e8f0;
   padding: 20px 12px;
@@ -21,8 +21,8 @@
 
 .alumni-main {
   flex: 1;
-  margin-left: 240px;
-  margin-right: 300px;
+  margin-left: 220px;
+  margin-right: 260px;
   padding: 20px 24px;
   min-width: 0;
 }
@@ -33,7 +33,7 @@
 }
 
 .alumni-desktop-rightbar {
-  width: 280px;
+  width: 240px;
   padding: 20px 12px;
   position: fixed;
   right: 0;

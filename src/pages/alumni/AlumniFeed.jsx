@@ -448,7 +448,7 @@ export default function AlumniFeed() {
   };
 
   return (
-    <AlumniLayout fullWidth>
+    <AlumniLayout>
       <div className="af-feed">
         {renderStoryCircles()}
 
