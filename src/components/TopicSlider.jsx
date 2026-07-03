@@ -13,7 +13,7 @@ const CATEGORIES = [
 
 const SLIDE_INTERVAL = 30000; // 30 seconds
 
-export default function TopicSlider({ onSelectTopic }) {
+export default function TopicSlider({ onSelectTopic, compact = false, onWriteClick }) {
   const navigate = useNavigate();
   const [category, setCategory] = useState('all');
   const [index, setIndex] = useState(0);
@@ -42,12 +42,30 @@ export default function TopicSlider({ onSelectTopic }) {
   }, [nextSlide, paused, category]);
 
   const handleStartWriting = () => {
+    if (onWriteClick) {
+      onWriteClick(currentTopic);
+      return;
+    }
     if (onSelectTopic) {
       onSelectTopic(currentTopic);
     } else {
       navigate('/alumni/compose', { state: { presetTopic: currentTopic } });
     }
   };
+
+  if (compact) {
+    return (
+      <div className="ts-inline" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        <button className="ts-inline-nav" onClick={prevSlide} aria-label="Previous topic">‹</button>
+        <div className="ts-inline-track">
+          <span className="ts-inline-label">{COMPOSITION_TOPICS.length}+ topics</span>
+          <span className="ts-inline-text" title={currentTopic}>{currentTopic}</span>
+        </div>
+        <button className="ts-inline-write" onClick={handleStartWriting}>✍️ Write</button>
+        <button className="ts-inline-nav" onClick={nextSlide} aria-label="Next topic">›</button>
+      </div>
+    );
+  }
 
   return (
     <div className="ts-container" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>

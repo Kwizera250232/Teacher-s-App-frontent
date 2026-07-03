@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
+import TopicSlider from './TopicSlider';
 import './DailyCompositionChallenge.css';
 
 const REWARD_AMOUNT = 'Rwf 1,000';
@@ -97,6 +98,15 @@ export default function DailyCompositionChallenge({ token }) {
             <span className="dcc-topic-label">Today&apos;s Topic</span>
             <h2 className="dcc-topic">{challenge.topic}</h2>
             <p className="dcc-subtitle">{challenge.prompt}</p>
+
+            <TopicSlider
+              compact
+              onWriteClick={(topic) => {
+                setTitle(topic);
+                setContent(`${topic}\n\n`);
+                setShowWriter(true);
+              }}
+            />
 
             <div className="dcc-stats">
               <div className="dcc-stat">

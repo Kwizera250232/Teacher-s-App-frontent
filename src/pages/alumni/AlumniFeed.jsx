@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import DailyCompositionChallenge from '../../components/DailyCompositionChallenge';
-import TopicSlider from '../../components/TopicSlider';
 import './AlumniFeed.css';
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '🔥', '🎉'];
@@ -444,8 +443,6 @@ export default function AlumniFeed() {
           </div>
           <span className="af-share-help-arrow">→</span>
         </div>
-
-        <TopicSlider onSelectTopic={(topic) => navigate('/alumni/compose', { state: { presetTopic: topic } })} />
 
         <DailyCompositionChallenge token={token} />
 

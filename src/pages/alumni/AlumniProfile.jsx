@@ -14,10 +14,13 @@ export default function AlumniProfile() {
   const [compositions, setCompositions] = useState([]);
   const [recognitions, setRecognitions] = useState([]);
   const [follows, setFollows] = useState({ followers: 0, following: 0 });
+  const [media, setMedia] = useState([]);
+  const [mediaCount, setMediaCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const avatarFileRef = useRef(null);
 
   const [form, setForm] = useState({
@@ -52,6 +55,14 @@ export default function AlumniProfile() {
 
         const f = await api.get(`/alumni/follows/${p.user_id || p.id}`, token);
         setFollows(f || { followers: 0, following: 0 });
+
+        const posts = await api.get(`/alumni/feed?author_id=${p.user_id || p.id}`, token);
+        const allImages = (posts.posts || []).flatMap(post => {
+          const imgs = post.image_paths ? (Array.isArray(post.image_paths) ? post.image_paths : [post.image_paths]) : [];
+          return imgs.map(url => ({ url: url.startsWith('http') ? url : `${UPLOADS_BASE}${url}`, postId: post.id }));
+        });
+        setMedia(allImages);
+        setMediaCount(allImages.length);
       } catch (err) {
         console.error(err);
       } finally {
@@ -118,7 +129,7 @@ export default function AlumniProfile() {
 
   const profileId = profile.user_id || profile.id;
   const canViewFull = isMe || profile.is_following;
-  const avatarSrc = profile.avatar_url
+  const avatarSrc = profile.avatar_url && isMe
     ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : `${UPLOADS_BASE}${profile.avatar_url}`)
     : null;
 
@@ -175,6 +186,7 @@ export default function AlumniProfile() {
             <div><strong>{follows.followers || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Followers</span></div>
             <div><strong>{follows.following || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Following</span></div>
             <div><strong>{profile.total_compositions || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Articles</span></div>
+            <div><strong>{mediaCount}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Media</span></div>
           </div>
 
           {/* Actions */}
@@ -278,6 +290,27 @@ export default function AlumniProfile() {
           </div>
         )}
 
+        {/* Media Gallery — only visible if canViewFull */}
+        {canViewFull && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 20 }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 800 }}>📸 Media</h3>
+            {media.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>🖼️</div>
+                <p>No media yet.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
+                {media.map((m, i) => (
+                  <div key={i} onClick={() => setSelectedMedia(m)} style={{ aspectRatio: '1', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', background: '#f1f5f9' }}>
+                    <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Articles — only visible if canViewFull */}
         {canViewFull && (
         <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
@@ -301,6 +334,13 @@ export default function AlumniProfile() {
             </div>
           )}
         </div>
+        )}
+
+        {/* Media lightbox */}
+        {selectedMedia && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: 20 }} onClick={() => setSelectedMedia(null)}>
+            <img src={selectedMedia.url} alt="" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: 12, objectFit: 'contain' }} />
+          </div>
         )}
       </div>
     </AlumniLayout>

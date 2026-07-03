@@ -143,6 +143,26 @@ export default function AlumniLayout({ children, showTopWriters = true }) {
             <input type="text" placeholder="Search alumni..." style={{ border: 'none', outline: 'none', fontSize: 14, width: '100%', background: 'transparent' }} />
           </div>
 
+          {/* Premium Card */}
+          <div style={{ background: 'linear-gradient(135deg, #7c3aed, #a78bfa)', borderRadius: 16, padding: 18, color: '#fff', marginBottom: 16, boxShadow: '0 4px 14px rgba(124,58,237,0.25)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 22 }}>👑</span>
+              <span style={{ fontWeight: 800, fontSize: 16 }}>Go Premium</span>
+            </div>
+            <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: '#ede9fe' }}>Unlock extra features and a better experience for your alumni journey.</p>
+            <button onClick={() => navigate('/alumni/premium')} style={{ width: '100%', padding: '9px 14px', borderRadius: 10, border: 'none', background: '#fff', color: '#7c3aed', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Upgrade Now</button>
+          </div>
+
+          {/* Refer & Earn Card */}
+          <div style={{ background: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 22 }}>🎁</span>
+              <span style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>Refer & Earn</span>
+            </div>
+            <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: '#64748b' }}>Invite friends and earn amazing rewards together.</p>
+            <button onClick={() => { const link = `${window.location.origin}/register?ref=${user?.id || ''}`; navigator.clipboard?.writeText(link); alert('Referral link copied!'); }} style={{ width: '100%', padding: '9px 14px', borderRadius: 10, border: '1px solid #7c3aed', background: '#fff', color: '#7c3aed', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Invite Now</button>
+          </div>
+
           {/* Top Writers */}
           <TopWriters token={user?.token} />
 
