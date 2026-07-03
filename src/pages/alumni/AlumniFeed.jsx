@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import DailyCompositionChallenge from '../../components/DailyCompositionChallenge';
+import TopicSlider from '../../components/TopicSlider';
 import './AlumniFeed.css';
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '🔥', '🎉'];
@@ -51,6 +52,11 @@ const STORIES = [
 export default function AlumniFeed() {
   const navigate = useNavigate();
   const { token, user } = useAuth();
+  const [stories, setStories] = useState([]);
+  const [showStoryModal, setShowStoryModal] = useState(false);
+  const [storyText, setStoryText] = useState('');
+  const [storyBg, setStoryBg] = useState('#7c3aed');
+  const [savingStory, setSavingStory] = useState(false);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showReactions, setShowReactions] = useState(null);
@@ -64,7 +70,26 @@ export default function AlumniFeed() {
   const [showComposer, setShowComposer] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { loadPosts(); loadSuggested(); }, [token]);
+  useEffect(() => { loadPosts(); loadSuggested(); loadStories(); }, [token]);
+
+  const loadStories = async () => {
+    try {
+      const data = await api.get('/alumni/stories', token);
+      setStories(data.stories || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleCreateStory = async () => {
+    if (!storyText.trim()) return;
+    setSavingStory(true);
+    try {
+      await api.post('/alumni/stories', { content: storyText, background_color: storyBg }, token);
+      setStoryText('');
+      setShowStoryModal(false);
+      loadStories();
+    } catch (e) { alert(e.message); }
+    finally { setSavingStory(false); }
+  };
 
   const loadSuggested = async () => {
     try {
@@ -155,19 +180,39 @@ export default function AlumniFeed() {
     else if (action === 'writers') navigate('/alumni/colleagues');
     else if (action === 'events') navigate('/alumni/opportunities');
     else if (action === 'news') navigate('/alumni/primary-things');
-    else if (action === 'add') setShowComposer(true);
+    else if (action === 'add') setShowStoryModal(true);
   };
+
+  const STORY_BGS = ['#7c3aed', '#dc2626', '#059669', '#d97706', '#2563eb', '#db2777', '#7c2d12', '#1e293b'];
 
   const renderStoryCircles = () => (
     <div className="af-stories">
-      {STORIES.map((s) => (
-        <button key={s.key} className="af-story" onClick={() => handleStoryClick(s.action)}>
-          <div className={`af-story-ring ${s.key === 'add' ? 'af-story-add' : ''}`}>
-            <div className="af-story-avatar">{s.icon}</div>
+      <button className="af-story" onClick={() => setShowStoryModal(true)}>
+        <div className="af-story-ring af-story-add">
+          <div className="af-story-avatar">➕</div>
+        </div>
+        <span className="af-story-label">Add Story</span>
+      </button>
+      {stories.map((s) => (
+        <button key={s.id} className="af-story" onClick={() => navigate(`/alumni/profile/${s.user_id}`)}>
+          <div className="af-story-ring" style={{ background: s.background_color || '#7c3aed' }}>
+            <div className="af-story-avatar">{(s.author_name || 'U')[0]}</div>
           </div>
-          <span className="af-story-label">{s.label}</span>
+          <span className="af-story-label">{s.author_name?.split(' ')[0] || 'Alumni'}</span>
         </button>
       ))}
+      <button className="af-story" onClick={() => navigate('/alumni/colleagues')}>
+        <div className="af-story-ring">
+          <div className="af-story-avatar">🏆</div>
+        </div>
+        <span className="af-story-label">Top Writers</span>
+      </button>
+      <button className="af-story" onClick={() => navigate('/alumni/opportunities')}>
+        <div className="af-story-ring">
+          <div className="af-story-avatar">📅</div>
+        </div>
+        <span className="af-story-label">Events</span>
+      </button>
     </div>
   );
 
@@ -207,8 +252,10 @@ export default function AlumniFeed() {
             <VerifiedBadge size={14} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
           </div>
           <div className="af-sub-meta">
-            <span>{post.graduation_year ? `Class of ${post.graduation_year}` : 'UClass Alumni'}</span>
+            <span>{post.graduation_year ? `Class of ${post.graduation_year}` : 'Alumni'}</span>
             <span className="af-dot">·</span>
+            <span>{post.school_name || ''}</span>
+            {post.school_name && <span className="af-dot">·</span>}
             <span>{timeAgo(post.created_at)}</span>
           </div>
         </div>
@@ -310,8 +357,10 @@ export default function AlumniFeed() {
               <span className="af-article-badge">✍️ Article</span>
             </div>
             <div className="af-sub-meta">
-              <span>{comp.category || 'UClass Alumni'}</span>
+              <span>{comp.graduation_year ? `Class of ${comp.graduation_year}` : 'Alumni'}</span>
               <span className="af-dot">·</span>
+              <span>{comp.school_name || comp.category || ''}</span>
+              {comp.category && <span className="af-dot">·</span>}
               <span>{timeAgo(comp.created_at)}</span>
               <span className="af-dot">·</span>
               <span>{comp.estimated_read_minutes || 1} min read</span>
@@ -385,6 +434,18 @@ export default function AlumniFeed() {
     <AlumniLayout>
       <div className="af-feed">
         {renderStoryCircles()}
+
+        {/* Share what will help others card */}
+        <div className="af-share-help-card" onClick={() => setShowComposer(true)}>
+          <div className="af-share-help-icon">💡</div>
+          <div className="af-share-help-body">
+            <strong>Share what will help others</strong>
+            <p>Post an article, tip, or story that benefits your fellow alumni</p>
+          </div>
+          <span className="af-share-help-arrow">→</span>
+        </div>
+
+        <TopicSlider onSelectTopic={(topic) => navigate('/alumni/compose', { state: { presetTopic: topic } })} />
 
         <DailyCompositionChallenge token={token} />
 
@@ -471,6 +532,44 @@ export default function AlumniFeed() {
               </button>
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setSelectedImage(e.target.files[0])} />
+          </div>
+        </div>
+      )}
+
+      {showStoryModal && (
+        <div className="af-composer-overlay" onClick={() => setShowStoryModal(false)}>
+          <div className="af-story-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>📸 Add Your Story</h3>
+            <p className="af-story-modal-hint">Stories last 24 hours then disappear</p>
+            <div className="af-story-preview" style={{ background: storyBg }}>
+              <textarea
+                className="af-story-textarea"
+                placeholder="Share something..."
+                value={storyText}
+                onChange={(e) => setStoryText(e.target.value)}
+                maxLength={200}
+              />
+            </div>
+            <div className="af-story-colors">
+              {STORY_BGS.map(c => (
+                <button
+                  key={c}
+                  className={`af-story-color ${storyBg === c ? 'af-story-color-active' : ''}`}
+                  style={{ background: c }}
+                  onClick={() => setStoryBg(c)}
+                />
+              ))}
+            </div>
+            <div className="af-story-actions">
+              <button className="af-composer-icon" onClick={() => setShowStoryModal(false)}>Cancel</button>
+              <button
+                className="af-composer-post"
+                disabled={savingStory || !storyText.trim()}
+                onClick={handleCreateStory}
+              >
+                {savingStory ? 'Posting...' : 'Share Story'}
+              </button>
+            </div>
           </div>
         </div>
       )}

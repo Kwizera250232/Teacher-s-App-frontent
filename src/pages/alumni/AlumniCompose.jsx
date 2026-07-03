@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
@@ -9,8 +9,10 @@ const CATEGORIES = ['Education', 'Technology', 'Career', 'Culture', 'Science', '
 export default function AlumniCompose() {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const fileInputRef = useRef(null);
+  const inlineImageRef = useRef(null);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -40,6 +42,14 @@ export default function AlumniCompose() {
       .catch(console.error);
   }, [id, token]);
 
+  // Pre-fill topic from TopicSlider navigation
+  useEffect(() => {
+    if (location.state?.presetTopic && !id) {
+      setTitle(location.state.presetTopic);
+      setContent(`${location.state.presetTopic}\n\n`);
+    }
+  }, [location.state, id]);
+
   const handleImageUpload = async (files) => {
     const file = files[0];
     if (!file) return;
@@ -50,6 +60,22 @@ export default function AlumniCompose() {
       setFeaturedImage(data.url || data.path || '');
     } catch (e) {
       console.error('Upload failed', e);
+      alert('Image upload failed: ' + (e.message || ''));
+    }
+  };
+
+  const handleInlineImageUpload = async (files) => {
+    const file = files[0];
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const data = await uploadFile('/alumni/upload', formData, token);
+      const imgUrl = data.url || data.path || '';
+      const markdown = `\n\n![image](${imgUrl})\n\n`;
+      setContent(prev => prev + markdown);
+    } catch (e) {
+      console.error('Inline upload failed', e);
       alert('Image upload failed: ' + (e.message || ''));
     }
   };
@@ -177,6 +203,15 @@ export default function AlumniCompose() {
             fontFamily: 'Georgia, "Times New Roman", serif',
           }}
         />
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <button
+            onClick={() => inlineImageRef.current?.click()}
+            style={{ background: '#f1f5f9', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer' }}
+          >
+            📷 Insert image inside article
+          </button>
+        </div>
+        <input ref={inlineImageRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleInlineImageUpload(e.target.files)} />
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>

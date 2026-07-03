@@ -431,6 +431,144 @@
   cursor: pointer;
 }
 
+/* Share help card */
+.af-share-help-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #fcd34d;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.af-share-help-card:hover {
+  transform: translateY(-1px);
+}
+
+.af-share-help-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.af-share-help-body {
+  flex: 1;
+}
+
+.af-share-help-body strong {
+  display: block;
+  font-size: 14px;
+  color: #92400e;
+  margin-bottom: 2px;
+}
+
+.af-share-help-body p {
+  margin: 0;
+  font-size: 12px;
+  color: #b45309;
+}
+
+.af-share-help-arrow {
+  font-size: 18px;
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+/* Story modal */
+.af-story-modal {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: af-slide-up 0.2s ease-out;
+}
+
+.af-story-modal h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.af-story-modal-hint {
+  margin: 0 0 14px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.af-story-preview {
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  transition: background 0.2s;
+}
+
+.af-story-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  resize: none;
+  min-height: 100px;
+  outline: none;
+  font-family: inherit;
+}
+
+.af-story-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.af-story-colors {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.af-story-color {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s;
+}
+
+.af-story-color:hover {
+  transform: scale(1.1);
+}
+
+.af-story-color-active {
+  border-color: #7c3aed;
+  border-width: 3px;
+}
+
+.af-story-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.af-story-actions .af-composer-post {
+  margin-left: auto;
+}
+
 /* Floating action button */
 .af-fab {
   position: fixed;
