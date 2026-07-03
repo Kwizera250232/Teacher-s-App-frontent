@@ -128,7 +128,7 @@ export default function AlumniProfile() {
   if (!profile) return <AlumniLayout showTopWriters={false}><div style={{ padding: 40, textAlign: 'center' }}>Profile not found.</div></AlumniLayout>;
 
   const profileId = profile.user_id || profile.id;
-  const canViewFull = isMe || profile.is_following;
+  const canViewFull = true; // profiles are public
   const avatarSrc = profile.avatar_url && isMe
     ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : `${UPLOADS_BASE}${profile.avatar_url}`)
     : null;

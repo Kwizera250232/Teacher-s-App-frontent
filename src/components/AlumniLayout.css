@@ -27,6 +27,11 @@
   min-width: 0;
 }
 
+.alumni-main-fullwidth {
+  margin-right: 0 !important;
+  max-width: 100%;
+}
+
 .alumni-desktop-rightbar {
   width: 280px;
   padding: 20px 12px;

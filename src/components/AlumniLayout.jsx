@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { icon: '🌟', label: 'Opportunities', path: '/alumni/opportunities' },
 ];
 
-export default function AlumniLayout({ children, showTopWriters = true }) {
+export default function AlumniLayout({ children, showTopWriters = true, fullWidth = false }) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,12 +130,12 @@ export default function AlumniLayout({ children, showTopWriters = true }) {
       )}
 
       {/* MAIN CONTENT */}
-      <main className={`alumni-main ${isMobile ? 'alumni-main-mobile' : ''}`}>
+      <main className={`alumni-main ${isMobile ? 'alumni-main-mobile' : ''} ${fullWidth ? 'alumni-main-fullwidth' : ''}`}>
         {children}
       </main>
 
       {/* RIGHT SIDEBAR - Desktop */}
-      {!isMobile && showTopWriters && (
+      {!isMobile && showTopWriters && !fullWidth && (
         <aside className="alumni-desktop-rightbar">
           {/* Search */}
           <div style={{ background: '#fff', borderRadius: 24, padding: '10px 16px', marginBottom: 16, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 8 }}>

@@ -192,6 +192,24 @@ export default function AlumniFeed() {
         </div>
         <span className="af-story-label">Add Story</span>
       </button>
+      <button className="af-story" onClick={() => navigate(`/alumni/profile/${user?.id || 'me'}`)}>
+        <div className="af-story-ring">
+          <div className="af-story-avatar">👤</div>
+        </div>
+        <span className="af-story-label">Your Story</span>
+      </button>
+      <button className="af-story" onClick={() => navigate('/alumni/colleagues')}>
+        <div className="af-story-ring">
+          <div className="af-story-avatar">🎓</div>
+        </div>
+        <span className="af-story-label">Class of 2024</span>
+      </button>
+      <button className="af-story" onClick={() => navigate('/alumni/primary-things')}>
+        <div className="af-story-ring">
+          <div className="af-story-avatar">🏫</div>
+        </div>
+        <span className="af-story-label">School News</span>
+      </button>
       {stories.map((s) => (
         <button key={s.id} className="af-story" onClick={() => navigate(`/alumni/profile/${s.user_id}`)}>
           <div className="af-story-ring" style={{ background: s.background_color || '#7c3aed' }}>
@@ -430,7 +448,7 @@ export default function AlumniFeed() {
   };
 
   return (
-    <AlumniLayout>
+    <AlumniLayout fullWidth>
       <div className="af-feed">
         {renderStoryCircles()}
 
