@@ -243,19 +243,21 @@
   background: linear-gradient(90deg, #f3e8ff, #ede9fe);
   border: 1px solid #d8b4fe;
   border-radius: 24px;
-  padding: 6px 10px;
+  padding: 6px 8px;
   margin-top: 12px;
   min-height: 38px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .ts-inline-nav {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: #fff;
   border: none;
   color: #7c3aed;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -264,25 +266,19 @@
   flex-shrink: 0;
   padding: 0;
   line-height: 1;
+  transition: transform 0.15s;
+}
+
+.ts-inline-nav:hover {
+  transform: scale(1.1);
 }
 
 .ts-inline-track {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
   min-width: 0;
   overflow: hidden;
-}
-
-.ts-inline-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #7c3aed;
-  background: #fff;
-  padding: 2px 8px;
-  border-radius: 10px;
-  flex-shrink: 0;
 }
 
 .ts-inline-text {
@@ -295,6 +291,7 @@
   flex: 1;
   min-width: 0;
   animation: ts-inline-fade 0.5s ease;
+  padding: 0 4px;
 }
 
 @keyframes ts-inline-fade {
@@ -316,4 +313,31 @@
   cursor: pointer;
   flex-shrink: 0;
   white-space: nowrap;
+  transition: transform 0.15s;
+}
+
+.ts-inline-write:hover {
+  transform: scale(1.05);
+}
+
+@media (max-width: 480px) {
+  .ts-inline {
+    padding: 5px 6px;
+    min-height: 34px;
+  }
+
+  .ts-inline-nav {
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+  }
+
+  .ts-inline-text {
+    font-size: 12px;
+  }
+
+  .ts-inline-write {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
 }

@@ -11,7 +11,7 @@ const CATEGORIES = [
   { key: 'subjects', label: 'Subjects', icon: '📚' },
 ];
 
-const SLIDE_INTERVAL = 30000; // 30 seconds
+const SLIDE_INTERVAL = 5000; // 5 seconds
 
 export default function TopicSlider({ onSelectTopic, compact = false, onWriteClick }) {
   const navigate = useNavigate();
@@ -58,10 +58,9 @@ export default function TopicSlider({ onSelectTopic, compact = false, onWriteCli
       <div className="ts-inline" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
         <button className="ts-inline-nav" onClick={prevSlide} aria-label="Previous topic">‹</button>
         <div className="ts-inline-track">
-          <span className="ts-inline-label">{COMPOSITION_TOPICS.length}+ topics</span>
           <span className="ts-inline-text" title={currentTopic}>{currentTopic}</span>
         </div>
-        <button className="ts-inline-write" onClick={handleStartWriting}>✍️ Write</button>
+        <button className="ts-inline-write" onClick={handleStartWriting}>✍️ Start</button>
         <button className="ts-inline-nav" onClick={nextSlide} aria-label="Next topic">›</button>
       </div>
     );
