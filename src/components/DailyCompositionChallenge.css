@@ -318,80 +318,97 @@
   }
 
   .dcc-body {
-    flex-direction: column-reverse;
-    gap: 16px;
+    gap: 14px;
   }
 
   .dcc-right {
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+    width: 120px;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
   }
 
   .dcc-illustration {
-    width: 120px;
+    width: 100%;
     height: 120px;
   }
 
   .dcc-notebook {
-    width: 60px;
-    height: 76px;
+    width: 56px;
+    height: 72px;
   }
 
   .dcc-pencil {
-    font-size: 22px;
-    bottom: 20px;
-    left: 14px;
+    font-size: 20px;
+    bottom: 18px;
+    left: 12px;
   }
 
   .dcc-plant {
-    font-size: 24px;
-    bottom: 14px;
+    font-size: 22px;
+    bottom: 12px;
+    right: 14px;
+  }
+
+  .dcc-sparkle {
+    top: 18px;
     right: 18px;
+    font-size: 12px;
+  }
+
+  .dcc-sparkle2 {
+    top: 44px;
+    left: 10px;
+    font-size: 9px;
   }
 
   .dcc-start-below {
-    flex: 1;
+    width: 100%;
     min-width: 0;
+    padding: 10px 12px;
+    font-size: 12px;
   }
 
   .dcc-topic {
-    font-size: 20px;
+    font-size: 19px;
   }
 
   .dcc-subtitle {
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.5;
   }
 
   .dcc-stats {
-    gap: 10px;
+    gap: 8px;
   }
 
   .dcc-stat {
-    flex: 1 1 100px;
-    min-width: 100px;
+    flex: 1 1 90px;
+    min-width: 90px;
   }
 
   .dcc-stat-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .dcc-stat-label {
+    font-size: 10px;
   }
 
   .dcc-stat-value {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .dcc-actions {
-    flex-direction: column;
+    flex-wrap: nowrap;
   }
 
   .dcc-btn-primary,
   .dcc-btn-outline {
-    width: 100%;
-    padding: 12px 16px;
+    padding: 10px 14px;
+    font-size: 12px;
   }
 }
 
@@ -406,26 +423,101 @@
   }
 
   .dcc-topic {
+    font-size: 17px;
+  }
+
+  .dcc-subtitle {
+    font-size: 12px;
+  }
+
+  .dcc-body {
+    gap: 10px;
+  }
+
+  .dcc-right {
+    width: 96px;
+    gap: 8px;
+  }
+
+  .dcc-illustration {
+    height: 96px;
+  }
+
+  .dcc-notebook {
+    width: 44px;
+    height: 56px;
+  }
+
+  .dcc-notebook-heart {
+    top: 16px;
+    left: 20px;
+    font-size: 20px;
+  }
+
+  .dcc-pencil {
+    font-size: 16px;
+    bottom: 14px;
+    left: 8px;
+  }
+
+  .dcc-plant {
     font-size: 18px;
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .dcc-start-below {
+    padding: 8px 10px;
+    font-size: 11px;
   }
 
   .dcc-stat {
-    flex: 1 1 80px;
-    min-width: 80px;
+    flex: 1 1 70px;
+    min-width: 70px;
   }
 
   .dcc-stat-icon {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
   }
 
   .dcc-stat-label {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .dcc-stat-value {
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  .dcc-btn-primary,
+  .dcc-btn-outline {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .dcc-body {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dcc-right {
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dcc-illustration {
+    width: 100px;
+    height: 100px;
+  }
+
+  .dcc-start-below {
+    width: auto;
   }
 }
 
