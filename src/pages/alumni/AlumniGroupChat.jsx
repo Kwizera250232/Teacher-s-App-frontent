@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api, UPLOADS_BASE } from '../../api';
+import { api, uploadFile, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
@@ -77,12 +77,7 @@ export default function AlumniGroupChat() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const uploadRes = await fetch(`${UPLOADS_BASE}/api/upload`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      const uploadData = await uploadRes.json();
+      const uploadData = await uploadFile('/alumni/upload', formData, token);
       const msg = await api.post(`/alumni/groups/${id}/messages`, {
         content: '',
         image_path: uploadData.url || uploadData.path,
@@ -90,7 +85,7 @@ export default function AlumniGroupChat() {
       }, token);
       setMessages([...messages, msg]);
     } catch (e) {
-      alert('Image upload failed.');
+      alert(e.message || 'Image upload failed.');
     } finally {
       setSending(false);
     }

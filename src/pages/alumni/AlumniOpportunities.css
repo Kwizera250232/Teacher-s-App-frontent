@@ -1,0 +1,159 @@
+.opp-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+.opp-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.opp-subtitle {
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.opp-categories {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.opp-categories::-webkit-scrollbar {
+  display: none;
+}
+
+.opp-category-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  background: #e2e8f0;
+  color: #475569;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.opp-category-btn.active {
+  background: #667eea;
+  color: #fff;
+}
+
+.opp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opp-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.opp-card-tag {
+  display: inline-block;
+  background: #f0f7ff;
+  color: #667eea;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.opp-card-title {
+  margin: 8px 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.opp-card-desc {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.opp-card-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.opp-card-link {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: #667eea;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.opp-card-link:hover {
+  background: #5a67d8;
+}
+
+@media (max-width: 640px) {
+  .opp-container {
+    padding: 0;
+  }
+
+  .opp-title {
+    font-size: 20px;
+  }
+
+  .opp-subtitle {
+    font-size: 14px;
+  }
+
+  .opp-categories {
+    gap: 6px;
+    padding-bottom: 6px;
+  }
+
+  .opp-category-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .opp-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .opp-card-title {
+    font-size: 16px;
+  }
+
+  .opp-card-desc {
+    font-size: 14px;
+  }
+
+  .opp-card-meta {
+    font-size: 12px;
+    gap: 10px;
+  }
+
+  .opp-card-link {
+    width: 100%;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+}

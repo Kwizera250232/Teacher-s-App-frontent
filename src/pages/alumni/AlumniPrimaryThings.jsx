@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
+import './AlumniPrimaryThings.css';
 
 const TABS = [
   { key: 'quizzes', label: 'Quizzes & Marks', icon: '🎯' },
@@ -478,30 +479,19 @@ export default function AlumniPrimaryThings() {
 
   return (
     <AlumniLayout showTopWriters={false}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 4px' }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800 }}>🎒 Primary Things</h2>
-        <p style={{ color: '#64748b', marginBottom: 20, fontSize: 14 }}>
+      <div className="pt-container">
+        <h2 className="pt-title">🎒 Primary Things</h2>
+        <p className="pt-subtitle">
           Everything from your school days — {classInfo?.name || 'your class'}
         </p>
 
         {/* Tabs — scrollable on mobile */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+        <div className="pt-tabs">
           {TABS.map((tab) => (
             <button
               key={tab.key}
+              className={`pt-tab ${activeTab === tab.key ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.key)}
-              style={{
-                padding: '8px 12px',
-                borderRadius: 20,
-                border: 'none',
-                background: activeTab === tab.key ? '#667eea' : '#e2e8f0',
-                color: activeTab === tab.key ? '#fff' : '#475569',
-                fontWeight: 700,
-                fontSize: 12,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-              }}
             >
               {tab.icon} {tab.label}
             </button>
