@@ -4,6 +4,7 @@ import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import AIRevisionBadge from '../../components/AIRevisionBadge';
 import DailyCompositionChallenge from '../../components/DailyCompositionChallenge';
 import './AlumniFeed.css';
 
@@ -344,6 +345,7 @@ export default function AlumniFeed() {
               {post.author_name}
             </span>
             <VerifiedBadge size={14} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
+            <AIRevisionBadge size={14} userId={post.author_id || post.user_id} />
           </div>
           <div className="af-sub-meta">
             <span>{post.graduation_year ? `Class of ${post.graduation_year}` : 'Alumni'}</span>
@@ -461,6 +463,7 @@ export default function AlumniFeed() {
                 {comp.author_name || comp.name || 'Alumni'}
               </span>
               <VerifiedBadge size={14} userId={comp.user_id || comp.author_id} onViewProfile={() => navigate(`/alumni/profile/${comp.user_id || comp.author_id}`)} />
+              <AIRevisionBadge size={14} userId={comp.user_id || comp.author_id} />
               <span className="af-article-badge">✍️ Article</span>
             </div>
             <div className="af-sub-meta">
@@ -596,6 +599,7 @@ export default function AlumniFeed() {
                     <div className="af-suggested-name-row">
                       <span onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
                       <VerifiedBadge size={14} userId={s.id} onViewProfile={() => navigate(`/alumni/profile/${s.id}`)} />
+                      <AIRevisionBadge size={14} userId={s.id} />
                     </div>
                     <div className="af-suggested-meta">{s.school_name || 'UClass'} · {s.total_compositions || 0} articles</div>
                     <button

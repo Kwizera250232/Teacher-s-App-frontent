@@ -4,6 +4,7 @@ import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import AIRevisionBadge from '../../components/AIRevisionBadge';
 
 export default function AlumniProfile() {
   const { identifier } = useParams();
@@ -203,6 +204,7 @@ export default function AlumniProfile() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{profile.name}</h2>
                 <VerifiedBadge size={20} userId={profileId} onViewProfile={null} />
+                <AIRevisionBadge size={20} userId={profileId} />
               </div>
               <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
                 @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role || 'Alumni'}

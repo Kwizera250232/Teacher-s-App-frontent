@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import AlumniLayout from '../components/AlumniLayout';
+import AIRevisionReflection from '../components/AIRevisionReflection';
 import './AIRevision.css';
 
 const EDUCATION_LEVELS = [
@@ -62,6 +63,8 @@ export default function AIRevision() {
   const [phase, setPhase] = useState('entry'); // entry | quiz | results
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showReflection, setShowReflection] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   // Entry form state
   const [form, setForm] = useState({
@@ -184,6 +187,7 @@ export default function AIRevision() {
       }, token);
       setResult(data);
       setPhase('results');
+      setShowReflection(true);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -199,6 +203,8 @@ export default function AIRevision() {
     setResult(null);
     setCurrentQ(0);
     setError('');
+    setShowReflection(false);
+    setShowSummary(false);
   };
 
   const applyRecommendation = () => {
@@ -579,9 +585,67 @@ export default function AIRevision() {
             })}
           </div>
 
+          {/* Summary Notes for Difficult Topics */}
+          {result.summary_notes && (
+            <div className="ar-ai-feedback" style={{ borderLeft: '4px solid #8b5cf6' }}>
+              <h3 className="ar-ai-feedback-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>📝 Summary Notes — Difficult Topics</span>
+                <button
+                  onClick={() => setShowSummary(s => !s)}
+                  style={{ fontSize: 12, padding: '4px 12px', borderRadius: 8, border: '1px solid #8b5cf6', background: 'transparent', color: '#8b5cf6', cursor: 'pointer', fontWeight: 700 }}
+                >
+                  {showSummary ? 'Hide' : 'Show'}
+                </button>
+              </h3>
+              {showSummary && (
+                <div className="ar-ai-feedback-text" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                  {result.summary_notes}
+                </div>
+              )}
+              {showSummary && (
+                <button
+                  onClick={() => {
+                    const blob = new Blob([result.summary_notes], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `AI_Revision_Notes_${form.subject}_${Date.now()}.md`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  style={{ marginTop: 12, fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#8b5cf6', color: 'white', cursor: 'pointer', fontWeight: 700 }}
+                >
+                  📥 Download Notes
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Download Marks */}
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <button
+              onClick={() => {
+                const marksText = `AI Assessment Revision — Results\n\nSubject: ${form.subject}\nGrade: ${form.grade}\nDifficulty: ${form.difficulty}\nDate: ${new Date().toLocaleString()}\n\nScore: ${result.score}/${result.total} (${result.percentage}%)\nGrade: ${result.grade}\nPerformance: ${result.performance_level}\nCorrect: ${result.correct_count}\nWrong: ${result.wrong_count}\nTime: ${formatTime(result.time_taken_seconds || elapsed)}\n\n${result.ai_feedback || ''}`;
+                const blob = new Blob([marksText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `AI_Revision_Marks_${form.subject}_${Date.now()}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              style={{ fontSize: 13, padding: '10px 20px', borderRadius: 10, border: '1px solid #6366f1', background: 'transparent', color: '#6366f1', cursor: 'pointer', fontWeight: 700 }}
+            >
+              📥 Download Marks
+            </button>
+          </div>
+
           <div className="ar-results-actions">
             <button className="ar-action-btn ar-action-primary" onClick={handleRestart}>
               🔄 New Revision Quiz
+            </button>
+            <button className="ar-action-btn ar-action-secondary" onClick={() => setShowReflection(true)}>
+              💬 Give Feedback
             </button>
             <button className="ar-action-btn ar-action-secondary" onClick={() => navigate('/alumni/ai-revision/progress')}>
               📊 View Progress
@@ -591,6 +655,18 @@ export default function AIRevision() {
             </button>
           </div>
         </div>
+
+        {showReflection && (
+          <AIRevisionReflection
+            sessionId={sessionId}
+            token={token}
+            subject={form.subject}
+            score={result.score}
+            total={result.total}
+            onComplete={() => setShowReflection(false)}
+            onSkip={() => setShowReflection(false)}
+          />
+        )}
       </div>
     );
   }

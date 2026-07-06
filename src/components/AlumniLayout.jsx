@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import VerifiedBadge from './VerifiedBadge';
+import AIRevisionBadge from './AIRevisionBadge';
 import './AlumniLayout.css';
 
 const NAV_ITEMS = [
@@ -69,6 +70,7 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
             <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 4 }}>
               {user.name}
               <VerifiedBadge size={12} userId={user.id} onViewProfile={() => navigate(getProfilePath())} />
+              <AIRevisionBadge size={12} userId={user.id} />
             </div>
             <div style={{ fontSize: 11, color: '#94a3b8' }}>@{user.email?.split('@')[0]}</div>
           </div>
@@ -230,6 +232,7 @@ function TopWriters({ token }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{w.name}</span>
               <VerifiedBadge size={14} userId={w.id} onViewProfile={() => navigate(`/alumni/profile/${w.id}`)} />
+              <AIRevisionBadge size={14} userId={w.id} />
             </div>
             <div style={{ fontSize: 11, color: '#94a3b8' }}>{w.school || 'UClass'} · {w.articles} articles</div>
           </div>
