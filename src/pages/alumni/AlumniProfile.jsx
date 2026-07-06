@@ -158,7 +158,7 @@ export default function AlumniProfile() {
 
   const profileId = profile.user_id || profile.id;
   const canViewFull = true; // profiles are public
-  const avatarSrc = profile.avatar_url && isMe
+  const avatarSrc = profile.avatar_url
     ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : `${UPLOADS_BASE}${profile.avatar_url}`)
     : null;
 
@@ -213,9 +213,9 @@ export default function AlumniProfile() {
           {/* Stats */}
           <div style={{ display: 'flex', gap: 24, marginBottom: 16, flexWrap: 'wrap' }}>
             <div style={{ cursor: 'pointer' }} onClick={loadSubscribers}>
-              <strong>{follows.followers || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Subscribers</span>
+              <strong>{follows.followers?.length || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Subscribers</span>
             </div>
-            <div><strong>{follows.following || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Following</span></div>
+            <div><strong>{follows.following?.length || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Following</span></div>
             <div><strong>{profile.total_compositions || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Articles</span></div>
             <div><strong>{mediaCount}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Media</span></div>
           </div>
