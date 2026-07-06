@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
@@ -39,6 +39,29 @@ function timeAgo(date) {
   return new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function AvatarWithStatus({ id, name, avatarUrl, size, online, onClick }) {
+  const sz = size === 'sm' ? 'af-avatar-sm' : size === 'md' ? 'af-avatar-md' : '';
+  const dotSz = size === 'sm' ? 'af-online-dot-sm' : '';
+  const avatarSrc = avatarUrl
+    ? (avatarUrl.startsWith('http') ? avatarUrl : `${UPLOADS_BASE}${avatarUrl}`)
+    : null;
+  return (
+    <div className="af-avatar-wrap" onClick={onClick}>
+      <div
+        className={`af-avatar ${sz}`}
+        style={avatarSrc ? { background: `url(${avatarSrc}) center/cover` } : { background: avatarColor(id) }}
+      >
+        {!avatarSrc && (name?.[0] || 'U')}
+      </div>
+      {online ? (
+        <span className={`af-online-dot ${dotSz}`} />
+      ) : online === false ? (
+        <span className={`af-offline-dot ${dotSz}`} />
+      ) : null}
+    </div>
+  );
+}
+
 const STORIES = [
   { key: 'add', label: 'Add Story', icon: '➕', action: 'add' },
   { key: 'yours', label: 'Your Story', icon: '👤', action: 'profile' },
@@ -67,9 +90,40 @@ export default function AlumniFeed() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [suggested, setSuggested] = useState([]);
   const [showComposer, setShowComposer] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [offlineUsers, setOfflineUsers] = useState([]);
+  const [likersModal, setLikersModal] = useState(null);
+  const [viewersModal, setViewersModal] = useState(null);
+  const [likersList, setLikersList] = useState([]);
+  const [viewersList, setViewersList] = useState([]);
   const fileInputRef = useRef(null);
 
   useEffect(() => { loadPosts(); loadSuggested(); loadStories(); }, [token]);
+
+  // Heartbeat — send every 2 minutes
+  useEffect(() => {
+    if (!token) return;
+    const beat = () => api.post('/alumni/online/heartbeat', {}, token).catch(() => {});
+    beat();
+    const interval = setInterval(beat, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [token]);
+
+  // Load online users every 30 seconds
+  const loadOnlineUsers = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await api.get('/alumni/online/status', token);
+      setOnlineUsers(data.online || []);
+      setOfflineUsers(data.offline || []);
+    } catch (e) { console.error(e); }
+  }, [token]);
+
+  useEffect(() => {
+    loadOnlineUsers();
+    const interval = setInterval(loadOnlineUsers, 30 * 1000);
+    return () => clearInterval(interval);
+  }, [loadOnlineUsers]);
 
   const loadStories = async () => {
     try {
@@ -152,6 +206,24 @@ export default function AlumniFeed() {
       loadComments(postId);
       loadPosts();
     } catch (e) { alert(e.message); }
+  };
+
+  const openLikers = async (postId) => {
+    setLikersModal(postId);
+    setLikersList([]);
+    try {
+      const data = await api.get(`/alumni/feed/${postId}/likers`, token);
+      setLikersList(data.likers || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const openViewers = async (postId) => {
+    setViewersModal(postId);
+    setViewersList([]);
+    try {
+      const data = await api.get(`/alumni/feed/${postId}/viewers`, token);
+      setViewersList(data.viewers || []);
+    } catch (e) { console.error(e); }
   };
 
   const handlePost = async () => {
@@ -259,13 +331,13 @@ export default function AlumniFeed() {
   const renderPost = (post) => (
     <article key={`post-${post.id}`} className="af-card">
       <div className="af-card-header">
-        <div
-          className="af-avatar"
-          style={{ background: avatarColor(post.user_id) }}
+        <AvatarWithStatus
+          id={post.author_id || post.user_id}
+          name={post.author_name}
+          avatarUrl={post.author_avatar}
+          online={post.author_online}
           onClick={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)}
-        >
-          {(post.author_name || 'U')[0]}
-        </div>
+        />
         <div className="af-card-meta">
           <div className="af-name-row">
             <span className="af-name" onClick={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)}>
@@ -290,9 +362,22 @@ export default function AlumniFeed() {
 
       {renderPostImages(post)}
 
-      <div className="af-card-stats">
-        <span>{post.likes_count || 0} likes</span>
-        <span>{post.comments_count || 0} comments</span>
+      <div className="af-stats-bar">
+        <div className="af-stats-left" onClick={() => openLikers(post.id)}>
+          <div className="af-likes-icons">
+            <span className="af-likes-icon-circle af-likes-icon-like">👍</span>
+            <span className="af-likes-icon-circle af-likes-icon-heart">❤️</span>
+          </div>
+          <span className="af-stats-text">{post.likes_count || 0}</span>
+        </div>
+        <div className="af-stats-right">
+          <span onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); if (commentOpen !== post.id) loadComments(post.id); }}>
+            {post.comments_count || 0} comments
+          </span>
+          <span onClick={() => openViewers(post.id)}>
+            👁️ {post.views_count || 0} views
+          </span>
+        </div>
       </div>
 
       <div className="af-card-actions">
@@ -326,7 +411,7 @@ export default function AlumniFeed() {
       {commentOpen === post.id && (
         <div className="af-comments">
           <div className="af-comment-input-row">
-            <div className="af-avatar af-avatar-sm" style={{ background: avatarColor(user?.id) }}>{(user?.name || 'U')[0]}</div>
+            <AvatarWithStatus id={user?.id} name={user?.name} avatarUrl={user?.avatar_url} size="sm" />
             <input
               type="text"
               placeholder="Write a comment..."
@@ -340,7 +425,7 @@ export default function AlumniFeed() {
           <div className="af-comment-list">
             {(commentsMap[post.id] || []).map((c) => (
               <div key={c.id} className="af-comment">
-                <div className="af-avatar af-avatar-sm" style={{ background: avatarColor(c.user_id) }}>{(c.author_name || 'U')[0]}</div>
+                <AvatarWithStatus id={c.user_id || c.author_id} name={c.author_name} avatarUrl={c.avatar_url} size="sm" online={c.is_online} />
                 <div className="af-comment-content">
                   <div className="af-comment-meta">
                     <strong>{c.author_name}</strong>
@@ -363,13 +448,13 @@ export default function AlumniFeed() {
     return (
       <article key={`comp-${comp.id}`} className="af-card">
         <div className="af-card-header">
-          <div
-            className="af-avatar"
-            style={{ background: avatarColor(comp.user_id || comp.author_id) }}
+          <AvatarWithStatus
+            id={comp.user_id || comp.author_id}
+            name={comp.author_name || comp.name}
+            avatarUrl={comp.author_avatar}
+            online={comp.author_online}
             onClick={() => navigate(`/alumni/profile/${comp.user_id || comp.author_id}`)}
-          >
-            {(comp.author_name || comp.name || 'U')[0]}
-          </div>
+          />
           <div className="af-card-meta">
             <div className="af-name-row">
               <span className="af-name" onClick={() => navigate(`/alumni/profile/${comp.user_id || comp.author_id}`)}>
@@ -398,9 +483,20 @@ export default function AlumniFeed() {
           </div>
         </div>
 
-        <div className="af-card-stats">
-          <span>{comp.likes_count || 0} likes</span>
-          <span>{comp.comments_count || 0} comments</span>
+        <div className="af-stats-bar">
+          <div className="af-stats-left" onClick={() => openLikers(comp.id)}>
+            <div className="af-likes-icons">
+              <span className="af-likes-icon-circle af-likes-icon-like">👍</span>
+              <span className="af-likes-icon-circle af-likes-icon-heart">❤️</span>
+            </div>
+            <span className="af-stats-text">{comp.likes_count || 0}</span>
+          </div>
+          <div className="af-stats-right">
+            <span onClick={() => { setCommentOpen(commentOpen === comp.id ? null : comp.id); if (commentOpen !== comp.id) loadComments(comp.id); }}>
+              {comp.comments_count || 0} comments
+            </span>
+            <span>📖 {comp.read_count || 0} reads</span>
+          </div>
         </div>
 
         <div className="af-card-actions">
@@ -435,7 +531,7 @@ export default function AlumniFeed() {
             <div className="af-comment-list">
               {(commentsMap[comp.id] || []).map((c) => (
                 <div key={c.id} className="af-comment">
-                  <div className="af-avatar af-avatar-sm" style={{ background: avatarColor(c.user_id) }}>{(c.author_name || 'U')[0]}</div>
+                  <AvatarWithStatus id={c.user_id || c.author_id} name={c.author_name} avatarUrl={c.avatar_url} size="sm" online={c.is_online} />
                   <div className="af-comment-content">
                     <div className="af-comment-meta">
                       <strong>{c.author_name}</strong>
@@ -491,11 +587,11 @@ export default function AlumniFeed() {
           <div className="af-suggested">
             <h3>✨ Suggested Alumni</h3>
             <div className="af-suggested-grid">
-              {suggested.map((s) => (
+              {suggested.map((s) => {
+                const isOnline = onlineUsers.some(u => u.user_id === s.id);
+                return (
                 <div key={s.id} className="af-suggested-card">
-                  <div className="af-avatar af-avatar-md" style={{ background: avatarColor(s.id) }} onClick={() => navigate(`/alumni/profile/${s.id}`)}>
-                    {(s.name || 'U')[0]}
-                  </div>
+                  <AvatarWithStatus id={s.id} name={s.name} avatarUrl={s.avatar_url} size="md" online={isOnline} onClick={() => navigate(`/alumni/profile/${s.id}`)} />
                   <div className="af-suggested-info">
                     <div className="af-suggested-name-row">
                       <span onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
@@ -510,11 +606,90 @@ export default function AlumniFeed() {
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
+
+        {/* Online Now section */}
+        <div className="af-online-section">
+          <div className="af-online-header">
+            <h3>🟢 Active Now</h3>
+            {onlineUsers.length > 0 && <span className="af-online-badge">{onlineUsers.length} online</span>}
+          </div>
+          {onlineUsers.length > 0 ? (
+            <div className="af-online-scroll">
+              {onlineUsers.map((u) => (
+                <div key={u.user_id} className="af-online-user" onClick={() => navigate(`/alumni/profile/${u.user_id}`)}>
+                  <div className="af-online-user-avatar" style={u.avatar_url ? { background: `url(${u.avatar_url.startsWith('http') ? u.avatar_url : UPLOADS_BASE + u.avatar_url}) center/cover` } : { background: avatarColor(u.user_id) }}>
+                    {!u.avatar_url && (u.name?.[0] || 'U')}
+                  </div>
+                  <span className="af-online-user-name">{u.name?.split(' ')[0] || 'User'}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="af-online-empty">No alumni online right now. Check back later! 🌙</div>
+          )}
+        </div>
       </div>
+
+      {/* Likers Modal */}
+      {likersModal && (
+        <div className="af-likers-overlay" onClick={() => setLikersModal(null)}>
+          <div className="af-likers-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="af-likers-header">
+              <h3>👍 Liked by</h3>
+              <button className="af-likers-close" onClick={() => setLikersModal(null)}>✕</button>
+            </div>
+            <div className="af-likers-list">
+              {likersList.length === 0 ? (
+                <div className="af-online-empty">No likes yet. Be the first to like this! 💜</div>
+              ) : likersList.map((l) => (
+                <div key={l.user_id} className="af-liker-row" onClick={() => { setLikersModal(null); navigate(`/alumni/profile/${l.user_id}`); }}>
+                  <AvatarWithStatus id={l.user_id} name={l.name} avatarUrl={l.avatar_url} size="sm" online={l.is_online} />
+                  <div className="af-liker-info">
+                    <div className="af-liker-name">{l.name}</div>
+                    <div className="af-liker-meta">{l.graduation_year ? `Class of ${l.graduation_year}` : ''} {l.school_name ? `· ${l.school_name}` : ''}</div>
+                  </div>
+                  <span className={`af-liker-status ${l.is_online ? 'af-liker-online' : 'af-liker-offline'}`}>
+                    {l.is_online ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Viewers Modal */}
+      {viewersModal && (
+        <div className="af-likers-overlay" onClick={() => setViewersModal(null)}>
+          <div className="af-likers-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="af-likers-header">
+              <h3>👁️ Viewed by</h3>
+              <button className="af-likers-close" onClick={() => setViewersModal(null)}>✕</button>
+            </div>
+            <div className="af-likers-list">
+              {viewersList.length === 0 ? (
+                <div className="af-online-empty">No views yet.</div>
+              ) : viewersList.map((v) => (
+                <div key={v.user_id} className="af-liker-row" onClick={() => { setViewersModal(null); navigate(`/alumni/profile/${v.user_id}`); }}>
+                  <AvatarWithStatus id={v.user_id} name={v.name} avatarUrl={v.avatar_url} size="sm" online={v.is_online} />
+                  <div className="af-liker-info">
+                    <div className="af-liker-name">{v.name}</div>
+                    <div className="af-liker-meta">{v.graduation_year ? `Class of ${v.graduation_year}` : ''} · viewed {timeAgo(v.viewed_at)}</div>
+                  </div>
+                  <span className={`af-liker-status ${v.is_online ? 'af-liker-online' : 'af-liker-offline'}`}>
+                    {v.is_online ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <button className="af-fab" onClick={() => setShowComposer(true)} aria-label="New post">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

@@ -295,10 +295,327 @@
 .af-card-stats {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 8px 18px;
   font-size: 13px;
   color: #64748b;
   border-bottom: 1px solid #f1f5f9;
+}
+
+/* Facebook-style stats bar */
+.af-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.af-stats-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.af-stats-left:hover {
+  opacity: 0.7;
+}
+
+.af-likes-icons {
+  display: flex;
+  align-items: center;
+}
+
+.af-likes-icon-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+  font-weight: 700;
+  margin-left: -6px;
+}
+
+.af-likes-icon-circle:first-child {
+  margin-left: 0;
+}
+
+.af-likes-icon-like {
+  background: linear-gradient(135deg, #1877f2, #4299e1);
+}
+
+.af-likes-icon-heart {
+  background: linear-gradient(135deg, #e0245e, #f56565);
+}
+
+.af-likes-icon-fire {
+  background: linear-gradient(135deg, #f6ad55, #ed8936);
+}
+
+.af-stats-text {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.af-stats-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.af-stats-right span {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.af-stats-right span:hover {
+  color: #334155;
+  text-decoration: underline;
+}
+
+/* Online indicator dot */
+.af-online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2.5px solid #fff;
+  z-index: 2;
+  box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+}
+
+.af-online-dot-sm {
+  width: 9px;
+  height: 9px;
+  border-width: 2px;
+}
+
+.af-offline-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  border: 2.5px solid #fff;
+  z-index: 2;
+}
+
+.af-offline-dot-sm {
+  width: 9px;
+  height: 9px;
+  border-width: 2px;
+}
+
+.af-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Likers / Viewers modal */
+.af-likers-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2800;
+  padding: 16px;
+}
+
+.af-likers-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.af-likers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.af-likers-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.af-likers-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.af-likers-list {
+  overflow-y: auto;
+  padding: 8px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.af-liker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.af-liker-row:hover {
+  background: #f8fafc;
+}
+
+.af-liker-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.af-liker-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.af-liker-meta {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.af-liker-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.af-liker-online {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.af-liker-offline {
+  color: #94a3b8;
+  background: #f1f5f9;
+}
+
+/* Online users section */
+.af-online-section {
+  margin-top: 24px;
+  margin-bottom: 20px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.af-online-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.af-online-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.af-online-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #16a34a;
+  background: #dcfce7;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.af-online-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.af-online-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.af-online-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-width: 60px;
+  cursor: pointer;
+}
+
+.af-online-user-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  position: relative;
+  border: 2px solid #22c55e;
+}
+
+.af-online-user-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.af-online-empty {
+  text-align: center;
+  padding: 20px;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .af-card-actions {
