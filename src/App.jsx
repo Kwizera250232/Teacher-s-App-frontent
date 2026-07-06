@@ -17,8 +17,6 @@ import StudentClassPage from './pages/StudentClassPage';
 import TakeQuiz from './pages/TakeQuiz';
 import TakeGroupQuiz from './pages/TakeGroupQuiz';
 import StudentQuizReportsPage from './pages/StudentQuizReportsPage';
-import AIRevision from './pages/AIRevision';
-import AIRevisionProgress from './pages/AIRevisionProgress';
 import QuizResults from './pages/QuizResults';
 import AdminDashboard from './pages/AdminDashboard';
 import JoinClass from './pages/JoinClass';
@@ -68,6 +66,8 @@ const AlumniDirectChat = lazy(() => import('./pages/alumni/AlumniDirectChat'));
 const AlumniDean = lazy(() => import('./pages/alumni/AlumniDean'));
 const AlumniOpportunities = lazy(() => import('./pages/alumni/AlumniOpportunities'));
 const AlumniAdmin = lazy(() => import('./pages/alumni/AlumniAdmin'));
+const AIRevision = lazy(() => import('./pages/AIRevision'));
+const AIRevisionProgress = lazy(() => import('./pages/AIRevisionProgress'));
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -197,12 +197,6 @@ function AppShell() {
                 <Route path="/student/quiz-reports" element={
                   <ProtectedRoute role="student"><StudentQuizReportsPage /></ProtectedRoute>
                 } />
-                <Route path="/student/ai-revision" element={
-                  <ProtectedRoute role="student"><AIRevision /></ProtectedRoute>
-                } />
-                <Route path="/student/ai-revision/progress" element={
-                  <ProtectedRoute role="student"><AIRevisionProgress /></ProtectedRoute>
-                } />
                 <Route path="/student/class-moments" element={
                   <ProtectedRoute role="student"><ClassMomentsPage backPath="/student/dashboard" /></ProtectedRoute>
                 } />
@@ -300,6 +294,12 @@ function AppShell() {
                 } />
                 <Route path="/alumni/opportunities" element={
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniOpportunities /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/ai-revision" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AIRevision /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/alumni/ai-revision/progress" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AIRevisionProgress /></Suspense></ProtectedRoute>
                 } />
                 <Route path="/alumni/admin" element={
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniAdmin /></Suspense></ProtectedRoute>

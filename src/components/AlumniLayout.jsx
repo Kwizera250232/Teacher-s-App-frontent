@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { icon: '💬', label: 'Groups', path: '/alumni/groups' },
   { icon: '📚', label: 'Library', path: '/alumni/library' },
   { icon: '📄', label: 'Past Papers', path: '/alumni/past-papers' },
+  { icon: '🤖', label: 'AI Revision', path: '/alumni/ai-revision' },
   { icon: '👤', label: 'Profile', path: '/alumni/profile/me' },
   { icon: '💰', label: 'Wallet', path: '/alumni/wallet' },
   { icon: '🌟', label: 'Opportunities', path: '/alumni/opportunities' },

@@ -24,7 +24,7 @@ export default function AIRevisionProgress() {
     return (
       <div className="ar-page">
         <div className="ar-header">
-          <button className="ar-header-back" onClick={() => navigate('/student/dashboard')}>← Back</button>
+          <button className="ar-header-back" onClick={() => navigate('/alumni/feed')}>← Back</button>
           <div className="ar-header-title">📊 My Progress</div>
         </div>
         <div className="ar-loading">Loading progress...</div>
@@ -36,7 +36,7 @@ export default function AIRevisionProgress() {
     return (
       <div className="ar-page">
         <div className="ar-header">
-          <button className="ar-header-back" onClick={() => navigate('/student/dashboard')}>← Back</button>
+          <button className="ar-header-back" onClick={() => navigate('/alumni/feed')}>← Back</button>
           <div className="ar-header-title">📊 My Progress</div>
         </div>
         <div className="ar-progress">
@@ -46,7 +46,7 @@ export default function AIRevisionProgress() {
             <br />
             Take your first AI Assessment Revision to start tracking progress!
             <br /><br />
-            <button className="ar-action-btn ar-action-primary" onClick={() => navigate('/student/ai-revision')}>
+            <button className="ar-action-btn ar-action-primary" onClick={() => navigate('/alumni/ai-revision')}>
               🚀 Start Revision
             </button>
           </div>
@@ -61,7 +61,7 @@ export default function AIRevisionProgress() {
   return (
     <div className="ar-page">
       <div className="ar-header">
-        <button className="ar-header-back" onClick={() => navigate('/student/dashboard')}>← Back</button>
+        <button className="ar-header-back" onClick={() => navigate('/alumni/feed')}>← Back</button>
         <div className="ar-header-title">📊 My Revision Progress</div>
       </div>
 
@@ -175,10 +175,10 @@ export default function AIRevisionProgress() {
         </div>
 
         <div className="ar-results-actions">
-          <button className="ar-action-btn ar-action-primary" onClick={() => navigate('/student/ai-revision')}>
+          <button className="ar-action-btn ar-action-primary" onClick={() => navigate('/alumni/ai-revision')}>
             🚀 New Revision Quiz
           </button>
-          <button className="ar-action-btn ar-action-secondary" onClick={() => navigate('/student/dashboard')}>
+          <button className="ar-action-btn ar-action-secondary" onClick={() => navigate('/alumni/feed')}>
             🏠 Dashboard
           </button>
         </div>

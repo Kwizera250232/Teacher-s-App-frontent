@@ -26,7 +26,6 @@ const QUICK_NAV = (handlers) => [
   { id: 'status', icon: '✍️', label: 'C. Status', onClick: handlers.openStatus },
   { id: 'notes', icon: '📝', label: 'Notes', to: '/student/notes' },
   { id: 'reports', icon: '📋', label: 'Quiz reports', to: '/student/quiz-reports' },
-  { id: 'ai-revision', icon: '🤖', label: 'AI Revision', to: '/student/ai-revision' },
   { id: 'parent', icon: '👪', label: 'Parent', onClick: handlers.openParent },
   { id: 'profile', icon: '👤', label: 'Profile', to: '/profile' },
 ];

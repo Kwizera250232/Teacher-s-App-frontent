@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
+import AlumniLayout from '../components/AlumniLayout';
 import './AIRevision.css';
 
 const EDUCATION_LEVELS = [
@@ -189,7 +190,7 @@ export default function AIRevision() {
     return (
       <div className="ar-page">
         <div className="ar-header">
-          <button className="ar-header-back" onClick={() => navigate('/student/dashboard')}>← Back</button>
+          <button className="ar-header-back" onClick={() => navigate('/alumni/feed')}>← Back</button>
           <div className="ar-header-title">🤖 AI Assessment Revision</div>
         </div>
 
@@ -580,10 +581,10 @@ export default function AIRevision() {
             <button className="ar-action-btn ar-action-primary" onClick={handleRestart}>
               🔄 New Revision Quiz
             </button>
-            <button className="ar-action-btn ar-action-secondary" onClick={() => navigate('/student/ai-revision/progress')}>
+            <button className="ar-action-btn ar-action-secondary" onClick={() => navigate('/alumni/ai-revision/progress')}>
               📊 View Progress
             </button>
-            <button className="ar-action-btn ar-action-secondary" onClick={() => navigate('/student/dashboard')}>
+            <button className="ar-action-btn ar-action-secondary" onClick={() => navigate('/alumni/feed')}>
               🏠 Dashboard
             </button>
           </div>
