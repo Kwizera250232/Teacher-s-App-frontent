@@ -17,6 +17,8 @@ import StudentClassPage from './pages/StudentClassPage';
 import TakeQuiz from './pages/TakeQuiz';
 import TakeGroupQuiz from './pages/TakeGroupQuiz';
 import StudentQuizReportsPage from './pages/StudentQuizReportsPage';
+import AIRevision from './pages/AIRevision';
+import AIRevisionProgress from './pages/AIRevisionProgress';
 import QuizResults from './pages/QuizResults';
 import AdminDashboard from './pages/AdminDashboard';
 import JoinClass from './pages/JoinClass';
@@ -194,6 +196,12 @@ function AppShell() {
                 } />
                 <Route path="/student/quiz-reports" element={
                   <ProtectedRoute role="student"><StudentQuizReportsPage /></ProtectedRoute>
+                } />
+                <Route path="/student/ai-revision" element={
+                  <ProtectedRoute role="student"><AIRevision /></ProtectedRoute>
+                } />
+                <Route path="/student/ai-revision/progress" element={
+                  <ProtectedRoute role="student"><AIRevisionProgress /></ProtectedRoute>
                 } />
                 <Route path="/student/class-moments" element={
                   <ProtectedRoute role="student"><ClassMomentsPage backPath="/student/dashboard" /></ProtectedRoute>
