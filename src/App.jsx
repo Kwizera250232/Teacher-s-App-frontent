@@ -289,9 +289,7 @@ function AppShell() {
                 <Route path="/alumni/chat/:userId" element={
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniDirectChat /></Suspense></ProtectedRoute>
                 } />
-                <Route path="/alumni/dean" element={
-                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniDean /></Suspense></ProtectedRoute>
-                } />
+                <Route path="/alumni/dean" element={<Navigate to="/alumni/ai-revision" replace />} />
                 <Route path="/alumni/opportunities" element={
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniOpportunities /></Suspense></ProtectedRoute>
                 } />
