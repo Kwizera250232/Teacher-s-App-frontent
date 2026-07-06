@@ -29,6 +29,33 @@ const DIFFICULTIES = [
 
 const QUESTION_COUNTS = [10, 20, 30, 50];
 
+function renderMatchingReview(q) {
+  let pairs = [];
+  try { pairs = JSON.parse(q.passage || '[]'); } catch (e) {}
+  const studentParts = (q.student_answer || '').split('|');
+  return (
+    <div>
+      {pairs.map((pair, pi) => {
+        const given = (studentParts[pi] || '').trim();
+        const correct = pair.right.trim();
+        const ok = given.toLowerCase() === correct.toLowerCase();
+        return (
+          <div key={pi} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, fontSize: 13 }}>
+            <span style={{ flex: 1, padding: '6px 10px', background: '#f1f5f9', borderRadius: 6, fontWeight: 600 }}>{pair.left}</span>
+            <span style={{ color: ok ? '#10b981' : '#ef4444', fontWeight: 700 }}>{ok ? '✓' : '✗'}</span>
+            <div style={{ flex: 1 }}>
+              <div className={`ar-review-option ${ok ? 'ar-review-correct-opt' : 'ar-review-wrong-opt'}`} style={{ marginBottom: 2 }}>
+                Your: <strong>{given || '—'}</strong>
+              </div>
+              {!ok && <div className="ar-review-option ar-review-correct-opt">Correct: <strong>{correct}</strong></div>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AIRevision() {
   const navigate = useNavigate();
   const { token, user } = useAuth();
@@ -546,32 +573,7 @@ export default function AIRevision() {
                     </div>
                   )}
 
-                  {qtype === 'matching' && (() => {
-                    let pairs = [];
-                    try { pairs = JSON.parse(q.passage || '[]'); } catch {}
-                    const studentParts = (q.student_answer || '').split('|');
-                    return (
-                      <div>
-                        {pairs.map((pair, pi) => {
-                          const given = (studentParts[pi] || '').trim();
-                          const correct = pair.right.trim();
-                          const ok = given.toLowerCase() === correct.toLowerCase();
-                          return (
-                            <div key={pi} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, fontSize: 13 }}>
-                              <span style={{ flex: 1, padding: '6px 10px', background: '#f1f5f9', borderRadius: 6, fontWeight: 600 }}>{pair.left}</span>
-                              <span style={{ color: ok ? '#10b981' : '#ef4444', fontWeight: 700 }}>{ok ? '✓' : '✗'}</span>
-                              <div style={{ flex: 1 }}>
-                                <div className={`ar-review-option ${ok ? 'ar-review-correct-opt' : 'ar-review-wrong-opt'}`} style={{ marginBottom: 2 }}>
-                                  Your: <strong>{given || '—'}</strong>
-                                </div>
-                                {!ok && <div className="ar-review-option ar-review-correct-opt'>Correct: <strong>{correct}</strong></div>}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
+                  {qtype === 'matching' && renderMatchingReview(q)}
                 </div>
               );
             })}
@@ -599,7 +601,7 @@ export default function AIRevision() {
 // ── Matching Question Component ───────────────────────────────────────────────
 function MatchingQuestion({ q, value, onChange }) {
   let pairs = [];
-  try { pairs = JSON.parse(q.passage || '[]'); } catch {}
+  try { pairs = JSON.parse(q.passage || '[]'); } catch (e) {}
   const parts = (value || '').split('|');
   const rights = pairs.map(p => p.right).sort(() => Math.random() - 0.5);
 
