@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import VerifiedBadge from './VerifiedBadge';
 import AIRevisionBadge from './AIRevisionBadge';
+import AppNotificationsBell from './AppNotificationsBell';
 import './AlumniLayout.css';
 
 const NAV_ITEMS = [
@@ -45,6 +46,11 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
       <button onClick={() => { navigate('/alumni/compose'); setSidebarOpen(false); }} style={{ width: '100%', padding: '12px 16px', borderRadius: 24, border: 'none', background: '#667eea', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 20, boxShadow: '0 4px 14px rgba(102,126,234,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         ✍️ New Article
       </button>
+
+      {/* Notifications Bell */}
+      <div style={{ marginBottom: 12 }}>
+        <AppNotificationsBell basePath="/alumni" />
+      </div>
 
       {/* Navigation */}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -106,7 +112,7 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
           </div>
           <div className="alumni-mobile-actions">
             <button onClick={() => navigate('/alumni/search')}>🔍</button>
-            <button onClick={() => navigate('/alumni/notifications')}>🔔</button>
+            <AppNotificationsBell basePath="/alumni" />
             <div className="alumni-mobile-profile" onClick={() => navigate(getProfilePath())}>
               {(user?.name || 'U')[0]}
             </div>

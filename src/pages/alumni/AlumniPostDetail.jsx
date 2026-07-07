@@ -14,6 +14,10 @@ export default function AlumniPostDetail() {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => { loadPost(); }, [postId, token]);
 
@@ -45,6 +49,25 @@ export default function AlumniPostDetail() {
       }
       loadPost();
     } catch (e) { console.error(e); }
+  };
+
+  const handleEdit = async () => {
+    if (!editText.trim()) return;
+    setSavingEdit(true);
+    try {
+      await api.put(`/alumni/feed/${postId}`, { content: editText }, token);
+      setEditing(false);
+      loadPost();
+    } catch (e) { alert(e.message); }
+    finally { setSavingEdit(false); }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    try {
+      await api.delete(`/alumni/feed/${postId}`, token);
+      navigate('/alumni/feed');
+    } catch (e) { alert(e.message); }
   };
 
   if (loading) return (
@@ -83,6 +106,17 @@ export default function AlumniPostDetail() {
               </div>
               <div style={{ fontSize: 13, color: '#94a3b8' }}>{new Date(post.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</div>
             </div>
+            {(post.author_id === user?.id || post.user_id === user?.id) && (
+              <div style={{ position: 'relative', marginLeft: 'auto' }}>
+                <button onClick={() => setShowMenu(!showMenu)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#94a3b8', padding: '4px 8px' }}>⋯</button>
+                {showMenu && (
+                  <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 100, minWidth: 140, overflow: 'hidden' }}>
+                    <button onClick={() => { setEditing(true); setEditText(post.content || ''); setShowMenu(false); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#1e293b', textAlign: 'left' }}>✏️ Edit Post</button>
+                    <button onClick={() => { handleDelete(); setShowMenu(false); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', textAlign: 'left' }}>🗑️ Delete Post</button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Featured Images */}
@@ -105,9 +139,19 @@ export default function AlumniPostDetail() {
           )}
 
           {/* Content */}
-          <div style={{ padding: '20px 24px', fontSize: 16, lineHeight: 1.7, color: '#1e293b' }}>
-            <div style={{ whiteSpace: 'pre-wrap' }}>{post.content}</div>
-          </div>
+          {editing ? (
+            <div style={{ padding: '20px 24px' }}>
+              <textarea value={editText} onChange={(e) => setEditText(e.target.value)} style={{ width: '100%', minHeight: 120, padding: '12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 16, lineHeight: 1.7, outline: 'none', resize: 'vertical' }} />
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <button onClick={() => setEditing(false)} style={{ padding: '8px 20px', borderRadius: 20, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={handleEdit} disabled={savingEdit || !editText.trim()} style={{ padding: '8px 20px', borderRadius: 20, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{savingEdit ? 'Saving...' : 'Save'}</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '20px 24px', fontSize: 16, lineHeight: 1.7, color: '#1e293b' }}>
+              <div style={{ whiteSpace: 'pre-wrap' }}>{post.content}</div>
+            </div>
+          )}
 
           {/* Action Bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '12px 24px', borderTop: '1px solid #f1f5f9' }}>

@@ -80,6 +80,8 @@ export default function AlumniFeed() {
   const [storyText, setStoryText] = useState('');
   const [storyBg, setStoryBg] = useState('#7c3aed');
   const [savingStory, setSavingStory] = useState(false);
+  const [statusViewer, setStatusViewer] = useState(null);
+  const [statusIndex, setStatusIndex] = useState(0);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showReactions, setShowReactions] = useState(null);
@@ -97,6 +99,10 @@ export default function AlumniFeed() {
   const [viewersModal, setViewersModal] = useState(null);
   const [likersList, setLikersList] = useState([]);
   const [viewersList, setViewersList] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [editPost, setEditPost] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => { loadPosts(); loadSuggested(); loadStories(); }, [token]);
@@ -227,6 +233,26 @@ export default function AlumniFeed() {
     } catch (e) { console.error(e); }
   };
 
+  const handleEditPost = async () => {
+    if (!editPost || !editText.trim()) return;
+    setSavingEdit(true);
+    try {
+      await api.put(`/alumni/feed/${editPost.id}`, { content: editText }, token);
+      setEditPost(null);
+      setEditText('');
+      loadPosts();
+    } catch (e) { alert(e.message); }
+    finally { setSavingEdit(false); }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    try {
+      await api.delete(`/alumni/feed/${postId}`, token);
+      loadPosts();
+    } catch (e) { alert(e.message); }
+  };
+
   const handlePost = async () => {
     if (!composeText.trim() && !selectedImage) return;
     setSendingPost(true);
@@ -254,6 +280,38 @@ export default function AlumniFeed() {
     else if (action === 'news') navigate('/alumni/primary-things');
     else if (action === 'add') setShowStoryModal(true);
   };
+
+  const openStatusViewer = async (index) => {
+    setStatusIndex(index);
+    setStatusViewer(stories[index]);
+    // Mark as viewed
+    if (stories[index] && !stories[index].viewed_by_me) {
+      try {
+        await api.post(`/alumni/stories/${stories[index].id}/view`, {}, token);
+        setStories(prev => prev.map((s, i) => i === index ? { ...s, viewed_by_me: true } : s));
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  const nextStatus = () => {
+    if (statusIndex < stories.length - 1) {
+      openStatusViewer(statusIndex + 1);
+    } else {
+      setStatusViewer(null);
+    }
+  };
+
+  const prevStatus = () => {
+    if (statusIndex > 0) {
+      openStatusViewer(statusIndex - 1);
+    }
+  };
+
+  useEffect(() => {
+    if (!statusViewer) return;
+    const timer = setTimeout(() => nextStatus(), 5000);
+    return () => clearTimeout(timer);
+  }, [statusViewer, statusIndex]);
 
   const STORY_BGS = ['#7c3aed', '#dc2626', '#059669', '#d97706', '#2563eb', '#db2777', '#7c2d12', '#1e293b'];
 
@@ -283,10 +341,16 @@ export default function AlumniFeed() {
         </div>
         <span className="af-story-label">School News</span>
       </button>
-      {stories.map((s) => (
-        <button key={s.id} className="af-story" onClick={() => navigate(`/alumni/profile/${s.user_id}`)}>
-          <div className="af-story-ring" style={{ background: s.background_color || '#7c3aed' }}>
-            <div className="af-story-avatar">{(s.author_name || 'U')[0]}</div>
+      {stories.map((s, i) => (
+        <button key={s.id} className="af-story" onClick={() => openStatusViewer(i)}>
+          <div className="af-story-ring" style={{ background: s.viewed_by_me ? '#cbd5e1' : 'linear-gradient(135deg, #667eea, #764ba2)' }}>
+            <div className="af-story-avatar" style={{ background: s.background_color || '#7c3aed' }}>
+              {s.media_url ? (
+                <img src={s.media_url.startsWith('http') ? s.media_url : `${UPLOADS_BASE}${s.media_url}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                (s.author_name || 'U')[0]
+              )}
+            </div>
           </div>
           <span className="af-story-label">{s.author_name?.split(' ')[0] || 'Alumni'}</span>
         </button>
@@ -355,6 +419,17 @@ export default function AlumniFeed() {
             <span>{timeAgo(post.created_at)}</span>
           </div>
         </div>
+        {(post.author_id === user?.id || post.user_id === user?.id) && (
+          <div style={{ position: 'relative', marginLeft: 'auto' }}>
+            <button onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === post.id ? null : post.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '4px 8px' }}>⋯</button>
+            {menuOpen === post.id && (
+              <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 100, minWidth: 140, overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => { setEditPost(post); setEditText(post.content || ''); setMenuOpen(null); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#1e293b', textAlign: 'left' }}>✏️ Edit Post</button>
+                <button onClick={() => { handleDeletePost(post.id); setMenuOpen(null); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', textAlign: 'left' }}>🗑️ Delete Post</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="af-card-body" onClick={() => navigate(`/alumni/post/${post.id}`)}>
@@ -770,6 +845,69 @@ export default function AlumniFeed() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {editPost && (
+        <div className="af-composer-overlay" onClick={() => setEditPost(null)}>
+          <div className="af-composer" onClick={(e) => e.stopPropagation()}>
+            <h3>✏️ Edit Post</h3>
+            <div className="af-composer-row">
+              <div className="af-avatar" style={{ background: avatarColor(user?.id) }}>{(user?.name || 'U')[0]}</div>
+              <textarea
+                placeholder="Edit your post..."
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                className="af-composer-textarea"
+              />
+            </div>
+            <div className="af-composer-actions">
+              <button onClick={() => setEditPost(null)} className="af-composer-icon">Cancel</button>
+              <button onClick={handleEditPost} disabled={savingEdit || !editText.trim()} className="af-composer-post">
+                {savingEdit ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {statusViewer && (
+        <div style={{ position: 'fixed', inset: 0, background: '#0f172a', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }} onClick={nextStatus}>
+          {/* Progress bars */}
+          <div style={{ position: 'absolute', top: 16, left: 16, right: 16, display: 'flex', gap: 4 }}>
+            {stories.map((_, i) => (
+              <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < statusIndex ? '#fff' : i === statusIndex ? '#fff' : 'rgba(255,255,255,0.3)', overflow: 'hidden' }}>
+                {i === statusIndex && <div style={{ height: '100%', background: '#fff', animation: 'statusProgress 5s linear forwards' }} />}
+              </div>
+            ))}
+          </div>
+          {/* Author info */}
+          <div style={{ position: 'absolute', top: 30, left: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: statusViewer.background_color || '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>
+              {statusViewer.author_name?.[0] || 'U'}
+            </div>
+            <div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{statusViewer.author_name}</div>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{timeAgo(statusViewer.created_at)}</div>
+            </div>
+          </div>
+          {/* Close button */}
+          <button onClick={(e) => { e.stopPropagation(); setStatusViewer(null); }} style={{ position: 'absolute', top: 30, right: 16, background: 'none', border: 'none', color: '#fff', fontSize: 28, cursor: 'pointer' }}>✕</button>
+          {/* Nav buttons */}
+          {statusIndex > 0 && <button onClick={(e) => { e.stopPropagation(); prevStatus(); }} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 40, height: 40, color: '#fff', fontSize: 20, cursor: 'pointer' }}>‹</button>}
+          {statusIndex < stories.length - 1 && <button onClick={(e) => { e.stopPropagation(); nextStatus(); }} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: 40, height: 40, color: '#fff', fontSize: 20, cursor: 'pointer' }}>›</button>}
+          {/* Status content */}
+          <div style={{ maxWidth: 500, width: '90%', textAlign: 'center', padding: 40 }} onClick={(e) => e.stopPropagation()}>
+            {statusViewer.media_url ? (
+              <img src={statusViewer.media_url.startsWith('http') ? statusViewer.media_url : `${UPLOADS_BASE}${statusViewer.media_url}`} alt="" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 16 }} />
+            ) : (
+              <div style={{ background: statusViewer.background_color || '#7c3aed', borderRadius: 20, padding: '60px 40px', minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <p style={{ color: '#fff', fontSize: 22, fontWeight: 600, lineHeight: 1.5, margin: 0 }}>{statusViewer.content}</p>
+              </div>
+            )}
+          </div>
+          {/* Auto-advance timer */}
+          <style>{`@keyframes statusProgress { from { width: 0% } to { width: 100% } }`}</style>
         </div>
       )}
     </AlumniLayout>

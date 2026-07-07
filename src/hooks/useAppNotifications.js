@@ -7,6 +7,7 @@ function notificationsEndpoint(role) {
   if (role === 'student') return '/student/notifications';
   if (role === 'parent') return '/parent/notifications';
   if (role === 'teacher' || role === 'head_teacher') return '/staff/notifications';
+  if (role === 'alumni') return '/alumni/notifications';
   return null;
 }
 
@@ -105,7 +106,9 @@ export function useAppNotifications(token, role, { enablePopups = true, basePath
         ? `/parent/notifications/${id}/read`
         : role === 'student'
           ? `/student/notifications/${id}/read`
-          : `/staff/notifications/${id}/read`;
+          : role === 'alumni'
+            ? `/alumni/notifications/${id}/read`
+            : `/staff/notifications/${id}/read`;
       await api.put(readPath, {}, token).catch(() => {});
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
       setUnreadCount((c) => Math.max(0, c - 1));
@@ -119,7 +122,9 @@ export function useAppNotifications(token, role, { enablePopups = true, basePath
       ? '/parent/notifications/read-all'
       : role === 'student'
         ? '/student/notifications/read-all'
-        : '/staff/notifications/read-all';
+        : role === 'alumni'
+          ? '/alumni/notifications/read-all'
+          : '/staff/notifications/read-all';
     await api.put(readAllPath, {}, token).catch(() => {});
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);

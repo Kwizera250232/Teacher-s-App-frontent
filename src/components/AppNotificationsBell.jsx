@@ -4,7 +4,7 @@ import { useAppNotifications } from '../hooks/useAppNotifications';
 import { notificationIcon } from '../utils/roleNotificationNav';
 import './StudentNotifications.css';
 
-const SUPPORTED_ROLES = new Set(['student', 'teacher', 'head_teacher', 'parent']);
+const SUPPORTED_ROLES = new Set(['student', 'teacher', 'head_teacher', 'parent', 'alumni']);
 
 export default function AppNotificationsBell({ className = '', basePath }) {
   const { token, user } = useAuth();
