@@ -138,11 +138,11 @@ export default function AIRevisionShare() {
         <h2>AI Assessment Revision</h2>
         <p className="auth-sub">
           {shareInfo && (
-            <>Shared by <strong>{shareInfo.student_name}</strong> — {shareInfo.subject} ({shareInfo.grade})</>
+            <>Shared by <strong>{shareInfo.student_name}</strong>{shareInfo.is_quiz_only ? <> — Try this quiz!</> : <> — {shareInfo.subject} ({shareInfo.grade})</>}</>
           )}
         </p>
 
-        {shareInfo && (
+        {shareInfo && !shareInfo.is_quiz_only && (
           <div style={{
             background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 12,
             padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#3730a3',
@@ -154,6 +154,30 @@ export default function AIRevisionShare() {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>🏆 Grade:</span>
               <strong>{shareInfo.grade_letter} — {shareInfo.performance_level}</strong>
+            </div>
+          </div>
+        )}
+
+        {shareInfo && shareInfo.is_quiz_only && (
+          <div style={{
+            background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 12,
+            padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#3730a3',
+          }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>📋 Quiz Configuration:</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span>Subject:</span><strong>{shareInfo.subject}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span>Grade:</span><strong>{shareInfo.grade}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span>Type:</span><strong>{shareInfo.quiz_type?.replace(/_/g, ' ')}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span>Difficulty:</span><strong>{shareInfo.difficulty}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Questions:</span><strong>{shareInfo.num_questions}</strong>
             </div>
           </div>
         )}

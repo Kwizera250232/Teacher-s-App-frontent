@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import AlumniLayout from '../components/AlumniLayout';
@@ -59,6 +59,7 @@ function renderMatchingReview(q) {
 
 export default function AIRevision() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { token, user } = useAuth();
   const [phase, setPhase] = useState('entry'); // entry | quiz | results
   const [loading, setLoading] = useState(false);
@@ -67,6 +68,7 @@ export default function AIRevision() {
   const [showSummary, setShowSummary] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [sharing, setSharing] = useState(false);
+  const [quizShareUrl, setQuizShareUrl] = useState('');
 
   // Entry form state
   const [form, setForm] = useState({
@@ -132,6 +134,32 @@ export default function AIRevision() {
       }
       return next;
     });
+  };
+
+  const handleShareQuiz = async () => {
+    if (!form.subject) {
+      setError('Please select a subject first.');
+      return;
+    }
+    setSharing(true);
+    setError('');
+    try {
+      const numQ = form.num_questions === 'custom'
+        ? parseInt(form.custom_count) || 10
+        : form.num_questions;
+      const data = await api.post('/ai-revision/share-quiz', {
+        education_level: form.education_level,
+        grade: form.grade,
+        subject: form.subject,
+        quiz_type: form.quiz_type,
+        difficulty: form.difficulty,
+        num_questions: numQ,
+      }, token);
+      setQuizShareUrl(data.share_url);
+    } catch (err) {
+      setError(err.message);
+    }
+    setSharing(false);
   };
 
   const handleGenerate = async () => {
@@ -377,9 +405,43 @@ export default function AIRevision() {
                 style={{ flex: 1 }}
                 onClick={() => navigate('/alumni/ai-revision/progress')}
               >
-                📊 View Progress & Share
+                📊 View Progress
+              </button>
+              <button
+                className="ar-action-btn ar-action-secondary"
+                style={{ flex: 1 }}
+                onClick={handleShareQuiz}
+                disabled={sharing}
+              >
+                {sharing ? 'Sharing...' : '🔗 Share This Quiz'}
               </button>
             </div>
+
+            {quizShareUrl && (
+              <div style={{ marginTop: 12, padding: 16, background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 12, textAlign: 'center' }}>
+                <p style={{ margin: '0 0 8px', fontWeight: 700, color: '#065f46' }}>✅ Quiz share link created!</p>
+                <input
+                  readOnly
+                  value={quizShareUrl}
+                  onClick={(e) => e.target.select()}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0', fontSize: 13, color: '#065f46', marginBottom: 8 }}
+                />
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(quizShareUrl); }}
+                    style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#059669', color: 'white', cursor: 'pointer', fontWeight: 700 }}
+                  >
+                    📋 Copy Link
+                  </button>
+                  <button
+                    onClick={() => setQuizShareUrl('')}
+                    style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#e2e8f0', color: '#475569', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
