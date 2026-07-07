@@ -9,6 +9,8 @@ export default function AIRevisionProgress() {
   const { token } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [shareUrl, setShareUrl] = useState(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     api.get('/ai-revision/progress', token).then(d => {
@@ -169,6 +171,21 @@ export default function AIRevisionProgress() {
                 <div className="ar-history-score" style={{ color }}>
                   {s.score}/{s.total}
                 </div>
+                <button
+                  className="ar-action-btn ar-action-secondary"
+                  style={{ padding: '4px 10px', fontSize: 12 }}
+                  onClick={async () => {
+                    setSharing(s.id);
+                    try {
+                      const d = await api.post('/ai-revision/share', { session_id: s.id }, token);
+                      setShareUrl({ url: d.share_url, sessionId: s.id });
+                    } catch (e) { alert(e.message); }
+                    setSharing(false);
+                  }}
+                  disabled={sharing === s.id}
+                >
+                  {sharing === s.id ? '...' : '🔗'}
+                </button>
               </div>
             );
           })}
@@ -182,6 +199,30 @@ export default function AIRevisionProgress() {
             🏠 Dashboard
           </button>
         </div>
+
+        {shareUrl && (
+          <div style={{ marginTop: 16, padding: 16, background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 12, textAlign: 'center' }}>
+            <p style={{ margin: '0 0 8px', fontWeight: 700, color: '#065f46' }}>✅ Share link created!</p>
+            <input
+              readOnly
+              value={shareUrl.url}
+              onClick={(e) => e.target.select()}
+              style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0', fontSize: 13, color: '#065f46', marginBottom: 8 }}
+            />
+            <button
+              onClick={() => { navigator.clipboard.writeText(shareUrl.url); }}
+              style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#059669', color: 'white', cursor: 'pointer', fontWeight: 700 }}
+            >
+              📋 Copy Link
+            </button>
+            <button
+              onClick={() => setShareUrl(null)}
+              style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#e2e8f0', color: '#475569', cursor: 'pointer', fontWeight: 600, marginLeft: 8 }}
+            >
+              Close
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

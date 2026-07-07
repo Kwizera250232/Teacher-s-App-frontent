@@ -80,6 +80,9 @@ export default function AlumniFeed() {
   const [storyText, setStoryText] = useState('');
   const [storyBg, setStoryBg] = useState('#7c3aed');
   const [savingStory, setSavingStory] = useState(false);
+  const [storyImage, setStoryImage] = useState(null);
+  const [storyImageUrl, setStoryImageUrl] = useState(null);
+  const [storyViewers, setStoryViewers] = useState(null);
   const [statusViewer, setStatusViewer] = useState(null);
   const [statusIndex, setStatusIndex] = useState(0);
   const [posts, setPosts] = useState([]);
@@ -140,11 +143,20 @@ export default function AlumniFeed() {
   };
 
   const handleCreateStory = async () => {
-    if (!storyText.trim()) return;
+    if (!storyText.trim() && !storyImage) return;
     setSavingStory(true);
     try {
-      await api.post('/alumni/stories', { content: storyText, background_color: storyBg }, token);
+      let media_url = null;
+      if (storyImage) {
+        const fd = new FormData();
+        fd.append('file', storyImage);
+        const upload = await uploadFile('/alumni/stories/upload', fd, token);
+        media_url = upload.url;
+      }
+      await api.post('/alumni/stories', { content: storyText || null, media_url, background_color: storyBg }, token);
       setStoryText('');
+      setStoryImage(null);
+      setStoryImageUrl(null);
       setShowStoryModal(false);
       loadStories();
     } catch (e) { alert(e.message); }
@@ -284,11 +296,19 @@ export default function AlumniFeed() {
   const openStatusViewer = async (index) => {
     setStatusIndex(index);
     setStatusViewer(stories[index]);
+    setStoryViewers(null);
     // Mark as viewed
     if (stories[index] && !stories[index].viewed_by_me) {
       try {
         await api.post(`/alumni/stories/${stories[index].id}/view`, {}, token);
         setStories(prev => prev.map((s, i) => i === index ? { ...s, viewed_by_me: true } : s));
+      } catch (e) { console.error(e); }
+    }
+    // If owner, load viewers
+    if (stories[index] && stories[index].user_id === user?.id) {
+      try {
+        const data = await api.get(`/alumni/stories/${stories[index].id}/viewers`, token);
+        setStoryViewers(data.viewers || []);
       } catch (e) { console.error(e); }
     }
   };
@@ -811,34 +831,52 @@ export default function AlumniFeed() {
       )}
 
       {showStoryModal && (
-        <div className="af-composer-overlay" onClick={() => setShowStoryModal(false)}>
+        <div className="af-composer-overlay" onClick={() => { setShowStoryModal(false); setStoryImage(null); setStoryImageUrl(null); }}>
           <div className="af-story-modal" onClick={(e) => e.stopPropagation()}>
             <h3>📸 Add Your Story</h3>
             <p className="af-story-modal-hint">Stories last 24 hours then disappear</p>
-            <div className="af-story-preview" style={{ background: storyBg }}>
-              <textarea
-                className="af-story-textarea"
-                placeholder="Share something..."
-                value={storyText}
-                onChange={(e) => setStoryText(e.target.value)}
-                maxLength={200}
-              />
-            </div>
-            <div className="af-story-colors">
-              {STORY_BGS.map(c => (
-                <button
-                  key={c}
-                  className={`af-story-color ${storyBg === c ? 'af-story-color-active' : ''}`}
-                  style={{ background: c }}
-                  onClick={() => setStoryBg(c)}
+            <div className="af-story-preview" style={{ background: storyImageUrl ? '#0f172a' : storyBg }}>
+              {storyImageUrl ? (
+                <img src={storyImageUrl} alt="Story preview" style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 12, objectFit: 'contain' }} />
+              ) : (
+                <textarea
+                  className="af-story-textarea"
+                  placeholder="Share something..."
+                  value={storyText}
+                  onChange={(e) => setStoryText(e.target.value)}
+                  maxLength={200}
                 />
-              ))}
+              )}
             </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <label style={{ flex: 1, padding: '8px 12px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', textAlign: 'center', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#475569' }}>
+                📷 {storyImage ? 'Change Image' : 'Upload Image'}
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+                  const f = e.target.files[0];
+                  if (f) { setStoryImage(f); setStoryImageUrl(URL.createObjectURL(f)); }
+                }} />
+              </label>
+              {storyImage && (
+                <button onClick={() => { setStoryImage(null); setStoryImageUrl(null); }} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid #fecaca', background: '#fef2f2', color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Remove</button>
+              )}
+            </div>
+            {!storyImage && (
+              <div className="af-story-colors">
+                {STORY_BGS.map(c => (
+                  <button
+                    key={c}
+                    className={`af-story-color ${storyBg === c ? 'af-story-color-active' : ''}`}
+                    style={{ background: c }}
+                    onClick={() => setStoryBg(c)}
+                  />
+                ))}
+              </div>
+            )}
             <div className="af-story-actions">
-              <button className="af-composer-icon" onClick={() => setShowStoryModal(false)}>Cancel</button>
+              <button className="af-composer-icon" onClick={() => { setShowStoryModal(false); setStoryImage(null); setStoryImageUrl(null); }}>Cancel</button>
               <button
                 className="af-composer-post"
-                disabled={savingStory || !storyText.trim()}
+                disabled={savingStory || (!storyText.trim() && !storyImage)}
                 onClick={handleCreateStory}
               >
                 {savingStory ? 'Posting...' : 'Share Story'}
@@ -881,16 +919,26 @@ export default function AlumniFeed() {
               </div>
             ))}
           </div>
-          {/* Author info */}
-          <div style={{ position: 'absolute', top: 30, left: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: statusViewer.background_color || '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>
-              {statusViewer.author_name?.[0] || 'U'}
+          {/* Author info - clickable to profile */}
+          <div style={{ position: 'absolute', top: 30, left: 16, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); navigate(`/alumni/profile/${statusViewer.user_id}`); setStatusViewer(null); }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: statusViewer.background_color || '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, overflow: 'hidden' }}>
+              {statusViewer.avatar_url ? (
+                <img src={statusViewer.avatar_url.startsWith('http') ? statusViewer.avatar_url : `${UPLOADS_BASE}${statusViewer.avatar_url}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                statusViewer.author_name?.[0] || 'U'
+              )}
             </div>
             <div>
               <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{statusViewer.author_name}</div>
               <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{timeAgo(statusViewer.created_at)}</div>
             </div>
           </div>
+          {/* Viewers count for owner */}
+          {storyViewers !== null && (
+            <div style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.7)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+              👁️ {storyViewers.length} {storyViewers.length === 1 ? 'view' : 'views'}
+            </div>
+          )}
           {/* Close button */}
           <button onClick={(e) => { e.stopPropagation(); setStatusViewer(null); }} style={{ position: 'absolute', top: 30, right: 16, background: 'none', border: 'none', color: '#fff', fontSize: 28, cursor: 'pointer' }}>✕</button>
           {/* Nav buttons */}
@@ -906,6 +954,19 @@ export default function AlumniFeed() {
               </div>
             )}
           </div>
+          {/* Viewers list for owner */}
+          {storyViewers !== null && storyViewers.length > 0 && (
+            <div style={{ position: 'absolute', bottom: 20, left: 16, right: 16, maxWidth: 400, margin: '0 auto', background: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 12, maxHeight: 120, overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>VIEWED BY</div>
+              {storyViewers.slice(0, 5).map(v => (
+                <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: `hsl(${(v.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}>{v.name?.[0] || 'U'}</div>
+                  <span style={{ color: '#fff', fontSize: 13 }}>{v.name}</span>
+                </div>
+              ))}
+              {storyViewers.length > 5 && <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 4 }}>+{storyViewers.length - 5} more</div>}
+            </div>
+          )}
           {/* Auto-advance timer */}
           <style>{`@keyframes statusProgress { from { width: 0% } to { width: 100% } }`}</style>
         </div>

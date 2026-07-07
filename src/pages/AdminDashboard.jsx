@@ -13,6 +13,7 @@ import AdminReports from '../components/admin/AdminReports';
 import AdminSettings from '../components/admin/AdminSettings';
 import AdminTextbooks from '../components/admin/AdminTextbooks';
 import AdminAlumni from '../components/admin/AdminAlumni';
+import AdminAIRevision from '../components/admin/AdminAIRevision';
 import AdminStudentArticles from '../components/admin/AdminStudentArticles';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import VerifiedBadge from '../components/VerifiedBadge';
@@ -33,6 +34,7 @@ const NAV = [
   { key: 'reports', label: 'Reports', icon: '💬' },
   { key: 'textbooks', label: 'AI Textbooks', icon: '🤖' },
   { key: 'alumni', label: 'Alumni', icon: '🎓' },
+  { key: 'ai-revision', label: 'AI Revision', icon: '🤖' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -227,6 +229,7 @@ export default function AdminDashboard() {
           {page === 'reports' && <AdminReports token={token} />}
           {page === 'textbooks' && <AdminTextbooks token={token} />}
           {page === 'alumni' && <AdminAlumni token={token} />}
+          {page === 'ai-revision' && <AdminAIRevision token={token} />}
           {page === 'settings' && <AdminSettings token={token} />}
         </div>
       </div>

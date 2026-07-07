@@ -69,12 +69,16 @@ export default function AIRevisionShare() {
         }
         payload.phone = form.parentPhone.trim();
       } else {
-        // Student
+        // Student — use parent/guardian gmail as login email
+        if (!form.parentGmail.trim()) {
+          setError('Parent/Guardian Gmail is required for students.');
+          setLoading(false);
+          return;
+        }
         payload.parent_gmail = form.parentGmail.trim().toLowerCase();
         payload.parent_phone = form.parentPhone.trim();
         payload.school_name_text = form.schoolName.trim();
-        // Use parent gmail as login email if no email provided
-        payload.email = form.email.trim().toLowerCase() || `${form.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@revision.edu`;
+        payload.email = form.parentGmail.trim().toLowerCase();
       }
 
       const data = await api.post('/auth/register', payload);
@@ -189,28 +193,25 @@ export default function AIRevisionShare() {
             />
           </div>
 
-          {/* Email */}
-          <div className="form-group">
-            <label>{role === 'teacher' ? 'Your Gmail (Login)' : 'Email (Login)'}</label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder={role === 'teacher' ? 'yourname@gmail.com' : 'yourname@gmail.com (optional)'}
-              required={role === 'teacher'}
-            />
-            {role === 'student' && (
-              <p style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-                If you don't have email, we'll create one for you automatically.
-              </p>
-            )}
-          </div>
+          {/* Email (only for teachers) */}
+          {role === 'teacher' && (
+            <div className="form-group">
+              <label>Your Gmail (Login)</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="yourname@gmail.com"
+                required
+              />
+            </div>
+          )}
 
           {/* Student-specific fields */}
           {role === 'student' && (
             <>
               <div className="form-group">
-                <label>Parent Gmail</label>
+                <label>Parent / Guardian Gmail (This is your login)</label>
                 <input
                   type="email"
                   value={form.parentGmail}
@@ -218,6 +219,9 @@ export default function AIRevisionShare() {
                   placeholder="parent@gmail.com"
                   required
                 />
+                <p style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                  This Gmail will be used to log in to your account.
+                </p>
               </div>
               <div className="form-group">
                 <label>Parent Telephone</label>
