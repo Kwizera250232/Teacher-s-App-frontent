@@ -7,6 +7,15 @@ function avatarColor(id) {
   return `hsl(${(id || 1) * 137 % 360}, 65%, 48%)`;
 }
 
+function formatContent(html) {
+  if (!html) return '';
+  // If content already has HTML tags, return as-is
+  if (/<[a-z][\s\S]*>/i.test(html)) return html;
+  // Convert plain text with newlines to paragraphs
+  const paragraphs = html.split(/\n\n+/).filter(p => p.trim());
+  return paragraphs.map(p => `<p style="margin:0 0 16px;">${p.replace(/\n/g, '<br/>')}</p>`).join('');
+}
+
 export default function AlumniComposition() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -167,7 +176,7 @@ export default function AlumniComposition() {
             lineHeight: 1.85, fontSize: 18, color: '#1e293b',
             fontFamily: 'Georgia, "Times New Roman", serif',
           }}
-          dangerouslySetInnerHTML={{ __html: comp.content }}
+          dangerouslySetInnerHTML={{ __html: formatContent(comp.content) }}
         />
 
         {/* Tags */}
