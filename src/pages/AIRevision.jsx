@@ -370,6 +370,16 @@ export default function AIRevision() {
             <button className="ar-generate-btn" onClick={handleGenerate} disabled={loading}>
               {loading ? '⏳ Generating...' : '🚀 Start Revision Quiz'}
             </button>
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button
+                className="ar-action-btn ar-action-secondary"
+                style={{ flex: 1 }}
+                onClick={() => navigate('/alumni/ai-revision/progress')}
+              >
+                📊 View Progress & Share
+              </button>
+            </div>
           </div>
         </div>
       </div>
