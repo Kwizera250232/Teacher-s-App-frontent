@@ -5,6 +5,7 @@ import '../pages/GuestDashboard.css';
 
 const NAV = [
   { id: 'home', label: 'Home', icon: '🏠', path: '/guest/dashboard' },
+  { id: 'eduhub', label: 'EduHub', icon: '🎓', path: '/education-hub' },
   { id: 'profile', label: 'Profile', icon: '👤', path: '/guest/profile' },
 ];
 

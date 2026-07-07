@@ -69,6 +69,7 @@ const AlumniAdmin = lazy(() => import('./pages/alumni/AlumniAdmin'));
 const AIRevision = lazy(() => import('./pages/AIRevision'));
 const AIRevisionProgress = lazy(() => import('./pages/AIRevisionProgress'));
 const AIRevisionShare = lazy(() => import('./pages/AIRevisionShare'));
+const EducationHub = lazy(() => import('./pages/eduhub/EducationHub'));
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -303,6 +304,12 @@ function AppShell() {
                 } />
                 <Route path="/alumni/admin" element={
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniAdmin /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/education-hub" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><EducationHub /></Suspense></ProtectedRoute>
+                } />
+                <Route path="/education-hub/*" element={
+                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><EducationHub /></Suspense></ProtectedRoute>
                 } />
         </Routes>
       </div>

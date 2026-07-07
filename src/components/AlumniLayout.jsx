@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { icon: '👤', label: 'Profile', path: '/alumni/profile/me' },
   { icon: '💰', label: 'Wallet', path: '/alumni/wallet' },
   { icon: '🌟', label: 'Opportunities', path: '/alumni/opportunities' },
+  { icon: '🎓', label: 'Education Hub', path: '/education-hub' },
 ];
 
 export default function AlumniLayout({ children, showTopWriters = true, fullWidth = false }) {
@@ -97,6 +98,7 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
     { icon: '👥', label: 'Connections', path: '/alumni/colleagues' },
     { icon: '💬', label: 'Group', path: '/alumni/groups' },
     { icon: '🌟', label: 'Opportunities', path: '/alumni/opportunities' },
+    { icon: '🎓', label: 'EduHub', path: '/education-hub' },
     { icon: '☰', label: 'Menu', action: () => setSidebarOpen(true) },
   ];
 
