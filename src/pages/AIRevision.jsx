@@ -413,7 +413,7 @@ export default function AIRevision() {
                 onClick={handleShareQuiz}
                 disabled={sharing}
               >
-                {sharing ? 'Sharing...' : '🔗 Share This Quiz'}
+                {sharing ? 'Sharing...' : '🔗 Share AI Revision'}
               </button>
             </div>
 
