@@ -11,10 +11,7 @@ export default function EmailConfirmBanner() {
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState('');
 
-  const needsConfirm =
-    user &&
-    user.email_confirmed === false &&
-    ['head_teacher', 'teacher', 'guest'].includes(user.role);
+  const needsConfirm = false;
 
   // Refresh the flag from the server (catches "confirmed in another tab/email click")
   useEffect(() => {

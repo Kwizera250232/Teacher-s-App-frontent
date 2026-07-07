@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api';
 
+const EDUCATION_LEVELS = [
+  { value: 'primary', label: 'Primary', icon: '📘' },
+  { value: 'secondary', label: 'Secondary', icon: '📗' },
+];
+const PRIMARY_GRADES = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'];
+const SECONDARY_GRADES = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
+
 const SUBJECTS = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Kinyarwanda', 'French', 'Entrepreneurship', 'Computer Science', 'Economics', 'Religious Education', 'General Studies'];
+
+const EMPTY_QUESTION = { question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', explanation: '' };
 
 export default function AdminPastPapers({ token }) {
   const [view, setView] = useState('list');
@@ -15,12 +24,10 @@ export default function AdminPastPapers({ token }) {
 
   // Create form state
   const [form, setForm] = useState({
-    title: '', subject: 'English', year: new Date().getFullYear(), class_level: '',
+    title: '', subject: 'English', year: new Date().getFullYear(), education_level: 'secondary', grade: 'S3',
     description: '', duration_minutes: 120,
   });
-  const [questions, setQuestions] = useState([
-    { question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', explanation: '' },
-  ]);
+  const [questions, setQuestions] = useState([{ ...EMPTY_QUESTION }]);
   const [saving, setSaving] = useState(false);
 
   const loadExams = async () => {
@@ -48,8 +55,8 @@ export default function AdminPastPapers({ token }) {
   }, [token]);
 
   const handleCreate = async () => {
-    if (!form.title.trim() || !form.subject.trim() || !form.year) {
-      setError('Title, subject, and year are required.');
+    if (!form.title.trim() || !form.subject.trim() || !form.year || !form.grade) {
+      setError('Title, subject, year, and grade are required.');
       return;
     }
     const validQuestions = questions.filter(q => q.question.trim() && q.option_a.trim() && q.option_b.trim() && q.correct_answer);
@@ -67,8 +74,8 @@ export default function AdminPastPapers({ token }) {
         questions: validQuestions,
       }, token);
       setShowCreate(false);
-      setForm({ title: '', subject: 'English', year: new Date().getFullYear(), class_level: '', description: '', duration_minutes: 120 });
-      setQuestions([{ question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', explanation: '' }]);
+      setForm({ title: '', subject: 'English', year: new Date().getFullYear(), education_level: 'secondary', grade: 'S3', description: '', duration_minutes: 120 });
+      setQuestions([{ ...EMPTY_QUESTION }]);
       loadExams();
       loadStats();
     } catch (e) {
@@ -112,7 +119,7 @@ export default function AdminPastPapers({ token }) {
   };
 
   const addQuestion = () => {
-    setQuestions(prev => [...prev, { question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', explanation: '' }]);
+    setQuestions(prev => [...prev, { ...EMPTY_QUESTION }]);
   };
 
   const removeQuestion = (idx) => {
