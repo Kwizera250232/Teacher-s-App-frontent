@@ -209,6 +209,21 @@ export default function AlumniProfile() {
               <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
                 @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role || 'Alumni'}
               </p>
+              {(profile.school_name_text || profile.school_name) && (
+                <p style={{ margin: '2px 0 0', color: '#64748b', fontSize: 13 }}>
+                  🏫 {profile.school_name_text || profile.school_name}
+                </p>
+              )}
+              {(profile.district || profile.sector) && (
+                <p style={{ margin: '2px 0 0', color: '#64748b', fontSize: 13 }}>
+                  📍 {[profile.district, profile.sector].filter(Boolean).join(', ')}
+                </p>
+              )}
+              {profile.is_external && (
+                <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 11, fontWeight: 700 }}>
+                  ✅ Verified External Student
+                </span>
+              )}
             </div>
           </div>
 

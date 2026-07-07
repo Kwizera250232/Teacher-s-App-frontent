@@ -68,6 +68,7 @@ const AlumniOpportunities = lazy(() => import('./pages/alumni/AlumniOpportunitie
 const AlumniAdmin = lazy(() => import('./pages/alumni/AlumniAdmin'));
 const AIRevision = lazy(() => import('./pages/AIRevision'));
 const AIRevisionProgress = lazy(() => import('./pages/AIRevisionProgress'));
+const AIRevisionShare = lazy(() => import('./pages/AIRevisionShare'));
 
 function ProtectedRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -116,6 +117,7 @@ function AppShell() {
                 <Route path="/invite" element={<InviteSignup />} />
                 <Route path="/share/moment/:token" element={<ShareMomentPage />} />
                 <Route path="/quiz/share/:token" element={<QuizShareLanding />} />
+                <Route path="/ai-revision/share/:token" element={<Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AIRevisionShare /></Suspense>} />
 
                 <Route path="/guest/dashboard" element={
                   <ProtectedRoute role="guest"><GuestDashboard /></ProtectedRoute>

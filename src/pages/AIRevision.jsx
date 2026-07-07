@@ -65,6 +65,8 @@ export default function AIRevision() {
   const [error, setError] = useState('');
   const [showReflection, setShowReflection] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [sharing, setSharing] = useState(false);
 
   // Entry form state
   const [form, setForm] = useState({
@@ -653,7 +655,46 @@ export default function AIRevision() {
             <button className="ar-action-btn ar-action-secondary" onClick={() => navigate('/alumni/feed')}>
               🏠 Dashboard
             </button>
+            <button
+              className="ar-action-btn ar-action-secondary"
+              onClick={async () => {
+                setSharing(true);
+                try {
+                  const data = await api.post('/ai-revision/share', { session_id: sessionId }, token);
+                  setShareUrl(data.share_url);
+                } catch (err) {
+                  setError(err.message);
+                }
+                setSharing(false);
+              }}
+              disabled={sharing}
+            >
+              {sharing ? 'Sharing...' : '🔗 Share Results'}
+            </button>
           </div>
+
+          {shareUrl && (
+            <div style={{ marginTop: 12, padding: 16, background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 12, textAlign: 'center' }}>
+              <p style={{ margin: '0 0 8px', fontWeight: 700, color: '#065f46' }}>✅ Share link created!</p>
+              <input
+                readOnly
+                value={shareUrl}
+                onClick={(e) => e.target.select()}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #a7f3d0', fontSize: 13, color: '#065f46', marginBottom: 8 }}
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(shareUrl);
+                }}
+                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#059669', color: 'white', cursor: 'pointer', fontWeight: 700 }}
+              >
+                📋 Copy Link
+              </button>
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: '#64748b' }}>
+                Anyone who opens this link can sign up and try AI Revision quizzes.
+              </p>
+            </div>
+          )}
         </div>
 
         {showReflection && (
