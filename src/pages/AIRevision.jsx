@@ -28,7 +28,7 @@ const DIFFICULTIES = [
   { value: 'mixed', label: 'Mixed', icon: '🔀' },
 ];
 
-const QUESTION_COUNTS = [10, 20, 30, 50];
+const QUESTION_COUNTS = [10, 20, 30, 50, 'all'];
 
 function renderMatchingReview(q) {
   let pairs = [];
@@ -146,7 +146,9 @@ export default function AIRevision() {
     try {
       const numQ = form.num_questions === 'custom'
         ? parseInt(form.custom_count) || 10
-        : form.num_questions;
+        : form.num_questions === 'all'
+          ? 0
+          : form.num_questions;
       const data = await api.post('/ai-revision/share-quiz', {
         education_level: form.education_level,
         grade: form.grade,
@@ -169,7 +171,9 @@ export default function AIRevision() {
     }
     const numQ = form.num_questions === 'custom'
       ? parseInt(form.custom_count) || 10
-      : form.num_questions;
+      : form.num_questions === 'all'
+        ? 0
+        : form.num_questions;
 
     setLoading(true);
     setError('');
@@ -352,7 +356,7 @@ export default function AIRevision() {
                     className={`ar-option ${form.num_questions === n ? 'ar-selected' : ''}`}
                     onClick={() => handleField('num_questions', n)}
                   >
-                    {n}
+                    {n === 'all' ? 'All' : n}
                   </div>
                 ))}
                 <div
