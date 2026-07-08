@@ -74,7 +74,7 @@ export default function EducationHubHome({ onNavigate }) {
       <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 8px', lineHeight: 1.5 }}>{sch.description?.slice(0, 80) || 'Scholarship opportunity'}...</p>
       {sch.amount && <div style={{ fontSize: 13, fontWeight: 700, color: '#059669', marginBottom: 4 }}>{sch.amount}</div>}
       {sch.deadline && <div style={{ fontSize: 12, color: '#dc2626' }}>Deadline: {new Date(sch.deadline).toLocaleDateString()}</div>}
-      {sch.institution_name && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4}>{sch.institution_name}</div>}
+      {sch.institution_name && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>{sch.institution_name}</div>}
     </div>
   );
 
