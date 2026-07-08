@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../api';
+import { api, uploadFile, API_BASE } from '../../api';
 
 const TABS = [
   { key: 'institutions', label: 'Institutions', icon: '🏫' },
@@ -27,6 +27,24 @@ export default function AdminEducationHub({ token }) {
   const [showForm, setShowForm] = useState(null);
   const [form, setForm] = useState({});
   const [msg, setMsg] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (field, file) => {
+    if (!file) return;
+    setUploading(true);
+    setMsg('');
+    try {
+      const formData = new FormData();
+      formData.append(field, file);
+      const result = await uploadFile('/education-hub/admin/upload-image', formData, token);
+      const urlKey = field === 'banner' ? 'banner_url' : 'logo_url';
+      setForm(prev => ({ ...prev, [urlKey]: result[urlKey] }));
+      setMsg(`✅ ${field === 'banner' ? 'Banner' : 'Logo'} uploaded`);
+    } catch (e) {
+      setMsg(e.message || 'Upload failed');
+    }
+    setUploading(false);
+  };
 
   const load = () => {
     setLoading(true);
@@ -131,8 +149,16 @@ export default function AdminEducationHub({ token }) {
                     <div><label style={labelStyle}>Email</label><input style={inputStyle} value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
                     <div><label style={labelStyle}>Phone</label><input style={inputStyle} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
                     <div><label style={labelStyle}>Website</label><input style={inputStyle} value={form.website || ''} onChange={e => setForm({ ...form, website: e.target.value })} /></div>
-                    <div><label style={labelStyle}>Banner URL</label><input style={inputStyle} value={form.banner_url || ''} onChange={e => setForm({ ...form, banner_url: e.target.value })} /></div>
-                    <div><label style={labelStyle}>Logo URL</label><input style={inputStyle} value={form.logo_url || ''} onChange={e => setForm({ ...form, logo_url: e.target.value })} /></div>
+                    <div><label style={labelStyle}>Banner Image</label>
+                      {form.banner_url && <img src={form.banner_url.startsWith('http') ? form.banner_url : API_BASE + form.banner_url} alt="banner" style={{ width: '100%', maxHeight: 100, objectFit: 'cover', borderRadius: 8, marginBottom: 6 }} />}
+                      <input type="file" accept="image/*" onChange={e => handleImageUpload('banner', e.target.files[0])} style={{ fontSize: 13, marginBottom: 6 }} />
+                      {form.banner_url && <button onClick={() => setForm({ ...form, banner_url: '' })} style={{ fontSize: 11, color: '#dc2626', border: 'none', background: 'none', cursor: 'pointer' }}>Remove banner</button>}
+                    </div>
+                    <div><label style={labelStyle}>Logo Image</label>
+                      {form.logo_url && <img src={form.logo_url.startsWith('http') ? form.logo_url : API_BASE + form.logo_url} alt="logo" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, marginBottom: 6 }} />}
+                      <input type="file" accept="image/*" onChange={e => handleImageUpload('logo', e.target.files[0])} style={{ fontSize: 13, marginBottom: 6 }} />
+                      {form.logo_url && <button onClick={() => setForm({ ...form, logo_url: '' })} style={{ fontSize: 11, color: '#dc2626', border: 'none', background: 'none', cursor: 'pointer' }}>Remove logo</button>}
+                    </div>
                     <div><label style={labelStyle}>Curriculum</label><input style={inputStyle} value={form.curriculum || ''} onChange={e => setForm({ ...form, curriculum: e.target.value })} /></div>
                   </div>
                   <div style={{ display: 'flex', gap: 16, margin: '8px 0' }}>
@@ -143,7 +169,7 @@ export default function AdminEducationHub({ token }) {
                   </div>
                   <div><label style={labelStyle}>Description</label><textarea style={{ ...inputStyle, minHeight: 60 }} value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
                   <div style={{ display: 'flex', gap: 10 }}>
-                    <button onClick={() => submit('/education-hub/admin/institutions', form)} style={{ padding: '8px 20px', borderRadius: 10, border: 'none', background: '#2563EB', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Create</button>
+                    <button onClick={() => submit('/education-hub/admin/institutions', form)} disabled={uploading} style={{ padding: '8px 20px', borderRadius: 10, border: 'none', background: uploading ? '#94a3b8' : '#2563EB', color: '#fff', fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer' }}>{uploading ? 'Uploading...' : 'Create'}</button>
                     <button onClick={() => setShowForm(null)} style={{ padding: '8px 20px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                   </div>
                 </div>
