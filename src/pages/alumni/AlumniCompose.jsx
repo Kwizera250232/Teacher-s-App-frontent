@@ -236,7 +236,7 @@ export default function AlumniCompose() {
               <img src={featuredImage.startsWith('http') ? featuredImage : `${UPLOADS_BASE}${featuredImage}`} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: 16, maxHeight: 300, objectFit: 'cover' }} />
             )}
             <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>{title || 'Untitled'}</h1>
-            <div style={{ lineHeight: 1.8, color: '#374151', fontSize: 16 }} dangerouslySetInnerHTML={{ __html: content }} />
+            <div style={{ lineHeight: 1.8, color: '#374151', fontSize: 16, whiteSpace: 'pre-wrap' }}>{content}</div>
           </div>
         )}
       </div>

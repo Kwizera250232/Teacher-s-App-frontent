@@ -12,6 +12,7 @@ function formatContent(html) {
   // If content already has HTML tags, return as-is
   if (/<[a-z][\s\S]*>/i.test(html)) return html;
   // Convert plain text with newlines to paragraphs
+  // Split on double newlines for paragraphs, single newlines become <br/>
   const paragraphs = html.split(/\n\n+/).filter(p => p.trim());
   return paragraphs.map(p => `<p style="margin:0 0 16px;">${p.replace(/\n/g, '<br/>')}</p>`).join('');
 }
