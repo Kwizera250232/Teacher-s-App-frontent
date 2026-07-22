@@ -53,15 +53,15 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
         <AppNotificationsBell basePath="/alumni" />
       </div>
 
-      {/* Navigation */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* Navigation — Feature Grid Style */}
+      <nav style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
         {NAV_ITEMS.map((item) => {
           const isActive = currentPath === item.path || currentPath.startsWith(item.path);
           const finalPath = item.path === '/alumni/profile/me' ? getProfilePath() : item.path;
           return (
-            <Link key={item.path} to={finalPath} onClick={() => setSidebarOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, textDecoration: 'none', color: isActive ? '#667eea' : '#475569', fontWeight: isActive ? 700 : 500, fontSize: 14, background: isActive ? '#f0f7ff' : 'transparent', transition: 'all 0.2s' }}>
-              <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{item.icon}</span>
-              {item.label}
+            <Link key={item.path} to={finalPath} onClick={() => setSidebarOpen(false)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 10px', borderRadius: 14, textDecoration: 'none', color: isActive ? '#667eea' : '#475569', fontWeight: 600, fontSize: 12, background: isActive ? '#f0f7ff' : '#f8fafc', transition: 'all 0.2s', textAlign: 'center', border: '1px solid ' + (isActive ? '#c7d2fe' : '#e2e8f0') }}>
+              <span style={{ fontSize: 24 }}>{item.icon}</span>
+              <span style={{ lineHeight: 1.2 }}>{item.label}</span>
             </Link>
           );
         })}
