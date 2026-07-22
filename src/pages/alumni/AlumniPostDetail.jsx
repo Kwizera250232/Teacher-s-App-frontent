@@ -88,10 +88,15 @@ export default function AlumniPostDetail() {
   return (
     <AlumniLayout showTopWriters={false}>
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 0 40px' }}>
-        {/* Back button */}
-        <button onClick={() => navigate('/alumni/feed')} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 14, cursor: 'pointer', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}>
-          ← Back to Feed
-        </button>
+        {/* Back button & PDF button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <button onClick={() => navigate('/alumni/feed')} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}>
+            ← Back to Feed
+          </button>
+          <button onClick={() => window.print()} style={{ background: 'none', border: '1.5px solid #e2e8f0', cursor: 'pointer', fontSize: 13, color: '#64748b', fontWeight: 600, padding: '6px 14px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
+            📄 Open as PDF
+          </button>
+        </div>
 
         <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
           {/* Author Header */}

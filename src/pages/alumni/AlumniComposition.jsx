@@ -114,10 +114,13 @@ export default function AlumniComposition() {
         <div style={{ width: `${readProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #d97706)', transition: 'width 0.2s' }} />
       </div>
 
-      {/* Back Button */}
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px 0' }}>
+      {/* Back Button & PDF Button */}
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button onClick={() => navigate('/alumni/feed')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
           ← Back to Feed
+        </button>
+        <button onClick={() => window.print()} style={{ background: 'none', border: '1.5px solid #e2e8f0', cursor: 'pointer', fontSize: 14, color: '#64748b', fontWeight: 600, padding: '8px 16px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
+          📄 Open as PDF
         </button>
       </div>
 

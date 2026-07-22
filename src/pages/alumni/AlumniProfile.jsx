@@ -205,6 +205,11 @@ export default function AlumniProfile() {
                 <h2 style={{ margin: 0, fontSize: 32, fontWeight: 600, fontFamily: "'Lora', Georgia, serif" }}>{profile.name}</h2>
                 <VerifiedBadge size={20} userId={profileId} onViewProfile={null} />
                 <AIRevisionBadge size={20} userId={profileId} />
+                {!isMe && (
+                  <button onClick={handleFollow} style={{ padding: '6px 16px', borderRadius: 20, border: profile.is_following ? '1.5px solid #e2e8f0' : 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter', sans-serif' }}>
+                    {profile.is_following ? '✓ Subscribed' : '🔔 Subscribe'}
+                  </button>
+                )}
               </div>
               <p style={{ margin: '6px 0 0', color: '#9ca3af', fontSize: 15, fontFamily: "'Inter', sans-serif" }}>
                 @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role || 'Alumni'}
