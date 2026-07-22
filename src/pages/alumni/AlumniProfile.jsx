@@ -59,6 +59,12 @@ export default function AlumniProfile() {
         const f = await api.get(`/alumni/follows/${p.user_id || p.id}`, token);
         setFollows(f || { followers: 0, following: 0 });
 
+        // Check if current user is following this profile
+        if (!isMe) {
+          const followStatus = await api.get(`/alumni/follow-status/${p.user_id || p.id}`, token);
+          setProfile(prev => ({ ...prev, is_following: followStatus.is_following || false }));
+        }
+
         const posts = await api.get(`/alumni/feed?author_id=${p.user_id || p.id}`, token);
         const allImages = (posts.posts || []).flatMap(post => {
           const imgs = post.image_paths ? (Array.isArray(post.image_paths) ? post.image_paths : [post.image_paths]) : [];

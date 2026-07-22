@@ -115,16 +115,18 @@ export default function AlumniComposition() {
       {comp && (
         <Helmet>
           <title>{comp.title} - UClass Alumni</title>
-          <meta name="description" content={comp.excerpt || comp.content?.substring(0, 160) || ''} />
+          <meta name="description" content={comp.excerpt || comp.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
           <meta property="og:type" content="article" />
           <meta property="og:title" content={comp.title} />
-          <meta property="og:description" content={comp.excerpt || comp.content?.substring(0, 160) || ''} />
+          <meta property="og:description" content={comp.excerpt || comp.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
           <meta property="og:url" content={window.location.href} />
           {featuredImg && <meta property="og:image" content={featuredImg} />}
           <meta property="og:site_name" content="UClass Alumni" />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={comp.title} />
-          <meta name="twitter:description" content={comp.excerpt || comp.content?.substring(0, 160) || ''} />
+          <meta name="twitter:description" content={comp.excerpt || comp.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
           {featuredImg && <meta name="twitter:image" content={featuredImg} />}
         </Helmet>
       )}

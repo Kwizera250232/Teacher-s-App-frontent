@@ -91,17 +91,19 @@ export default function AlumniPostDetail() {
     <AlumniLayout showTopWriters={false}>
       {post && (
         <Helmet>
-          <title>{post.content?.substring(0, 60) || 'Post'} - UClass Alumni</title>
-          <meta name="description" content={post.content?.substring(0, 160) || ''} />
+          <title>{post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} - UClass Alumni</title>
+          <meta name="description" content={post.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
           <meta property="og:type" content="article" />
-          <meta property="og:title" content={post.content?.substring(0, 60) || 'Post'} />
-          <meta property="og:description" content={post.content?.substring(0, 160) || ''} />
+          <meta property="og:title" content={post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
+          <meta property="og:description" content={post.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
           <meta property="og:url" content={window.location.href} />
           {post.image_paths?.[0] && <meta property="og:image" content={post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`} />}
           <meta property="og:site_name" content="UClass Alumni" />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={post.content?.substring(0, 60) || 'Post'} />
-          <meta name="twitter:description" content={post.content?.substring(0, 160) || ''} />
+          <meta name="twitter:title" content={post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
+          <meta name="twitter:description" content={post.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
           {post.image_paths?.[0] && <meta name="twitter:image" content={post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`} />}
         </Helmet>
       )}
