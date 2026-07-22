@@ -61,8 +61,13 @@ export default function AlumniProfile() {
 
         // Check if current user is following this profile
         if (!isMe) {
-          const followStatus = await api.get(`/alumni/follow-status/${p.user_id || p.id}`, token);
-          setProfile(prev => ({ ...prev, is_following: followStatus.is_following || false }));
+          try {
+            const followStatus = await api.get(`/alumni/follow-status/${p.user_id || p.id}`, token);
+            setProfile(prev => ({ ...prev, is_following: followStatus.is_following || false }));
+          } catch (err) {
+            console.error('Follow status check failed:', err);
+            setProfile(prev => ({ ...prev, is_following: false }));
+          }
         }
 
         const posts = await api.get(`/alumni/feed?author_id=${p.user_id || p.id}`, token);
@@ -211,7 +216,7 @@ export default function AlumniProfile() {
                 <h2 style={{ margin: 0, fontSize: 32, fontWeight: 600, fontFamily: "'Lora', Georgia, serif" }}>{profile.name}</h2>
                 <VerifiedBadge size={20} userId={profileId} onViewProfile={null} />
                 <AIRevisionBadge size={20} userId={profileId} />
-                {!isMe && (
+                {user && !isMe && (
                   <button
                     onClick={handleFollow}
                     style={{
