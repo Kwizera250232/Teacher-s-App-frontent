@@ -165,20 +165,20 @@ export default function AlumniProfile() {
 
   return (
     <AlumniLayout showTopWriters={false}>
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        {/* Cover */}
+      <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+        {/* Cover — Edge-to-edge */}
         <div style={{
-          height: 200,
+          height: 280,
           background: profile.cover_photo_path
             ? `url(${profile.cover_photo_path.startsWith('http') ? profile.cover_photo_path : `${UPLOADS_BASE}${profile.cover_photo_path}`}) center/cover`
             : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderRadius: 16,
-          marginBottom: -50,
+          borderRadius: 0,
+          marginBottom: -60,
           position: 'relative',
         }}>
           {isMe && (
-            <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8 }}>
-              <button onClick={() => avatarFileRef.current?.click()} disabled={uploadingAvatar} style={{ padding: '8px 14px', borderRadius: 20, border: 'none', background: 'rgba(0,0,0,0.5)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
+            <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8 }}>
+              <button onClick={() => avatarFileRef.current?.click()} disabled={uploadingAvatar} style={{ padding: '10px 18px', borderRadius: 24, border: 'none', background: 'rgba(0,0,0,0.5)', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
                 {uploadingAvatar ? 'Uploading...' : '📸 Upload Photo'}
               </button>
               <input ref={avatarFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
@@ -186,41 +186,41 @@ export default function AlumniProfile() {
           )}
         </div>
 
-        {/* Profile Card */}
-        <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+        {/* Profile Card — Minimal, no border */}
+        <div style={{ background: '#fff', borderRadius: 0, padding: '80px 24px 32px', marginBottom: 32, boxShadow: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, marginBottom: 24, flexWrap: 'wrap' }}>
             <div style={{
-              width: 100, height: 100, borderRadius: '50%',
+              width: 120, height: 120, borderRadius: '50%',
               background: avatarSrc ? `url(${avatarSrc}) center/cover` : `hsl(${(profile.id * 137) % 360}, 60%, 50%)`,
-              border: '4px solid #fff',
+              border: '5px solid #fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 40, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              fontSize: 48, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
               color: '#fff', fontWeight: 700,
               overflow: 'hidden', flexShrink: 0,
             }}>
               {!avatarSrc && (profile.name?.[0] || 'K')}
             </div>
             <div style={{ flex: 1, marginBottom: 8, minWidth: 200 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{profile.name}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <h2 style={{ margin: 0, fontSize: 32, fontWeight: 600, fontFamily: "'Lora', Georgia, serif" }}>{profile.name}</h2>
                 <VerifiedBadge size={20} userId={profileId} onViewProfile={null} />
                 <AIRevisionBadge size={20} userId={profileId} />
               </div>
-              <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
+              <p style={{ margin: '6px 0 0', color: '#9ca3af', fontSize: 15, fontFamily: "'Inter', sans-serif" }}>
                 @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role || 'Alumni'}
               </p>
               {(profile.school_name_text || profile.school_name) && (
-                <p style={{ margin: '2px 0 0', color: '#64748b', fontSize: 13 }}>
+                <p style={{ margin: '4px 0 0', color: '#9ca3af', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
                   🏫 {profile.school_name_text || profile.school_name}
                 </p>
               )}
               {(profile.district || profile.sector) && (
-                <p style={{ margin: '2px 0 0', color: '#64748b', fontSize: 13 }}>
+                <p style={{ margin: '4px 0 0', color: '#9ca3af', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
                   📍 {[profile.district, profile.sector].filter(Boolean).join(', ')}
                 </p>
               )}
               {profile.is_external && (
-                <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 6, background: '#eef2ff', color: '#4f46e5', fontSize: 11, fontWeight: 700 }}>
+                <span style={{ display: 'inline-block', marginTop: 6, padding: '4px 12px', borderRadius: 8, background: '#eef2ff', color: '#4f46e5', fontSize: 12, fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
                   ✅ Verified External Student
                 </span>
               )}
@@ -228,33 +228,33 @@ export default function AlumniProfile() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'flex', gap: 24, marginBottom: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 32, marginBottom: 24, flexWrap: 'wrap' }}>
             <div style={{ cursor: 'pointer' }} onClick={loadSubscribers}>
-              <strong>{follows.followers?.length || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Subscribers</span>
+              <strong style={{ fontSize: 18, color: '#0f172a' }}>{follows.followers?.length || 0}</strong> <span style={{ color: '#9ca3af', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>Subscribers</span>
             </div>
-            <div><strong>{follows.following?.length || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Following</span></div>
-            <div><strong>{profile.total_compositions || 0}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Articles</span></div>
-            <div><strong>{mediaCount}</strong> <span style={{ color: '#64748b', fontSize: 14 }}>Media</span></div>
+            <div><strong style={{ fontSize: 18, color: '#0f172a' }}>{follows.following?.length || 0}</strong> <span style={{ color: '#9ca3af', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>Following</span></div>
+            <div><strong style={{ fontSize: 18, color: '#0f172a' }}>{profile.total_compositions || 0}</strong> <span style={{ color: '#9ca3af', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>Articles</span></div>
+            <div><strong style={{ fontSize: 18, color: '#0f172a' }}>{mediaCount}</strong> <span style={{ color: '#9ca3af', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>Media</span></div>
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
             {isMe ? (
               <>
-                <button onClick={() => setEditing(!editing)} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #667eea', background: editing ? '#667eea' : '#fff', color: editing ? '#fff' : '#667eea', fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={() => setEditing(!editing)} style={{ padding: '10px 24px', borderRadius: 24, border: '1.5px solid #667eea', background: editing ? '#667eea' : '#fff', color: editing ? '#fff' : '#667eea', fontWeight: 600, cursor: 'pointer', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
                   {editing ? 'Cancel' : '✏️ Edit Profile'}
                 </button>
-                <button onClick={() => avatarFileRef.current?.click()} disabled={uploadingAvatar} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={() => avatarFileRef.current?.click()} disabled={uploadingAvatar} style={{ padding: '10px 24px', borderRadius: 24, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
                   {uploadingAvatar ? 'Uploading...' : '📸 Change Photo'}
                 </button>
               </>
             ) : (
               <>
-                <button onClick={handleFollow} style={{ padding: '8px 20px', borderRadius: 20, border: profile.is_following ? '1.5px solid #e2e8f0' : 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={handleFollow} style={{ padding: '10px 24px', borderRadius: 24, border: profile.is_following ? '1.5px solid #e2e8f0' : 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
                   {profile.is_following ? '✓ Subscribed' : '🔔 Subscribe'}
                 </button>
                 {profile.is_following && (
-                  <button onClick={() => navigate(`/alumni/chat/${profileId}`)} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #667eea', background: '#fff', color: '#667eea', fontWeight: 700, cursor: 'pointer' }}>
+                  <button onClick={() => navigate(`/alumni/chat/${profileId}`)} style={{ padding: '10px 24px', borderRadius: 24, border: '1.5px solid #667eea', background: '#fff', color: '#667eea', fontWeight: 600, cursor: 'pointer', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
                     💬 Chat
                   </button>
                 )}
@@ -263,11 +263,11 @@ export default function AlumniProfile() {
           </div>
 
           {/* Bio — always visible */}
-          <p style={{ margin: '0 0 12px', lineHeight: 1.6, color: '#374151' }}>{profile.bio || 'No bio yet.'}</p>
+          <p style={{ margin: '0 0 16px', lineHeight: 1.8, color: '#374151', fontSize: 18, fontFamily: "'Inter', sans-serif" }}>{profile.bio || 'No bio yet.'}</p>
 
           {/* Details — always visible */}
           {profile.graduation_year && (
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, color: '#64748b' }}>
+            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 14, color: '#9ca3af', fontFamily: "'Inter', sans-serif" }}>
               {profile.graduation_year && <span>🎓 Class of {profile.graduation_year}</span>}
               {profile.current_school_or_uni && <span>🏫 {profile.current_school_or_uni}</span>}
               {profile.favorite_subject && <span>📚 {profile.favorite_subject}</span>}
@@ -288,10 +288,10 @@ export default function AlumniProfile() {
           </div>
         )}
 
-        {/* EDIT FORM */}
+        {/* EDIT FORM — Editorial style */}
         {editing && (
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800 }}>Edit Profile</h3>
+          <div style={{ background: '#fff', borderRadius: 0, padding: '32px 24px', marginBottom: 32, boxShadow: 'none' }}>
+            <h3 style={{ margin: '0 0 24px', fontSize: 24, fontWeight: 600, fontFamily: "'Lora', Georgia, serif" }}>Edit Profile</h3>
             {[
               { key: 'current_school_or_uni', label: 'Current School / University', placeholder: 'Where are you studying now?' },
               { key: 'current_occupation', label: 'Current Occupation', placeholder: 'Student, Developer, etc.' },
@@ -300,57 +300,57 @@ export default function AlumniProfile() {
               { key: 'favorite_teacher', label: 'Favorite Teacher', placeholder: 'Who inspired you most?' },
               { key: 'personal_motto', label: 'Personal Motto', placeholder: 'Your life motto or quote' },
             ].map(field => (
-              <div key={field.key} style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>{field.label}</label>
+              <div key={field.key} style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151', fontFamily: "'Inter', sans-serif" }}>{field.label}</label>
                 <input
                   type="text"
                   placeholder={field.placeholder}
                   value={form[field.key]}
                   onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14 }}
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 15, fontFamily: "'Inter', sans-serif" }}
                 />
               </div>
             ))}
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>Bio</label>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151', fontFamily: "'Inter', sans-serif" }}>Bio</label>
               <textarea
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, minHeight: 80, resize: 'vertical' }}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 15, minHeight: 100, resize: 'vertical', fontFamily: "'Inter', sans-serif", lineHeight: 1.6 }}
               />
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>Profile Photo URL</label>
-              <input type="text" value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://example.com/photo.jpg" style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14 }} />
-              {form.avatar_url && <img src={form.avatar_url} alt="Preview" style={{ width: 60, height: 60, borderRadius: '50%', marginTop: 8, objectFit: 'cover' }} />}
-            </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>Skills (comma separated)</label>
-              <input type="text" value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14 }} />
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151', fontFamily: "'Inter', sans-serif" }}>Profile Photo URL</label>
+              <input type="text" value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://example.com/photo.jpg" style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 15, fontFamily: "'Inter', sans-serif" }} />
+              {form.avatar_url && <img src={form.avatar_url} alt="Preview" style={{ width: 80, height: 80, borderRadius: '50%', marginTop: 12, objectFit: 'cover' }} />}
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4, color: '#374151' }}>Interests (comma separated)</label>
-              <input type="text" value={form.interests} onChange={(e) => setForm({ ...form, interests: e.target.value })} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14 }} />
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151', fontFamily: "'Inter', sans-serif" }}>Skills (comma separated)</label>
+              <input type="text" value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 15, fontFamily: "'Inter', sans-serif" }} />
             </div>
-            <button onClick={handleSave} disabled={saving} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#374151', fontFamily: "'Inter', sans-serif" }}>Interests (comma separated)</label>
+              <input type="text" value={form.interests} onChange={(e) => setForm({ ...form, interests: e.target.value })} style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontSize: 15, fontFamily: "'Inter', sans-serif" }} />
+            </div>
+            <button onClick={handleSave} disabled={saving} style={{ padding: '12px 32px', borderRadius: 24, border: 'none', background: '#667eea', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 15, fontFamily: "'Inter', sans-serif" }}>
               {saving ? 'Saving...' : '💾 Save Changes'}
             </button>
           </div>
         )}
 
-        {/* Media Gallery — only visible if canViewFull */}
+        {/* Media Gallery — Editorial style */}
         {canViewFull && (
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 20 }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 800 }}>📸 Media</h3>
+          <div style={{ background: '#fff', borderRadius: 0, padding: '32px 24px', marginBottom: 32, boxShadow: 'none' }}>
+            <h3 style={{ margin: '0 0 24px', fontSize: 24, fontWeight: 600, fontFamily: "'Lora', Georgia, serif" }}>📸 Media</h3>
             {media.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
-                <div style={{ fontSize: 36, marginBottom: 8 }}>🖼️</div>
-                <p>No media yet.</p>
+              <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🖼️</div>
+                <p style={{ fontSize: 16, fontFamily: "'Inter', sans-serif" }}>No media yet.</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
                 {media.map((m, i) => (
-                  <div key={i} onClick={() => setSelectedMedia(m)} style={{ aspectRatio: '1', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', background: '#f1f5f9' }}>
+                  <div key={i} onClick={() => setSelectedMedia(m)} style={{ aspectRatio: '1', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', background: '#f1f5f9' }}>
                     <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 ))}
@@ -359,22 +359,22 @@ export default function AlumniProfile() {
           </div>
         )}
 
-        {/* Articles — only visible if canViewFull */}
+        {/* Articles — Editorial style */}
         {canViewFull && (
-        <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 800 }}>✍️ Articles</h3>
+        <div style={{ background: '#fff', borderRadius: 0, padding: '32px 24px', marginBottom: 32, boxShadow: 'none' }}>
+          <h3 style={{ margin: '0 0 24px', fontSize: 24, fontWeight: 600, fontFamily: "'Lora', Georgia, serif" }}>✍️ Articles</h3>
           {compositions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>📝</div>
-              <p>No articles yet.</p>
+            <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>📝</div>
+              <p style={{ fontSize: 16, fontFamily: "'Inter', sans-serif" }}>No articles yet.</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {compositions.map((comp) => (
-                <div key={comp.id} onClick={() => navigate(`/alumni/composition/${comp.slug}`)} style={{ padding: 16, borderRadius: 12, border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'box-shadow 0.2s' }}>
-                  <h4 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700 }}>{comp.title}</h4>
-                  <p style={{ margin: '0 0 8px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{comp.excerpt || comp.content?.substring(0, 120)}...</p>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                <div key={comp.id} onClick={() => navigate(`/alumni/composition/${comp.slug}`)} style={{ padding: 20, borderRadius: 16, border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'box-shadow 0.2s', background: '#f8fafc' }}>
+                  <h4 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 600, fontFamily: "'Lora', Georgia, serif" }}>{comp.title}</h4>
+                  <p style={{ margin: '0 0 12px', fontSize: 15, color: '#64748b', lineHeight: 1.7, fontFamily: "'Inter', sans-serif" }}>{comp.excerpt || comp.content?.substring(0, 150)}...</p>
+                  <div style={{ fontSize: 13, color: '#94a3b8', fontFamily: "'Inter', sans-serif" }}>
                     {new Date(comp.created_at).toLocaleDateString()} · {comp.reads || 0} reads · {comp.likes || 0} likes
                   </div>
                 </div>
