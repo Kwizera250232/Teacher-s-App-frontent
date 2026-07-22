@@ -4,6 +4,8 @@ import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
+import AIRevisionBadge from '../../components/AIRevisionBadge';
+import { Helmet } from 'react-helmet';
 import './AlumniFeed.css';
 
 export default function AlumniPostDetail() {
@@ -87,6 +89,22 @@ export default function AlumniPostDetail() {
 
   return (
     <AlumniLayout showTopWriters={false}>
+      {post && (
+        <Helmet>
+          <title>{post.content?.substring(0, 60) || 'Post'} - UClass Alumni</title>
+          <meta name="description" content={post.content?.substring(0, 160) || ''} />
+          <meta property="og:type" content="article" />
+          <meta property="og:title" content={post.content?.substring(0, 60) || 'Post'} />
+          <meta property="og:description" content={post.content?.substring(0, 160) || ''} />
+          <meta property="og:url" content={window.location.href} />
+          {post.image_paths?.[0] && <meta property="og:image" content={post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`} />}
+          <meta property="og:site_name" content="UClass Alumni" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={post.content?.substring(0, 60) || 'Post'} />
+          <meta name="twitter:description" content={post.content?.substring(0, 160) || ''} />
+          {post.image_paths?.[0] && <meta name="twitter:image" content={post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`} />}
+        </Helmet>
+      )}
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 0 40px' }}>
         {/* Back button & PDF button */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -108,6 +126,7 @@ export default function AlumniPostDetail() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontWeight: 700, fontSize: 15, color: '#1e293b' }}>{post.author_name}</span>
                 <VerifiedBadge size={16} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
+                <AIRevisionBadge size={16} userId={post.author_id || post.user_id} />
               </div>
               <div style={{ fontSize: 13, color: '#94a3b8' }}>{new Date(post.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</div>
             </div>
@@ -159,7 +178,7 @@ export default function AlumniPostDetail() {
           )}
 
           {/* Action Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '12px 24px', borderTop: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 24px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap' }}>
             <button onClick={toggleLike} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: post.liked_by_me ? '#ef4444' : '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 20 }}>{post.liked_by_me ? '❤️' : '🤍'}</span>
               <span style={{ fontWeight: 600 }}>{post.likes_count || 0}</span>
@@ -172,12 +191,43 @@ export default function AlumniPostDetail() {
               <span style={{ fontSize: 20 }}>👁️</span>
               <span style={{ fontWeight: 600 }}>{post.views_count || 0} views</span>
             </span>
-            <button onClick={() => alert('Repost feature coming soon!')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 20 }}>🔄</span>
-            </button>
-            <button onClick={() => { navigator.clipboard?.writeText(window.location.href); alert('Link copied!'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 20 }}>↗️</span>
-            </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button
+                onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.content?.substring(0, 100) || 'Check this out')}&url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
+                title="Share on X (Twitter)"
+              >
+                𝕏
+              </button>
+              <button
+                onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')}
+                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
+                title="Share on Facebook"
+              >
+                📘
+              </button>
+              <button
+                onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
+                title="Share on LinkedIn"
+              >
+                💼
+              </button>
+              <button
+                onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent((post.content?.substring(0, 100) || 'Check this out') + ' ' + window.location.href)}`, '_blank')}
+                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
+                title="Share on WhatsApp"
+              >
+                📱
+              </button>
+              <button
+                onClick={() => { navigator.clipboard?.writeText(window.location.href); alert('Link copied!'); }}
+                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
+                title="Copy link"
+              >
+                🔗
+              </button>
+            </div>
           </div>
         </div>
 

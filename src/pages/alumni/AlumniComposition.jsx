@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import VerifiedBadge from '../../components/VerifiedBadge';
+import AIRevisionBadge from '../../components/AIRevisionBadge';
+import { Helmet } from 'react-helmet';
 
 function avatarColor(id) {
   return `hsl(${(id || 1) * 137 % 360}, 65%, 48%)`;
@@ -109,6 +112,22 @@ export default function AlumniComposition() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff' }}>
+      {comp && (
+        <Helmet>
+          <title>{comp.title} - UClass Alumni</title>
+          <meta name="description" content={comp.excerpt || comp.content?.substring(0, 160) || ''} />
+          <meta property="og:type" content="article" />
+          <meta property="og:title" content={comp.title} />
+          <meta property="og:description" content={comp.excerpt || comp.content?.substring(0, 160) || ''} />
+          <meta property="og:url" content={window.location.href} />
+          {featuredImg && <meta property="og:image" content={featuredImg} />}
+          <meta property="og:site_name" content="UClass Alumni" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={comp.title} />
+          <meta name="twitter:description" content={comp.excerpt || comp.content?.substring(0, 160) || ''} />
+          {featuredImg && <meta name="twitter:image" content={featuredImg} />}
+        </Helmet>
+      )}
       {/* Reading Progress Bar */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 3, background: '#f1f5f9', zIndex: 200 }}>
         <div style={{ width: `${readProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #d97706)', transition: 'width 0.2s' }} />
@@ -148,7 +167,8 @@ export default function AlumniComposition() {
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>{comp.author_name}</span>
-              <span style={{ color: '#3b82f6', fontSize: 15 }}>✓</span>
+              <VerifiedBadge size={16} userId={authorId} onViewProfile={null} />
+              <AIRevisionBadge size={16} userId={authorId} />
             </div>
             <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>
               {new Date(comp.published_at || comp.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -195,7 +215,7 @@ export default function AlumniComposition() {
         )}
 
         {/* Reaction Bar */}
-        <div style={{ display: 'flex', gap: 10, padding: '24px 0', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', margin: '32px 0', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, padding: '24px 0', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', margin: '32px 0', alignItems: 'center', flexWrap: 'wrap' }}>
           {[
             { type: 'like', emoji: '👍', label: 'Like' },
             { type: 'love', emoji: '❤️', label: 'Love' },
@@ -215,12 +235,43 @@ export default function AlumniComposition() {
               {emoji} {label}
             </button>
           ))}
-          <button
-            onClick={() => { navigator.clipboard?.writeText(window.location.href); alert('Link copied!'); }}
-            style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 24, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
-          >
-            ↗️ Share
-          </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(comp.title)}&url=${encodeURIComponent(window.location.href)}`, '_blank')}
+              style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              title="Share on X (Twitter)"
+            >
+              𝕏
+            </button>
+            <button
+              onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')}
+              style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              title="Share on Facebook"
+            >
+              📘
+            </button>
+            <button
+              onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+              style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              title="Share on LinkedIn"
+            >
+              💼
+            </button>
+            <button
+              onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(comp.title + ' ' + window.location.href)}`, '_blank')}
+              style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              title="Share on WhatsApp"
+            >
+              📱
+            </button>
+            <button
+              onClick={() => { navigator.clipboard?.writeText(window.location.href); alert('Link copied!'); }}
+              style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+              title="Copy link"
+            >
+              🔗
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
