@@ -206,7 +206,20 @@ export default function AlumniProfile() {
                 <VerifiedBadge size={20} userId={profileId} onViewProfile={null} />
                 <AIRevisionBadge size={20} userId={profileId} />
                 {!isMe && (
-                  <button onClick={handleFollow} style={{ padding: '6px 16px', borderRadius: 20, border: profile.is_following ? '1.5px solid #e2e8f0' : 'none', background: profile.is_following ? '#fff' : '#667eea', color: profile.is_following ? '#475569' : '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 13, fontFamily: "'Inter', sans-serif' }}>
+                  <button
+                    onClick={handleFollow}
+                    style={{
+                      padding: '6px 16px',
+                      borderRadius: 20,
+                      border: profile.is_following ? '1.5px solid #e2e8f0' : 'none',
+                      background: profile.is_following ? '#fff' : '#667eea',
+                      color: profile.is_following ? '#475569' : '#fff',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      fontFamily: "'Inter', sans-serif"
+                    }}
+                  >
                     {profile.is_following ? '✓ Subscribed' : '🔔 Subscribe'}
                   </button>
                 )}
