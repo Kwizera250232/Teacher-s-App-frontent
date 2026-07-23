@@ -332,6 +332,12 @@ export default function Landing() {
               >
                 Join a Class
               </button>
+              <button
+                onClick={() => navigate('/alumni/feed')}
+                className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700"
+              >
+                🎓 Alumni Feed
+              </button>
             </div>
             <div className="mt-5 max-w-md rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700">Student Join Class</p>

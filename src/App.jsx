@@ -66,6 +66,7 @@ const AlumniDirectChat = lazy(() => import('./pages/alumni/AlumniDirectChat'));
 const AlumniDean = lazy(() => import('./pages/alumni/AlumniDean'));
 const AlumniOpportunities = lazy(() => import('./pages/alumni/AlumniOpportunities'));
 const AlumniAdmin = lazy(() => import('./pages/alumni/AlumniAdmin'));
+const AlumniShare = lazy(() => import('./pages/alumni/AlumniShare'));
 const AIRevision = lazy(() => import('./pages/AIRevision'));
 const AIRevisionProgress = lazy(() => import('./pages/AIRevisionProgress'));
 const AIRevisionShare = lazy(() => import('./pages/AIRevisionShare'));
@@ -119,6 +120,7 @@ function AppShell() {
                 <Route path="/share/moment/:token" element={<ShareMomentPage />} />
                 <Route path="/quiz/share/:token" element={<QuizShareLanding />} />
                 <Route path="/ai-revision/share/:token" element={<Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AIRevisionShare /></Suspense>} />
+                <Route path="/alumni/share" element={<Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniShare /></Suspense>} />
 
                 <Route path="/guest/dashboard" element={
                   <ProtectedRoute role="guest"><GuestDashboard /></ProtectedRoute>
@@ -248,7 +250,7 @@ function AppShell() {
                   <ProtectedRoute role="alumni"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniCompose /></Suspense></ProtectedRoute>
                 } />
                 <Route path="/alumni/composition/:slug" element={
-                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniComposition /></Suspense></ProtectedRoute>
+                  <Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniComposition /></Suspense>
                 } />
                 <Route path="/alumni/wallet" element={
                   <ProtectedRoute role="alumni"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniWallet /></Suspense></ProtectedRoute>
@@ -263,7 +265,7 @@ function AppShell() {
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniGroupChat /></Suspense></ProtectedRoute>
                 } />
                 <Route path="/alumni/feed" element={
-                  <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniFeed /></Suspense></ProtectedRoute>
+                  <Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniFeed /></Suspense>
                 } />
                 <Route path="/alumni/post/:postId" element={
                   <ProtectedRoute><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><AlumniPostDetail /></Suspense></ProtectedRoute>

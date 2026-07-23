@@ -203,6 +203,10 @@ export default function AlumniFeed() {
   };
 
   const addReaction = async (postId, emoji) => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
     try {
       await api.post(`/alumni/feed/${postId}/reaction`, { emoji }, token);
       setShowReactions(null);
@@ -218,6 +222,10 @@ export default function AlumniFeed() {
   };
 
   const submitComment = async (postId) => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
     if (!commentText.trim()) return;
     try {
       await api.post(`/alumni/feed/${postId}/comments`, { content: commentText }, token);
