@@ -98,13 +98,20 @@ export default function AlumniPostDetail() {
           <meta property="og:description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
           <meta property="og:url" content={window.location.href} />
           <meta property="og:image" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
-          <meta property="og:site_name" content="UClass Alumni" />
+          <meta property="og:image:secure_url" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
+          <meta property="og:image:type" content="image/jpeg" />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
+          <meta property="og:site_name" content="UClass Alumni" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
           <meta name="twitter:description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
           <meta name="twitter:image" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
+          <meta name="twitter:image:alt" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
+          <meta itemprop="name" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
+          <meta itemprop="description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
+          <meta itemprop="image" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
         </Helmet>
       )}
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 0 40px' }}>

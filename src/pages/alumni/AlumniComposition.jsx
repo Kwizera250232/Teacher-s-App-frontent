@@ -121,13 +121,20 @@ export default function AlumniComposition() {
           <meta property="og:description" content={comp.excerpt || comp.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || comp.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
           <meta property="og:url" content={window.location.href} />
           <meta property="og:image" content={featuredImg || 'https://student.umunsi.com/og-image.svg'} />
-          <meta property="og:site_name" content="UClass Alumni" />
+          <meta property="og:image:secure_url" content={featuredImg || 'https://student.umunsi.com/og-image.svg'} />
+          <meta property="og:image:type" content="image/jpeg" />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={comp.title} />
+          <meta property="og:site_name" content="UClass Alumni" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={comp.title} />
           <meta name="twitter:description" content={comp.excerpt || comp.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || comp.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
           <meta name="twitter:image" content={featuredImg || 'https://student.umunsi.com/og-image.svg'} />
+          <meta name="twitter:image:alt" content={comp.title} />
+          <meta itemprop="name" content={comp.title} />
+          <meta itemprop="description" content={comp.excerpt || comp.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || comp.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
+          <meta itemprop="image" content={featuredImg || 'https://student.umunsi.com/og-image.svg'} />
         </Helmet>
       )}
       {/* Reading Progress Bar */}
