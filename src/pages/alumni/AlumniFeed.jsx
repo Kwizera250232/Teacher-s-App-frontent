@@ -179,13 +179,17 @@ export default function AlumniFeed() {
 
   const loadPosts = async () => {
     try {
+      console.log('Loading posts, token:', token ? 'present' : 'none');
       const [feedData, compData] = await Promise.all([
-        api.get('/alumni/feed', token).catch(() => ({ posts: [] })),
-        api.get('/alumni/compositions?status=published', token).catch(() => ({ compositions: [] })),
+        api.get('/alumni/feed', token).catch((e) => { console.error('Feed API error:', e); return { posts: [] }; }),
+        api.get('/alumni/compositions?status=published', token).catch((e) => { console.error('Compositions API error:', e); return { compositions: [] }; }),
       ]);
+      console.log('Feed data:', feedData);
+      console.log('Compositions data:', compData);
       const feedPosts = (feedData.posts || []).map(p => ({ ...p, itemType: 'post' }));
       const comps = (compData.compositions || []).map(c => ({ ...c, itemType: 'composition' }));
       const allItems = [...feedPosts, ...comps].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      console.log('Total items:', allItems.length);
       setPosts(allItems);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
