@@ -118,6 +118,11 @@ body {
 
 /* Classes grid */
 .classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.classes-grid--professional {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
 
 .class-card {
   background: white;
@@ -133,6 +138,81 @@ body {
   border: 2px solid transparent;
 }
 .class-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(102,126,234,0.2); border-color: #667eea; }
+
+/* Professional class card styling */
+.class-card--professional {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: none;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.class-card--professional:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+}
+.class-card-icon-professional {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+.class-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.class-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  margin: 0;
+  line-height: 1.3;
+}
+.subject-tag-professional {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  align-self: flex-start;
+  backdrop-filter: blur(5px);
+}
+.class-card-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.class-card-code,
+.class-card-students {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+.class-card-arrow {
+  color: white;
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
 
 .class-card-header h3 { font-size: 17px; font-weight: 700; color: #1a1a2e; }
 .subject-tag { display: inline-block; background: #f0f2ff; color: #667eea; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 4px; }
@@ -900,4 +980,52 @@ body {
   font-size: 64px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+
+/* Class roster table view */
+.class-roster-table-wrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+.class-roster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.class-roster-search {
+  margin-bottom: 16px;
+}
+.class-roster-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.class-roster-table thead {
+  background: #f8fafc;
+}
+.class-roster-table th {
+  padding: 14px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  border-bottom: 2px solid #e2e8f0;
+}
+.class-roster-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+  vertical-align: middle;
+}
+.class-roster-table tbody tr:hover {
+  background: #f8fafc;
+}
+.class-roster-table tbody tr:last-child td {
+  border-bottom: none;
 }

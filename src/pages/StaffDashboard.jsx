@@ -336,19 +336,19 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         ) : (
           <>
             <div className="wa-section-title">Your classes</div>
-            <div className="classes-grid classes-grid--square">
+            <div className="classes-grid classes-grid--professional">
               {classes.map(cls => (
-                <Link key={cls.id} to={`${basePath}/classes/${cls.id}?tab=Students`} className="class-card class-card--square">
-                  <div className="class-card-icon">{(cls.name || 'C').slice(0, 1)}</div>
-                  <div className="class-card-header">
-                    <h3>{cls.name}</h3>
-                    {cls.subject && <span className="subject-tag">{cls.subject}</span>}
+                <Link key={cls.id} to={`${basePath}/classes/${cls.id}?tab=Students`} className="class-card class-card--professional">
+                  <div className="class-card-icon-professional">{(cls.name || 'C').slice(0, 1)}</div>
+                  <div className="class-card-content">
+                    <h3 className="class-card-title">{cls.name}</h3>
+                    {cls.subject && <span className="subject-tag-professional">{cls.subject}</span>}
+                    <div className="class-card-meta">
+                      <span className="class-card-code">Code {cls.class_code}</span>
+                      <span className="class-card-students">👥 {cls.student_count}</span>
+                    </div>
                   </div>
-                  <p className="class-teacher">Code {cls.class_code} · 👥 {cls.student_count}</p>
-                  <div className="class-card-footer">
-                    <span>Open class</span>
-                    <span className="arrow">→</span>
-                  </div>
+                  <div className="class-card-arrow">→</div>
                 </Link>
               ))}
             </div>

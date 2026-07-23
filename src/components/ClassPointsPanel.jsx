@@ -41,6 +41,7 @@ export default function ClassPointsPanel({
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [view, setView] = useState('students');
+  const [studentView, setStudentView] = useState('cards');
   const [showFeed, setShowFeed] = useState(true);
   const [multiMode, setMultiMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -341,6 +342,16 @@ export default function ClassPointsPanel({
             Groups
           </button>
         </div>
+        {view === 'students' && (
+          <div className="tabs" style={{ marginBottom: 0 }}>
+            <button type="button" className={`tab ${studentView === 'cards' ? 'active' : ''}`} onClick={() => setStudentView('cards')}>
+              Cards
+            </button>
+            <button type="button" className={`tab ${studentView === 'table' ? 'active' : ''}`} onClick={() => setStudentView('table')}>
+              Table
+            </button>
+          </div>
+        )}
         <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowFeed((v) => !v)}>
           {showFeed ? 'Hide activity' : 'Show activity'}
         </button>
@@ -388,21 +399,124 @@ export default function ClassPointsPanel({
       <div className={`class-points-layout${showFeed ? ' with-feed' : ''}`}>
         <div>
           {view === 'students' && (
-            <div className="class-roster-grid">
-              <div
-                className="class-roster-card"
-                onClick={() => students.length && openSkillPicker({ type: 'whole_class' })}
-                role="button"
-                tabIndex={0}
-              >
-                <div className="class-roster-avatar class-roster-avatar--whole">
-                  {wholeClassPoints > 0 && <span className="class-roster-point-badge">{wholeClassPoints}</span>}
-                  👥
+            <>
+              {studentView === 'cards' ? (
+                <div className="class-roster-grid">
+                  <div
+                    className="class-roster-card"
+                    onClick={() => students.length && openSkillPicker({ type: 'whole_class' })}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="class-roster-avatar class-roster-avatar--whole">
+                      {wholeClassPoints > 0 && <span className="class-roster-point-badge">{wholeClassPoints}</span>}
+                      👥
+                    </div>
+                    <div className="class-roster-name">Whole class</div>
+                  </div>
+                  {students.map((s, i) => renderStudentCard(s, i))}
                 </div>
-                <div className="class-roster-name">Whole class</div>
-              </div>
-              {students.map((s, i) => renderStudentCard(s, i))}
-            </div>
+              ) : (
+                <div className="class-roster-table-wrapper">
+                  <div className="class-roster-header">
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
+                      {students.length} student(s) in this class
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        if (!selectedIds.size) return;
+                        openSkillPicker({ type: 'multi', ids: [...selectedIds] });
+                      }}
+                      disabled={!selectedIds.size}
+                    >
+                      SUBMIT ALL
+                    </button>
+                  </div>
+                  <div className="class-roster-search">
+                    <input
+                      type="text"
+                      placeholder="Search all columns..."
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '2px solid #e8e8e8',
+                        borderRadius: 8,
+                        fontSize: 14
+                      }}
+                    />
+                  </div>
+                  <table className="class-roster-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 50 }}>#</th>
+                        <th style={{ width: 60 }}>Image</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Attendance Status</th>
+                        <th>Yesterday Status</th>
+                        <th style={{ width: 150 }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students.map((s, i) => {
+                        const displayName = String(s.name || 'Student').trim();
+                        const bg = AVATAR_COLORS[s.id % AVATAR_COLORS.length];
+                        const points = s.points || 0;
+                        return (
+                          <tr key={s.id}>
+                            <td>{i + 1}</td>
+                            <td>
+                              <div
+                                className="class-roster-avatar"
+                                style={{
+                                  background: bg,
+                                  width: 40,
+                                  height: 40,
+                                  fontSize: 14,
+                                  margin: 0
+                                }}
+                              >
+                                {points > 0 && <span className="class-roster-point-badge">{points}</span>}
+                                {initials(displayName)}
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600, color: '#1e293b' }}>{displayName}</div>
+                              <div style={{ fontSize: 12, color: '#64748b' }}>{s.email || ''}</div>
+                            </td>
+                            <td>{s.gender || '—'}</td>
+                            <td>
+                              <span style={{
+                                padding: '4px 8px',
+                                borderRadius: 12,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                background: '#dcfce7',
+                                color: '#166534'
+                              }}>
+                                Present
+                              </span>
+                            </td>
+                            <td>Not marked</td>
+                            <td>
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm"
+                                onClick={() => handleStudentClick(s)}
+                              >
+                                MARK ATTENDANCE
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
 
           {view === 'groups' && (
