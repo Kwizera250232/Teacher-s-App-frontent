@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AuthBackLink from '../../components/AuthBackLink';
-import '../../Auth.css';
+import '../Auth.css';
 
 export default function AlumniShare() {
   const navigate = useNavigate();
