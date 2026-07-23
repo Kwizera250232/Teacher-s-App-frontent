@@ -112,11 +112,13 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   ];
 
   return (
-    <div className="dashboard staff-hub-page staff-dashboard-classic wa-theme">
-      <header className="dash-header phub-header">
-        <div className="phub-brand">
-          <span className="phub-logo">UClass</span>
-          <span className="phub-sub">{roleLabel}</span>
+    <div className="dashboard staff-hub-page staff-dashboard-professional wa-theme">
+      <header className="dash-header-professional">
+        <div className="dash-header-left">
+          <div className="brand-section">
+            <span className="brand-logo">UClass</span>
+            <span className="brand-role">{roleLabel}</span>
+          </div>
         </div>
         <MobileStaffHeader
           basePath={basePath}
@@ -126,27 +128,31 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           isImpersonating={isImpersonating}
           stopImpersonation={stopImpersonation}
         />
-        <div className="dash-user">
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            👋 {user?.name}
+        <div className="dash-header-right">
+          <div className="user-greeting">
+            <span className="greeting-icon">👋</span>
+            <span className="greeting-name">{user?.name}</span>
             <VerifiedBadge size={15} info={{ items: [
               { icon: '👨‍🏫', label: 'Role', value: roleLabel },
               { icon: '📧', label: 'Email', value: user?.email },
             ] }} />
-          </span>
+          </div>
           {isImpersonating && (
-            <button className="btn btn-secondary btn-sm" onClick={stopImpersonation}>↩ Return Admin</button>
+            <button className="btn-professional btn-professional-secondary" onClick={stopImpersonation}>↩ Return Admin</button>
           )}
-          <AppNotificationsBell className="student-notif-bell--header" basePath={basePath} />
-          <Link to="/messages" className="btn btn-secondary btn-sm" style={{ position: 'relative' }}>
-            💬 Messages{unread > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 4 }}>{unread}</span>}
-          </Link>
-          <Link to="/alumni/directory" className="btn btn-secondary btn-sm" style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', color: '#fff', border: 'none' }}>
-            🎓 Alumni
-          </Link>
-          <DonateButton />
-          <Link to="/profile" className="btn btn-secondary btn-sm">👤 Profile</Link>
-          <button type="button" className="btn btn-sm btn-logout" onClick={logout}>Logout</button>
+          <div className="header-actions">
+            <AppNotificationsBell className="notif-bell-professional" basePath={basePath} />
+            <Link to="/messages" className="btn-professional btn-professional-icon" style={{ position: 'relative' }}>
+              💬
+              {unread > 0 && <span className="notification-badge">{unread}</span>}
+            </Link>
+            <Link to="/alumni/directory" className="btn-professional btn-professional-alumni">
+              🎓 Alumni
+            </Link>
+            <DonateButton />
+            <Link to="/profile" className="btn-professional btn-professional-icon">👤</Link>
+            <button type="button" className="btn-professional btn-professional-logout" onClick={logout}>Logout</button>
+          </div>
         </div>
       </header>
 
@@ -154,12 +160,12 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         <DonateButton compact fab />
       </div>
 
-      <nav className="phub-nav staff-hub-nav">
+      <nav className="nav-tabs-professional">
         {navTabs.map((t) => (
           <button
             key={t.id}
             type="button"
-            className={`phub-nav-btn ${hubTab === t.id ? 'active' : ''}`}
+            className={`nav-tab-professional ${hubTab === t.id ? 'active' : ''}`}
             onClick={() => setHubTab(t.id)}
           >
             {t.label}
@@ -167,7 +173,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         ))}
       </nav>
 
-      <main className={`dash-main${hubTab === 'chats' ? ' dash-main--chats-full' : ''}`}>
+      <main className={`dash-main-professional${hubTab === 'chats' ? ' dash-main--chats-full' : ''}`}>
         <StaleApiBanner />
         <TutorialVideo
           compact
@@ -176,33 +182,33 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         />
         {hubTab !== 'chats' && <SchoolRequestBanner token={token} user={user} />}
         {hasSchool && hubTab !== 'chats' && (
-          <div style={{ marginBottom: 12 }}>
-            <TeacherSchoolBadge user={user} style={{ width: '100%', justifyContent: 'center' }} />
+          <div className="school-badge-wrapper">
+            <TeacherSchoolBadge user={user} className="school-badge-professional" />
           </div>
         )}
         {hasSchool && hubTab === 'classes' && (
-          <>
+          <div className="shared-content-section">
             <QuizTeacherShareInbox token={token} classes={classes} onChange={loadClasses} />
             <NoteTeacherShareInbox token={token} classes={classes} onChange={loadClasses} />
-          </>
+          </div>
         )}
         {isHeadTeacher && hubTab === 'school' && <SchoolRequestsPanel token={token} />}
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && <div className="alert alert-error-professional">{error}</div>}
 
         {hubTab === 'school' && hasSchool && (
           <>
             <SchoolHubPanel token={token} isHeadTeacher={isHeadTeacher} />
             {isHeadTeacher && (
-              <section style={{ marginTop: 20 }}>
-                <h2 style={{ fontSize: 17, color: '#075e54', marginBottom: 10 }}>✍️ School — C. Status</h2>
+              <section className="section-professional">
+                <h2 className="section-title-professional">✍️ School — C. Status</h2>
                 <CompositionStatusList token={token} schoolWide />
               </section>
             )}
           </>
         )}
         {hubTab === 'school' && !hasSchool && user?.role === 'teacher' && (
-          <p className="phub-muted">Join a school from the banner above before posting announcements.</p>
+          <p className="muted-text-professional">Join a school from the banner above before posting announcements.</p>
         )}
 
         {hubTab === 'chats' && hasSchool && <StaffChatsPanel token={token} />}
@@ -283,84 +289,72 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
         {hubTab === 'classes' && (
           <>
-        <div className="dash-top dash-top--staff-actions">
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
-            <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-              + Fungura Ishuri
-            </button>
-            <button className="btn btn-secondary" onClick={() => setShowAddStudents(true)} disabled={user?.role === 'teacher' && !hasSchool}>
-              👤 Add Students
-            </button>
-            <Link to="/alumni/graduation" className="btn btn-primary" style={{ textDecoration: 'none' }}>
-              🎓 Graduate Students
-            </Link>
-          </div>
-        </div>
-
-        {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
-          <div key={a.id} style={{
-            background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
-            border: '1px solid #93c5fd',
-            borderRadius: 12,
-            padding: '1rem 1.25rem',
-            marginBottom: '0.75rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '1rem',
-          }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span>📢</span>
-                <strong style={{ color: '#1e40af', fontSize: '0.95rem' }}>{a.title}</strong>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>— {a.admin_name}</span>
-              </div>
-              <p style={{ margin: 0, color: '#374151', fontSize: '0.9rem' }}>{a.message}</p>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</span>
+            <div className="classes-actions-professional">
+              <button className="btn-professional btn-professional-primary" onClick={() => setShowCreate(true)}>
+                + Fungura Ishuri
+              </button>
+              <button className="btn-professional btn-professional-secondary" onClick={() => setShowAddStudents(true)} disabled={user?.role === 'teacher' && !hasSchool}>
+                👤 Add Students
+              </button>
+              <Link to="/alumni/graduation" className="btn-professional btn-professional-tertiary">
+                🎓 Graduate Students
+              </Link>
             </div>
-            <button
-              onClick={() => dismissAnnouncement(a.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.2rem', padding: 0, lineHeight: 1, flexShrink: 0 }}
-              title="Dismiss"
-            >✕</button>
-          </div>
-        ))}
 
-        {classes.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📚</div>
-            <h3>Nta madarasa</h3>
-            <p>Fungura ishuri ryawe rya mbere utangire</p>
-            <button className="btn btn-primary" onClick={() => setShowCreate(true)}>Fungura Ishuri</button>
-          </div>
-        ) : (
-          <>
-            <div className="wa-section-title">Your classes</div>
-            <div className="classes-grid classes-grid--professional">
-              {classes.map(cls => (
-                <Link key={cls.id} to={`${basePath}/classes/${cls.id}?tab=Students`} className="class-card class-card--professional">
-                  <div className="class-card-icon-professional">{(cls.name || 'C').slice(0, 1)}</div>
-                  <div className="class-card-content">
-                    <h3 className="class-card-title">{cls.name}</h3>
-                    {cls.subject && <span className="subject-tag-professional">{cls.subject}</span>}
-                    <div className="class-card-meta">
-                      <span className="class-card-code">Code {cls.class_code}</span>
-                      <span className="class-card-students">👥 {cls.student_count}</span>
-                    </div>
+            {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
+              <div key={a.id} className="announcement-card-professional">
+                <div className="announcement-content">
+                  <div className="announcement-header">
+                    <span className="announcement-icon">📢</span>
+                    <strong className="announcement-title">{a.title}</strong>
+                    <span className="announcement-author">— {a.admin_name}</span>
                   </div>
-                  <div className="class-card-arrow">→</div>
-                </Link>
-              ))}
-            </div>
-            {classes[0] && (
-              <div className="wa-staff-class-actions">
-                <Link to={`${basePath}/classes/${classes[0].id}/record-marks`} className="wa-pill-btn wa-pill-btn--outline">
-                  📊 CAT Marks
-                </Link>
+                  <p className="announcement-text">{a.message}</p>
+                  <span className="announcement-date">{new Date(a.created_at).toLocaleDateString()}</span>
+                </div>
+                <button
+                  onClick={() => dismissAnnouncement(a.id)}
+                  className="announcement-dismiss"
+                  title="Dismiss"
+                >✕</button>
               </div>
+            ))}
+
+            {classes.length === 0 ? (
+              <div className="empty-state-professional">
+                <div className="empty-icon-professional">📚</div>
+                <h3>Nta madarasa</h3>
+                <p>Fungura ishuri ryawe rya mbere utangire</p>
+                <button className="btn-professional btn-professional-primary" onClick={() => setShowCreate(true)}>Fungura Ishuri</button>
+              </div>
+            ) : (
+              <>
+                <h2 className="section-title-professional">Your classes</h2>
+                <div className="classes-grid classes-grid--professional">
+                  {classes.map(cls => (
+                    <Link key={cls.id} to={`${basePath}/classes/${cls.id}?tab=Students`} className="class-card class-card--professional">
+                      <div className="class-card-icon-professional">{(cls.name || 'C').slice(0, 1)}</div>
+                      <div className="class-card-content">
+                        <h3 className="class-card-title">{cls.name}</h3>
+                        {cls.subject && <span className="subject-tag-professional">{cls.subject}</span>}
+                        <div className="class-card-meta">
+                          <span className="class-card-code">Code {cls.class_code}</span>
+                          <span className="class-card-students">👥 {cls.student_count}</span>
+                        </div>
+                      </div>
+                      <div className="class-card-arrow">→</div>
+                    </Link>
+                  ))}
+                </div>
+                {classes[0] && (
+                  <div className="quick-actions-professional">
+                    <Link to={`${basePath}/classes/${classes[0].id}/record-marks`} className="action-pill-professional">
+                      📊 CAT Marks
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
           </>
         )}
       </main>
