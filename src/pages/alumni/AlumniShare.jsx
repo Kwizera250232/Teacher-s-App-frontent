@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AuthBackLink from '../../components/AuthBackLink';
-import '../Auth.css';
 
 export default function AlumniShare() {
   const navigate = useNavigate();
@@ -88,39 +87,41 @@ export default function AlumniShare() {
   };
 
   return (
-    <div className="auth-container">
-      <AuthBackLink />
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1 className="auth-title">Join UClass Alumni</h1>
-          <p className="auth-subtitle">Sign up to read and engage with alumni compositions and posts</p>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '20px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+      <div style={{ position: 'absolute', top: 20, left: 20 }}>
+        <AuthBackLink />
+      </div>
+      <div style={{ background: '#fff', borderRadius: 16, padding: 32, width: '100%', maxWidth: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+        <div style={{ marginBottom: 24, textAlign: 'center' }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e293b', margin: '0 0 8px 0' }}>Join UClass Alumni</h1>
+          <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>Sign up to read and engage with alumni compositions and posts</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          {error && <div className="auth-error">{error}</div>}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {error && <div style={{ background: '#fee2e2', color: '#dc2626', padding: 12, borderRadius: 8, fontSize: 13, fontWeight: 600 }}>{error}</div>}
 
-          <div className="auth-tabs">
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <button
               type="button"
-              className={`auth-tab ${role === 'student' ? 'auth-tab-active' : ''}`}
+              style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: role === 'student' ? '#667eea' : '#f1f5f9', color: role === 'student' ? '#fff' : '#64748b', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
               onClick={() => setRole('student')}
             >
               Student
             </button>
             <button
               type="button"
-              className={`auth-tab ${role === 'teacher' ? 'auth-tab-active' : ''}`}
+              style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: role === 'teacher' ? '#667eea' : '#f1f5f9', color: role === 'teacher' ? '#fff' : '#64748b', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
               onClick={() => setRole('teacher')}
             >
               Teacher
             </button>
           </div>
 
-          <div className="auth-field">
-            <label className="auth-label">Full Name</label>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Full Name</label>
             <input
               type="text"
-              className="auth-input"
+              style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Enter your full name"
@@ -128,11 +129,11 @@ export default function AlumniShare() {
             />
           </div>
 
-          <div className="auth-field">
-            <label className="auth-label">Password</label>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Password</label>
             <input
               type="password"
-              className="auth-input"
+              style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               placeholder="Create a password (min 8 characters)"
@@ -143,22 +144,22 @@ export default function AlumniShare() {
 
           {role === 'teacher' ? (
             <>
-              <div className="auth-field">
-                <label className="auth-label">Email (Gmail)</label>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Email (Gmail)</label>
                 <input
                   type="email"
-                  className="auth-input"
+                  style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="yourname@gmail.com"
                   required
                 />
               </div>
-              <div className="auth-field">
-                <label className="auth-label">Phone</label>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Phone</label>
                 <input
                   type="tel"
-                  className="auth-input"
+                  style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   value={form.parentPhone}
                   onChange={(e) => setForm({ ...form, parentPhone: e.target.value })}
                   placeholder="07..."
@@ -167,52 +168,52 @@ export default function AlumniShare() {
             </>
           ) : (
             <>
-              <div className="auth-field">
-                <label className="auth-label">Parent/Guardian Gmail</label>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Parent/Guardian Gmail</label>
                 <input
                   type="email"
-                  className="auth-input"
+                  style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   value={form.parentGmail}
                   onChange={(e) => setForm({ ...form, parentGmail: e.target.value })}
                   placeholder="parent@gmail.com"
                   required
                 />
               </div>
-              <div className="auth-field">
-                <label className="auth-label">Parent Phone</label>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Parent Phone</label>
                 <input
                   type="tel"
-                  className="auth-input"
+                  style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   value={form.parentPhone}
                   onChange={(e) => setForm({ ...form, parentPhone: e.target.value })}
                   placeholder="07..."
                 />
               </div>
-              <div className="auth-field">
-                <label className="auth-label">School Name</label>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>School Name</label>
                 <input
                   type="text"
-                  className="auth-input"
+                  style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   value={form.schoolName}
                   onChange={(e) => setForm({ ...form, schoolName: e.target.value })}
                   placeholder="Your school name"
                 />
               </div>
-              <div className="auth-field">
-                <label className="auth-label">District</label>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>District</label>
                 <input
                   type="text"
-                  className="auth-input"
+                  style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   value={form.district}
                   onChange={(e) => setForm({ ...form, district: e.target.value })}
                   placeholder="Your district"
                 />
               </div>
-              <div className="auth-field">
-                <label className="auth-label">Sector</label>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>Sector</label>
                 <input
                   type="text"
-                  className="auth-input"
+                  style={{ width: '100%', padding: 12, borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                   value={form.sector}
                   onChange={(e) => setForm({ ...form, sector: e.target.value })}
                   placeholder="Your sector"
@@ -221,13 +222,13 @@ export default function AlumniShare() {
             </>
           )}
 
-          <button type="submit" className="auth-button" disabled={loading}>
+          <button type="submit" style={{ padding: 14, borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 600, fontSize: 15, cursor: 'pointer', opacity: loading ? 0.7 : 1 }} disabled={loading}>
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>
 
-          <div className="auth-footer">
+          <div style={{ textAlign: 'center', fontSize: 13, color: '#64748b' }}>
             Already have an account?{' '}
-            <button type="button" className="auth-link" onClick={() => navigate('/login')}>
+            <button type="button" style={{ background: 'none', border: 'none', color: '#667eea', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate('/login')}>
               Sign in
             </button>
           </div>
