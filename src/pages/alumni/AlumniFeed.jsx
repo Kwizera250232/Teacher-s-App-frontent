@@ -542,6 +542,7 @@ export default function AlumniFeed() {
     const featuredImg = comp.featured_image_path
       ? (comp.featured_image_path.startsWith('http') ? comp.featured_image_path : `${UPLOADS_BASE}${comp.featured_image_path}`)
       : null;
+    const previewText = comp.excerpt || comp.content?.split('\n\n')?.[0]?.substring(0, 150)?.replace(/\n/g, ' ') || comp.content?.substring(0, 150)?.replace(/\n/g, ' ') || '';
     return (
       <article key={`comp-${comp.id}`} className="af-card">
         <div className="af-card-header">
@@ -573,11 +574,12 @@ export default function AlumniFeed() {
           </div>
         </div>
 
-        <div className="af-link-card" onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)}>
-          {featuredImg && <img src={featuredImg} alt={comp.title} className="af-link-img" />}
+        <div className="af-link-card" onClick={() => navigate(`/alumni/composition/${comp.slug || comp.id}`)} style={{ cursor: 'pointer' }}>
+          {featuredImg && <img src={featuredImg} alt={comp.title} className="af-link-img" style={{ height: '200px', objectFit: 'cover' }} />}
           <div className="af-link-body">
             <h3 className="af-link-title">{comp.title}</h3>
-            <p className="af-link-desc">{comp.category ? `${comp.category} · ` : ''}{comp.read_count || 0} reads</p>
+            <p className="af-link-desc" style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5', marginTop: '8px' }}>{previewText}</p>
+            <p className="af-link-desc" style={{ fontSize: '13px', color: '#94a3b8', marginTop: '8px' }}>{comp.category ? `${comp.category} · ` : ''}{comp.read_count || 0} reads</p>
           </div>
         </div>
 
