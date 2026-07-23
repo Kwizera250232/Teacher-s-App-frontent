@@ -246,28 +246,28 @@ export default function AlumniComposition() {
           ))}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
-              onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(comp.title)}&url=${encodeURIComponent(window.location.href)}`, '_blank')}
+              onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(comp.title)}&url=${encodeURIComponent(`https://studentapi.umunsi.com/alumni/og/${comp.slug}`)}`, '_blank')}
               style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
               title="Share on X (Twitter)"
             >
               𝕏
             </button>
             <button
-              onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')}
+              onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`https://studentapi.umunsi.com/alumni/og/${comp.slug}`)}`, '_blank')}
               style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
               title="Share on Facebook"
             >
               📘
             </button>
             <button
-              onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+              onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://studentapi.umunsi.com/alumni/og/${comp.slug}`)}`, '_blank')}
               style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
               title="Share on LinkedIn"
             >
               💼
             </button>
             <button
-              onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(comp.title + ' ' + window.location.href)}`, '_blank')}
+              onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(comp.title + ' ' + `https://studentapi.umunsi.com/alumni/og/${comp.slug}`)}`, '_blank')}
               style={{ padding: '8px 12px', borderRadius: 20, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
               title="Share on WhatsApp"
             >
