@@ -91,19 +91,19 @@ export default function AlumniPostDetail() {
     <AlumniLayout showTopWriters={false}>
       {post && (
         <Helmet>
-          <title>{post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} - UClass Alumni</title>
-          <meta name="description" content={post.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
+          <title>{post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} - UClass Alumni</title>
+          <meta name="description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
           <meta property="og:type" content="article" />
-          <meta property="og:title" content={post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
-          <meta property="og:description" content={post.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
+          <meta property="og:title" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
+          <meta property="og:description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
           <meta property="og:url" content={window.location.href} />
           <meta property="og:image" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
           <meta property="og:site_name" content="UClass Alumni" />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
-          <meta name="twitter:description" content={post.content?.substring(0, 160)?.replace(/\n/g, ' ') || ''} />
+          <meta name="twitter:title" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
+          <meta name="twitter:description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
           <meta name="twitter:image" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
         </Helmet>
       )}
