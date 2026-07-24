@@ -6,6 +6,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import TeacherDashboard from './pages/TeacherDashboard';
+import PremiumStaffDashboard from './pages/PremiumStaffDashboard';
 import HeadTeacherDashboard from './pages/HeadTeacherDashboard';
 import ParentHub from './pages/ParentHub';
 import ParentDashboard from './pages/ParentDashboard';
@@ -156,10 +157,13 @@ function AppShell() {
                 } />
 
                 <Route path="/teacher/dashboard" element={
+                  <ProtectedRoute role="teacher"><PremiumStaffDashboard /></ProtectedRoute>
+                } />
+                <Route path="/teacher/legacy" element={
                   <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
                 } />
                 <Route path="/teacher/classes" element={
-                  <ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>
+                  <ProtectedRoute role="teacher"><PremiumStaffDashboard /></ProtectedRoute>
                 } />
                 <Route path="/teacher/classes/:id" element={
                   <ProtectedRoute role="teacher"><TeacherClassPage /></ProtectedRoute>
