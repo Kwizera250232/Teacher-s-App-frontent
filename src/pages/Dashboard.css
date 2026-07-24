@@ -1416,18 +1416,26 @@ body {
     flex-wrap: wrap;
     gap: 12px;
   }
+  .dash-header-left,
+  .brand-section {
+    display: none;
+  }
   .dash-header-right {
+    width: 100%;
     flex-wrap: wrap;
     gap: 8px;
   }
   .user-greeting {
+    width: 100%;
     font-size: 14px;
   }
   .header-actions {
+    width: 100%;
+    justify-content: space-between;
     gap: 6px;
   }
   .btn-professional {
-    padding: 8px 14px;
+    padding: 8px 12px;
     font-size: 13px;
   }
   .btn-professional-icon {
@@ -1440,7 +1448,7 @@ body {
     padding: 4px;
   }
   .nav-tab-professional {
-    padding: 8px 14px;
+    padding: 8px 12px;
     font-size: 13px;
   }
   .dash-main-professional {

@@ -402,18 +402,6 @@ export default function ClassPointsPanel({
             <>
               {studentView === 'cards' ? (
                 <div className="class-roster-grid">
-                  <div
-                    className="class-roster-card"
-                    onClick={() => students.length && openSkillPicker({ type: 'whole_class' })}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className="class-roster-avatar class-roster-avatar--whole">
-                      {wholeClassPoints > 0 && <span className="class-roster-point-badge">{wholeClassPoints}</span>}
-                      👥
-                    </div>
-                    <div className="class-roster-name">Whole class</div>
-                  </div>
                   {students.map((s, i) => renderStudentCard(s, i))}
                 </div>
               ) : (
