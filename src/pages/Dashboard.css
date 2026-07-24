@@ -1461,3 +1461,9 @@ body {
     width: 100%;
   }
 }
+
+@media (min-width: 769px) {
+  .mobile-staff-header {
+    display: none !important;
+  }
+}

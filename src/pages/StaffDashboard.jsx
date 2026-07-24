@@ -120,14 +120,6 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <span className="brand-role">{roleLabel}</span>
           </div>
         </div>
-        <MobileStaffHeader
-          basePath={basePath}
-          user={user}
-          roleLabel={roleLabel}
-          onLogout={logout}
-          isImpersonating={isImpersonating}
-          stopImpersonation={stopImpersonation}
-        />
         <div className="dash-header-right">
           <div className="user-greeting">
             <span className="greeting-icon">👋</span>
@@ -144,16 +136,21 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <AppNotificationsBell className="notif-bell-professional" basePath={basePath} />
             <Link to="/messages" className="btn-professional btn-professional-icon" style={{ position: 'relative' }}>
               💬
-              {unread > 0 && <span className="notification-badge">{unread}</span>}
-            </Link>
-            <Link to="/alumni/directory" className="btn-professional btn-professional-alumni">
-              🎓 Alumni
+              {unread > 0 && <span className="notification-badge">{unread}</span>
             </Link>
             <DonateButton />
             <Link to="/profile" className="btn-professional btn-professional-icon">👤</Link>
             <button type="button" className="btn-professional btn-professional-logout" onClick={logout}>Logout</button>
           </div>
         </div>
+        <MobileStaffHeader
+          basePath={basePath}
+          user={user}
+          roleLabel={roleLabel}
+          onLogout={logout}
+          isImpersonating={isImpersonating}
+          stopImpersonation={stopImpersonation}
+        />
       </header>
 
       <div className="mobile-donate-fab">
