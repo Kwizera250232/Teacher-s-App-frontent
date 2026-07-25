@@ -110,11 +110,14 @@ export default function TeacherClassPage() {
         Discussion: `/classes/${id}/discussions`,
         Students: `/classes/${id}/students`,
       };
+      console.log(`Loading ${tab} from endpoint:`, endpointMap[tab]);
       const res = await api.get(endpointMap[tab], token);
       const list = Array.isArray(res) ? res : [];
+      console.log(`${tab} data loaded:`, list);
       setData(list);
       try { localStorage.setItem(tCacheKey(tab), JSON.stringify(list)); } catch {}
     } catch (e) {
+      console.error(`Failed to load ${tab}:`, e);
       const cached = JSON.parse(localStorage.getItem(tCacheKey(tab)) || '[]');
       const list = Array.isArray(cached) ? cached : [];
       if (list.length) setData(list);
