@@ -70,9 +70,11 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
   const loadClasses = () => {
     api.get('/classes', token).then(data => {
+      console.log('Classes loaded:', data);
       setClasses(data);
       try { localStorage.setItem('cached_staff_classes', JSON.stringify(data)); } catch {}
     }).catch(e => {
+      console.error('Failed to load classes:', e);
       if (!navigator.onLine) {
         try { const c = JSON.parse(localStorage.getItem('cached_staff_classes') || '[]'); setClasses(c); } catch {}
       } else {
