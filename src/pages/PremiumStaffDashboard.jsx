@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 import PremiumSidebar from '../components/PremiumSidebar';
 import PremiumClassCard from '../components/PremiumClassCard';
 import './PremiumDashboard.css';
 
-export default function PremiumStaffDashboard({ token, user, onLogout, basePath = '/teacher' }) {
+export default function PremiumStaffDashboard({ roleLabel, basePath = '/teacher' }) {
+  const { user, token, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('classes');
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
@@ -74,7 +76,7 @@ export default function PremiumStaffDashboard({ token, user, onLogout, basePath 
         user={user}
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        onLogout={onLogout}
+        onLogout={logout}
         basePath={basePath}
       />
 
