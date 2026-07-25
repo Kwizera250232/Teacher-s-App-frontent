@@ -136,7 +136,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
             <AppNotificationsBell className="notif-bell-professional" basePath={basePath} />
             <Link to="/messages" className="btn-professional btn-professional-icon" style={{ position: 'relative' }}>
               💬
-              {unread > 0 && <span className="notification-badge">{unread}</span>
+              {unread > 0 && <span className="notification-badge">{unread}</span>}
             </Link>
             <DonateButton />
             <Link to="/profile" className="btn-professional btn-professional-icon">👤</Link>

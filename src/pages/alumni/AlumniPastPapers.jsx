@@ -192,7 +192,7 @@ export default function AlumniPastPapers() {
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
             {questions.map((qq, i) => (
               <button key={qq.id} onClick={() => setCurrentQ(i)} style={{
-                width: 36, height: 36, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                width: 36, height: 36, borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700,
                 background: i === currentQ ? '#6366f1' : answers[qq.id] ? '#dcfce7' : '#fff',
                 color: i === currentQ ? '#fff' : answers[qq.id] ? '#166534' : '#64748b',
                 border: '1px solid #e2e8f0',
