@@ -738,6 +738,39 @@ export default function TeacherClassPage() {
         {/* Students */}
         {tab === 'Students' && (
           <div style={{ padding: '1.5rem 0' }}>
+            {Number(cls?.graduated_count) > 0 && (
+              <div
+                style={{
+                  background: '#fffbeb',
+                  border: '1px solid #fcd34d',
+                  borderRadius: 12,
+                  padding: '12px 16px',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 10,
+                }}
+              >
+                <div>
+                  <strong style={{ color: '#92400e' }}>
+                    🎓 {cls.graduated_count} student{Number(cls.graduated_count) > 1 ? 's' : ''} graduated to Alumni
+                  </strong>
+                  <p style={{ margin: '6px 0 0', fontSize: 13, color: '#374151' }}>
+                    They finished this class, so they are no longer listed here. Add new students with class code{' '}
+                    <strong>{cls?.class_code}</strong>.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => navigate('/alumni/directory')}
+                >
+                  View Alumni
+                </button>
+              </div>
+            )}
             <div
               style={{
                 background: '#f0fdf4',

@@ -340,6 +340,11 @@ export default function StaffDashboard({ roleLabel, basePath }) {
                         <div className="class-card-meta">
                           <span className="class-card-code">Code {cls.class_code}</span>
                           <span className="class-card-students">👥 {cls.student_count}</span>
+                          {Number(cls.graduated_count) > 0 && (
+                            <span className="class-card-graduated" title="Students who graduated to Alumni from this class">
+                              🎓 {cls.graduated_count}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="class-card-arrow">→</div>
