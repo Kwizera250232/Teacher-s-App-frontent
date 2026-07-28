@@ -1,17 +1,24 @@
-export default function PremiumClassCard({ classData, studentCount, presentCount, absentCount }) {
-  const attendanceRate = studentCount > 0 ? ((presentCount / studentCount) * 100).toFixed(1) : 0;
-  const absentRate = studentCount > 0 ? ((absentCount / studentCount) * 100).toFixed(1) : 0;
+import { Link } from 'react-router-dom';
+
+export default function PremiumClassCard({
+  classData,
+  studentCount,
+  graduatedCount = 0,
+  basePath = '/teacher',
+}) {
+  const name = classData?.name || 'Class';
+  const badge = name.trim().slice(0, 3).toUpperCase();
 
   return (
     <div className="premium-class-card">
       <div className="class-card-header">
         <div className="class-badge">
-          <span className="class-badge-text">P6</span>
+          <span className="class-badge-text">{badge}</span>
         </div>
         <div className="class-info">
-          <h1 className="class-name">P6 A</h1>
-          <p className="class-subject">Languages</p>
-          <p className="class-code">Class Code: LKGAY5</p>
+          <h1 className="class-name">{name}</h1>
+          {classData?.subject && <p className="class-subject">{classData.subject}</p>}
+          <p className="class-code">Class Code: {classData?.class_code || '—'}</p>
         </div>
       </div>
 
@@ -25,28 +32,40 @@ export default function PremiumClassCard({ classData, studentCount, presentCount
         </div>
 
         <div className="stat-card stat-card--present">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon">🎓</div>
           <div className="stat-content">
-            <div className="stat-label">Present</div>
-            <div className="stat-value">{presentCount}</div>
-            <div className="stat-rate">{attendanceRate}%</div>
+            <div className="stat-label">Graduated</div>
+            <div className="stat-value">{graduatedCount}</div>
           </div>
         </div>
 
         <div className="stat-card stat-card--absent">
-          <div className="stat-icon">❌</div>
+          <div className="stat-icon">📋</div>
           <div className="stat-content">
-            <div className="stat-label">Absent</div>
-            <div className="stat-value">{absentCount}</div>
-            <div className="stat-rate">{absentRate}%</div>
+            <div className="stat-label">Quiz reports</div>
+            <div className="stat-value">
+              <Link
+                to={`${basePath}/classes/${classData?.id}?tab=Quiz reports`}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                Open
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
+      {graduatedCount > 0 && studentCount === 0 && (
+        <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6B7280' }}>
+          All {graduatedCount} students of this class graduated to Alumni. Share code{' '}
+          <strong>{classData?.class_code}</strong> to add new students.
+        </p>
+      )}
+
       <div className="class-action">
-        <button type="button" className="premium-action-button">
-          Start Class
-        </button>
+        <Link to={`${basePath}/classes/${classData?.id}`} className="premium-action-button">
+          Open Class
+        </Link>
       </div>
     </div>
   );

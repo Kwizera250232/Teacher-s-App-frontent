@@ -4,50 +4,73 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import PremiumSidebar from '../components/PremiumSidebar';
 import PremiumClassCard from '../components/PremiumClassCard';
+import CreateClassModal from '../components/CreateClassModal';
+import AddStudentsModal from '../components/AddStudentsModal';
+import ParentInvitesPickerModal from '../components/ParentInvitesPickerModal';
+import QuizTeacherShareInbox from '../components/QuizTeacherShareInbox';
+import NoteTeacherShareInbox from '../components/NoteTeacherShareInbox';
+import StaffQuickActions from '../components/StaffQuickActions';
+import GuestMarksPanel from '../components/GuestMarksPanel';
+import CompositionStatusList from '../components/CompositionStatusList';
+import AppNotificationsBell from '../components/AppNotificationsBell';
+import StaffChatsPanel from '../components/staff/StaffChatsPanel';
+import StaffClassNowPanel from '../components/staff/StaffClassNowPanel';
+import StaffInyandikoDashboard from '../components/staff/StaffInyandikoDashboard';
+import AddTeacherModal from '../components/staff/AddTeacherModal';
+import NotifyParentsModal from '../components/staff/NotifyParentsModal';
+import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
+import ClassMomentsDashboardBlock from '../components/classMoments/ClassMomentsDashboardBlock';
+import OnlineNowStrip from '../components/classMoments/OnlineNowStrip';
+import { usePresence } from '../hooks/usePresence';
+import { usePushNotifications } from '../hooks/usePushNotifications';
+import '../components/classMoments/ClassMoments.css';
+import '../components/StudentNotifications.css';
 import './PremiumDashboard.css';
 
-export default function PremiumStaffDashboard({ roleLabel, basePath = '/teacher' }) {
+export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath = '/teacher' }) {
   const { user, token, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('classes');
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
-  const [selectedClass, setSelectedClass] = useState(null);
-  const [stats, setStats] = useState({ total: 0, present: 0, absent: 0 });
-
-  useEffect(() => {
-    loadClasses();
-  }, [token]);
+  const [error, setError] = useState('');
+  const [momentPreview, setMomentPreview] = useState(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [showAddStudents, setShowAddStudents] = useState(false);
+  const [showParentInvites, setShowParentInvites] = useState(false);
+  const [showAddTeacher, setShowAddTeacher] = useState(false);
+  const [showNotifyParents, setShowNotifyParents] = useState(false);
+  const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
+  const { online } = usePresence(token);
+  const isHeadTeacher = roleLabel === 'Head Teacher';
+  const hasSchool = Boolean(user?.school_id);
+  usePushNotifications(token);
 
   const loadClasses = async () => {
     try {
       const res = await api.get('/classes', token);
-      setClasses(res);
-      if (res.length > 0) {
-        setSelectedClass(res[0]);
-        await loadClassStats(res[0].id);
-      }
+      const list = Array.isArray(res) ? res : [];
+      setClasses(list);
+      try { localStorage.setItem('cached_staff_classes', JSON.stringify(list)); } catch {}
     } catch (err) {
-      console.error('Failed to load classes:', err);
+      if (!navigator.onLine) {
+        try { setClasses(JSON.parse(localStorage.getItem('cached_staff_classes') || '[]')); } catch {}
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const loadClassStats = async (classId) => {
-    try {
-      const studentsRes = await api.get(`/classes/${classId}/students`, token);
-      const total = studentsRes.length;
-      
-      // For demo purposes, we'll calculate present/absent
-      // In production, this would come from attendance API
-      const present = Math.floor(total * 0.87);
-      const absent = total - present;
-      
-      setStats({ total, present, absent });
-    } catch (err) {
-      console.error('Failed to load class stats:', err);
-    }
-  };
+  useEffect(() => {
+    if (!token) return;
+    loadClasses();
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    api.get('/class-moments/preview', token).then(setMomentPreview).catch(() => {});
+  }, [token]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -90,23 +113,67 @@ export default function PremiumStaffDashboard({ roleLabel, basePath = '/teacher'
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div className="school-selector">
-              🏫 Bright School ▼
-            </div>
+            {user?.school_name && (
+              <div className="school-selector">🏫 {user.school_name}</div>
+            )}
+            <AppNotificationsBell basePath={basePath} />
+            <Link to="/messages" className="profile-avatar" title="Messages">💬</Link>
             <Link to="/profile" className="profile-avatar">
               {user?.name?.charAt(0) || 'U'}
             </Link>
           </div>
         </nav>
 
-        {activeTab === 'classes' && selectedClass && (
+        {error && (
+          <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 16px', borderRadius: 10, marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
+
+        {activeTab === 'classes' && (
           <>
-            <PremiumClassCard
-              classData={selectedClass}
-              studentCount={stats.total}
-              presentCount={stats.present}
-              absentCount={stats.absent}
-            />
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
+              <button type="button" className="premium-action-button" onClick={() => setShowCreate(true)}>
+                + Fungura Ishuri
+              </button>
+              <button
+                type="button"
+                className="premium-action-button"
+                onClick={() => setShowAddStudents(true)}
+                disabled={user?.role === 'teacher' && !hasSchool}
+              >
+                👤 Add Students
+              </button>
+              <Link to="/alumni/graduation" className="premium-action-button">🎓 Graduate Students</Link>
+            </div>
+
+            {hasSchool && (
+              <>
+                <QuizTeacherShareInbox token={token} classes={classes} onChange={loadClasses} />
+                <NoteTeacherShareInbox token={token} classes={classes} onChange={loadClasses} />
+              </>
+            )}
+
+            {classes.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
+                <h2 style={{ fontSize: 22, color: '#111827', marginBottom: 8 }}>Nta madarasa</h2>
+                <p style={{ color: '#6B7280', marginBottom: 16 }}>Fungura ishuri ryawe rya mbere utangire</p>
+                <button type="button" className="premium-action-button" onClick={() => setShowCreate(true)}>
+                  Fungura Ishuri
+                </button>
+              </div>
+            ) : (
+              classes.map((cls) => (
+                <PremiumClassCard
+                  key={cls.id}
+                  classData={cls}
+                  studentCount={Number(cls.student_count) || 0}
+                  graduatedCount={Number(cls.graduated_count) || 0}
+                  basePath={basePath}
+                />
+              ))
+            )}
 
             <footer className="premium-footer">
               <div className="footer-date">📅 {getDayName()}</div>
@@ -119,34 +186,87 @@ export default function PremiumStaffDashboard({ roleLabel, basePath = '/teacher'
         )}
 
         {activeTab === 'chats' && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h2 style={{ fontSize: '24px', color: '#111827', marginBottom: '12px' }}>Chats</h2>
-            <p style={{ color: '#6B7280' }}>Select a chat from the sidebar</p>
-          </div>
+          hasSchool
+            ? <StaffChatsPanel token={token} />
+            : <p style={{ color: '#6B7280', padding: '40px 20px', textAlign: 'center' }}>Link to a school to message parents.</p>
+        )}
+
+        {activeTab === 'class-now' && (
+          <>
+            <OnlineNowStrip online={online} />
+            <StaffClassNowPanel token={token} classes={classes} />
+          </>
+        )}
+
+        {activeTab === 'inyandiko' && (
+          <StaffInyandikoDashboard token={token} basePath={basePath} />
         )}
 
         {activeTab === 'alumni' && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h2 style={{ fontSize: '24px', color: '#111827', marginBottom: '12px' }}>Alumni</h2>
-            <p style={{ color: '#6B7280' }}>
-              <Link to="/alumni/directory" style={{ color: '#5A3FFF', textDecoration: 'none' }}>
-                View Alumni Directory →
-              </Link>
-            </p>
+          <div style={{ padding: '8px 0' }}>
+            <h2 style={{ fontSize: 22, color: '#111827', marginBottom: 16 }}>🎓 Alumni</h2>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link to="/alumni/directory" className="premium-action-button">🔍 Alumni Directory</Link>
+              <Link to="/alumni/graduation" className="premium-action-button">🎓 Graduate Students</Link>
+              <Link to="/alumni/admin" className="premium-action-button">⚙️ Manage Alumni Content</Link>
+            </div>
           </div>
         )}
 
         {activeTab === 'tools' && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h2 style={{ fontSize: '24px', color: '#111827', marginBottom: '12px' }}>Tools</h2>
-            <p style={{ color: '#6B7280' }}>Select a tool from the sidebar</p>
+          <div style={{ padding: '8px 0' }}>
+            {!hasSchool && (
+              <p style={{ color: '#6B7280', marginBottom: 16 }}>Some tools require linking to a school.</p>
+            )}
+            {hasSchool && (
+              <ClassMomentsDashboardBlock
+                token={token}
+                userRole={user?.role}
+                preview={momentPreview}
+                feedPath={`${basePath}/class-moments`}
+                showOpenAll
+              />
+            )}
+            {hasSchool && (
+              <section style={{ marginBottom: 20 }}>
+                <h2 style={{ fontSize: 17, color: '#111827', marginBottom: 10 }}>✍️ C. Status (school)</h2>
+                <CompositionStatusList token={token} schoolWide />
+              </section>
+            )}
+            <StaffQuickActions
+              token={token}
+              onAddStudents={() => setShowAddStudents(true)}
+              onParentInvites={() => setShowParentInvites(true)}
+            />
+            <section style={{ marginTop: 20, marginBottom: 16 }}>
+              <h2 style={{ fontSize: 17, color: '#111827', marginBottom: 10 }}>👤 Guest marks (share links)</h2>
+              <GuestMarksPanel token={token} />
+            </section>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button type="button" className="premium-action-button" onClick={() => setShowNotifyParents(true)}>
+                📢 Notify parents
+              </button>
+              {isHeadTeacher && (
+                <button type="button" className="premium-action-button" onClick={() => setShowAddTeacher(true)}>
+                  👨‍🏫 Add teacher
+                </button>
+              )}
+              {classes[0]?.id && (
+                <button type="button" className="premium-action-button" onClick={() => setShowWeeklyDigest(true)}>
+                  📊 Weekly behavior digest
+                </button>
+              )}
+            </div>
           </div>
         )}
 
         {activeTab === 'settings' && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h2 style={{ fontSize: '24px', color: '#111827', marginBottom: '12px' }}>Settings</h2>
-            <p style={{ color: '#6B7280' }}>Settings coming soon</p>
+          <div style={{ padding: '8px 0' }}>
+            <h2 style={{ fontSize: 22, color: '#111827', marginBottom: 16 }}>⚙ Settings</h2>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link to="/profile" className="premium-action-button">👤 My Profile</Link>
+              <Link to="/messages" className="premium-action-button">💬 Messages</Link>
+            </div>
           </div>
         )}
 
@@ -157,6 +277,46 @@ export default function PremiumStaffDashboard({ roleLabel, basePath = '/teacher'
           </div>
         )}
       </main>
+
+      {showCreate && (
+        <CreateClassModal
+          token={token}
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { setShowCreate(false); loadClasses(); }}
+        />
+      )}
+      {showAddStudents && (
+        <AddStudentsModal
+          token={token}
+          onClose={() => { setShowAddStudents(false); loadClasses(); }}
+          onNeedJoinSchool={() => { setShowAddStudents(false); setActiveTab('classes'); }}
+        />
+      )}
+      {showParentInvites && (
+        <ParentInvitesPickerModal token={token} onClose={() => setShowParentInvites(false)} />
+      )}
+      {showAddTeacher && (
+        <AddTeacherModal
+          token={token}
+          onClose={() => setShowAddTeacher(false)}
+          onCreated={() => setShowAddTeacher(false)}
+        />
+      )}
+      {showNotifyParents && classes[0]?.id && (
+        <NotifyParentsModal
+          token={token}
+          classId={parseInt(classes[0].id, 10)}
+          onClose={() => setShowNotifyParents(false)}
+        />
+      )}
+      {showWeeklyDigest && classes[0]?.id && (
+        <WeeklyDigestModal
+          token={token}
+          classId={parseInt(classes[0].id, 10)}
+          onClose={() => setShowWeeklyDigest(false)}
+          onSent={() => setShowWeeklyDigest(false)}
+        />
+      )}
     </div>
   );
 }
