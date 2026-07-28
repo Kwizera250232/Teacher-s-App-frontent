@@ -383,6 +383,11 @@
   color: var(--primary-purple);
 }
 
+/* Mobile logout button — hidden on desktop, shown when sidebar is hidden */
+.mobile-logout-btn {
+  display: none;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .premium-sidebar {
@@ -414,6 +419,27 @@
 @media (max-width: 768px) {
   .premium-sidebar {
     display: none;
+  }
+
+  .mobile-logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: #FEF2F2;
+    color: var(--absent);
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .mobile-logout-btn:hover {
+    background: #FEE2E2;
+    transform: scale(1.05);
   }
 
   .premium-main {

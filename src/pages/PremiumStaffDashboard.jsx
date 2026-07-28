@@ -121,6 +121,9 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
             <Link to="/profile" className="profile-avatar">
               {user?.name?.charAt(0) || 'U'}
             </Link>
+            <button type="button" className="mobile-logout-btn" onClick={logout} title="Logout">
+              🚪
+            </button>
           </div>
         </nav>
 

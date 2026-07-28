@@ -30,6 +30,28 @@
       ],
       "destination": "https://studentapi.umunsi.com/share/moment/:token"
     },
+    {
+      "source": "/alumni/composition/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Googlebot|bingbot).*"
+        }
+      ],
+      "destination": "https://studentapi.umunsi.com/api/alumni/og/:slug"
+    },
+    {
+      "source": "/alumni/post/:postId",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Googlebot|bingbot).*"
+        }
+      ],
+      "destination": "https://studentapi.umunsi.com/api/alumni/og-post/:postId"
+    },
     { "source": "/((?!assets|uploads|favicon.ico).*)", "destination": "/index.html" }
   ],
   "headers": [
