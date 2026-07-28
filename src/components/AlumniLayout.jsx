@@ -40,7 +40,7 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
       {/* Logo */}
       <div onClick={() => { navigate('/alumni/feed'); setSidebarOpen(false); }} style={{ marginBottom: 24, paddingLeft: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
         <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18 }}>U</div>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#1e293b' }}>Alumni</h1>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a', fontFamily: "'Newsreader', Georgia, serif" }}>UClass Alumni</h1>
       </div>
 
       {/* Compose Button */}
@@ -59,9 +59,9 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
           const isActive = currentPath === item.path || currentPath.startsWith(item.path);
           const finalPath = item.path === '/alumni/profile/me' ? getProfilePath() : item.path;
           return (
-            <Link key={item.path} to={finalPath} onClick={() => setSidebarOpen(false)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 10px', borderRadius: 14, textDecoration: 'none', color: isActive ? '#667eea' : '#475569', fontWeight: 600, fontSize: 12, background: isActive ? '#f0f7ff' : '#f8fafc', transition: 'all 0.2s', textAlign: 'center', border: '1px solid ' + (isActive ? '#c7d2fe' : '#e2e8f0') }}>
+            <Link key={item.path} to={finalPath} onClick={() => setSidebarOpen(false)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 10px', borderRadius: 14, textDecoration: 'none', color: isActive ? '#7c3aed' : '#475569', fontWeight: 600, fontSize: 12, background: isActive ? '#ffffff' : '#ffffff', transition: 'all 0.2s', textAlign: 'center', border: '1px solid ' + (isActive ? '#c7d2fe' : '#eef2f6'), boxShadow: isActive ? '0 1px 4px rgba(124,58,237,0.08)' : 'none' }}>
               <span style={{ fontSize: 24 }}>{item.icon}</span>
-              <span style={{ lineHeight: 1.2 }}>{item.label}</span>
+              <span style={{ lineHeight: 1.2, fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>{item.label}</span>
             </Link>
           );
         })}
@@ -148,7 +148,7 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
       {!isMobile && showTopWriters && !fullWidth && (
         <aside className="alumni-desktop-rightbar">
           {/* Search */}
-          <div style={{ background: '#fff', borderRadius: 24, padding: '10px 16px', marginBottom: 16, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ background: '#ffffff', borderRadius: 24, padding: '10px 16px', marginBottom: 16, border: '1px solid #eef2f6', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ color: '#94a3b8', fontSize: 16 }}>🔍</span>
             <input type="text" placeholder="Search alumni..." style={{ border: 'none', outline: 'none', fontSize: 14, width: '100%', background: 'transparent' }} />
           </div>
@@ -157,28 +157,28 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
           <div style={{ background: 'linear-gradient(135deg, #7c3aed, #a78bfa)', borderRadius: 16, padding: 18, color: '#fff', marginBottom: 16, boxShadow: '0 4px 14px rgba(124,58,237,0.25)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <span style={{ fontSize: 22 }}>👑</span>
-              <span style={{ fontWeight: 800, fontSize: 16 }}>Go Premium</span>
+              <span style={{ fontWeight: 700, fontSize: 16, fontFamily: "'Newsreader', Georgia, serif" }}>Go Premium</span>
             </div>
             <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: '#ede9fe' }}>Unlock extra features and a better experience for your alumni journey.</p>
             <button onClick={() => navigate('/alumni/premium')} style={{ width: '100%', padding: '9px 14px', borderRadius: 10, border: 'none', background: '#fff', color: '#7c3aed', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Upgrade Now</button>
           </div>
 
           {/* Refer & Earn Card */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 18, marginBottom: 16, border: '1px solid #eef2f6' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <span style={{ fontSize: 22 }}>🎁</span>
-              <span style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>Refer & Earn</span>
+              <span style={{ fontWeight: 700, fontSize: 16, color: '#0f172a', fontFamily: "'Newsreader', Georgia, serif" }}>Refer & Earn</span>
             </div>
             <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: '#64748b' }}>Invite friends and earn amazing rewards together.</p>
-            <button onClick={() => { const link = `${window.location.origin}/register?ref=${user?.id || ''}`; navigator.clipboard?.writeText(link); alert('Referral link copied!'); }} style={{ width: '100%', padding: '9px 14px', borderRadius: 10, border: '1px solid #7c3aed', background: '#fff', color: '#7c3aed', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Invite Now</button>
+            <button onClick={() => { const link = `${window.location.origin}/register?ref=${user?.id || ''}`; navigator.clipboard?.writeText(link); alert('Referral link copied!'); }} style={{ width: '100%', padding: '9px 14px', borderRadius: 10, border: '1px solid #7c3aed', background: '#ffffff', color: '#7c3aed', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Invite Now</button>
           </div>
 
           {/* Top Writers */}
           <TopWriters token={user?.token} />
 
           {/* Quick Stats */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 800, color: '#1e293b' }}>📊 Your Stats</h3>
+          <div style={{ background: '#ffffff', borderRadius: 16, padding: 18, border: '1px solid #eef2f6' }}>
+            <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 700, color: '#0f172a', fontFamily: "'Newsreader', Georgia, serif" }}>📊 Your Stats</h3>
             {[{label:'Articles',value:'0',icon:'✍️'},{label:'Reads',value:'0',icon:'👁️'},{label:'Followers',value:'0',icon:'👥'},{label:'Wallet',value:'RWF 0',icon:'💰'}].map((stat) => (
               <div key={stat.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontSize: 13 }}><span>{stat.icon}</span>{stat.label}</div>
@@ -231,8 +231,8 @@ function TopWriters({ token }) {
   ];
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-      <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 800, color: '#1e293b' }}>🏆 Top Writers</h3>
+    <div style={{ background: '#ffffff', borderRadius: 16, padding: 18, marginBottom: 16, border: '1px solid #eef2f6' }}>
+      <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 700, color: '#0f172a', fontFamily: "'Newsreader', Georgia, serif" }}>🏆 Top Writers</h3>
       {displayWriters.map((w, i) => (
         <div key={w.id || i} onClick={() => navigate(`/alumni/profile/${w.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < displayWriters.length - 1 ? '1px solid #f1f5f9' : 'none', cursor: 'pointer' }}>
           <div style={{ width: 34, height: 34, borderRadius: '50%', background: `hsl(${(w.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>{w.avatar || w.name?.[0] || '?'}</div>

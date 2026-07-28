@@ -1,18 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap');
+
 .opp-container {
   max-width: 720px;
   margin: 0 auto;
   padding: 0 4px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .opp-title {
   margin: 0 0 8px;
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 700;
+  font-family: 'Newsreader', Georgia, serif;
+  color: #0f172a;
 }
 
 .opp-subtitle {
   color: #64748b;
   margin-bottom: 20px;
+  font-size: 15px;
 }
 
 .opp-categories {
@@ -55,16 +61,16 @@
 }
 
 .opp-card {
-  background: #fff;
+  background: #ffffff;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eef2f6;
 }
 
 .opp-card-tag {
   display: inline-block;
-  background: #f0f7ff;
-  color: #667eea;
+  background: #f5f3ff;
+  color: #7c3aed;
   padding: 2px 10px;
   border-radius: 12px;
   font-size: 11px;
@@ -73,8 +79,10 @@
 
 .opp-card-title {
   margin: 8px 0 6px;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
+  font-family: 'Newsreader', Georgia, serif;
+  color: #0f172a;
 }
 
 .opp-card-desc {

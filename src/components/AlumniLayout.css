@@ -1,13 +1,18 @@
+/* ── Substack-Inspired Alumni Layout ────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap');
+
 .alumni-layout {
   display: flex;
   min-height: 100vh;
-  background: #f0f2f5;
+  background: #ffffff;
+  color: #1e293b;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .alumni-desktop-sidebar {
   width: 220px;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-right: 1px solid #eef2f6;
   padding: 20px 12px;
   position: fixed;
   left: 0;
@@ -22,9 +27,10 @@
 .alumni-main {
   flex: 1;
   margin-left: 220px;
-  margin-right: 260px;
+  margin-right: 360px;
   padding: 20px 24px;
   min-width: 0;
+  background: #ffffff;
 }
 
 .alumni-main-fullwidth {
@@ -33,15 +39,15 @@
 }
 
 .alumni-desktop-rightbar {
-  width: 240px;
-  padding: 20px 12px;
+  width: 340px;
+  padding: 20px 16px;
   position: fixed;
   right: 0;
   top: 0;
   bottom: 0;
   overflow-y: auto;
-  border-left: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-left: 1px solid #eef2f6;
+  background: #ffffff;
 }
 
 /* Mobile header */
@@ -51,8 +57,8 @@
   left: 0;
   right: 0;
   height: 56px;
-  background: #fff;
-  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  border-bottom: 1px solid #eef2f6;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -139,7 +145,7 @@
 
 .alumni-mobile-sidebar {
   width: 260px;
-  background: #fff;
+  background: #ffffff;
   padding: 20px 12px;
   position: fixed;
   left: 0;
@@ -159,8 +165,8 @@
   left: 0;
   right: 0;
   height: 64px;
-  background: #fff;
-  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+  border-top: 1px solid #eef2f6;
   display: flex;
   align-items: center;
   justify-content: space-around;
