@@ -11,7 +11,7 @@ export default function AlumniColleagues() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/alumni/directory', token)
+    api.get('/alumni/directory?limit=500', token)
       .then((data) => { setColleagues(data.alumni || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [token]);
