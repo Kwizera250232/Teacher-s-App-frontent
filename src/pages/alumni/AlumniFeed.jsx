@@ -526,24 +526,6 @@ export default function AlumniFeed() {
 
       {renderPostImages(post)}
 
-      <div className="af-stats-bar">
-        <div className="af-stats-left" onClick={() => openLikers(post.id)}>
-          <div className="af-likes-icons">
-            <span className="af-likes-icon-circle af-likes-icon-like">👍</span>
-            <span className="af-likes-icon-circle af-likes-icon-heart">❤️</span>
-          </div>
-          <span className="af-stats-text">{post.likes_count || 0}</span>
-        </div>
-        <div className="af-stats-right">
-          <span onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); if (commentOpen !== post.id) loadComments(post.id); }}>
-            {post.comments_count || 0} comments
-          </span>
-          <span onClick={() => openViewers(post.id)}>
-            👁️ {post.views_count || 0} views
-          </span>
-        </div>
-      </div>
-
       <div className="af-card-actions substack-actions">
         <button className={`substack-action-btn${post.liked_by_me ? ' active' : ''}`} onClick={() => toggleLike(post)} title="Like">
           <HeartIcon filled={post.liked_by_me} />
@@ -639,22 +621,6 @@ export default function AlumniFeed() {
             <h3 className="af-link-title">{comp.title}</h3>
             <p className="af-link-desc" style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.5', marginTop: '8px' }}>{previewText}</p>
             <p className="af-link-desc" style={{ fontSize: '13px', color: '#94a3b8', marginTop: '8px' }}>{comp.category ? `${comp.category} · ` : ''}{comp.read_count || 0} reads</p>
-          </div>
-        </div>
-
-        <div className="af-stats-bar">
-          <div className="af-stats-left" onClick={() => openLikers(comp.id)}>
-            <div className="af-likes-icons">
-              <span className="af-likes-icon-circle af-likes-icon-like">👍</span>
-              <span className="af-likes-icon-circle af-likes-icon-heart">❤️</span>
-            </div>
-            <span className="af-stats-text">{comp.likes_count || 0}</span>
-          </div>
-          <div className="af-stats-right">
-            <span onClick={() => { setCommentOpen(commentOpen === comp.id ? null : comp.id); if (commentOpen !== comp.id) loadComments(comp.id); }}>
-              {comp.comments_count || 0} comments
-            </span>
-            <span>📖 {comp.read_count || 0} reads</span>
           </div>
         </div>
 
