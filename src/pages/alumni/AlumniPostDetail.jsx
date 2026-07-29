@@ -2,11 +2,46 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
-import AlumniLayout from '../../components/AlumniLayout';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import AIRevisionBadge from '../../components/AIRevisionBadge';
 import { Helmet } from 'react-helmet';
-import './AlumniFeed.css';
+import './AlumniPostSubstack.css';
+
+function avatarColor(id) {
+  return `hsl(${(id || 1) * 137 % 360}, 65%, 48%)`;
+}
+
+/* ── Substack-style SVG icons ─────────────────────────────────────────────── */
+const HeartIcon = ({ filled }) => (
+  <svg viewBox="0 0 24 24" className={filled ? 'filled-heart' : ''}>
+    <path d="M12 21s-7.5-4.7-10-9.2C.4 8.4 2 5 5.2 5c2 0 3.4 1.1 4.3 2.4C10.4 6.1 11.8 5 13.8 5 17 5 18.6 8.4 17 11.8 14.5 16.3 12 21 12 21z"
+      strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const CommentIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+      strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const RestackIcon = ({ active }) => (
+  <svg viewBox="0 0 24 24" className={active ? 'filled-restack' : ''}>
+    <path d="M17 2.1l4.6 4.6L17 11.3" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M3.5 11.5v-2a4 4 0 0 1 4-4h14.6" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M7 21.9l-4.6-4.6L7 11.7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M20.5 12.5v2a4 4 0 0 1-4 4H1.9" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ShareIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M16 6l-4-4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 export default function AlumniPostDetail() {
   const { postId } = useParams();
@@ -20,14 +55,28 @@ export default function AlumniPostDetail() {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [restacked, setRestacked] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
+  const [readProgress, setReadProgress] = useState(0);
 
   useEffect(() => { loadPost(); }, [postId, token]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      setReadProgress(Math.min(100, Math.round((scrolled / Math.max(docHeight, 1)) * 100)));
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const loadPost = async () => {
     try {
       const data = await api.get(`/alumni/feed/${postId}`, token);
       setPost(data.post || null);
       setComments(data.comments || []);
+      setRestacked(!!(data.post || {}).restacked_by_me);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -53,6 +102,31 @@ export default function AlumniPostDetail() {
     } catch (e) { console.error(e); }
   };
 
+  const handleRestack = async () => {
+    if (!post) return;
+    try {
+      if (restacked) {
+        await api.delete(`/alumni/feed/${post.id}/restack`, token);
+        setRestacked(false);
+      } else {
+        await api.post(`/alumni/feed/${post.id}/restack`, {}, token);
+        setRestacked(true);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: post.content?.substring(0, 60) || 'Post', url: window.location.href });
+      } else {
+        await navigator.clipboard?.writeText(window.location.href);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 2000);
+      }
+    } catch (err) { /* user cancelled */ }
+  };
+
   const handleEdit = async () => {
     if (!editText.trim()) return;
     setSavingEdit(true);
@@ -72,210 +146,249 @@ export default function AlumniPostDetail() {
     } catch (e) { alert(e.message); }
   };
 
-  if (loading) return (
-    <AlumniLayout showTopWriters={false}>
-      <div style={{ textAlign: 'center', padding: 60 }}>Loading...</div>
-    </AlumniLayout>
-  );
+  if (loading) return <div style={{ padding: 60, textAlign: 'center', fontSize: 16, color: '#64748b', fontFamily: 'Inter, sans-serif' }}>Loading post…</div>;
 
   if (!post) return (
-    <AlumniLayout showTopWriters={false}>
-      <div style={{ textAlign: 'center', padding: 60 }}>
-        <h2>Post not found</h2>
-        <button onClick={() => navigate('/alumni/feed')} style={{ marginTop: 20, padding: '10px 20px', borderRadius: 10, border: 'none', background: '#f59e0b', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>Back to Feed</button>
-      </div>
-    </AlumniLayout>
+    <div style={{ padding: 60, textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
+      <h2 style={{ color: '#0f172a' }}>Post not found</h2>
+      <button onClick={() => navigate('/alumni/feed')} style={{ marginTop: 20, padding: '10px 24px', borderRadius: 24, border: '1.5px solid #eef2f6', background: '#fff', color: '#64748b', cursor: 'pointer', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>← Back to Feed</button>
+    </div>
   );
 
+  const authorId = post.author_id || post.user_id;
+  const firstImg = post.image_paths?.[0];
+  const ogImg = firstImg ? (firstImg.startsWith('http') ? firstImg : `${UPLOADS_BASE}${firstImg}`) : 'https://student.umunsi.com/og-image.svg';
+  const ogDesc = post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || '';
+  const ogTitle = post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post';
+
   return (
-    <AlumniLayout showTopWriters={false}>
+    <div className="substack-post-page">
       {post && (
         <Helmet>
-          <title>{post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} - UClass Alumni</title>
-          <meta name="description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
+          <title>{ogTitle} - UClass Alumni</title>
+          <meta name="description" content={ogDesc} />
           <meta property="og:type" content="article" />
-          <meta property="og:title" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
-          <meta property="og:description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
+          <meta property="og:title" content={ogTitle} />
+          <meta property="og:description" content={ogDesc} />
           <meta property="og:url" content={window.location.href} />
-          <meta property="og:image" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
-          <meta property="og:image:secure_url" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
+          <meta property="og:image" content={ogImg} />
+          <meta property="og:image:secure_url" content={ogImg} />
           <meta property="og:image:type" content="image/jpeg" />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
-          <meta property="og:image:alt" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
+          <meta property="og:image:alt" content={ogTitle} />
           <meta property="og:site_name" content="UClass Alumni" />
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
-          <meta name="twitter:description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
-          <meta name="twitter:image" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
-          <meta name="twitter:image:alt" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
-          <meta itemprop="name" content={post.content?.split('\n\n')?.[0]?.substring(0, 60)?.replace(/\n/g, ' ') || post.content?.substring(0, 60)?.replace(/\n/g, ' ') || 'Post'} />
-          <meta itemprop="description" content={post.content?.split('\n\n')?.[0]?.substring(0, 200)?.replace(/\n/g, ' ') || post.content?.substring(0, 200)?.replace(/\n/g, ' ') || ''} />
-          <meta itemprop="image" content={post.image_paths?.[0] ? (post.image_paths[0].startsWith('http') ? post.image_paths[0] : `${UPLOADS_BASE}${post.image_paths[0]}`) : 'https://student.umunsi.com/og-image.svg'} />
+          <meta name="twitter:title" content={ogTitle} />
+          <meta name="twitter:description" content={ogDesc} />
+          <meta name="twitter:image" content={ogImg} />
+          <meta name="twitter:image:alt" content={ogTitle} />
+          <meta itemprop="name" content={ogTitle} />
+          <meta itemprop="description" content={ogDesc} />
+          <meta itemprop="image" content={ogImg} />
         </Helmet>
       )}
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 0 40px' }}>
-        {/* Back button & PDF button */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <button onClick={() => navigate('/alumni/feed')} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}>
-            ← Back to Feed
-          </button>
-          <button onClick={() => window.print()} style={{ background: 'none', border: '1.5px solid #e2e8f0', cursor: 'pointer', fontSize: 13, color: '#64748b', fontWeight: 600, padding: '6px 14px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
-            📄 Open as PDF
-          </button>
+
+      {/* Reading Progress Bar */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 3, background: '#f1f5f9', zIndex: 200 }}>
+        <div style={{ width: `${readProgress}%`, height: '100%', background: 'linear-gradient(90deg, #f97316, #ea580c)', transition: 'width 0.2s' }} />
+      </div>
+
+      <div className="substack-container">
+        {/* Top tools */}
+        <div className="substack-header-tools">
+          <button className="substack-back-btn" onClick={() => navigate('/alumni/feed')}>← Back to Feed</button>
+          <button className="substack-pdf-btn" onClick={() => window.print()}>📄 Open as PDF</button>
         </div>
 
-        <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          {/* Author Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 24px 12px' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: `hsl(${(post.user_id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16 }}>
-              {post.author_name?.[0] || 'U'}
+        {/* Author row */}
+        <div className="substack-author-row">
+          <div className="substack-author-avatar" style={{ background: avatarColor(authorId) }}>
+            {post.author_name?.[0] || 'U'}
+          </div>
+          <div className="substack-author-info">
+            <div className="substack-author-name">
+              <span>{post.author_name}</span>
+              <VerifiedBadge size={16} userId={authorId} onViewProfile={() => navigate(`/alumni/profile/${authorId}`)} />
+              <AIRevisionBadge size={16} userId={authorId} />
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontWeight: 700, fontSize: 15, color: '#1e293b' }}>{post.author_name}</span>
-                <VerifiedBadge size={16} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
-                <AIRevisionBadge size={16} userId={post.author_id || post.user_id} />
-              </div>
-              <div style={{ fontSize: 13, color: '#94a3b8' }}>{new Date(post.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+            <div className="substack-author-meta">
+              {new Date(post.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+              {post.views_count > 0 ? ` · ${post.views_count} views` : ''}
             </div>
-            {(post.author_id === user?.id || post.user_id === user?.id) && (
-              <div style={{ position: 'relative', marginLeft: 'auto' }}>
-                <button onClick={() => setShowMenu(!showMenu)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#94a3b8', padding: '4px 8px' }}>⋯</button>
-                {showMenu && (
-                  <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 100, minWidth: 140, overflow: 'hidden' }}>
-                    <button onClick={() => { setEditing(true); setEditText(post.content || ''); setShowMenu(false); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#1e293b', textAlign: 'left' }}>✏️ Edit Post</button>
-                    <button onClick={() => { handleDelete(); setShowMenu(false); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', textAlign: 'left' }}>🗑️ Delete Post</button>
+          </div>
+          {(post.author_id === user?.id || post.user_id === user?.id) && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: '#94a3b8', padding: '4px 8px' }}
+                title="More"
+              >⋯</button>
+              {showMenu && (
+                <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', borderRadius: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', zIndex: 100, minWidth: 150, overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
+                  <button onClick={() => { setEditing(true); setEditText(post.content || ''); setShowMenu(false); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#1e293b', textAlign: 'left' }}>✏️ Edit Post</button>
+                  <button onClick={() => { handleDelete(); setShowMenu(false); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', textAlign: 'left' }}>🗑️ Delete Post</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Featured Images */}
+      {post.image_paths && post.image_paths.length > 0 && (
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 16px' }}>
+          <div className="substack-featured-img" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(post.image_paths.length, 2)}, 1fr)`, gap: 4 }}>
+            {post.image_paths.slice(0, 4).map((img, i) => (
+              <div key={i} style={{ position: 'relative', minHeight: 200 }}>
+                <img
+                  src={img.startsWith('http') ? img : `${UPLOADS_BASE}${img}`}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+                {i === 3 && post.image_paths.length > 4 && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 700 }}>
+                    +{post.image_paths.length - 4}
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-
-          {/* Featured Images */}
-          {post.image_paths && post.image_paths.length > 0 && (
-            <div className={`af-post-images af-post-images-${Math.min(post.image_paths.length, 4)}`} style={{ margin: '0 -24px 16px', width: 'calc(100% + 48px)' }}>
-              {post.image_paths.slice(0, 4).map((img, i) => (
-                <div key={i} className="af-post-img-wrap">
-                  <img
-                    src={img.startsWith('http') ? img : `${UPLOADS_BASE}${img}`}
-                    alt=""
-                    className="af-post-img"
-                    style={{ borderRadius: 0 }}
-                  />
-                  {i === 3 && post.image_paths.length > 4 && (
-                    <div className="af-post-img-overlay">+{post.image_paths.length - 4}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Content */}
-          {editing ? (
-            <div style={{ padding: '20px 24px' }}>
-              <textarea value={editText} onChange={(e) => setEditText(e.target.value)} style={{ width: '100%', minHeight: 120, padding: '12px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 16, lineHeight: 1.7, outline: 'none', resize: 'vertical' }} />
-              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                <button onClick={() => setEditing(false)} style={{ padding: '8px 20px', borderRadius: 20, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                <button onClick={handleEdit} disabled={savingEdit || !editText.trim()} style={{ padding: '8px 20px', borderRadius: 20, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{savingEdit ? 'Saving...' : 'Save'}</button>
-              </div>
-            </div>
-          ) : (
-            <div style={{ padding: '20px 24px', fontSize: 16, lineHeight: 1.7, color: '#1e293b' }}>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{post.content}</div>
-            </div>
-          )}
-
-          {/* Action Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 24px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap' }}>
-            <button onClick={toggleLike} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: post.liked_by_me ? '#ef4444' : '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 20 }}>{post.liked_by_me ? '❤️' : '🤍'}</span>
-              <span style={{ fontWeight: 600 }}>{post.likes_count || 0}</span>
-            </button>
-            <span style={{ fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 20 }}>💬</span>
-              <span style={{ fontWeight: 600 }}>{post.comments_count || 0}</span>
-            </span>
-            <span style={{ fontSize: 14, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 20 }}>👁️</span>
-              <span style={{ fontWeight: 600 }}>{post.views_count || 0} views</span>
-            </span>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
-              <button
-                onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.content?.substring(0, 100) || 'Check this out')}&url=${encodeURIComponent(window.location.href)}`, '_blank')}
-                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
-                title="Share on X (Twitter)"
-              >
-                𝕏
-              </button>
-              <button
-                onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')}
-                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
-                title="Share on Facebook"
-              >
-                📘
-              </button>
-              <button
-                onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank')}
-                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
-                title="Share on LinkedIn"
-              >
-                💼
-              </button>
-              <button
-                onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent((post.content?.substring(0, 100) || 'Check this out') + ' ' + window.location.href)}`, '_blank')}
-                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
-                title="Share on WhatsApp"
-              >
-                📱
-              </button>
-              <button
-                onClick={() => { navigator.clipboard?.writeText(window.location.href); alert('Link copied!'); }}
-                style={{ padding: '6px 10px', borderRadius: 18, border: '1.5px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
-                title="Copy link"
-              >
-                🔗
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Comments Section */}
-        <div style={{ marginTop: 20 }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 800, color: '#1e293b' }}>Comments ({comments.length})</h3>
-
-          {/* Comment Input */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: `hsl(${(user?.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
-              {user?.name?.[0] || 'U'}
-            </div>
-            <div style={{ flex: 1 }}>
-              <input type="text" placeholder="Write a comment..." value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addComment()} style={{ width: '100%', padding: '12px 16px', borderRadius: 20, border: '1.5px solid #e2e8f0', fontSize: 14, outline: 'none' }} />
-            </div>
-            <button onClick={addComment} style={{ padding: '10px 20px', borderRadius: 20, border: 'none', background: '#f59e0b', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>Reply</button>
-          </div>
-
-          {/* Comments List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {comments.map((c) => (
-              <div key={c.id} style={{ display: 'flex', gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: `hsl(${(c.user_id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
-                  {c.author_name?.[0] || 'U'}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <strong style={{ fontSize: 14, color: '#1e293b' }}>{c.author_name}</strong>
-                      <span style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                    </div>
-                    <p style={{ margin: 0, fontSize: 15, color: '#475569', lineHeight: 1.5 }}>{c.content}</p>
-                  </div>
-                </div>
               </div>
             ))}
           </div>
         </div>
+      )}
+
+      {/* Content */}
+      <div className="substack-container" style={{ paddingTop: 0 }}>
+        {editing ? (
+          <div style={{ marginBottom: 24 }}>
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              style={{ width: '100%', minHeight: 140, padding: 14, borderRadius: 12, border: '1.5px solid #eef2f6', fontSize: 16, lineHeight: 1.7, outline: 'none', resize: 'vertical', fontFamily: 'Inter, sans-serif', color: '#1e293b' }}
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <button onClick={() => setEditing(false)} style={{ padding: '8px 20px', borderRadius: 20, border: '1.5px solid #eef2f6', background: '#fff', color: '#64748b', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Cancel</button>
+              <button onClick={handleEdit} disabled={savingEdit || !editText.trim()} style={{ padding: '8px 20px', borderRadius: 20, border: 'none', background: '#f97316', color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>{savingEdit ? 'Saving…' : 'Save'}</button>
+            </div>
+          </div>
+        ) : (
+          <div className="substack-content" style={{ fontFamily: 'Inter, sans-serif', fontSize: 17, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+            {post.content}
+          </div>
+        )}
+
+        {/* Action Bar — Substack style */}
+        <div className="substack-actions">
+          <button
+            className={`substack-action-btn${post.liked_by_me ? ' active' : ''}`}
+            onClick={toggleLike}
+            title="Like"
+          >
+            <HeartIcon filled={post.liked_by_me} />
+            <span>{post.likes_count || 0}</span>
+          </button>
+
+          <button
+            className="substack-action-btn"
+            onClick={() => document.getElementById('substack-comments')?.scrollIntoView({ behavior: 'smooth' })}
+            title="Comment"
+          >
+            <CommentIcon />
+            <span>{post.comments_count || 0}</span>
+          </button>
+
+          <button
+            className={`substack-action-btn${restacked ? ' active' : ''}`}
+            onClick={handleRestack}
+            title="Repost"
+            style={restacked ? { color: '#10b981', background: '#ecfdf5', borderColor: '#a7f3d0' } : {}}
+          >
+            <RestackIcon active={restacked} />
+            <span>{post.restacks_count || 0}</span>
+          </button>
+
+          <div className="substack-share-group">
+            <button className="substack-action-btn" onClick={handleShare} title="Share">
+              <ShareIcon />
+            </button>
+          </div>
+        </div>
+
+        {/* Stats line */}
+        <div className="substack-stats">
+          {post.views_count || 0} views · {post.likes_count || 0} likes · {post.comments_count || 0} comments
+        </div>
+
+        {/* Comments */}
+        <div id="substack-comments">
+          <h3 className="substack-comments-title">Comments ({comments.length})</h3>
+
+          {/* Comment Input */}
+          <div className="substack-comment-input-row">
+            <div className="substack-comment-avatar" style={{ background: avatarColor(user?.id) }}>
+              {user?.name?.[0] || 'U'}
+            </div>
+            <div className="substack-comment-input-col">
+              <textarea
+                className="substack-comment-textarea"
+                placeholder="Write a comment…"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(); } }}
+              />
+              <button
+                className="substack-comment-submit"
+                onClick={addComment}
+                disabled={!commentText.trim()}
+              >
+                Reply
+              </button>
+            </div>
+          </div>
+
+          {/* Comments List */}
+          {comments.length === 0 ? (
+            <div className="substack-empty-comments">No comments yet. Be the first to comment.</div>
+          ) : (
+            <div className="substack-comments-list">
+              {comments.map((c) => (
+                <div key={c.id} className="substack-comment">
+                  <div className="substack-comment-avatar" style={{ background: avatarColor(c.user_id) }}>
+                    {c.author_name?.[0] || 'U'}
+                  </div>
+                  <div className="substack-comment-bubble">
+                    <div className="substack-comment-header">
+                      <span className="substack-comment-name">{c.author_name}</span>
+                      <span className="substack-comment-date">
+                        {new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <p className="substack-comment-text">{c.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Back to Feed bottom */}
+        <div className="substack-back-bottom">
+          <button className="substack-back-bottom-btn" onClick={() => navigate('/alumni/feed')}>
+            ← Back to Feed
+          </button>
+        </div>
       </div>
-    </AlumniLayout>
+
+      {shareToast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: '#0f172a', color: '#fff', padding: '10px 20px', borderRadius: 24,
+          fontSize: 14, fontWeight: 600, fontFamily: 'Inter, sans-serif', zIndex: 300,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+        }}>
+          🔗 Link copied to clipboard
+        </div>
+      )}
+    </div>
   );
 }
