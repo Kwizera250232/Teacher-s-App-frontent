@@ -7,6 +7,36 @@ import VerifiedBadge from '../../components/VerifiedBadge';
 import AIRevisionBadge from '../../components/AIRevisionBadge';
 import DailyCompositionChallenge from '../../components/DailyCompositionChallenge';
 import './AlumniFeed.css';
+import './AlumniPostSubstack.css';
+
+/* ── Substack-style SVG icons for feed action bar ─────────────────────────── */
+const HeartIcon = ({ filled }) => (
+  <svg viewBox="0 0 24 24" className={filled ? 'filled-heart' : ''}>
+    <path d="M12 21s-7.5-4.7-10-9.2C.4 8.4 2 5 5.2 5c2 0 3.4 1.1 4.3 2.4C10.4 6.1 11.8 5 13.8 5 17 5 18.6 8.4 17 11.8 14.5 16.3 12 21 12 21z"
+      strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const CommentIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+      strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const RestackIcon = ({ active }) => (
+  <svg viewBox="0 0 24 24" className={active ? 'filled-restack' : ''}>
+    <path d="M17 2.1l4.6 4.6L17 11.3" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M3.5 11.5v-2a4 4 0 0 1 4-4h14.6" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M7 21.9l-4.6-4.6L7 11.7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M20.5 12.5v2a4 4 0 0 1-4 4H1.9" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const ShareIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M16 6l-4-4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12 2v13" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '🔥', '🎉'];
 
@@ -99,6 +129,7 @@ export default function AlumniFeed() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [offlineUsers, setOfflineUsers] = useState([]);
   const [likersModal, setLikersModal] = useState(null);
+  const [shareToast, setShareToast] = useState(false);
   const [viewersModal, setViewersModal] = useState(null);
   const [likersList, setLikersList] = useState([]);
   const [viewersList, setViewersList] = useState([]);
@@ -212,6 +243,34 @@ export default function AlumniFeed() {
       setShowReactions(null);
       loadPosts();
     } catch (e) { alert(e.message); }
+  };
+
+  const toggleRestack = async (post) => {
+    if (!token) { navigate('/login'); return; }
+    try {
+      if (post.restacked_by_me) {
+        await api.delete(`/alumni/feed/${post.id}/restack`, token);
+      } else {
+        await api.post(`/alumni/feed/${post.id}/restack`, {}, token);
+      }
+      loadPosts();
+    } catch (e) { console.error(e); }
+  };
+
+  const handleShare = async (post, isComposition = false) => {
+    const url = isComposition
+      ? `${window.location.origin}/alumni/composition/${post.slug || post.id}`
+      : `${window.location.origin}/alumni/post/${post.id}`;
+    const title = isComposition ? post.title : (post.content?.split('\n\n')?.[0]?.substring(0, 60) || 'Check this out');
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+      } else {
+        await navigator.clipboard?.writeText(url);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 2000);
+      }
+    } catch (err) { /* user cancelled */ }
   };
 
   const loadComments = async (postId) => {
@@ -485,32 +544,24 @@ export default function AlumniFeed() {
         </div>
       </div>
 
-      <div className="af-card-actions">
-        <button className={`af-action ${post.liked_by_me ? 'af-action-active' : ''}`} onClick={() => toggleLike(post)}>
-          <span>{post.liked_by_me ? '❤️' : '👍'}</span>
-          <span>Like</span>
+      <div className="af-card-actions substack-actions">
+        <button className={`substack-action-btn${post.liked_by_me ? ' active' : ''}`} onClick={() => toggleLike(post)} title="Like">
+          <HeartIcon filled={post.liked_by_me} />
+          <span>{post.likes_count || 0}</span>
         </button>
-        <button className="af-action" onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); if (commentOpen !== post.id) loadComments(post.id); }}>
-          <span>💬</span>
-          <span>Comment</span>
+        <button className="substack-action-btn" onClick={() => { setCommentOpen(commentOpen === post.id ? null : post.id); if (commentOpen !== post.id) loadComments(post.id); }} title="Comment">
+          <CommentIcon />
+          <span>{post.comments_count || 0}</span>
         </button>
-        <div className="af-action-wrap">
-          <button className="af-action" onClick={() => setShowReactions(showReactions === post.id ? null : post.id)}>
-            <span>😊</span>
-            <span>Celebrate</span>
+        <button className={`substack-action-btn${post.restacked_by_me ? ' active' : ''}`} onClick={() => toggleRestack(post)} title="Repost" style={post.restacked_by_me ? { color: '#10b981', background: '#ecfdf5', borderColor: '#a7f3d0' } : {}}>
+          <RestackIcon active={post.restacked_by_me} />
+          <span>{post.restacks_count || 0}</span>
+        </button>
+        <div className="substack-share-group">
+          <button className="substack-action-btn" onClick={() => handleShare(post)} title="Share">
+            <ShareIcon />
           </button>
-          {showReactions === post.id && (
-            <div className="af-reaction-picker">
-              {REACTIONS.map((emoji) => (
-                <button key={emoji} onClick={() => addReaction(post.id, emoji)} className="af-reaction-btn">{emoji}</button>
-              ))}
-            </div>
-          )}
         </div>
-        <button className="af-action" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/alumni/post/${post.id}`); alert('Link copied!'); }}>
-          <span>↗️</span>
-          <span>Share</span>
-        </button>
       </div>
 
       {commentOpen === post.id && (
@@ -607,19 +658,24 @@ export default function AlumniFeed() {
           </div>
         </div>
 
-        <div className="af-card-actions">
-          <button className={`af-action ${comp.liked_by_me ? 'af-action-active' : ''}`} onClick={() => toggleLike(comp)}>
-            <span>{comp.liked_by_me ? '❤️' : '👍'}</span>
-            <span>Like</span>
+        <div className="af-card-actions substack-actions">
+          <button className={`substack-action-btn${comp.liked_by_me ? ' active' : ''}`} onClick={() => toggleLike(comp)} title="Like">
+            <HeartIcon filled={comp.liked_by_me} />
+            <span>{comp.likes_count || 0}</span>
           </button>
-          <button className="af-action" onClick={() => { setCommentOpen(commentOpen === comp.id ? null : comp.id); if (commentOpen !== comp.id) loadComments(comp.id); }}>
-            <span>💬</span>
-            <span>Comment</span>
+          <button className="substack-action-btn" onClick={() => { setCommentOpen(commentOpen === comp.id ? null : comp.id); if (commentOpen !== comp.id) loadComments(comp.id); }} title="Comment">
+            <CommentIcon />
+            <span>{comp.comments_count || 0}</span>
           </button>
-          <button className="af-action" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/alumni/composition/${comp.slug || comp.id}`); alert('Link copied!'); }}>
-            <span>↗️</span>
-            <span>Share</span>
+          <button className={`substack-action-btn${comp.restacked_by_me ? ' active' : ''}`} onClick={() => toggleRestack(comp)} title="Repost" style={comp.restacked_by_me ? { color: '#10b981', background: '#ecfdf5', borderColor: '#a7f3d0' } : {}}>
+            <RestackIcon active={comp.restacked_by_me} />
+            <span>{comp.restacks_count || 0}</span>
           </button>
+          <div className="substack-share-group">
+            <button className="substack-action-btn" onClick={() => handleShare(comp, true)} title="Share">
+              <ShareIcon />
+            </button>
+          </div>
         </div>
 
         {commentOpen === comp.id && (
@@ -979,6 +1035,16 @@ export default function AlumniFeed() {
           )}
           {/* Auto-advance timer */}
           <style>{`@keyframes statusProgress { from { width: 0% } to { width: 100% } }`}</style>
+        </div>
+      )}
+      {shareToast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: '#0f172a', color: '#fff', padding: '10px 20px', borderRadius: 24,
+          fontSize: 14, fontWeight: 600, fontFamily: 'Inter, sans-serif', zIndex: 300,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+        }}>
+          🔗 Link copied to clipboard
         </div>
       )}
     </AlumniLayout>

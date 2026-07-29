@@ -641,6 +641,14 @@
   position: relative;
 }
 
+/* Substack-style action bar inside feed cards */
+.af-card-actions.substack-actions {
+  gap: 8px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid #eef2f6;
+  margin-top: 4px;
+}
+
 .af-action {
   display: flex;
   align-items: center;
