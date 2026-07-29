@@ -130,6 +130,7 @@ export default function AlumniFeed() {
   const [offlineUsers, setOfflineUsers] = useState([]);
   const [likersModal, setLikersModal] = useState(null);
   const [shareToast, setShareToast] = useState(false);
+  const [expandedPosts, setExpandedPosts] = useState({});
   const [viewersModal, setViewersModal] = useState(null);
   const [likersList, setLikersList] = useState([]);
   const [viewersList, setViewersList] = useState([]);
@@ -480,7 +481,14 @@ export default function AlumniFeed() {
     );
   };
 
-  const renderPost = (post) => (
+  const renderPost = (post) => {
+    const isExpanded = !!expandedPosts[post.id];
+    const fullText = (post.content || '').trim();
+    const title = getTitle(post.content);
+    const bodyText = fullText.split('\n').slice(1).join('\n').trim();
+    const isLong = bodyText.length > 280;
+    const displayedBody = isExpanded ? bodyText : (bodyText.length > 280 ? bodyText.slice(0, 280) + '…' : bodyText);
+    return (
     <article key={`post-${post.id}`} className="af-card">
       <div className="af-card-header">
         <AvatarWithStatus
@@ -519,9 +527,19 @@ export default function AlumniFeed() {
         )}
       </div>
 
-      <div className="af-card-body" onClick={() => navigate(`/alumni/post/${post.id}`)}>
-        <h3 className="af-card-title">{getTitle(post.content)}</h3>
-        {getPreview(post.content) && <p className="af-card-text">{getPreview(post.content)}</p>}
+      <div className="af-card-body">
+        <h3 className="af-card-title" onClick={() => navigate(`/alumni/post/${post.id}`)}>{title}</h3>
+        {displayedBody && (
+          <p className="af-card-text" style={{ whiteSpace: 'pre-wrap' }}>{displayedBody}</p>
+        )}
+        {isLong && (
+          <button
+            className="af-study-more"
+            onClick={() => setExpandedPosts(prev => ({ ...prev, [post.id]: !prev[post.id] }))}
+          >
+            {isExpanded ? 'Show less' : 'Study more'}
+          </button>
+        )}
       </div>
 
       {renderPostImages(post)}
@@ -577,7 +595,8 @@ export default function AlumniFeed() {
         </div>
       )}
     </article>
-  );
+    );
+  };
 
   const renderComposition = (comp) => {
     const featuredImg = comp.featured_image_path

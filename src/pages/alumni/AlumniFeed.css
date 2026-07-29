@@ -192,6 +192,22 @@
   font-weight: 400;
 }
 
+.af-study-more {
+  background: none;
+  border: none;
+  color: #f97316;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 0 0;
+  font-family: 'Inter', sans-serif;
+  display: inline-block;
+}
+
+.af-study-more:hover {
+  text-decoration: underline;
+}
+
 /* Post images — Edge-to-edge with rounded corners */
 .af-post-images {
   display: grid;
