@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, UPLOADS_BASE, uploadFile } from '../../api';
 import { useAuth } from '../../context/AuthContext';
@@ -71,8 +71,8 @@ function timeAgo(date) {
 }
 
 function AvatarWithStatus({ id, name, avatarUrl, size, online, onClick }) {
-  const sz = size === 'sm' ? 'af-avatar-sm' : size === 'md' ? 'af-avatar-md' : '';
-  const dotSz = size === 'sm' ? 'af-online-dot-sm' : '';
+  const sz = size === 'sm' ? 'af-avatar-sm' : size === 'md' ? 'af-avatar-md' : size === 'lg' ? 'af-avatar-lg' : '';
+  const dotSz = size === 'sm' ? 'af-online-dot-sm' : size === 'lg' ? 'af-online-dot-lg' : '';
   const avatarSrc = avatarUrl
     ? (avatarUrl.startsWith('http') ? avatarUrl : `${UPLOADS_BASE}${avatarUrl}`)
     : null;
@@ -709,37 +709,44 @@ export default function AlumniFeed() {
           </div>
         ) : (
           <div className="af-posts">
-            {posts.map((item) => item.itemType === 'composition' ? renderComposition(item) : renderPost(item))}
-          </div>
-        )}
-
-        {suggested.length > 0 && (
-          <div className="af-suggested">
-            <h3>✨ Suggested Alumni</h3>
-            <div className="af-suggested-grid">
-              {suggested.map((s) => {
-                const isOnline = onlineUsers.some(u => u.user_id === s.id);
-                return (
-                <div key={s.id} className="af-suggested-card">
-                  <AvatarWithStatus id={s.id} name={s.name} avatarUrl={s.avatar_url} size="md" online={isOnline} onClick={() => navigate(`/alumni/profile/${s.id}`)} />
-                  <div className="af-suggested-info">
-                    <div className="af-suggested-name-row">
-                      <span onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
-                      <VerifiedBadge size={14} userId={s.id} onViewProfile={() => navigate(`/alumni/profile/${s.id}`)} />
-                      <AIRevisionBadge size={14} userId={s.id} />
+            {posts.map((item, idx) => (
+              <React.Fragment key={item.id || `item-${idx}`}>
+                {item.itemType === 'composition' ? renderComposition(item) : renderPost(item)}
+                {idx === 2 && suggested.length > 0 && (
+                  <div className="af-suggested-carousel">
+                    <div className="af-suggested-carousel-header">
+                      <h3>✨ Suggested Alumni</h3>
+                      <button className="af-suggested-carousel-more" onClick={() => navigate('/alumni/colleagues')}>See all →</button>
                     </div>
-                    <div className="af-suggested-meta">{s.school_name || 'UClass'} · {s.total_compositions || 0} articles</div>
-                    <button
-                      onClick={() => handleSubscribe(s.id)}
-                      className={s.is_following ? 'af-suggested-subscribed' : 'af-suggested-subscribe'}
-                    >
-                      {s.is_following ? '✓ Subscribed' : '🔔 Subscribe'}
-                    </button>
+                    <div className="af-suggested-carousel-track">
+                      {suggested.map((s) => {
+                        const isOnline = onlineUsers.some(u => u.user_id === s.id);
+                        return (
+                          <div key={s.id} className="af-suggested-carousel-card">
+                            <div className="af-suggested-carousel-top">
+                              <AvatarWithStatus id={s.id} name={s.name} avatarUrl={s.avatar_url} size="lg" online={isOnline} onClick={() => navigate(`/alumni/profile/${s.id}`)} />
+                              <div className="af-suggested-carousel-name-row">
+                                <span onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
+                                <VerifiedBadge size={14} userId={s.id} onViewProfile={() => navigate(`/alumni/profile/${s.id}`)} />
+                                <AIRevisionBadge size={14} userId={s.id} />
+                              </div>
+                              <div className="af-suggested-carousel-school">{s.school_name || 'UClass'}</div>
+                              <div className="af-suggested-carousel-meta">{s.total_compositions || 0} articles · {s.graduation_year ? `Class of ${s.graduation_year}` : 'Alumni'}</div>
+                            </div>
+                            <button
+                              onClick={() => handleSubscribe(s.id)}
+                              className={s.is_following ? 'af-suggested-carousel-subscribed' : 'af-suggested-carousel-subscribe'}
+                            >
+                              {s.is_following ? '✓ Subscribed' : 'Subscribe'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-                );
-              })}
-            </div>
+                )}
+              </React.Fragment>
+            ))}
           </div>
         )}
 
