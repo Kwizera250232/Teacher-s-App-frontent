@@ -437,6 +437,27 @@
 .form-group textarea:focus { border-color: #667eea; outline: none; }
 .form-group textarea { resize: vertical; min-height: 70px; }
 
+/* Profile form inputs */
+.profile-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: border-color 0.2s;
+  background: #fff;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.profile-input:focus {
+  border-color: #667eea;
+  outline: none;
+}
+.profile-input:disabled {
+  background: #f8fafc;
+  opacity: 0.7;
+}
+
 /* ── Mobile responsive ─────────────────────────── */
 @media (max-width: 480px) {
   .profile-page {

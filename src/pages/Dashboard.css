@@ -1416,24 +1416,15 @@ body {
     padding: 10px 14px;
     flex-wrap: wrap;
     gap: 8px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
   }
   .dash-header-left,
   .brand-section {
     display: none;
   }
   .dash-header-right {
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .user-greeting {
-    width: 100%;
-    font-size: 13px;
-  }
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
-    gap: 6px;
+    display: none;
   }
   .btn-professional {
     padding: 7px 10px;
@@ -1455,6 +1446,9 @@ body {
   }
   .nav-tabs-professional::-webkit-scrollbar {
     display: none;
+  }
+  .nav-tabs-desktop {
+    display: none !important;
   }
   .nav-tab-professional {
     padding: 7px 12px;
@@ -1503,6 +1497,9 @@ body {
     font-size: 13px;
   }
   .mobile-staff-quick-bar {
+    display: none !important;
+  }
+  .mobile-staff-header {
     display: none !important;
   }
   .staff-hub-page .dash-main-professional {

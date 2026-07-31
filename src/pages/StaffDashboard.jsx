@@ -18,6 +18,7 @@ import StaffChatsPanel from '../components/staff/StaffChatsPanel';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
 import MobileStaffHeader from '../components/MobileStaffHeader';
 import MobileBottomBar from '../components/MobileBottomBar';
+import TeacherMobileMenu from '../components/TeacherMobileMenu';
 import DonateButton from '../components/DonateButton';
 import './Dashboard.css';
 import './ParentHub.css';
@@ -154,13 +155,21 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           isImpersonating={isImpersonating}
           stopImpersonation={stopImpersonation}
         />
+        <TeacherMobileMenu
+          user={user}
+          roleLabel={roleLabel}
+          hubTab={hubTab}
+          onTabChange={setHubTab}
+          onLogout={logout}
+          basePath={basePath}
+        />
       </header>
 
       <div className="mobile-donate-fab">
         <DonateButton compact fab />
       </div>
 
-      <nav className="nav-tabs-professional">
+      <nav className="nav-tabs-professional nav-tabs-desktop">
         {navTabs.map((t) => (
           <button
             key={t.id}
