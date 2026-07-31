@@ -1,0 +1,172 @@
+/* Shared styles for Quiz & Note teacher share inbox cards */
+
+.share-inbox {
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.share-inbox--quiz {
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  border: 1px solid #7dd3fc;
+}
+
+.share-inbox--note {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #fcd34d;
+}
+
+.share-inbox__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.share-inbox__icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.share-inbox__title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.share-inbox--quiz .share-inbox__title { color: #0c4a6e; }
+.share-inbox--note .share-inbox__title { color: #92400e; }
+
+.share-inbox__empty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.share-inbox--quiz .share-inbox__empty { color: #0369a1; }
+.share-inbox--note .share-inbox__empty { color: #92400e; }
+
+.share-inbox__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.share-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.share-card__title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.share-card__meta {
+  font-size: 12px;
+  color: #475569;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.share-card__msg {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.share-card__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.share-card__select-wrap {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.share-card__select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
+  max-width: 140px;
+}
+
+.share-card__btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.share-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.share-card__btn--accept {
+  background: #16a34a;
+  color: #fff;
+}
+
+.share-card__btn--decline {
+  background: #dc2626;
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .share-inbox {
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+
+  .share-inbox__title {
+    font-size: 13px;
+  }
+
+  .share-card {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .share-card__title {
+    font-size: 13px;
+  }
+
+  .share-card__meta {
+    font-size: 11px;
+  }
+
+  .share-card__actions {
+    gap: 4px;
+  }
+
+  .share-card__select {
+    max-width: 110px;
+    font-size: 11px;
+  }
+
+  .share-card__btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}

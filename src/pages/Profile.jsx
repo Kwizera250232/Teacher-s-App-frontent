@@ -221,14 +221,14 @@ function TeacherUserCreation({ token }) {
   };
 
   return (
-    <div style={{ background: 'white', padding: '20px', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+    <div style={{ background: 'white', padding: '16px 14px', borderRadius: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
       {teacherNeedsSchool && (
         <div className="alert alert-error" style={{ marginBottom: 16 }}>
           Your account is not linked to a school yet. Join a school from your dashboard, or add a new school below (head teacher / admin).
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '12px' }}>
         <div className="form-group">
           <label style={{ fontSize: '14px', fontWeight: 600 }}>Full Name *</label>
           <input
@@ -322,8 +322,8 @@ function TeacherUserCreation({ token }) {
         {loading ? 'Creating...' : '+ Create User'}
       </button>
 
-      <section style={{ marginTop: 20 }}>
-        <h3 style={{ fontSize: 16, marginBottom: 8 }}>Bulk create students</h3>
+      <section style={{ marginTop: 16 }}>
+        <h3 style={{ fontSize: 14, marginBottom: 6 }}>Bulk create students</h3>
         <textarea
           className="profile-input"
           style={{ width: '100%', minHeight: 100 }}
@@ -594,8 +594,8 @@ export default function Profile() {
         {/* User Creation for Teachers */}
         {(user?.role === 'teacher' || user?.role === 'head_teacher' || user?.role === 'admin') && (
           <div className="profile-teacher-section">
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, color: '#1e40af' }}>👤 Create Student/Teacher Account</h2>
-            <p style={{ color: '#64748b', marginBottom: 20 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: '#1e40af' }}>👤 Create Student/Teacher Account</h2>
+            <p style={{ color: '#64748b', marginBottom: 14, fontSize: 13, lineHeight: 1.4 }}>
               Create accounts for students or teachers. Leave email empty to auto-generate a school address, or enter one that matches your school domain.
             </p>
             <TeacherUserCreation token={token} />
@@ -608,10 +608,10 @@ export default function Profile() {
         {/* Share feed – students only */}
         {user?.role === 'student' && (
           <div className="profile-share-section">
-            <h2 style={{ textAlign: 'center', fontWeight: 700, fontSize: 22, marginBottom: 6, color: '#2563eb' }}>
+            <h2 style={{ textAlign: 'center', fontWeight: 700, fontSize: 17, marginBottom: 4, color: '#2563eb' }}>
               📚 Share Your Knowledge with Classmates
             </h2>
-            <p style={{ textAlign: 'center', color: '#64748b', marginBottom: 20, fontSize: 15 }}>
+            <p style={{ textAlign: 'center', color: '#64748b', marginBottom: 14, fontSize: 13, lineHeight: 1.4 }}>
               Teach what you know, share what you learned, inspire others. Only your subscribers can see your posts.
             </p>
             <StudentShareFeed token={token} />

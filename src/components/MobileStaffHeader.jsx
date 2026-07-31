@@ -13,9 +13,9 @@ export default function MobileStaffHeader({
     <div className="mobile-staff-header">
       <div className="mobile-student-row1">
         <div className="mobile-student-name">
-          <span className="mobile-student-greet">{user?.name}</span>
+          <span className="mobile-student-greet" style={{ fontSize: 15, fontWeight: 700 }}>{user?.name}</span>
           <VerifiedBadge
-            size={14}
+            size={13}
             info={{
               items: [
                 { icon: '👨‍🏫', label: 'Role', value: roleLabel },
@@ -24,22 +24,22 @@ export default function MobileStaffHeader({
             }}
           />
         </div>
-        <Link to="/profile" className="mobile-nav-text-btn">
-          Profile
-        </Link>
-      </div>
-      <div className="mobile-student-row2 mobile-staff-row2">
-        <Link to="/messages" className="mobile-nav-text-btn mobile-nav-text-btn--muted">
-          Messages
-        </Link>
-        <button type="button" className="mobile-nav-text-btn mobile-nav-text-btn--muted" onClick={onLogout}>
-          Logout
-        </button>
-        {isImpersonating && (
-          <button type="button" className="mobile-nav-text-btn" onClick={stopImpersonation}>
-            ↩ Admin
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <Link to="/messages" className="mobile-nav-text-btn mobile-nav-text-btn--muted" style={{ fontSize: 13 }}>
+            💬
+          </Link>
+          <Link to="/profile" className="mobile-nav-text-btn" style={{ fontSize: 13 }}>
+            👥
+          </Link>
+          <button type="button" className="mobile-nav-text-btn mobile-nav-text-btn--muted" onClick={onLogout} style={{ fontSize: 13 }}>
+            🚪
           </button>
-        )}
+          {isImpersonating && (
+            <button type="button" className="mobile-nav-text-btn" onClick={stopImpersonation} style={{ fontSize: 13 }}>
+              ↩
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

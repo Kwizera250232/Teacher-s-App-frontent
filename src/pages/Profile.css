@@ -1,8 +1,8 @@
 .profile-page {
-  max-width: none;
+  max-width: 640px;
   width: 100%;
-  margin: 0;
-  padding: 24px 16px 60px;
+  margin: 0 auto;
+  padding: 16px 14px 48px;
   color: #111b21;
   box-sizing: border-box;
 }
@@ -22,11 +22,11 @@
 .profile-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 .profile-header h1 {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   color: #333;
   flex: 1;
@@ -35,14 +35,14 @@
 /* ── View mode card ─────────────────────────────── */
 .profile-view-card {
   background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(99,102,241,0.1);
-  padding: 28px 20px 24px;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.08);
+  padding: 20px 16px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 20px;
+  gap: 4px;
+  margin-bottom: 14px;
 }
 
 .profile-view-avatar-wrap {
@@ -50,12 +50,12 @@
   margin-bottom: 8px;
 }
 .profile-view-avatar {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #e8eaf6;
-  box-shadow: 0 4px 18px rgba(99,102,241,0.18);
+  border: 3px solid #e8eaf6;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.15);
 }
 .avatar-edit-btn-overlay {
   position: absolute;
@@ -65,9 +65,9 @@
   color: #fff;
   border: none;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -87,8 +87,8 @@
 .profile-view-section {
   width: 100%;
   border-top: 1px solid #f1f5f9;
-  padding-top: 14px;
-  margin-top: 8px;
+  padding-top: 10px;
+  margin-top: 6px;
 }
 .profile-view-section-title {
   font-size: 11px;
@@ -96,30 +96,30 @@
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: #667eea;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .profile-view-row {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 8px;
-  font-size: 14px;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
   color: #374151;
 }
 .profile-view-block {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .profile-view-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #94a3b8;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 .profile-view-text {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: #374151;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 .profile-view-tags {
   display: flex;
@@ -130,8 +130,8 @@
   background: #e0e7ff;
   color: #3730a3;
   border-radius: 20px;
-  padding: 4px 13px;
-  font-size: 12px;
+  padding: 3px 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 .profile-view-empty {
@@ -154,14 +154,14 @@
   margin-bottom: 12px;
 }
 .profile-avatar {
-  width: 110px;
-  height: 110px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #667eea;
+  border: 3px solid #667eea;
   cursor: pointer;
   transition: opacity 0.2s;
-  box-shadow: 0 4px 16px rgba(102,126,234,0.25);
+  box-shadow: 0 2px 12px rgba(102,126,234,0.2);
 }
 .profile-avatar:hover { opacity: 0.85; }
 .avatar-edit-btn {
@@ -183,9 +183,9 @@
   justify-content: center;
   gap: 0;
   background: #f4f6ff;
-  border-radius: 14px;
-  padding: 12px 20px;
-  margin: 0 0 14px 0;
+  border-radius: 10px;
+  padding: 8px 16px;
+  margin: 0 0 10px 0;
 }
 .profile-stat {
   display: flex;
@@ -195,13 +195,13 @@
   flex: 1;
 }
 .profile-stat strong {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   color: #5c6bc0;
   line-height: 1;
 }
 .profile-stat span {
-  font-size: 12px;
+  font-size: 11px;
   color: #888;
   font-weight: 500;
 }
@@ -220,7 +220,7 @@
   margin-bottom: 4px;
 }
 .profile-name {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
   color: #222;
 }
@@ -228,33 +228,34 @@
   background: #667eea;
   color: #fff;
   border-radius: 20px;
-  padding: 2px 12px;
-  font-size: 12px;
+  padding: 2px 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: capitalize;
 }
 .profile-email {
   text-align: center;
   color: #777;
-  font-size: 14px;
-  margin-bottom: 24px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  word-break: break-all;
 }
 
 /* Form */
 .profile-form {
   background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  border-radius: 14px;
+  padding: 18px 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 .profile-section-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #667eea;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin: 24px 0 12px;
-  padding-bottom: 6px;
+  margin: 18px 0 10px;
+  padding-bottom: 5px;
   border-bottom: 2px solid #f0f2ff;
 }
 
@@ -303,27 +304,27 @@
 
 /* Share section on profile */
 .profile-share-section {
-  margin: 32px 0 8px;
-  padding: 24px 16px;
+  margin: 20px 0 8px;
+  padding: 16px 12px;
   background: #f8fafc;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
 }
 
 /* Teacher user creation section */
 .profile-teacher-section {
-  margin: 32px 0 8px;
-  padding: 24px 16px;
+  margin: 20px 0 8px;
+  padding: 16px 12px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 /* Umunsimedia promo */
 .umunsimedia-promo {
-  margin-top: 32px;
-  border-radius: 16px;
+  margin-top: 20px;
+  border-radius: 12px;
   overflow: hidden;
 }
 .umunsimedia-link {
@@ -332,11 +333,11 @@
 }
 .umunsimedia-inner {
   background: linear-gradient(135deg, #f59e0b, #f97316);
-  padding: 20px 24px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  border-radius: 16px;
+  gap: 12px;
+  border-radius: 12px;
   transition: opacity 0.2s;
 }
 .umunsimedia-inner:hover { opacity: 0.92; }
@@ -355,12 +356,12 @@
 }
 .umunsimedia-tagline {
   color: rgba(255,255,255,0.9);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
 }
 .umunsimedia-cta {
   color: #fff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.2px;
 }
@@ -419,19 +420,62 @@
 }
 
 /* Form inputs (reuse from Dashboard.css) */
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #555; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #555; }
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 2px solid #e8e8e8;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   transition: border-color 0.2s;
   background: white;
   font-family: inherit;
 }
 .form-group input:focus,
 .form-group textarea:focus { border-color: #667eea; outline: none; }
-.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group textarea { resize: vertical; min-height: 70px; }
+
+/* ── Mobile responsive ─────────────────────────── */
+@media (max-width: 480px) {
+  .profile-page {
+    padding: 12px 10px 40px;
+  }
+  .profile-header h1 {
+    font-size: 16px;
+  }
+  .profile-view-card {
+    padding: 16px 12px 14px;
+  }
+  .profile-view-avatar {
+    width: 70px;
+    height: 70px;
+  }
+  .profile-name {
+    font-size: 15px;
+  }
+  .profile-email {
+    font-size: 12px;
+  }
+  .profile-stats-bar {
+    padding: 6px 12px;
+  }
+  .profile-stat strong {
+    font-size: 16px;
+  }
+  .profile-form {
+    padding: 14px 12px;
+  }
+  .profile-share-section,
+  .profile-teacher-section {
+    margin: 14px 0 6px;
+    padding: 12px 10px;
+  }
+  .umunsimedia-inner {
+    padding: 10px 14px;
+  }
+  .umunsimedia-cta {
+    font-size: 13px;
+  }
+}

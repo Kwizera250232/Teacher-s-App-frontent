@@ -273,7 +273,7 @@
   }
 
   .mobile-staff-quick-bar {
-    display: flex;
+    display: none !important;
   }
 
   .staff-hub-page .staff-hub-nav {
@@ -281,7 +281,7 @@
   }
 
   .staff-hub-page .dash-main {
-    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
   .student-wa-dashboard .dash-header-desktop-brand,

@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { api } from '../api';
 
+// Rwandan curriculum subjects — Primary (P1-P6) and Secondary (S1-S6)
+const SUBJECTS = [
+  'English', 'Mathematics', 'Kinyarwanda', 'French', 'Science and Elementary Technology (SET)',
+  'Social and Religious Studies (SST)', 'Creative Arts', 'Physical Education and Sports (PES)',
+  'ICT', 'Entrepreneurship', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History',
+  'Economics', 'Accounting', 'Literature in English', 'Kinyarwanda Literature', 'Religious Education',
+  'General Studies', 'Other',
+];
+
 export default function CreateClassModal({ token, onClose, onCreated }) {
   const [form, setForm] = useState({ name: '', subject: '' });
   const [error, setError] = useState('');
@@ -40,13 +49,16 @@ export default function CreateClassModal({ token, onClose, onCreated }) {
             />
           </div>
           <div className="form-group">
-            <label>Subject (optional)</label>
-            <input
-              type="text"
+            <label>Subject</label>
+            <select
               value={form.subject}
               onChange={e => setForm({ ...form, subject: e.target.value })}
-              placeholder="e.g. Mathematics"
-            />
+            >
+              <option value="">— Choose subject —</option>
+              {SUBJECTS.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>

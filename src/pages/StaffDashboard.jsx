@@ -17,6 +17,7 @@ import ParentInvitesPickerModal from '../components/ParentInvitesPickerModal';
 import StaffChatsPanel from '../components/staff/StaffChatsPanel';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
 import MobileStaffHeader from '../components/MobileStaffHeader';
+import MobileBottomBar from '../components/MobileBottomBar';
 import DonateButton from '../components/DonateButton';
 import './Dashboard.css';
 import './ParentHub.css';
@@ -364,23 +365,16 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         )}
       </main>
 
-      <div className="mobile-staff-quick-bar">
-        <button type="button" onClick={() => { setHubTab('classes'); setShowAddStudents(true); }}>
-          👥 View students
-        </button>
-        <button type="button" onClick={() => setHubTab('classnow')}>
-          📸 Class Now
-        </button>
-        <button type="button" onClick={() => setHubTab('inyandiko')}>
-          ✍️ Inyandiko
-        </button>
-        <button type="button" onClick={() => setHubTab('tools')}>
-          ✍️ C. Status
-        </button>
-        <button type="button" onClick={() => setShowParentInvites(true)}>
-          👪 Parent invite
-        </button>
-      </div>
+      <MobileBottomBar
+        items={[
+          { id: 'classes', icon: '📚', label: 'Classes', onClick: () => setHubTab('classes'), active: hubTab === 'classes' },
+          { id: 'classnow', icon: '📸', label: 'Class Now', onClick: () => setHubTab('classnow'), active: hubTab === 'classnow' },
+          { id: 'inyandiko', icon: '✍️', label: 'Inyandiko', onClick: () => setHubTab('inyandiko'), active: hubTab === 'inyandiko' },
+          { id: 'tools', icon: '⚡', label: 'Tools', onClick: () => setHubTab('tools'), active: hubTab === 'tools' },
+          { id: 'profile', icon: '👤', label: 'Profile', to: '/profile' },
+        ]}
+        className="staff-bottom-nav"
+      />
 
       {showCreate && (
         <CreateClassModal

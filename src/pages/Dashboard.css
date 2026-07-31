@@ -1208,6 +1208,7 @@ body {
   color: #64748b;
   transition: all 0.2s;
   font-family: 'Segoe UI', system-ui, sans-serif;
+  white-space: nowrap;
 }
 .nav-tab-professional:hover {
   background: #f1f5f9;
@@ -1412,9 +1413,9 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   .dash-header-professional {
-    padding: 12px 16px;
+    padding: 10px 14px;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
   }
   .dash-header-left,
   .brand-section {
@@ -1427,7 +1428,7 @@ body {
   }
   .user-greeting {
     width: 100%;
-    font-size: 14px;
+    font-size: 13px;
   }
   .header-actions {
     width: 100%;
@@ -1435,30 +1436,77 @@ body {
     gap: 6px;
   }
   .btn-professional {
-    padding: 8px 12px;
-    font-size: 13px;
+    padding: 7px 10px;
+    font-size: 12px;
   }
   .btn-professional-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
   }
   .nav-tabs-professional {
-    margin: 16px;
+    margin: 8px 10px;
     padding: 4px;
+    border-radius: 10px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-tabs-professional::-webkit-scrollbar {
+    display: none;
   }
   .nav-tab-professional {
-    padding: 8px 12px;
-    font-size: 13px;
+    padding: 7px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
   }
   .dash-main-professional {
-    padding: 0 16px 20px;
+    padding: 0 10px 20px;
   }
   .classes-actions-professional {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
   }
   .classes-actions-professional .btn-professional {
-    width: 100%;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 130px;
+  }
+  .section-professional {
+    padding: 14px 12px;
+    border-radius: 12px;
+  }
+  .section-title-professional {
+    font-size: 15px;
+    margin: 0 0 10px 0;
+  }
+  .shared-content-section {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .school-badge-wrapper {
+    margin-bottom: 12px;
+  }
+  .announcement-card-professional {
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+  }
+  .announcement-title {
+    font-size: 13px;
+  }
+  .announcement-text {
+    font-size: 13px;
+  }
+  .mobile-staff-quick-bar {
+    display: none !important;
+  }
+  .staff-hub-page .dash-main-professional {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 }
 

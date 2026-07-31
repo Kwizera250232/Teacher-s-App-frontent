@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
 import VerifiedBadge from './VerifiedBadge';
+import './TeacherShareInbox.css';
 
 export default function NoteTeacherShareInbox({ token, classes = [], onChange }) {
   const [items, setItems] = useState([]);
@@ -50,45 +51,32 @@ export default function NoteTeacherShareInbox({ token, classes = [], onChange })
   };
 
   if (loading) {
-    return <p className="phub-muted" style={{ marginBottom: 16 }}>Loading note share requests…</p>;
+    return <p className="phub-muted" style={{ marginBottom: 12, fontSize: 13 }}>Loading note shares…</p>;
   }
 
   if (items.length === 0) return null;
 
   return (
-    <div style={{
-      background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-      border: '1px solid #d97706',
-      borderRadius: 12,
-      padding: '16px 20px',
-      marginBottom: 16,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <span style={{ fontSize: 20 }}>📄</span>
-        <strong style={{ color: '#92400e', fontSize: 16 }}>
+    <div className="share-inbox share-inbox--note">
+      <div className="share-inbox__header">
+        <span className="share-inbox__icon">📄</span>
+        <strong className="share-inbox__title">
           Note shares from colleagues ({items.length})
         </strong>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="share-inbox__list">
         {items.map((r) => (
-          <div key={r.id} style={{
-            background: 'white',
-            borderRadius: 10,
-            padding: '12px 16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-          }}>
+          <div key={r.id} className="share-card">
             <div>
-              <strong style={{ fontSize: 15 }}>{r.note_title}</strong>
-              <div style={{ fontSize: 13, color: '#475569', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <p className="share-card__title">{r.note_title}</p>
+              <div className="share-card__meta">
                 From
                 {' '}
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   {r.source_teacher_name}
                   {r.source_teacher_verified && (
                     <VerifiedBadge
-                      size={13}
+                      size={12}
                       info={{
                         items: [
                           { icon: '✓', label: 'Verified teacher', value: 'Approved at your school' },
@@ -98,23 +86,21 @@ export default function NoteTeacherShareInbox({ token, classes = [], onChange })
                     />
                   )}
                 </span>
-                · Class <strong>{r.source_class_name}</strong>
+                {' · '}{r.source_class_name}
                 {r.source_class_subject ? ` · ${r.source_class_subject}` : ''}
               </div>
               {r.message && (
-                <div style={{ fontSize: 12, color: '#64748b', marginTop: 6, fontStyle: 'italic' }}>
-                  &ldquo;{r.message}&rdquo;
-                </div>
+                <div className="share-card__msg">&ldquo;{r.message}&rdquo;</div>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <label style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                Show in class:
+            <div className="share-card__actions">
+              <label className="share-card__select-wrap">
+                Class:
                 <select
+                  className="share-card__select"
                   value={classByShare[r.id] || (classes[0] ? String(classes[0].id) : '')}
                   onChange={(e) => setClassByShare((prev) => ({ ...prev, [r.id]: e.target.value }))}
                   disabled={!classes.length || actionLoading === r.id}
-                  style={{ padding: '6px 10px', borderRadius: 8 }}
                 >
                   {classes.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -123,7 +109,7 @@ export default function NoteTeacherShareInbox({ token, classes = [], onChange })
               </label>
               <button
                 type="button"
-                className="btn btn-primary btn-sm"
+                className="share-card__btn share-card__btn--accept"
                 onClick={() => accept(r.id)}
                 disabled={actionLoading === r.id || !classes.length}
               >
@@ -131,7 +117,7 @@ export default function NoteTeacherShareInbox({ token, classes = [], onChange })
               </button>
               <button
                 type="button"
-                className="btn btn-danger btn-sm"
+                className="share-card__btn share-card__btn--decline"
                 onClick={() => decline(r.id)}
                 disabled={actionLoading === r.id}
               >

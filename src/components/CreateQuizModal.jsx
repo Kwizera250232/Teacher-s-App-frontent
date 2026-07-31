@@ -17,6 +17,8 @@ const EMPTY_QUESTION = {
   matching_pairs: [{ left: '', right: '' }, { left: '', right: '' }],
 };
 
+const GRADE_OPTIONS = ['P1','P2','P3','P4','P5','P6','S1','S2','S3','S4','S5','S6'];
+
 const DRAFT_KEY = (classId) => `quiz_draft_${classId}`;
 
 function prepareForSave(q) {
@@ -40,6 +42,7 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
 
   const [title, setTitle] = useState(isEdit ? (editQuiz?.title || '') : (savedDraft?.title || ''));
   const [description, setDescription] = useState(isEdit ? (editQuiz?.description || '') : (savedDraft?.description || ''));
+  const [gradeLevel, setGradeLevel] = useState(isEdit ? (editQuiz?.grade_level || '') : (savedDraft?.gradeLevel || ''));
   const [questions, setQuestions] = useState(isEdit ? [{ ...EMPTY_QUESTION }] : (savedDraft?.questions || [{ ...EMPTY_QUESTION }]));
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,8 +52,8 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
 
   useEffect(() => {
     if (isEdit) return;
-    localStorage.setItem(draftKey, JSON.stringify({ title, description, questions }));
-  }, [title, description, questions]);
+    localStorage.setItem(draftKey, JSON.stringify({ title, description, gradeLevel, questions }));
+  }, [title, description, gradeLevel, questions]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -144,9 +147,9 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
       const prepared = questions.map(prepareForSave);
       let created;
       if (isEdit) {
-        created = await api.put(`/classes/${classId}/quizzes/${editQuiz.id}`, { title, description, questions: prepared }, token);
+        created = await api.put(`/classes/${classId}/quizzes/${editQuiz.id}`, { title, description, grade_level: gradeLevel, questions: prepared }, token);
       } else {
-        created = await api.post(`/classes/${classId}/quizzes`, { title, description, questions: prepared }, token);
+        created = await api.post(`/classes/${classId}/quizzes`, { title, description, grade_level: gradeLevel, questions: prepared }, token);
       }
       isSubmitted.current = true;
       if (!isEdit) localStorage.removeItem(draftKey);
@@ -188,6 +191,13 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
             <div className="form-group">
               <label>Description (optional)</label>
               <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. 10 questions, 20 marks" />
+            </div>
+            <div className="form-group">
+              <label>Grade level (for AI Revision)</label>
+              <select value={gradeLevel} onChange={e => setGradeLevel(e.target.value)}>
+                <option value="">— None / mixed —</option>
+                {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
             </div>
 
             <hr style={{ margin: '16px 0', borderColor: '#f0f0f0' }} />
