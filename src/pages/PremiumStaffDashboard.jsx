@@ -19,10 +19,13 @@ import StaffInyandikoDashboard from '../components/staff/StaffInyandikoDashboard
 import AddTeacherModal from '../components/staff/AddTeacherModal';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
+import WeeklyQuizReport from '../components/staff/WeeklyQuizReport';
+import AIQuizGenerator from '../components/staff/AIQuizGenerator';
 import ClassMomentsDashboardBlock from '../components/classMoments/ClassMomentsDashboardBlock';
 import OnlineNowStrip from '../components/classMoments/OnlineNowStrip';
 import { usePresence } from '../hooks/usePresence';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import TeacherMobileMenu from '../components/TeacherMobileMenu';
 import '../components/classMoments/ClassMoments.css';
 import '../components/StudentNotifications.css';
 import './PremiumDashboard.css';
@@ -40,6 +43,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
   const [showAddTeacher, setShowAddTeacher] = useState(false);
   const [showNotifyParents, setShowNotifyParents] = useState(false);
   const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
+  const [selectedReportClass, setSelectedReportClass] = useState(null);
   const { online } = usePresence(token);
   const isHeadTeacher = roleLabel === 'Head Teacher';
   const hasSchool = Boolean(user?.school_id);
@@ -95,6 +99,14 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
 
   return (
     <div className="premium-dashboard">
+      <TeacherMobileMenu
+        user={user}
+        roleLabel={roleLabel}
+        hubTab={activeTab}
+        onTabChange={setActiveTab}
+        onLogout={logout}
+        basePath={basePath}
+      />
       <PremiumSidebar
         user={user}
         activeTab={activeTab}
@@ -201,8 +213,39 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
           </>
         )}
 
+        {activeTab === 'quiz-reports' && (
+          <div style={{ padding: '8px 0' }}>
+            <h2 style={{ fontSize: 22, color: '#111827', marginBottom: 16 }}>📊 Weekly Quiz Reports</h2>
+            {classes.length === 0 ? (
+              <p style={{ color: '#6B7280', padding: '20px', textAlign: 'center' }}>Create a class first to use quiz reports.</p>
+            ) : (
+              <>
+                <div style={{ marginBottom: 16 }}>
+                  <select
+                    value={selectedReportClass || ''}
+                    onChange={e => setSelectedReportClass(parseInt(e.target.value, 10))}
+                    style={{ padding: '8px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: 14, minWidth: 240 }}
+                  >
+                    <option value="">— Select a class —</option>
+                    {classes.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}{c.subject ? ` (${c.subject})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                {selectedReportClass && (
+                  <WeeklyQuizReport token={token} classId={selectedReportClass} />
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {activeTab === 'inyandiko' && (
           <StaffInyandikoDashboard token={token} basePath={basePath} />
+        )}
+
+        {activeTab === 'ai-quiz' && (
+          <AIQuizGenerator token={token} classId={selectedReportClass} classes={classes} />
         )}
 
         {activeTab === 'alumni' && (

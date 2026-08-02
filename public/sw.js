@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'uclass-v39';
+const CACHE_VERSION = 'uclass-v40';
 const API_CACHE = 'uclass-api-v2';
 const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 
@@ -72,6 +72,8 @@ self.addEventListener('fetch', (e) => {
   if (url.pathname.startsWith('/api/')) {
     e.respondWith(networkFirstApi(request));
   } else if (request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    e.respondWith(networkFirstStatic(request));
+  } else if (url.pathname.startsWith('/assets/')) {
     e.respondWith(networkFirstStatic(request));
   } else {
     e.respondWith(cacheFirstStatic(request));

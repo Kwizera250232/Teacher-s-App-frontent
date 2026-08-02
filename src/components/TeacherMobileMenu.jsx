@@ -12,9 +12,14 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
 
   const tabItems = [
     { id: 'classes', icon: '📚', label: 'Classes' },
-    { id: 'classnow', icon: '📸', label: 'Class Now' },
+    { id: 'chats', icon: '💬', label: 'Chats' },
+    { id: 'class-now', icon: '📸', label: 'Class Now' },
+    { id: 'quiz-reports', icon: '📊', label: 'Quiz Reports' },
+    { id: 'ai-quiz', icon: '🤖', label: 'AI Quiz Gen' },
     { id: 'inyandiko', icon: '✍️', label: 'Inyandiko' },
+    { id: 'alumni', icon: '🎓', label: 'Alumni' },
     { id: 'tools', icon: '⚡', label: 'Tools' },
+    { id: 'settings', icon: '⚙️', label: 'Settings' },
   ];
 
   const handleTab = (id) => {

@@ -226,6 +226,18 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    padding: 0 14px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  .premium-main {
+    padding-top: 60px !important;
   }
 }
 
