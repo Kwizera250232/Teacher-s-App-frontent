@@ -8,7 +8,11 @@ const EDUCATION_LEVELS = [
 const PRIMARY_GRADES = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'];
 const SECONDARY_GRADES = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
 
-const SUBJECTS = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Kinyarwanda', 'French', 'Entrepreneurship', 'Computer Science', 'Economics', 'Religious Education', 'General Studies'];
+const SUBJECTS = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Kinyarwanda', 'French', 'Entrepreneurship', 'Computer Science', 'Economics', 'Religious Education', 'General Studies', 'Science and Elementary Technology (SET)', 'Social and Religious Studies (SST)', 'Creative Arts', 'Physical Education and Sports (PES)', 'ICT', 'Literature in English', 'Kiswahili', 'German', 'Accounting', 'Business Studies', 'Agriculture', 'Technical Drawing'];
+
+const EXAM_TYPES = ['National Exam', 'Mock Exam'];
+const GRADE_OPTIONS = ['P1','P2','P3','P4','P5','P6','S1','S2','S3','S4','S5','S6'];
+const YEARS = Array.from({ length: 26 }, (_, i) => 2000 + i);
 
 const EMPTY_QUESTION = { question: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a', explanation: '' };
 
@@ -24,7 +28,7 @@ export default function AdminPastPapers({ token }) {
 
   // Create form state
   const [form, setForm] = useState({
-    title: '', subject: 'English', year: new Date().getFullYear(), education_level: 'secondary', grade: 'S3',
+    title: '', subject: 'English', year: new Date().getFullYear(), exam_type: 'National Exam', class_level: 'P6',
     description: '', duration_minutes: 120,
   });
   const [questions, setQuestions] = useState([{ ...EMPTY_QUESTION }]);
@@ -55,8 +59,8 @@ export default function AdminPastPapers({ token }) {
   }, [token]);
 
   const handleCreate = async () => {
-    if (!form.title.trim() || !form.subject.trim() || !form.year || !form.grade) {
-      setError('Title, subject, year, and grade are required.');
+    if (!form.title.trim() || !form.subject.trim() || !form.year || !form.class_level) {
+      setError('Title, subject, year, and class level are required.');
       return;
     }
     const validQuestions = questions.filter(q => q.question.trim() && q.option_a.trim() && q.option_b.trim() && q.correct_answer);
@@ -73,8 +77,9 @@ export default function AdminPastPapers({ token }) {
         duration_minutes: parseInt(form.duration_minutes) || 120,
         questions: validQuestions,
       }, token);
+      // also send class_level as the grade
       setShowCreate(false);
-      setForm({ title: '', subject: 'English', year: new Date().getFullYear(), education_level: 'secondary', grade: 'S3', description: '', duration_minutes: 120 });
+      setForm({ title: '', subject: 'English', year: new Date().getFullYear(), exam_type: 'National Exam', class_level: 'P6', description: '', duration_minutes: 120 });
       setQuestions([{ ...EMPTY_QUESTION }]);
       loadExams();
       loadStats();
@@ -170,7 +175,7 @@ export default function AdminPastPapers({ token }) {
               <div>
                 <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>{exam.title}</div>
                 <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>
-                  {exam.subject} · {exam.year} {exam.class_level ? `· ${exam.class_level}` : ''} · {exam.question_count} questions · {exam.attempt_count} attempts
+                  {exam.subject} · {exam.year} {exam.class_level ? `· ${exam.class_level}` : ''} {exam.exam_type ? `· ${exam.exam_type}` : ''} · {exam.question_count} questions · {exam.attempt_count} attempts
                 </div>
                 <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Created by {exam.creator_name}</div>
               </div>
@@ -203,11 +208,21 @@ export default function AdminPastPapers({ token }) {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Year *</label>
-                <input type="number" value={form.year} onChange={e => setForm({ ...form, year: e.target.value })} min="2000" max="2030" style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 }} />
+                <select value={form.year} onChange={e => setForm({ ...form, year: e.target.value })} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 }}>
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Class Level</label>
-                <input type="text" value={form.class_level} onChange={e => setForm({ ...form, class_level: e.target.value })} placeholder="e.g. O-Level, A-Level" style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 }} />
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Class Level *</label>
+                <select value={form.class_level} onChange={e => setForm({ ...form, class_level: e.target.value })} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 }}>
+                  {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Exam Type *</label>
+                <select value={form.exam_type} onChange={e => setForm({ ...form, exam_type: e.target.value })} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 }}>
+                  {EXAM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Duration (minutes)</label>
