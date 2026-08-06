@@ -97,7 +97,7 @@ This workspace contains two independent repos:
 ### Email signup (UI)
 
 - Staff register with a **school email username** (shown as `user@schooldomain.edu`) and log in with that address only.
-- Students use Gmail or school email on the register form; backend validates on submit.
+- Students use Gmail or `@schoolname.edu` on the register form and **Add Students** modal (`signupEmailDomain` in `src/utils/schoolDomain.js` — never `@mail.umunsi.com`).
 - CLI: `npm run check-email -- user@gmail.com` in the backend repo.
 
 ### Parent hub & school communication
