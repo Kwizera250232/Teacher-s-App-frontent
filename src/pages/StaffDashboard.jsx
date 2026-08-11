@@ -364,7 +364,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
                 {classes[0] && (
                   <div className="quick-actions-professional">
                     <Link to={`${basePath}/classes/${classes[0].id}/record-marks`} className="action-pill-professional">
-                      📊 CAT Marks
+                      📊 Marks Sheet
                     </Link>
                   </div>
                 )}

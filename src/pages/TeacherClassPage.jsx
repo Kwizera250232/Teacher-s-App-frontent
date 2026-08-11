@@ -28,10 +28,11 @@ import TeacherQuizReportsPanel from '../components/quizReflection/TeacherQuizRep
 import AppNotificationsBell from '../components/AppNotificationsBell';
 import '../components/StudentNotifications.css';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import RecordCatMarks from './RecordCatMarks';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 
-const TABS = ['Students', 'Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Quiz reports', 'Leaderboard', 'Discussion', 'C. Status'];
+const TABS = ['Students', 'Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Quiz reports', 'Marks', 'Leaderboard', 'Discussion', 'C. Status'];
 
 export default function TeacherClassPage() {
   const { id } = useParams();
@@ -98,7 +99,7 @@ export default function TeacherClassPage() {
 
   const loadTab = async () => {
     setError('');
-    if (tab === 'Leaderboard' || tab === 'Feed' || tab === 'C. Status' || tab === 'Students' || tab === 'Quiz reports') return;
+    if (tab === 'Leaderboard' || tab === 'Feed' || tab === 'C. Status' || tab === 'Students' || tab === 'Quiz reports' || tab === 'Marks') return;
     setTabLoading(true);
     setData([]);
     try {
@@ -698,6 +699,10 @@ export default function TeacherClassPage() {
               highlightReportId={searchParams.get('report')}
             />
           </>
+        )}
+
+        {tab === 'Marks' && (
+          <RecordCatMarks embeddedClassId={id} embeddedToken={token} />
         )}
 
         {/* Leaderboard */}
