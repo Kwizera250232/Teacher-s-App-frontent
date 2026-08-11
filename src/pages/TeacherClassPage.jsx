@@ -31,6 +31,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import RecordCatMarks from './RecordCatMarks';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
+import '../pages/PremiumClassTheme.css';
 
 const TABS = ['Students', 'Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Quiz reports', 'Marks', 'Leaderboard', 'Discussion', 'C. Status'];
 

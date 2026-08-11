@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import '../components/quizReflection/QuizReflectionForm.css';
 import './Dashboard.css';
+import './PremiumClassTheme.css';
 
 const GRADE_LABELS = {
   star5: '⭐⭐⭐⭐⭐ Outstanding',

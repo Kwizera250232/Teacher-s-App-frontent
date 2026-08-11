@@ -17,6 +17,8 @@ import SharedNoteAttribution from '../components/SharedNoteAttribution';
 import StudentMyGroupsPanel from '../components/StudentMyGroupsPanel';
 import StudentNotificationsBell from '../components/StudentNotificationsBell';
 import '../pages/Dashboard.css';
+import '../pages/MobileDashboard.css';
+import '../pages/PremiumClassTheme.css';
 
 const CLASSMATE_DEFAULT_AVATAR =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2325d366'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";

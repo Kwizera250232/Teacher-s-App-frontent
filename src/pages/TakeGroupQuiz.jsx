@@ -6,6 +6,7 @@ import ClassDeanHelp from '../components/ClassDeanHelp';
 import QuizReflectionWizard from '../components/quizReflection/QuizReflectionWizard';
 import GroupQuizResultPanel from '../components/groupQuiz/GroupQuizResultPanel';
 import '../pages/Dashboard.css';
+import '../pages/PremiumClassTheme.css';
 
 async function loadQuestions(classId, assignmentId, assignment, token) {
   if (assignment?.questions?.length) return assignment.questions;

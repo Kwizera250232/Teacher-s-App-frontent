@@ -1,0 +1,546 @@
+/* Premium Student Theme — matches Teacher Dashboard professional look */
+
+.student-dashboard-classic {
+  --pro-purple: #667eea;
+  --pro-purple-dark: #764ba2;
+  --pro-bg: #f8f9fc;
+  --pro-card: #ffffff;
+  --pro-border: #e2e8f0;
+  --pro-text: #1e293b;
+  --pro-text-secondary: #64748b;
+
+  background: var(--pro-bg) !important;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+  min-height: 100dvh;
+}
+
+/* Header — professional gradient */
+.dash-header--student {
+  background: linear-gradient(135deg, var(--pro-purple) 0%, var(--pro-purple-dark) 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3) !important;
+  padding: 16px 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+
+.dash-header--student .dash-brand {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: -0.5px !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #fff !important;
+  background-clip: unset !important;
+}
+
+.dash-header--student .dash-user {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+}
+
+.dash-header--student .dash-user span {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+/* Header buttons — professional style */
+.dash-header--student .btn {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 8px 14px !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.dash-header--student .btn-secondary {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+.dash-header--student .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+.dash-header--student .btn-logout {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fff !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.dash-header--student .btn-logout:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Main content */
+.student-dashboard-classic .dash-main {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 24px 32px !important;
+}
+
+/* Top section */
+.dash-top-actions-desktop {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+  margin-bottom: 20px !important;
+}
+
+.dash-top-actions-desktop h1 {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  color: var(--pro-text) !important;
+  letter-spacing: -0.5px !important;
+  margin: 0 0 4px 0 !important;
+}
+
+.dash-top-actions-desktop .dash-sub {
+  font-size: 14px !important;
+  color: var(--pro-text-secondary) !important;
+  margin: 0 !important;
+}
+
+.student-dash-actions {
+  display: flex !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+}
+
+.student-dash-actions .btn {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  padding: 10px 18px !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.student-dash-actions .btn-primary {
+  background: linear-gradient(135deg, var(--pro-purple) 0%, var(--pro-purple-dark) 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3) !important;
+}
+
+.student-dash-actions .btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+}
+
+.student-dash-actions .btn-secondary {
+  background: var(--pro-card) !important;
+  color: var(--pro-text) !important;
+  border: 1.5px solid var(--pro-border) !important;
+}
+
+.student-dash-actions .btn-secondary:hover {
+  border-color: var(--pro-purple) !important;
+  color: var(--pro-purple) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Quick nav — professional pill tabs */
+.student-desktop-quick-nav {
+  display: flex !important;
+  gap: 8px !important;
+  background: var(--pro-card) !important;
+  border-radius: 14px !important;
+  padding: 8px !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+  flex-wrap: wrap !important;
+}
+
+.student-desktop-quick-nav__btn {
+  padding: 10px 18px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--pro-text-secondary) !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-family: inherit !important;
+}
+
+.student-desktop-quick-nav__btn:hover {
+  background: #f1f5f9 !important;
+  color: var(--pro-text) !important;
+}
+
+.student-desktop-quick-nav__btn.active {
+  background: linear-gradient(135deg, var(--pro-purple) 0%, var(--pro-purple-dark) 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+}
+
+/* Invite banner — premium card */
+.student-parent-invite-banner {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+  border: 2px solid #93c5fd !important;
+  border-radius: 14px !important;
+  padding: 16px 20px !important;
+  margin-bottom: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+
+.student-parent-invite-banner strong {
+  color: #1e40af !important;
+  font-size: 15px !important;
+}
+
+.student-parent-invite-banner p {
+  color: #3730a3 !important;
+  font-size: 13px !important;
+  margin: 4px 0 0 0 !important;
+}
+
+.student-parent-invite-banner button {
+  background: linear-gradient(135deg, var(--pro-purple) 0%, var(--pro-purple-dark) 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 10px 18px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+  font-family: inherit !important;
+}
+
+.student-parent-invite-banner button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Announcements — professional card */
+.student-announcement {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+  border: 2px solid #93c5fd !important;
+  border-radius: 14px !important;
+  padding: 16px 20px !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+
+.student-announcement strong {
+  color: #1e40af !important;
+  font-size: 15px !important;
+}
+
+.student-announcement p {
+  color: #3730a3 !important;
+  font-size: 13px !important;
+  margin: 4px 0 0 0 !important;
+}
+
+.student-announcement button {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(147, 197, 253, 0.5) !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  color: #1e40af !important;
+  transition: all 0.2s ease !important;
+}
+
+.student-announcement button:hover {
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Classes section */
+.student-classes-section {
+  margin-top: 8px !important;
+}
+
+.student-classes-heading {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: var(--pro-text) !important;
+  margin-bottom: 16px !important;
+  letter-spacing: -0.3px !important;
+}
+
+/* Class cards — professional gradient */
+.classes-grid--square {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+  gap: 16px !important;
+}
+
+.class-card-wrap--square {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.class-card--square {
+  background: linear-gradient(135deg, var(--pro-purple) 0%, var(--pro-purple-dark) 100%) !important;
+  border-radius: 16px !important;
+  padding: 20px !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  border: none !important;
+  transition: transform 0.25s, box-shadow 0.25s !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2) !important;
+  cursor: pointer !important;
+}
+
+.class-card--square:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4) !important;
+}
+
+.class-card--square .class-card-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  text-transform: uppercase !important;
+}
+
+.class-card--square .class-card-header h3 {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  margin: 0 0 4px 0 !important;
+  color: #fff !important;
+}
+
+.class-card--square .subject-tag {
+  display: inline-block !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  padding: 3px 10px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.class-card--square .class-code-display {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.class-card--square .code-label {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+}
+
+.class-card--square .code-value {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+.class-card--square .class-teacher {
+  font-size: 13px !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  margin: 0 !important;
+}
+
+.class-card--square .class-card-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+}
+
+.class-card--square .class-card-footer .arrow {
+  font-size: 18px !important;
+}
+
+/* Class card note buttons */
+.class-card-note-btn {
+  background: var(--pro-card) !important;
+  border: 1.5px solid var(--pro-border) !important;
+  border-radius: 10px !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--pro-text) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  text-align: center !important;
+}
+
+.class-card-note-btn:hover {
+  border-color: var(--pro-purple) !important;
+  color: var(--pro-purple) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center !important;
+  padding: 60px 20px !important;
+  background: var(--pro-card) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+}
+
+.empty-state .empty-icon {
+  font-size: 64px !important;
+  margin-bottom: 16px !important;
+}
+
+.empty-state h3 {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: var(--pro-text) !important;
+  margin-bottom: 8px !important;
+}
+
+.empty-state p {
+  color: var(--pro-text-secondary) !important;
+  margin-bottom: 24px !important;
+  font-size: 15px !important;
+}
+
+.empty-state .btn-primary {
+  background: linear-gradient(135deg, var(--pro-purple) 0%, var(--pro-purple-dark) 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 12px 28px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.empty-state .btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Alerts */
+.student-dashboard-classic .alert-error {
+  background: #fef2f2 !important;
+  color: #991b1b !important;
+  border-radius: 12px !important;
+  border: 1px solid #fecaca !important;
+  padding: 12px 16px !important;
+  margin-bottom: 16px !important;
+}
+
+/* Class Now section */
+.student-class-now-under-classes {
+  margin-top: 24px !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .student-dashboard-classic .dash-main {
+    padding: 16px 14px 80px !important;
+  }
+
+  .dash-header--student {
+    padding: 10px 14px !important;
+  }
+
+  .dash-header--student .dash-header-desktop-actions {
+    display: none !important;
+  }
+
+  .dash-top-actions-desktop {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .dash-top-actions-desktop h1 {
+    font-size: 22px !important;
+  }
+
+  .student-dash-actions {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+
+  .student-dash-actions .btn {
+    flex: 1 1 auto !important;
+    min-width: 120px !important;
+  }
+
+  .student-desktop-quick-nav {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .student-desktop-quick-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .student-desktop-quick-nav__btn {
+    flex-shrink: 0 !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+  }
+
+  .classes-grid--square {
+    grid-template-columns: 1fr !important;
+  }
+
+  .student-parent-invite-banner {
+    flex-direction: column !important;
+    text-align: center !important;
+  }
+}

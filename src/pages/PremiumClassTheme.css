@@ -1,0 +1,364 @@
+/* Premium Class Theme — overrides wa-theme green with premium purple */
+
+.class-page.wa-theme {
+  --premium-purple: #5A3FFF;
+  --premium-purple-light: #8B5CF6;
+  --premium-bg: #F8F9FC;
+  --premium-card: #ffffff;
+  --premium-border: #ECECEC;
+  --premium-text: #111827;
+  --premium-text-secondary: #6B7280;
+
+  background: var(--premium-bg) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  min-height: 100dvh;
+}
+
+/* Class header — premium purple instead of WhatsApp green */
+.wa-class-header {
+  background: linear-gradient(135deg, var(--premium-purple) 0%, var(--premium-purple-light) 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(90, 63, 255, 0.2) !important;
+}
+
+.wa-back-btn {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 8px 14px !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+
+.wa-back-btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.wa-class-header-title strong {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.wa-class-header-title span {
+  font-size: 13px !important;
+  opacity: 0.9 !important;
+}
+
+/* Chat screen background — premium light */
+.wa-chat-screen {
+  background: var(--premium-bg) !important;
+}
+
+/* Class hero — premium card style */
+.class-hero {
+  background: var(--premium-card) !important;
+  border-radius: 24px !important;
+  padding: 32px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid var(--premium-border) !important;
+  margin-bottom: 24px !important;
+}
+
+.class-hero h1 {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  color: var(--premium-text) !important;
+  letter-spacing: -0.5px !important;
+  margin: 0 0 6px 0 !important;
+}
+
+.class-hero .subject {
+  font-size: 16px !important;
+  color: var(--premium-text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+.class-hero-code {
+  background: linear-gradient(135deg, var(--premium-purple) 0%, var(--premium-purple-light) 100%) !important;
+  border-radius: 16px !important;
+  padding: 16px 24px !important;
+  box-shadow: 0 8px 24px rgba(90, 63, 255, 0.3) !important;
+}
+
+.code-label {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.code-big {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  letter-spacing: 1px !important;
+}
+
+/* Tabs — premium pill style */
+.tabs {
+  display: flex !important;
+  gap: 8px !important;
+  margin-bottom: 24px !important;
+  flex-wrap: wrap !important;
+  border-bottom: 2px solid var(--premium-border) !important;
+  padding-bottom: 0 !important;
+}
+
+.tab {
+  padding: 10px 18px !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 12px 12px 0 0 !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--premium-text-secondary) !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  font-family: inherit !important;
+}
+
+.tab:hover {
+  background: var(--premium-bg) !important;
+  color: var(--premium-text) !important;
+}
+
+.tab.active {
+  color: var(--premium-purple) !important;
+  background: transparent !important;
+}
+
+.tab.active::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: -2px !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 3px !important;
+  background: linear-gradient(135deg, var(--premium-purple) 0%, var(--premium-purple-light) 100%) !important;
+  border-radius: 3px 3px 0 0 !important;
+}
+
+/* Item cards — premium style */
+.item-card {
+  background: var(--premium-card) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid var(--premium-border) !important;
+  transition: all 0.3s ease !important;
+}
+
+.item-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-2px) !important;
+}
+
+.item-card-body h3 {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: var(--premium-text) !important;
+}
+
+/* Buttons — premium gradient */
+.btn-primary {
+  background: linear-gradient(135deg, var(--premium-purple) 0%, var(--premium-purple-light) 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  padding: 10px 22px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 16px rgba(90, 63, 255, 0.2) !important;
+  color: #fff !important;
+  font-family: inherit !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(90, 63, 255, 0.3) !important;
+}
+
+.btn-secondary {
+  background: var(--premium-card) !important;
+  border: 1.5px solid var(--premium-border) !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  color: var(--premium-text) !important;
+  padding: 10px 18px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+}
+
+.btn-secondary:hover {
+  border-color: var(--premium-purple) !important;
+  color: var(--premium-purple) !important;
+}
+
+.btn-danger {
+  background: #FEF2F2 !important;
+  border: 1.5px solid #FECACA !important;
+  color: #EF4444 !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  padding: 10px 18px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+}
+
+.btn-danger:hover {
+  background: #FEE2E2 !important;
+}
+
+/* Forms — premium inputs */
+.form-group input,
+.form-group textarea,
+.form-group select {
+  border: 2px solid var(--premium-border) !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  transition: border-color 0.2s ease !important;
+  background: var(--premium-card) !important;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--premium-purple) !important;
+  outline: none !important;
+}
+
+/* Section headers */
+.section-header h2 {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: var(--premium-text) !important;
+  letter-spacing: -0.3px !important;
+}
+
+/* Alerts */
+.alert-error {
+  background: #FEF2F2 !important;
+  color: #991B1B !important;
+  border-radius: 12px !important;
+  border: 1px solid #FECACA !important;
+  padding: 12px 16px !important;
+}
+
+.alert-success {
+  background: #F0FDF4 !important;
+  color: #166534 !important;
+  border-radius: 12px !important;
+  border: 1px solid #BBF7D0 !important;
+  padding: 12px 16px !important;
+}
+
+/* Discussion — premium style */
+.discussion-msg {
+  background: var(--premium-card) !important;
+  border-radius: 16px !important;
+  padding: 14px 18px !important;
+  margin-bottom: 10px !important;
+  border: 1px solid var(--premium-border) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+.discussion-msg .author {
+  font-weight: 700 !important;
+  color: var(--premium-text) !important;
+}
+
+.discussion-msg .body {
+  color: var(--premium-text) !important;
+  font-size: 14px !important;
+  margin: 6px 0 !important;
+}
+
+.discussion-msg .time {
+  font-size: 12px !important;
+  color: var(--premium-text-secondary) !important;
+}
+
+.discussion-input {
+  display: flex !important;
+  gap: 10px !important;
+  margin-top: 16px !important;
+}
+
+.discussion-input input {
+  flex: 1 !important;
+  padding: 12px 16px !important;
+  border: 2px solid var(--premium-border) !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+}
+
+.discussion-input input:focus {
+  border-color: var(--premium-purple) !important;
+  outline: none !important;
+}
+
+/* Details/summary — premium style */
+details {
+  border-radius: 16px !important;
+}
+
+details summary {
+  color: var(--premium-purple) !important;
+}
+
+/* CAT marks table — premium header */
+.cat-marks-table thead th {
+  background: linear-gradient(135deg, #F0F2FF 0%, #F8F9FC 100%) !important;
+  color: var(--premium-text) !important;
+  font-weight: 700 !important;
+}
+
+.cat-marks-table .cat-avg-row {
+  background: linear-gradient(135deg, #F0F2FF 0%, #E8EAFF 100%) !important;
+}
+
+.cat-marks-table .cat-avg-row td.cat-name {
+  background: linear-gradient(135deg, #F0F2FF 0%, #E8EAFF 100%) !important;
+}
+
+/* Class dean help — premium */
+.class-dean-help-wrap {
+  margin-top: 8px !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .class-hero {
+    padding: 20px !important;
+    border-radius: 16px !important;
+  }
+
+  .class-hero h1 {
+    font-size: 22px !important;
+  }
+
+  .tabs {
+    gap: 4px !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .tab {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+  }
+
+  .item-card {
+    border-radius: 14px !important;
+  }
+}

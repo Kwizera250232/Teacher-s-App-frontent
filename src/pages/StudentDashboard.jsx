@@ -19,6 +19,7 @@ import { classMomentDetailPath } from '../utils/classMomentPaths';
 import '../components/classMoments/ClassMoments.css';
 import './Dashboard.css';
 import './MobileDashboard.css';
+import './PremiumStudentTheme.css';
 
 const QUICK_NAV = (handlers) => [
   { id: 'classes', icon: '📚', label: 'Classes', onClick: handlers.scrollClasses, active: true },
