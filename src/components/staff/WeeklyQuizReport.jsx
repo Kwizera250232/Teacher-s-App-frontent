@@ -31,16 +31,12 @@ export default function WeeklyQuizReport({ token, classId }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [aiReports, setAiReports] = useState({});
-  const [aiLoading, setAiLoading] = useState({});
   const [notifyLoading, setNotifyLoading] = useState(false);
   const [notifyResult, setNotifyResult] = useState('');
   const [showNewReport, setShowNewReport] = useState(false);
   const [newWeekLabel, setNewWeekLabel] = useState(getWeekLabel(0));
   const [alsoEmail, setAlsoEmail] = useState(true);
-  const [showStudentReport, setShowStudentReport] = useState(null);
-  const [viewMode, setViewMode] = useState('gradebook'); // 'gradebook' | 'cards'
-  const [selectedParents, setSelectedParents] = useState(new Set()); // student IDs selected for bulk notify
+  const [selectedParents, setSelectedParents] = useState(new Set());
 
   const marksRef = useRef({});
   const saveTimer = useRef(null);
@@ -51,7 +47,6 @@ export default function WeeklyQuizReport({ token, classId }) {
   const messageRef = useRef({});
   const messageSaveTimer = useRef({});
 
-  // Load all reports for this class
   const loadReports = useCallback(async () => {
     try {
       const r = await api.get(`/classes/${classId}/weekly-reports`, token);
@@ -69,7 +64,6 @@ export default function WeeklyQuizReport({ token, classId }) {
 
   useEffect(() => { loadReports(); }, [loadReports]);
 
-  // Load active report data
   const loadReportData = useCallback(() => {
     if (!activeReport) return;
     setLoading(true);
@@ -77,7 +71,6 @@ export default function WeeklyQuizReport({ token, classId }) {
     api.get(`/classes/${classId}/weekly-reports/${activeReport}`, token)
       .then(data => {
         setReportData(data);
-        // Initialize marks ref
         const marksMap = {};
         for (const m of data.marks) {
           marksMap[`${m.column_id}_${m.student_id}`] = m.marks !== null ? String(m.marks) : '';
@@ -90,7 +83,6 @@ export default function WeeklyQuizReport({ token, classId }) {
 
   useEffect(() => { loadReportData(); }, [loadReportData]);
 
-  // Auto-save (debounced)
   const scheduleSave = useCallback(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
@@ -106,7 +98,6 @@ export default function WeeklyQuizReport({ token, classId }) {
         await api.put(`/classes/${classId}/weekly-reports/${activeReport}/marks`, { marks: marksArr }, token);
         setSuccessMsg('Auto-saved');
         setTimeout(() => setSuccessMsg(''), 2000);
-        // Refresh data silently to update totals
         const data = await api.get(`/classes/${classId}/weekly-reports/${activeReport}`, token);
         setReportData(data);
       } catch (err) {
@@ -145,7 +136,6 @@ export default function WeeklyQuizReport({ token, classId }) {
         setSuccessMsg('Phone saved');
         setTimeout(() => setSuccessMsg(''), 2000);
       } catch (err) {
-        // 404 means the API isn't deployed yet — save silently, don't block the user
         if (String(err.message || '').includes('404') || String(err.message || '').includes('not on the server')) {
           setSuccessMsg('Phone saved (will sync after server update)');
           setTimeout(() => setSuccessMsg(''), 3000);
@@ -233,7 +223,7 @@ export default function WeeklyQuizReport({ token, classId }) {
   // Calculate stats for each student
   const computeStats = () => {
     if (!reportData) return [];
-    const { students, columns, marks } = reportData;
+    const { students, columns, marks, systemQuizzes } = reportData;
     const stats = students.map(s => {
       let total = 0, taken = 0, totalMax = 0;
       const perQuiz = columns.map(c => {
@@ -244,7 +234,6 @@ export default function WeeklyQuizReport({ token, classId }) {
       });
       const avg = taken ? total / taken : 0;
       const pct = totalMax ? (total / totalMax) * 100 : 0;
-      // Subject breakdown
       const bySubject = {};
       for (const q of perQuiz) {
         if (q.marks === null) continue;
@@ -254,28 +243,19 @@ export default function WeeklyQuizReport({ token, classId }) {
         bySubject[subj].max += q.max;
         bySubject[subj].count++;
       }
-      return { ...s, total, taken, avg, pct, totalMax, perQuiz, bySubject };
+      // Auto system quiz data
+      const autoQuizzes = (systemQuizzes || []).filter(sq => sq.student_id === s.id);
+      let autoTotal = 0, autoMax = 0, autoCount = 0;
+      for (const aq of autoQuizzes) {
+        autoTotal += parseFloat(aq.score || 0);
+        autoMax += parseFloat(aq.total || 0);
+        autoCount++;
+      }
+      return { ...s, total, taken, avg, pct, totalMax, perQuiz, bySubject, autoQuizzes, autoTotal, autoMax, autoCount };
     });
     stats.sort((a, b) => b.total - a.total);
     stats.forEach((s, i) => { s.rank = i + 1; });
     return stats;
-  };
-
-  const generateAIReport = async (studentId) => {
-    setAiLoading(prev => ({ ...prev, [studentId]: true }));
-    try {
-      const r = await api.post(
-        `/classes/${classId}/weekly-reports/${activeReport}/ai-report`,
-        { student_id: studentId },
-        token
-      );
-      setAiReports(prev => ({ ...prev, [studentId]: r }));
-      setShowStudentReport(studentId);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setAiLoading(prev => ({ ...prev, [studentId]: false }));
-    }
   };
 
   const notifyParents = async () => {
@@ -296,7 +276,6 @@ export default function WeeklyQuizReport({ token, classId }) {
     }
   };
 
-  // Notify only selected parents (bulk)
   const notifySelectedParents = async () => {
     const ids = Array.from(selectedParents);
     if (!ids.length) {
@@ -320,7 +299,6 @@ export default function WeeklyQuizReport({ token, classId }) {
     }
   };
 
-  // Notify a single student's parent
   const notifyOneParent = async (studentId, studentName) => {
     if (!confirm(`Send report to ${studentName}'s parent${alsoEmail ? ' via email' : ''}?`)) return;
     setNotifyLoading(true);
@@ -372,7 +350,7 @@ export default function WeeklyQuizReport({ token, classId }) {
               value={newWeekLabel}
               onChange={e => setNewWeekLabel(e.target.value)}
               placeholder="Week label"
-              style={{ padding: '8px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: 14, width: 220 }}
+              style={{ padding: '8px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: 14, width: 220, color: '#1e293b' }}
             />
             <button className="btn btn-primary" onClick={createReport}>Create First Report</button>
           </div>
@@ -390,7 +368,7 @@ export default function WeeklyQuizReport({ token, classId }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <h2 style={{ fontSize: 22, color: '#111827', margin: 0 }}>📊 Weekly Quiz Report</h2>
-          <p style={{ color: '#64748b', fontSize: 13, margin: '4px 0 0' }}>Gradebook with auto-save, rankings & AI reports</p>
+          <p style={{ color: '#64748b', fontSize: 13, margin: '4px 0 0' }}>Teacher marks + Auto system marks, parent contacts, email sending</p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {saving && <span style={{ fontSize: 12, color: '#2563eb' }}>💾 Saving...</span>}
@@ -412,8 +390,8 @@ export default function WeeklyQuizReport({ token, classId }) {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
         <select
           value={activeReport || ''}
-          onChange={e => { setActiveReport(parseInt(e.target.value, 10)); setAiReports({}); setNotifyResult(''); }}
-          style={{ padding: '8px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: 14, minWidth: 200 }}
+          onChange={e => { setActiveReport(parseInt(e.target.value, 10)); setNotifyResult(''); }}
+          style={{ padding: '8px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: 14, minWidth: 200, color: '#1e293b' }}
         >
           {reports.map(r => (
             <option key={r.id} value={r.id}>{r.week_label}</option>
@@ -428,14 +406,14 @@ export default function WeeklyQuizReport({ token, classId }) {
               type="text"
               value={newWeekLabel}
               onChange={e => setNewWeekLabel(e.target.value)}
-              style={{ padding: '6px 10px', border: '1.5px solid #cbd5e1', borderRadius: 6, fontSize: 13, width: 180 }}
+              style={{ padding: '6px 10px', border: '1.5px solid #cbd5e1', borderRadius: 6, fontSize: 13, width: 180, color: '#1e293b' }}
             />
             <button className="btn btn-primary" style={{ fontSize: 12, padding: '5px 10px' }} onClick={createReport}>OK</button>
             <button className="btn btn-outline" style={{ fontSize: 12, padding: '5px 10px' }} onClick={() => setShowNewReport(false)}>Cancel</button>
           </div>
         )}
         <div style={{ flex: 1 }} />
-        <select id="newColSubject" defaultValue="" style={{ padding: '6px 10px', border: '1.5px solid #cbd5e1', borderRadius: 6, fontSize: 13 }}>
+        <select id="newColSubject" defaultValue="" style={{ padding: '6px 10px', border: '1.5px solid #cbd5e1', borderRadius: 6, fontSize: 13, color: '#1e293b' }}>
           <option value="">No subject</option>
           {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
@@ -445,247 +423,46 @@ export default function WeeklyQuizReport({ token, classId }) {
         }}>
           + Add Quiz Column
         </button>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748b' }}>
-          <input type="checkbox" checked={alsoEmail} onChange={e => setAlsoEmail(e.target.checked)} />
-          Email
-        </label>
-        <button
-          className="btn btn-primary"
-          style={{ fontSize: 13, padding: '6px 16px', background: '#7c3aed' }}
-          onClick={notifyParents}
-          disabled={notifyLoading}
-        >
-          {notifyLoading ? 'Sending...' : '📢 Notify Parents'}
-        </button>
       </div>
 
-      {notifyResult && (
-        <div className="alert alert-success" style={{ marginBottom: 12 }}>{notifyResult}</div>
-      )}
-
-      {/* View mode toggle */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-        <button
-          className={`btn btn-sm${viewMode === 'gradebook' ? ' btn-primary' : ' btn-outline'}`}
-          style={{ fontSize: 13, padding: '6px 16px' }}
-          onClick={() => setViewMode('gradebook')}
-        >
-          📊 Gradebook & Marks
-        </button>
-        <button
-          className={`btn btn-sm${viewMode === 'cards' ? ' btn-primary' : ' btn-outline'}`}
-          style={{ fontSize: 13, padding: '6px 16px' }}
-          onClick={() => setViewMode('cards')}
-        >
-          📮 Parent Notify Cards
-        </button>
-      </div>
-
-      {/* Gradebook Table — redesigned with parent info and selection */}
-      {viewMode === 'gradebook' && reportData && reportData.columns && (
-        <div style={{ overflowX: 'auto', borderRadius: 12, border: '1.5px solid #e2e8f0', marginBottom: 20 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 800 }}>
-            <thead>
-              <tr style={{ background: '#f1f5f9' }}>
-                <th style={{ padding: '10px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', width: 40 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedParents.size === stats.length && stats.length > 0}
-                    onChange={toggleSelectAll}
-                    title="Select all parents"
-                  />
-                </th>
-                <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', position: 'sticky', left: 0, background: '#f1f5f9', zIndex: 2, minWidth: 120 }}>
-                  Student
-                </th>
-                {reportData.columns.map(col => (
-                  <th key={col.id} style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 90 }}>
-                    <input
-                      type="text"
-                      value={col.name}
-                      onChange={e => renameColumn(col.id, e.target.value)}
-                      style={{ border: 'none', background: 'transparent', fontWeight: 700, fontSize: 12, textAlign: 'center', width: '100%', color: '#1e293b' }}
-                    />
-                    <select
-                      value={col.subject || ''}
-                      onChange={e => setColumnSubject(col.id, e.target.value)}
-                      style={{ border: '1px solid #e2e8f0', borderRadius: 4, fontSize: 10, padding: '1px 2px', marginTop: 2, color: '#64748b', background: '#f8fafc', width: '100%' }}
-                    >
-                      <option value="">— subject —</option>
-                      {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <div style={{ fontSize: 10, color: '#94a3b8' }}>/{parseFloat(col.max_marks)}</div>
-                    <button
-                      onClick={() => deleteColumn(col.id)}
-                      style={{ border: 'none', background: 'none', color: '#e11d48', cursor: 'pointer', fontSize: 11, marginTop: 2 }}
-                      title="Delete column"
-                    >✕</button>
-                  </th>
-                ))}
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#eff6ff' }}>Total</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#eff6ff' }}>%</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#fef3c7' }}>Rank</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 160 }}>Parent Email</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 130 }}>Parent Phone</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 150 }}>Teacher Message</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}>Send</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.map((s, idx) => (
-                <tr key={s.id} style={{ background: idx % 2 === 0 ? '#fff' : '#f8fafc' }}>
-                  {/* Checkbox for bulk selection */}
-                  <td style={{ padding: '8px 6px', textAlign: 'center' }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedParents.has(s.id)}
-                      onChange={() => toggleParentSelection(s.id)}
-                      title="Select for bulk notify"
-                    />
-                  </td>
-                  {/* Student name */}
-                  <td style={{ padding: '8px', fontWeight: 600, color: '#1e293b', position: 'sticky', left: 0, background: idx % 2 === 0 ? '#fff' : '#f8fafc', zIndex: 1 }}>
-                    {s.name}
-                  </td>
-                  {/* Marks columns */}
-                  {reportData.columns.map(col => {
-                    const key = `${col.id}_${s.id}`;
-                    const val = marksRef.current[key] !== undefined
-                      ? marksRef.current[key]
-                      : (reportData.marks.find(m => m.column_id === col.id && m.student_id === s.id)?.marks);
-                    return (
-                      <td key={col.id} style={{ padding: '4px', textAlign: 'center' }}>
-                        <input
-                          type="number"
-                          step="0.5"
-                          min="0"
-                          max={parseFloat(col.max_marks)}
-                          defaultValue={val !== null && val !== undefined ? val : ''}
-                          onChange={e => handleMarkChange(col.id, s.id, e.target.value)}
-                          style={{
-                            width: 48, padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 5,
-                            textAlign: 'center', fontSize: 13, background: '#fff', color: '#1e293b',
-                          }}
-                        />
-                      </td>
-                    );
-                  })}
-                  {/* Total */}
-                  <td style={{ padding: '8px', textAlign: 'center', fontWeight: 700, background: '#eff6ff', color: '#1e40af' }}>
-                    {s.total.toFixed(1)}
-                  </td>
-                  {/* Percentage */}
-                  <td style={{ padding: '8px', textAlign: 'center', fontWeight: 700, background: '#eff6ff', color: s.pct >= 50 ? '#16a34a' : '#e11d48' }}>
-                    {s.pct.toFixed(0)}%
-                  </td>
-                  {/* Rank */}
-                  <td style={{ padding: '8px', textAlign: 'center', background: '#fef3c7', fontWeight: 700, color: '#92400e' }}>
-                    #{s.rank}
-                  </td>
-                  {/* Parent Email — persists in class_members */}
-                  <td style={{ padding: '4px', textAlign: 'center' }}>
-                    <input
-                      type="email"
-                      defaultValue={s.parent_email || ''}
-                      onChange={e => handleEmailChange(s.id, e.target.value)}
-                      placeholder="parent@email.com"
-                      style={{
-                        width: 150, padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6,
-                        fontSize: 12, background: '#fff', color: '#1e293b',
-                      }}
-                    />
-                  </td>
-                  {/* Parent Phone — persists in class_members */}
-                  <td style={{ padding: '4px', textAlign: 'center' }}>
-                    <input
-                      type="tel"
-                      defaultValue={s.parent_phone || ''}
-                      onChange={e => handlePhoneChange(s.id, e.target.value)}
-                      placeholder="+250..."
-                      style={{
-                        width: 120, padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6,
-                        fontSize: 12, background: '#fff', color: '#1e293b',
-                      }}
-                    />
-                  </td>
-                  {/* Teacher Message */}
-                  <td style={{ padding: '4px', textAlign: 'center' }}>
-                    <input
-                      type="text"
-                      defaultValue={reportData.comments?.find(c => c.student_id === s.id)?.comment || ''}
-                      onBlur={e => saveComment(s.id, e.target.value)}
-                      placeholder="Message..."
-                      style={{
-                        width: 130, padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6,
-                        fontSize: 12, background: '#fff', color: '#1e293b',
-                      }}
-                    />
-                  </td>
-                  {/* Individual Send button */}
-                  <td style={{ padding: '4px', textAlign: 'center' }}>
-                    <button
-                      onClick={() => notifyOneParent(s.id, s.name)}
-                      disabled={notifyLoading}
-                      title="Send to this parent only"
-                      style={{
-                        padding: '5px 10px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600,
-                        cursor: 'pointer', background: '#25d366', color: '#fff',
-                      }}
-                    >
-                      📧 Send
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {stats.length === 0 && (
-                <tr>
-                  <td colSpan={reportData.columns.length + 10} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>
-                    No students in this class yet. Make sure students have joined with the class code.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Parent Notify Cards view */}
-      {viewMode === 'cards' && reportData && stats.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(360px, 100%), 1fr))', gap: 16 }}>
+      {/* Student Cards — Mobile + Desktop friendly */}
+      {reportData && reportData.columns && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
           {stats.map((s) => {
             const studentRow = reportData.students.find(st => st.id === s.id);
+            const isSelected = selectedParents.has(s.id);
             return (
               <div key={s.id} style={{
                 background: '#fff',
-                borderRadius: 16,
-                border: '1.5px solid #e2e8f0',
+                borderRadius: 14,
+                border: isSelected ? '2px solid #667eea' : '1.5px solid #e2e8f0',
                 overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                display: 'flex',
-                flexDirection: 'column',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
               }}>
-                {/* Card header: avatar + name + rank */}
+                {/* Student header bar */}
                 <div style={{
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  padding: '14px 16px',
+                  padding: '12px 16px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
+                  gap: 10,
+                  flexWrap: 'wrap',
                 }}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleParentSelection(s.id)}
+                    style={{ width: 20, height: 20, cursor: 'pointer', flexShrink: 0 }}
+                    title="Select for bulk send"
+                  />
                   <img
                     src={studentRow?.avatar_path ? `${UPLOADS_BASE}${studentRow.avatar_path}` : DEFAULT_AVATAR}
                     alt={s.name}
                     onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
-                    style={{
-                      width: 48, height: 48, borderRadius: '50%',
-                      objectFit: 'cover', border: '2px solid rgba(255,255,255,0.4)',
-                      background: '#e8eaf6', flexShrink: 0,
-                    }}
+                    style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.4)', flexShrink: 0 }}
                   />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {s.name}
-                    </div>
+                  <div style={{ flex: 1, minWidth: 100 }}>
+                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>{s.name}</div>
                     <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12 }}>
                       Rank #{s.rank} of {stats.length} · {s.taken} quiz{s.taken !== 1 ? 'zes' : ''} taken
                     </div>
@@ -693,100 +470,160 @@ export default function WeeklyQuizReport({ token, classId }) {
                   <div style={{
                     background: 'rgba(255,255,255,0.2)',
                     borderRadius: 10,
-                    padding: '6px 12px',
+                    padding: '4px 10px',
                     textAlign: 'center',
                     flexShrink: 0,
                   }}>
-                    <div style={{ color: '#fff', fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{s.pct.toFixed(0)}%</div>
+                    <div style={{ color: '#fff', fontSize: 16, fontWeight: 800, lineHeight: 1 }}>{s.pct.toFixed(0)}%</div>
                     <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10 }}>{s.total}/{s.totalMax}</div>
                   </div>
                 </div>
 
-                {/* Quiz summary list */}
+                {/* Teacher-added marks section */}
                 <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Quiz Summary
+                    ✍️ Teacher Marks (enter below)
                   </div>
-                  {s.perQuiz.length === 0 ? (
-                    <div style={{ fontSize: 13, color: '#94a3b8' }}>No quizzes recorded yet.</div>
+                  {reportData.columns.length === 0 ? (
+                    <div style={{ fontSize: 13, color: '#94a3b8' }}>No quiz columns yet. Click "+ Add Quiz Column" above.</div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {s.perQuiz.map((q, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                          <span style={{ color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
-                            {q.subject && <span style={{ fontSize: 10, color: '#7c3aed', background: '#f3e8ff', padding: '1px 5px', borderRadius: 4, marginRight: 4 }}>{q.subject}</span>}
-                            {q.name}
-                          </span>
-                          <span style={{ fontWeight: 600, color: q.marks === null ? '#cbd5e1' : (q.marks / q.max >= 0.5 ? '#16a34a' : '#e11d48'), flexShrink: 0 }}>
-                            {q.marks === null ? 'N/A' : `${q.marks}/${q.max}`}
-                          </span>
-                        </div>
-                      ))}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {reportData.columns.map(col => {
+                        const key = `${col.id}_${s.id}`;
+                        const val = marksRef.current[key] !== undefined
+                          ? marksRef.current[key]
+                          : (reportData.marks.find(m => m.column_id === col.id && m.student_id === s.id)?.marks);
+                        return (
+                          <div key={col.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                            <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {col.name}
+                            </div>
+                            {col.subject && (
+                              <div style={{ fontSize: 9, color: '#7c3aed', background: '#f3e8ff', padding: '1px 4px', borderRadius: 3 }}>
+                                {col.subject.length > 12 ? col.subject.slice(0, 12) + '…' : col.subject}
+                              </div>
+                            )}
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="0"
+                              max={parseFloat(col.max_marks)}
+                              defaultValue={val !== null && val !== undefined ? val : ''}
+                              onChange={e => handleMarkChange(col.id, s.id, e.target.value)}
+                              placeholder={`/${parseFloat(col.max_marks)}`}
+                              style={{
+                                width: 60, padding: '5px 6px', border: '1.5px solid #e2e8f0', borderRadius: 6,
+                                textAlign: 'center', fontSize: 14, fontWeight: 600, background: '#fff', color: '#1e293b',
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
 
+                {/* Auto system quiz marks section */}
+                {s.autoQuizzes && s.autoQuizzes.length > 0 && (
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f0fdf4' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      🤖 Auto System Marks (from quiz_attempts)
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {s.autoQuizzes.map((aq, i) => (
+                        <div key={i} style={{
+                          background: '#fff', border: '1px solid #bbf7d0', borderRadius: 8,
+                          padding: '4px 8px', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 1,
+                        }}>
+                          <div style={{ color: '#1e293b', fontWeight: 600, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {aq.title}
+                          </div>
+                          <div style={{ fontWeight: 700, color: parseFloat(aq.score) / parseFloat(aq.total) >= 0.5 ? '#16a34a' : '#e11d48' }}>
+                            {aq.score}/{aq.total}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#15803d', marginTop: 6 }}>
+                      Total: {s.autoTotal}/{s.autoMax} across {s.autoCount} system quiz{s.autoCount !== 1 ? 'zes' : ''}
+                    </div>
+                  </div>
+                )}
+
                 {/* Parent contact info */}
                 <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Parent Contact
+                    👨‍👩‍👧 Parent Contact
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <input
-                      type="email"
-                      defaultValue={s.parent_email || ''}
-                      onChange={e => handleEmailChange(s.id, e.target.value)}
-                      placeholder="✉ parent@email.com"
-                      style={{
-                        flex: '1 1 140px', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 8,
-                        fontSize: 12, background: '#fff', color: '#475569',
-                      }}
-                    />
-                    <input
-                      type="tel"
-                      defaultValue={s.parent_phone || ''}
-                      onChange={e => handlePhoneChange(s.id, e.target.value)}
-                      placeholder="📞 +250..."
-                      style={{
-                        flex: '1 1 120px', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 8,
-                        fontSize: 12, background: '#fff', color: '#475569',
-                      }}
-                    />
+                    <div style={{ flex: '1 1 180px', minWidth: 140 }}>
+                      <label style={{ fontSize: 10, color: '#94a3b8', display: 'block', marginBottom: 2 }}>Parent Email</label>
+                      <input
+                        type="email"
+                        defaultValue={s.parent_email || ''}
+                        onChange={e => handleEmailChange(s.id, e.target.value)}
+                        placeholder="parent@email.com"
+                        style={{
+                          width: '100%', padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 8,
+                          fontSize: 13, background: '#fff', color: '#1e293b', boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div style={{ flex: '1 1 140px', minWidth: 120 }}>
+                      <label style={{ fontSize: 10, color: '#94a3b8', display: 'block', marginBottom: 2 }}>Parent Phone</label>
+                      <input
+                        type="tel"
+                        defaultValue={s.parent_phone || ''}
+                        onChange={e => handlePhoneChange(s.id, e.target.value)}
+                        placeholder="+250..."
+                        style={{
+                          width: '100%', padding: '6px 10px', border: '1.5px solid #e2e8f0', borderRadius: 8,
+                          fontSize: 13, background: '#fff', color: '#1e293b', boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Teacher message box */}
-                <div style={{ padding: '12px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                {/* Big teacher message area */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    ✍️ Message to Parent
+                    ✍️ Teacher Message to Parent
                   </div>
                   <textarea
                     defaultValue={reportData.comments?.find(c => c.student_id === s.id)?.comment || ''}
                     onChange={e => handleMessageChange(s.id, e.target.value)}
                     placeholder="Write a personal message to this parent about their child's week..."
-                    rows={3}
+                    rows={4}
                     style={{
-                      width: '100%', padding: '8px 10px', border: '1.5px solid #e2e8f0', borderRadius: 8,
-                      fontSize: 13, background: '#fff', color: '#1e293b', resize: 'vertical',
-                      boxSizing: 'border-box', fontFamily: 'inherit', flex: 1, minHeight: 60,
+                      width: '100%', padding: '10px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8,
+                      fontSize: 14, background: '#fff', color: '#1e293b', resize: 'vertical',
+                      boxSizing: 'border-box', fontFamily: 'inherit', minHeight: 80, lineHeight: 1.5,
                     }}
                   />
-                  <div style={{ display: 'flex', gap: 8, marginTop: 10, justifyContent: 'flex-end' }}>
-                    <button
-                      onClick={() => generateAIReport(s.id)}
-                      disabled={aiLoading[s.id]}
-                      style={{
-                        padding: '5px 12px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 600,
-                        cursor: 'pointer', background: '#7c3aed', color: '#fff',
-                      }}
-                    >
-                      {aiLoading[s.id] ? '⏳ AI…' : '🤖 AI Report'}
-                    </button>
-                  </div>
+                </div>
+
+                {/* Individual send button */}
+                <div style={{ padding: '10px 16px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => notifyOneParent(s.id, s.name)}
+                    disabled={notifyLoading}
+                    style={{
+                      padding: '8px 20px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 700,
+                      cursor: 'pointer', background: '#25d366', color: '#fff',
+                    }}
+                  >
+                    {notifyLoading ? '⏳ Sending...' : '📧 Send to This Parent'}
+                  </button>
                 </div>
               </div>
             );
           })}
+          {stats.length === 0 && (
+            <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', background: '#f8fafc', borderRadius: 12 }}>
+              No students in this class yet. Make sure students have joined with the class code.
+            </div>
+          )}
         </div>
       )}
 
@@ -855,120 +692,7 @@ export default function WeeklyQuizReport({ token, classId }) {
           )}
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>
             ✓ Parent emails and phones are saved automatically and stay for next week.
-            Each parent receives: student marks, quiz summary, teacher message, performance analysis, and a signup link.
-          </div>
-        </div>
-      )}
-
-      {/* Subject Analytics */}
-      {reportData && reportData.columns && stats.length > 0 && (() => {
-        const allSubjects = {};
-        for (const s of stats) {
-          for (const [subj, g] of Object.entries(s.bySubject)) {
-            if (!allSubjects[subj]) allSubjects[subj] = { totals: [], count: 0 };
-            allSubjects[subj].totals.push({ name: s.name, total: g.total, max: g.max, pct: g.max ? (g.total / g.max) * 100 : 0 });
-            allSubjects[subj].count++;
-          }
-        }
-        const subjectList = Object.entries(allSubjects);
-        if (!subjectList.length) return null;
-        return (
-          <div style={{ marginTop: 20 }}>
-            <h3 style={{ fontSize: 18, color: '#111827', marginBottom: 12 }}>📈 Marks by Subject</h3>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {subjectList.map(([subj, data]) => {
-                const sorted = [...data.totals].sort((a, b) => b.pct - a.pct);
-                const avgPct = sorted.reduce((s, x) => s + x.pct, 0) / sorted.length;
-                return (
-                  <div key={subj} style={{ background: '#f8fafc', borderRadius: 12, padding: 14, minWidth: 240, border: '1.5px solid #e2e8f0' }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', marginBottom: 8 }}>{subj}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>Class avg: {avgPct.toFixed(0)}%</div>
-                    {sorted.map((t, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', borderBottom: i < sorted.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                        <span style={{ color: '#475569' }}>{t.name}</span>
-                        <span style={{ fontWeight: 600, color: t.pct >= 50 ? '#16a34a' : '#e11d48' }}>{t.total}/{t.max} ({t.pct.toFixed(0)}%)</span>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* AI Student Report Modal */}
-      {showStudentReport && aiReports[showStudentReport] && (
-        <div
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-          onClick={e => e.target === e.currentTarget && setShowStudentReport(null)}
-        >
-          <div style={{ background: '#fff', borderRadius: 16, maxWidth: 560, width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 20, color: '#111827' }}>🤖 AI Report — {aiReports[showStudentReport].student_name}</h3>
-              <button onClick={() => setShowStudentReport(null)} style={{ border: 'none', background: 'none', fontSize: 22, cursor: 'pointer', color: '#64748b' }}>×</button>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-              <div style={{ background: '#eff6ff', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Total</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#1e40af' }}>{aiReports[showStudentReport].total_marks.toFixed(1)}</div>
-              </div>
-              <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Quizzes</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#16a34a' }}>{aiReports[showStudentReport].quiz_count}</div>
-              </div>
-              <div style={{ background: '#fef3c7', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Average</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#92400e' }}>{aiReports[showStudentReport].average}</div>
-              </div>
-              <div style={{ background: '#fce7f3', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Percentage</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#be185d' }}>{aiReports[showStudentReport].percentage}%</div>
-              </div>
-            </div>
-
-            {aiReports[showStudentReport].ai_feedback ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {aiReports[showStudentReport].ai_feedback.performed_well && (
-                  <div style={{ background: '#f0fdf4', borderRadius: 10, padding: 14, border: '1px solid #bbf7d0' }}>
-                    <div style={{ fontWeight: 700, color: '#15803d', marginBottom: 6, fontSize: 14 }}>✅ Performed Well</div>
-                    <div style={{ fontSize: 13, color: '#166534', lineHeight: 1.5 }}>{aiReports[showStudentReport].ai_feedback.performed_well}</div>
-                  </div>
-                )}
-                {aiReports[showStudentReport].ai_feedback.needs_improvement && (
-                  <div style={{ background: '#fef2f2', borderRadius: 10, padding: 14, border: '1px solid #fecaca' }}>
-                    <div style={{ fontWeight: 700, color: '#b91c1c', marginBottom: 6, fontSize: 14 }}>⚠️ Needs Improvement</div>
-                    <div style={{ fontSize: 13, color: '#991b1b', lineHeight: 1.5 }}>{aiReports[showStudentReport].ai_feedback.needs_improvement}</div>
-                  </div>
-                )}
-                {aiReports[showStudentReport].ai_feedback.appreciation && (
-                  <div style={{ background: '#eff6ff', borderRadius: 10, padding: 14, border: '1px solid #bfdbfe' }}>
-                    <div style={{ fontWeight: 700, color: '#1e40af', marginBottom: 6, fontSize: 14 }}>👏 Subject to Appreciate</div>
-                    <div style={{ fontSize: 13, color: '#1e3a8a', lineHeight: 1.5 }}>{aiReports[showStudentReport].ai_feedback.appreciation}</div>
-                  </div>
-                )}
-                {aiReports[showStudentReport].ai_feedback.suggestions_for_parents && (
-                  <div style={{ background: '#faf5ff', borderRadius: 10, padding: 14, border: '1px solid #e9d5ff' }}>
-                    <div style={{ fontWeight: 700, color: '#7c3aed', marginBottom: 6, fontSize: 14 }}>💡 Suggestions for Parents</div>
-                    <div style={{ fontSize: 13, color: '#6b21a8', lineHeight: 1.5 }}>{aiReports[showStudentReport].ai_feedback.suggestions_for_parents}</div>
-                  </div>
-                )}
-                {aiReports[showStudentReport].ai_feedback.raw_text && (
-                  <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14, fontSize: 13, color: '#475569', lineHeight: 1.5 }}>
-                    {aiReports[showStudentReport].ai_feedback.raw_text}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14, fontSize: 13, color: '#64748b' }}>
-                AI not configured. Basic summary: {aiReports[showStudentReport].summary}
-              </div>
-            )}
-
-            <div style={{ marginTop: 16, textAlign: 'right' }}>
-              <button className="btn btn-outline" onClick={() => setShowStudentReport(null)}>Close</button>
-            </div>
+            Each parent receives: teacher marks, auto system marks, teacher message, performance analysis, and a signup link.
           </div>
         </div>
       )}
