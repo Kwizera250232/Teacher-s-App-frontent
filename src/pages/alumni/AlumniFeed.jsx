@@ -823,23 +823,30 @@ export default function AlumniFeed() {
                       <button className="af-suggested-carousel-more" onClick={refreshSuggestedSchools}>🔄 Refresh</button>
                     </div>
                     <div className="af-suggested-carousel-track">
-                      {suggestedSchools.map((sch) => (
+                      {suggestedSchools.map((sch) => {
+                        const typeIcon = sch.type === 'university' ? '🎓' : sch.type === 'tvet' ? '🔧' : '🏫';
+                        const typeLabel = sch.type === 'university' ? 'University' : sch.type === 'tvet' ? 'TVET' : 'Secondary';
+                        return (
                         <div key={sch.id} className="af-suggested-carousel-card">
                           <div className="af-suggested-carousel-top">
-                            <div style={{
-                              width: 56, height: 56, borderRadius: 14,
-                              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 26, color: '#fff', fontWeight: 700, margin: '0 auto',
-                            }}>
-                              🏫
-                            </div>
+                            {sch.logo_url ? (
+                              <img src={sch.logo_url} alt={sch.name} style={{ width: 56, height: 56, borderRadius: 14, objectFit: 'cover', margin: '0 auto' }} />
+                            ) : (
+                              <div style={{
+                                width: 56, height: 56, borderRadius: 14,
+                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 26, color: '#fff', fontWeight: 700, margin: '0 auto',
+                              }}>
+                                {typeIcon}
+                              </div>
+                            )}
                             <div className="af-suggested-carousel-name-row">
                               <span>{sch.name}</span>
                             </div>
-                            <div className="af-suggested-carousel-school">{sch.location || 'Rwanda'}</div>
+                            <div className="af-suggested-carousel-school">{typeLabel}{sch.province ? ` · ${sch.province}` : ''}</div>
                             <div className="af-suggested-carousel-meta">
-                              {sch.alumni_count || 0} alumni · {sch.member_count || 0} members
+                              {sch.follower_count || 0} followers{sch.program_count > 0 ? ` · ${sch.program_count} programs` : ''}
                             </div>
                           </div>
                           <button
@@ -849,7 +856,8 @@ export default function AlumniFeed() {
                             {sch.is_following ? '✓ Following' : '+ Follow'}
                           </button>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
