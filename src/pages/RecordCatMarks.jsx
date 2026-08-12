@@ -6,6 +6,14 @@ import '../pages/Dashboard.css';
 
 const CAT_NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
+const SUBJECTS = [
+  'English', 'Mathematics', 'Kinyarwanda', 'French', 'Science and Elementary Technology (SET)',
+  'Social and Religious Studies (SST)', 'Creative Arts', 'Physical Education and Sports (PES)',
+  'ICT', 'Entrepreneurship', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History',
+  'Economics', 'Accounting', 'Literature in English', 'Kinyarwanda Literature', 'Religious Education',
+  'General Studies', 'Other',
+];
+
 export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const { id: routeClassId } = useParams();
   const auth = useAuth();
@@ -24,6 +32,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const [search, setSearch] = useState('');
   const [showMigrate, setShowMigrate] = useState(false);
   const [showRecord, setShowRecord] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState('');
   const location = useLocation();
   const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
   const isEmbedded = Boolean(embeddedClassId);
@@ -39,13 +48,16 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const loadData = () => {
     if (!classId) return;
     setLoading(true);
+    const overviewUrl = selectedSubject
+      ? `/catmarks/${classId}/overview?subject=${encodeURIComponent(selectedSubject)}`
+      : `/catmarks/${classId}/overview`;
     Promise.all([
-      api.get(`/catmarks/${classId}/overview`, token).then(setStats),
+      api.get(overviewUrl, token).then(setStats),
       api.get(`/classes/${classId}/quizzes`, token).then(setQuizzes),
     ]).catch((e) => setError(e.message)).finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadData(); }, [classId, token]);
+  useEffect(() => { loadData(); }, [classId, token, selectedSubject]);
 
   const handleClassChange = (nextId) => {
     setClassId(nextId);
@@ -67,6 +79,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
         test_number: testNumber,
         marks_obtained: marks,
         total_marks: 100,
+        subject: selectedSubject || 'General',
       }, token);
       setEditing(null);
       setError('');
@@ -81,7 +94,8 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const deleteMark = async (studentId, testNumber) => {
     if (!window.confirm('Delete this mark?')) return;
     try {
-      await api.delete(`/catmarks/${classId}/entry/${studentId}/${testNumber}`, token);
+      const subjParam = selectedSubject ? `?subject=${encodeURIComponent(selectedSubject)}` : '';
+      await api.delete(`/catmarks/${classId}/entry/${studentId}/${testNumber}${subjParam}`, token);
       loadData();
     } catch (err) { setError(err.message); }
   };
@@ -133,7 +147,8 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `class-${classId}-marks.csv`;
+    const subjSlug = selectedSubject ? `-${selectedSubject.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+    a.download = `class-${classId}${subjSlug}-marks.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -164,6 +179,19 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                 </select>
               </label>
             )}
+            {/* Subject selector — pick subject before adding marks */}
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13, fontWeight: 600 }}>
+              Subject
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                style={{ borderColor: selectedSubject ? '#7c3aed' : '#e8e8e8', color: selectedSubject ? '#5b21b6' : '#1e293b' }}
+              >
+                <option value="">All subjects (mixed)</option>
+                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+                {stats?.subjects?.filter(s => !SUBJECTS.includes(s) && s !== 'General').map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
             <input
               type="text"
               placeholder="🔍 Search student..."
@@ -185,10 +213,31 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
           </div>
         </section>
 
+        {/* Subject banner — shows which subject is active */}
+        {selectedSubject && (
+          <div style={{
+            background: 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)',
+            border: '1.5px solid #c4b5fd', borderRadius: 10,
+            padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#5b21b6' }}>
+              📚 Showing marks for: <span style={{ fontSize: 16 }}>{selectedSubject}</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              style={{ fontSize: 11, padding: '3px 10px', color: '#7c3aed', borderColor: '#c4b5fd' }}
+              onClick={() => setSelectedSubject('')}
+            >
+              Show all subjects
+            </button>
+          </div>
+        )}
+
         {/* Migrate quiz to CAT */}
         {showMigrate && (
           <section className="cat-panel">
-            <h2>Migrate quiz scores to CAT</h2>
+            <h2>Migrate quiz scores to CAT{selectedSubject && <span style={{ color: '#7c3aed', fontSize: 14 }}> — {selectedSubject}</span>}</h2>
             <form className="cat-form-row" onSubmit={async (e) => {
               e.preventDefault();
               if (!migrateQuiz.quiz_id || !migrateQuiz.test_number) return setError('Select quiz and CAT number.');
@@ -197,6 +246,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                 const res = await api.post(`/catmarks/${classId}/fromquiz`, {
                   quiz_id: parseInt(migrateQuiz.quiz_id, 10),
                   test_number: parseInt(migrateQuiz.test_number, 10),
+                  subject: selectedSubject || 'General',
                 }, token);
                 setMigrateQuiz({ quiz_id: '', test_number: '' });
                 setShowMigrate(false);
@@ -205,6 +255,10 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                 alert(`Migrated ${res.migrated} scores.`);
               } catch (err) { setError(err.message); } finally { setSaving(false); }
             }}>
+              <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
+                <option value="">Select subject</option>
+                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
               <select value={migrateQuiz.quiz_id} onChange={(e) => setMigrateQuiz({ ...migrateQuiz, quiz_id: e.target.value })}>
                 <option value="">Select quiz</option>
                 {quizzes.map((q) => <option key={q.id} value={q.id}>{q.title}</option>)}
@@ -219,7 +273,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
         {/* Record mark form */}
         {showRecord && (
           <section className="cat-panel">
-            <h2>Record mark</h2>
+            <h2>Record mark{selectedSubject && <span style={{ color: '#7c3aed', fontSize: 14 }}> — {selectedSubject}</span>}</h2>
             <form className="cat-form-grid" onSubmit={async (e) => {
               e.preventDefault();
               if (!recordForm.student_id || recordForm.marks_obtained === '') return setError('Select student and marks.');
@@ -230,6 +284,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                   test_number: parseInt(recordForm.test_number, 10),
                   marks_obtained: parseInt(recordForm.marks_obtained, 10),
                   total_marks: 100,
+                  subject: selectedSubject || 'General',
                 }, token);
                 setRecordForm({ ...recordForm, student_id: '', marks_obtained: '' });
                 setShowRecord(false);
@@ -241,6 +296,12 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                 <option value="">Select student</option>
                 {roster.map((s) => <option key={s.student_id} value={s.student_id}>{s.name}</option>)}
               </select></label>
+              <label>Subject
+                <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
+                  <option value="">Select subject</option>
+                  {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </label>
               <label>CAT #<input type="number" min="1" max="10" value={recordForm.test_number} onChange={(e) => setRecordForm({ ...recordForm, test_number: e.target.value })} /></label>
               <label>Marks<input type="number" min="0" max="100" value={recordForm.marks_obtained} onChange={(e) => setRecordForm({ ...recordForm, marks_obtained: e.target.value })} /></label>
               <button type="submit" className="btn btn-primary" disabled={saving}>Record</button>
@@ -252,7 +313,10 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
         {/* Marks table */}
         <section className="cat-panel cat-table-wrap">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-            <h2 style={{ margin: 0 }}>Marks Sheet (CAT 1–10)</h2>
+            <h2 style={{ margin: 0 }}>
+              Marks Sheet (CAT 1–10)
+              {selectedSubject && <span style={{ color: '#7c3aed', fontSize: 14, marginLeft: 8 }}>— {selectedSubject}</span>}
+            </h2>
             {stats && (
               <span className="cat-class-avg" style={{ margin: 0 }}>
                 <strong>Class average:</strong> {stats?.class_average ?? 0}%
@@ -331,7 +395,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
           )}
           {!loading && roster.length > 0 && (
             <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 10 }}>
-              💡 Click a cell to edit. Right-click to delete. Use "From Quiz" to import quiz scores.
+              💡 Select a subject first to keep marks organized. Click a cell to edit. Right-click to delete. Use "From Quiz" to import quiz scores.
             </p>
           )}
         </section>
