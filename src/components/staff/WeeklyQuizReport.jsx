@@ -37,7 +37,7 @@ export default function WeeklyQuizReport({ token, classId }) {
   const [notifyResult, setNotifyResult] = useState('');
   const [showNewReport, setShowNewReport] = useState(false);
   const [newWeekLabel, setNewWeekLabel] = useState(getWeekLabel(0));
-  const [alsoEmail, setAlsoEmail] = useState(false);
+  const [alsoEmail, setAlsoEmail] = useState(true);
   const [showStudentReport, setShowStudentReport] = useState(null);
   const [viewMode, setViewMode] = useState('gradebook'); // 'gradebook' | 'cards'
   const [selectedParents, setSelectedParents] = useState(new Set()); // student IDs selected for bulk notify
