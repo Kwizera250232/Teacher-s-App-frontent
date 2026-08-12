@@ -383,6 +383,74 @@ export default function AlumniFeed() {
     } catch (e) { alert(e.message); }
   };
 
+  // Save post as image with UCLASS branding
+  const savePostAsImage = async (post) => {
+    setMenuOpen(null);
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const postEl = document.querySelector(`[data-post-id="${post.id}"]`);
+      if (!postEl) { alert('Post not found.'); return; }
+
+      // Create a styled clone with UCLASS branding
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        position: fixed; left: -9999px; top: 0; width: 500px;
+        background: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
+        padding: 24px; border-radius: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      `;
+
+      // UCLASS header
+      const header = document.createElement('div');
+      header.style.cssText = 'display: flex; align-items: center; gap: 10px; margin-bottom: 16px;';
+      header.innerHTML = `
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff;">U</div>
+        <div>
+          <div style="color: #fff; font-weight: 700; font-size: 16px;">UCLASS</div>
+          <div style="color: #94a3b8; font-size: 11px;">Alumni Community</div>
+        </div>
+      `;
+      wrapper.appendChild(header);
+
+      // Clone the post card
+      const clone = postEl.cloneNode(true);
+      clone.style.cssText = 'background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+      // Remove menu buttons from clone
+      clone.querySelectorAll('button').forEach(b => { if (b.textContent.includes('⋯') || b.textContent.includes('Edit') || b.textContent.includes('Delete')) b.remove(); });
+      wrapper.appendChild(clone);
+
+      // Footer
+      const footer = document.createElement('div');
+      footer.style.cssText = 'text-align: center; color: #94a3b8; font-size: 12px; padding-top: 8px;';
+      footer.textContent = 'Join UCLASS Alumni at student.umunsi.com';
+      wrapper.appendChild(footer);
+
+      document.body.appendChild(wrapper);
+      const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: true });
+      document.body.removeChild(wrapper);
+
+      // Download
+      const link = document.createElement('a');
+      link.download = `uclass-post-${post.id}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      console.error('Save as image error:', e);
+      alert('Could not save as image. Try again.');
+    }
+  };
+
+  // Quick subscribe to author
+  const quickSubscribe = async (authorId) => {
+    try {
+      await api.post(`/alumni/follow/${authorId}`, {}, token);
+      // Update post state to show subscribed
+      setPosts(prev => prev.map(p => {
+        if ((p.author_id || p.user_id) === authorId) return { ...p, author_following: true };
+        return p;
+      }));
+    } catch (e) { alert(e.message); }
+  };
+
   const handlePost = async () => {
     if (!composeText.trim() && !selectedImage) return;
     setSendingPost(true);
@@ -539,7 +607,7 @@ export default function AlumniFeed() {
     const isLong = bodyText.length > 280;
     const displayedBody = isExpanded ? bodyText : (bodyText.length > 280 ? bodyText.slice(0, 280) + '…' : bodyText);
     return (
-    <article key={`post-${post.id}`} className="af-card">
+    <article key={`post-${post.id}`} className="af-card" data-post-id={post.id}>
       <div className="af-card-header">
         <AvatarWithStatus
           id={post.author_id || post.user_id}
@@ -555,6 +623,22 @@ export default function AlumniFeed() {
             </span>
             <VerifiedBadge size={14} userId={post.author_id || post.user_id} onViewProfile={() => navigate(`/alumni/profile/${post.author_id || post.user_id}`)} />
             <AIRevisionBadge size={14} userId={post.author_id || post.user_id} />
+            {/* Quick Subscribe button next to author name */}
+            {(post.author_id || post.user_id) !== user?.id && !post.author_following && (
+              <button
+                onClick={() => quickSubscribe(post.author_id || post.user_id)}
+                style={{
+                  marginLeft: 6, padding: '2px 10px', fontSize: 11, fontWeight: 600,
+                  border: '1.5px solid #7c3aed', color: '#7c3aed', background: '#f3e8ff',
+                  borderRadius: 12, cursor: 'pointer',
+                }}
+              >
+                + Subscribe
+              </button>
+            )}
+            {post.author_following && (
+              <span style={{ marginLeft: 6, fontSize: 11, color: '#16a34a', fontWeight: 600 }}>✓ Following</span>
+            )}
           </div>
           <div className="af-sub-meta">
             <span>{post.graduation_year ? `Class of ${post.graduation_year}` : 'Alumni'}</span>
@@ -564,17 +648,22 @@ export default function AlumniFeed() {
             <span>{timeAgo(post.created_at)}</span>
           </div>
         </div>
-        {(post.author_id === user?.id || post.user_id === user?.id) && (
-          <div style={{ position: 'relative', marginLeft: 'auto' }}>
-            <button onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === post.id ? null : post.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '4px 8px' }}>⋯</button>
-            {menuOpen === post.id && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 100, minWidth: 140, overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
-                <button onClick={() => { setEditPost(post); setEditText(post.content || ''); setMenuOpen(null); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#1e293b', textAlign: 'left' }}>✏️ Edit Post</button>
-                <button onClick={() => { handleDeletePost(post.id); setMenuOpen(null); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', textAlign: 'left' }}>🗑️ Delete Post</button>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Menu — available for ALL posts (Save as Image, Share) + own posts (Edit, Delete) */}
+        <div style={{ position: 'relative', marginLeft: 'auto' }}>
+          <button onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === post.id ? null : post.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8', padding: '4px 8px' }}>⋯</button>
+          {menuOpen === post.id && (
+            <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 100, minWidth: 160, overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => savePostAsImage(post)} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#1e293b', textAlign: 'left' }}>📷 Save as Image</button>
+              <button onClick={() => { handleShare(post); setMenuOpen(null); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#1e293b', textAlign: 'left' }}>🔗 Share Post</button>
+              {(post.author_id === user?.id || post.user_id === user?.id) && (
+                <>
+                  <button onClick={() => { setEditPost(post); setEditText(post.content || ''); setMenuOpen(null); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#1e293b', textAlign: 'left' }}>✏️ Edit Post</button>
+                  <button onClick={() => { handleDeletePost(post.id); setMenuOpen(null); }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, color: '#ef4444', textAlign: 'left' }}>🗑️ Delete Post</button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="af-card-body">
@@ -827,7 +916,7 @@ export default function AlumniFeed() {
                         const typeIcon = sch.type === 'university' ? '🎓' : sch.type === 'tvet' ? '🔧' : '🏫';
                         const typeLabel = sch.type === 'university' ? 'University' : sch.type === 'tvet' ? 'TVET' : 'Secondary';
                         return (
-                        <div key={sch.id} className="af-suggested-carousel-card">
+                        <div key={sch.id} className="af-suggested-carousel-card" style={{ cursor: 'pointer' }} onClick={() => navigate(`/alumni/education-hub/institution/${sch.id}`)}>
                           <div className="af-suggested-carousel-top">
                             {sch.logo_url ? (
                               <img src={sch.logo_url} alt={sch.name} style={{ width: 56, height: 56, borderRadius: 14, objectFit: 'cover', margin: '0 auto' }} />
@@ -850,7 +939,7 @@ export default function AlumniFeed() {
                             </div>
                           </div>
                           <button
-                            onClick={() => handleFollowSchool(sch.id)}
+                            onClick={(e) => { e.stopPropagation(); handleFollowSchool(sch.id); }}
                             className={sch.is_following ? 'af-suggested-carousel-subscribed' : 'af-suggested-carousel-subscribe'}
                           >
                             {sch.is_following ? '✓ Following' : '+ Follow'}
