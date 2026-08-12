@@ -37,6 +37,8 @@ export default function WeeklyQuizReport({ token, classId }) {
   const [newWeekLabel, setNewWeekLabel] = useState(getWeekLabel(0));
   const [alsoEmail, setAlsoEmail] = useState(true);
   const [selectedParents, setSelectedParents] = useState(new Set());
+  const [mySubjects, setMySubjects] = useState([]);
+  const [showSubjectPicker, setShowSubjectPicker] = useState(false);
 
   const marksRef = useRef({});
   const saveTimer = useRef(null);
@@ -46,6 +48,22 @@ export default function WeeklyQuizReport({ token, classId }) {
   const phoneSaveTimer = useRef({});
   const messageRef = useRef({});
   const messageSaveTimer = useRef({});
+
+  // Load saved subjects from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`mySubjects_${classId}`);
+      if (saved) setMySubjects(JSON.parse(saved));
+    } catch {}
+  }, [classId]);
+
+  const toggleSubject = (subj) => {
+    setMySubjects(prev => {
+      const next = prev.includes(subj) ? prev.filter(s => s !== subj) : [...prev, subj];
+      localStorage.setItem(`mySubjects_${classId}`, JSON.stringify(next));
+      return next;
+    });
+  };
 
   const loadReports = useCallback(async () => {
     try {
@@ -413,9 +431,19 @@ export default function WeeklyQuizReport({ token, classId }) {
           </div>
         )}
         <div style={{ flex: 1 }} />
+        {/* My Subjects selector — teacher picks which subjects they teach */}
+        <button
+          className="btn btn-outline btn-sm"
+          style={{ fontSize: 12, padding: '6px 12px', border: '1.5px solid #7c3aed', color: '#7c3aed', fontWeight: 600 }}
+          onClick={() => setShowSubjectPicker(!showSubjectPicker)}
+          title="Select which subjects you teach — marks will be organized by subject in reports"
+        >
+          📚 My Subjects {mySubjects.length > 0 && `(${mySubjects.length})`}
+        </button>
+        {/* Quick add quiz column with subject */}
         <select id="newColSubject" defaultValue="" style={{ padding: '6px 10px', border: '1.5px solid #cbd5e1', borderRadius: 6, fontSize: 13, color: '#1e293b' }}>
           <option value="">No subject</option>
-          {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+          {(mySubjects.length > 0 ? mySubjects : SUBJECTS).map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <button className="btn btn-secondary" style={{ fontSize: 13, padding: '6px 14px' }} onClick={() => {
           const sel = document.getElementById('newColSubject');
@@ -424,6 +452,77 @@ export default function WeeklyQuizReport({ token, classId }) {
           + Add Quiz Column
         </button>
       </div>
+
+      {/* Subject picker panel */}
+      {showSubjectPicker && (
+        <div style={{
+          background: '#faf5ff', border: '1.5px solid #c4b5fd', borderRadius: 12,
+          padding: 16, marginBottom: 16,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ fontSize: 15, color: '#5b21b6', margin: 0, fontWeight: 700 }}>
+              📚 Select subjects you teach
+            </h3>
+            <button className="btn btn-outline btn-sm" style={{ fontSize: 11, padding: '3px 8px' }} onClick={() => setShowSubjectPicker(false)}>Done</button>
+          </div>
+          <p style={{ fontSize: 12, color: '#7c3aed', margin: '0 0 12px' }}>
+            Only subjects you select will appear as quick-add options. Marks will be grouped by subject in reports and parent emails.
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {SUBJECTS.map(subj => {
+              const selected = mySubjects.includes(subj);
+              return (
+                <button
+                  key={subj}
+                  onClick={() => toggleSubject(subj)}
+                  style={{
+                    padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                    border: selected ? '2px solid #7c3aed' : '1.5px solid #d1d5db',
+                    background: selected ? '#7c3aed' : '#fff',
+                    color: selected ? '#fff' : '#374151',
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  {selected ? '✓ ' : ''}{subj}
+                </button>
+              );
+            })}
+          </div>
+          {mySubjects.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <button
+                className="btn btn-outline btn-sm"
+                style={{ fontSize: 11, padding: '3px 10px', color: '#dc2626' }}
+                onClick={() => { setMySubjects([]); localStorage.removeItem(`mySubjects_${classId}`); }}
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick-add subject buttons — show selected subjects as one-click add */}
+      {mySubjects.length > 0 && reportData && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600, alignSelf: 'center' }}>Quick add CAT:</span>
+          {mySubjects.map(subj => (
+            <button
+              key={subj}
+              className="btn btn-sm"
+              style={{
+                fontSize: 12, padding: '4px 10px', borderRadius: 16,
+                background: '#f3e8ff', border: '1.5px solid #c4b5fd', color: '#6b21a8', fontWeight: 600,
+                cursor: 'pointer',
+              }}
+              onClick={() => addColumn(subj)}
+              title={`Add a CAT column for ${subj}`}
+            >
+              + {subj}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Student Cards — Mobile + Desktop friendly */}
       {reportData && reportData.columns && (

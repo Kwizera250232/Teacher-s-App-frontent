@@ -31,6 +31,10 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
 
+  // Class selection for immediate join
+  const [teacherClasses, setTeacherClasses] = useState([]);
+  const [addClassTo, setAddClassTo] = useState(''); // '' = none, 'select' = pick from list
+
   const selectedSchool = schools.find((s) => String(s.id) === String(schoolId));
   const studentEmailDomain = signupEmailDomain(selectedSchool || (linkedSchoolName ? { name: linkedSchoolName } : null));
 
@@ -64,6 +68,15 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
         }
       } catch {
         if (!cancelled) setSchools([]);
+      }
+      // Fetch teacher's classes for immediate-add option
+      try {
+        const classesData = await api.get('/classes', token);
+        if (!cancelled && Array.isArray(classesData)) {
+          setTeacherClasses(classesData);
+        }
+      } catch {
+        // ignore — class selection is optional
       }
     })();
     return () => { cancelled = true; };
@@ -111,7 +124,19 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
       if (trimmedEmail) body.email = trimmedEmail;
       if (password.trim()) body.password = password.trim();
       const res = await api.post('/admin/add-pupil', body, token);
-      setResults({ type: 'single', data: res });
+      // If teacher selected a class, add student to it immediately
+      if (addClassTo && res?.user?.id) {
+        try {
+          await api.post(`/classes/${addClassTo}/join`, { student_id: res.user.id }, token);
+        } catch (joinErr) {
+          // Student created but class join failed — show partial success
+          setResults({ type: 'single', data: res, joinWarning: `Student created but could not add to class: ${joinErr.message}` });
+          setName(''); setEmail(''); setPassword('');
+          setLoading(false);
+          return;
+        }
+      }
+      setResults({ type: 'single', data: res, addedToClass: addClassTo ? teacherClasses.find(c => String(c.id) === String(addClassTo))?.name : null });
       setName('');
       setEmail('');
       setPassword('');
@@ -135,7 +160,28 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
       };
       if (bulkPassword.trim()) body.password = bulkPassword.trim();
       const res = await api.post('/admin/add-pupils', body, token);
-      setResults({ type: 'bulk', data: res });
+      // If teacher selected a class, add all created students to it
+      let joinedCount = 0;
+      let joinFailures = 0;
+      if (addClassTo && res?.created) {
+        for (const item of res.created) {
+          if (item?.user?.id) {
+            try {
+              await api.post(`/classes/${addClassTo}/join`, { student_id: item.user.id }, token);
+              joinedCount++;
+            } catch {
+              joinFailures++;
+            }
+          }
+        }
+      }
+      setResults({
+        type: 'bulk',
+        data: res,
+        addedToClass: addClassTo ? teacherClasses.find(c => String(c.id) === String(addClassTo))?.name : null,
+        joinedCount,
+        joinFailures,
+      });
       setBulkNames('');
       setBulkPassword('');
     } catch (e) {
@@ -249,6 +295,35 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
 
         {error && <div className="alert alert-error">{error}</div>}
 
+        {/* Class selection for immediate add */}
+        {!teacherNeedsSchool && teacherClasses.length > 0 && !results && (
+          <div className="form-group">
+            <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>
+              Add to class immediately?
+              <span style={{ fontWeight: 400, color: '#64748b', marginLeft: 8, fontSize: 12 }}>
+                (Optional — skip class code)
+              </span>
+            </label>
+            <select
+              style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: 'white', color: '#1e293b' }}
+              value={addClassTo}
+              onChange={e => setAddClassTo(e.target.value)}
+            >
+              <option value="">No — just create school account</option>
+              {teacherClasses.map(c => (
+                <option key={c.id} value={String(c.id)}>
+                  {c.name} {c.subject ? `(${c.subject})` : ''} {c.class_code ? `· Code: ${c.class_code}` : ''}
+                </option>
+              ))}
+            </select>
+            {addClassTo && (
+              <small style={{ color: '#16a34a', fontSize: 12, display: 'block', marginTop: 6 }}>
+                ✓ Student(s) will be added to this class immediately — no class code needed.
+              </small>
+            )}
+          </div>
+        )}
+
         {/* Single student form */}
         {mode === 'single' && !results && !teacherNeedsSchool && (
           <div>
@@ -344,6 +419,16 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
                   {results.data.temp_password}
                 </code>
               </div>
+              {results.addedToClass && (
+                <div style={{ marginTop: 8, padding: '8px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, color: '#1e40af', fontSize: 13 }}>
+                  ✓ Added to class: <strong>{results.addedToClass}</strong>
+                </div>
+              )}
+              {results.joinWarning && (
+                <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 6, color: '#92400e', fontSize: 13 }}>
+                  ⚠ {results.joinWarning}
+                </div>
+              )}
               <small style={{ color: '#64748b', display: 'block', marginTop: 8 }}>
                 Share these credentials with the student securely.
               </small>
@@ -364,6 +449,12 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
             <h3 style={{ color: '#166534', fontSize: 16, marginBottom: 12 }}>
               {results.data.created.length} Student(s) Created!
             </h3>
+            {results.addedToClass && (
+              <div style={{ marginBottom: 12, padding: '10px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, color: '#1e40af', fontSize: 13 }}>
+                ✓ {results.joinedCount} student(s) added to class: <strong>{results.addedToClass}</strong>
+                {results.joinFailures > 0 && <span style={{ color: '#92400e' }}> ({results.joinFailures} failed)</span>}
+              </div>
+            )}
             <div style={{ maxHeight: 300, overflowY: 'auto' }}>
               {results.data.created.map((item, i) => (
                 <div key={i} style={{ background: 'white', padding: 10, borderRadius: 8, marginBottom: 8, fontSize: 13 }}>
