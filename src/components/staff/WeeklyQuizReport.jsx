@@ -40,6 +40,7 @@ export default function WeeklyQuizReport({ token, classId }) {
   const [alsoEmail, setAlsoEmail] = useState(false);
   const [showStudentReport, setShowStudentReport] = useState(null);
   const [viewMode, setViewMode] = useState('gradebook'); // 'gradebook' | 'cards'
+  const [selectedParents, setSelectedParents] = useState(new Set()); // student IDs selected for bulk notify
 
   const marksRef = useRef({});
   const saveTimer = useRef(null);
@@ -295,6 +296,66 @@ export default function WeeklyQuizReport({ token, classId }) {
     }
   };
 
+  // Notify only selected parents (bulk)
+  const notifySelectedParents = async () => {
+    const ids = Array.from(selectedParents);
+    if (!ids.length) {
+      setNotifyResult('Select at least one parent first.');
+      return;
+    }
+    if (!confirm(`Send to ${ids.length} selected parent(s)${alsoEmail ? ' via email' : ''}?`)) return;
+    setNotifyLoading(true);
+    setNotifyResult('');
+    try {
+      const r = await api.post(
+        `/classes/${classId}/weekly-reports/${activeReport}/notify-parents`,
+        { also_email: alsoEmail, student_ids: ids },
+        token
+      );
+      setNotifyResult(r.message);
+    } catch (err) {
+      setNotifyResult(err.message);
+    } finally {
+      setNotifyLoading(false);
+    }
+  };
+
+  // Notify a single student's parent
+  const notifyOneParent = async (studentId, studentName) => {
+    if (!confirm(`Send report to ${studentName}'s parent${alsoEmail ? ' via email' : ''}?`)) return;
+    setNotifyLoading(true);
+    setNotifyResult('');
+    try {
+      const r = await api.post(
+        `/classes/${classId}/weekly-reports/${activeReport}/notify-parents`,
+        { also_email: alsoEmail, student_ids: [studentId] },
+        token
+      );
+      setNotifyResult(`Sent to ${studentName}'s parent: ${r.message}`);
+    } catch (err) {
+      setNotifyResult(err.message);
+    } finally {
+      setNotifyLoading(false);
+    }
+  };
+
+  const toggleParentSelection = (studentId) => {
+    setSelectedParents(prev => {
+      const next = new Set(prev);
+      if (next.has(studentId)) next.delete(studentId);
+      else next.add(studentId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedParents.size === stats.length) {
+      setSelectedParents(new Set());
+    } else {
+      setSelectedParents(new Set(stats.map(s => s.id)));
+    }
+  };
+
   if (loading && !reportData) {
     return <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading weekly reports...</div>;
   }
@@ -403,13 +464,13 @@ export default function WeeklyQuizReport({ token, classId }) {
       )}
 
       {/* View mode toggle */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
         <button
           className={`btn btn-sm${viewMode === 'gradebook' ? ' btn-primary' : ' btn-outline'}`}
           style={{ fontSize: 13, padding: '6px 16px' }}
           onClick={() => setViewMode('gradebook')}
         >
-          📊 Gradebook
+          📊 Gradebook & Marks
         </button>
         <button
           className={`btn btn-sm${viewMode === 'cards' ? ' btn-primary' : ' btn-outline'}`}
@@ -420,17 +481,25 @@ export default function WeeklyQuizReport({ token, classId }) {
         </button>
       </div>
 
-      {/* Gradebook Table */}
+      {/* Gradebook Table — redesigned with parent info and selection */}
       {viewMode === 'gradebook' && reportData && reportData.columns && (
-        <div style={{ overflowX: 'auto', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 600 }}>
+        <div style={{ overflowX: 'auto', borderRadius: 12, border: '1.5px solid #e2e8f0', marginBottom: 20 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 800 }}>
             <thead>
               <tr style={{ background: '#f1f5f9' }}>
-                <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', position: 'sticky', left: 0, background: '#f1f5f9', zIndex: 2, minWidth: 140 }}>
+                <th style={{ padding: '10px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', width: 40 }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedParents.size === stats.length && stats.length > 0}
+                    onChange={toggleSelectAll}
+                    title="Select all parents"
+                  />
+                </th>
+                <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', position: 'sticky', left: 0, background: '#f1f5f9', zIndex: 2, minWidth: 120 }}>
                   Student
                 </th>
                 {reportData.columns.map(col => (
-                  <th key={col.id} style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 100 }}>
+                  <th key={col.id} style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 90 }}>
                     <input
                       type="text"
                       value={col.name}
@@ -454,22 +523,31 @@ export default function WeeklyQuizReport({ token, classId }) {
                   </th>
                 ))}
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#eff6ff' }}>Total</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#eff6ff' }}>Taken</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#eff6ff' }}>Avg</th>
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#eff6ff' }}>%</th>
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#fef3c7' }}>Rank</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 180 }}>Parent Email</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 140 }}>Parent Phone</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 160 }}>Teacher Comment</th>
-                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}>AI Report</th>
+                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 160 }}>Parent Email</th>
+                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 130 }}>Parent Phone</th>
+                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 150 }}>Teacher Message</th>
+                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}>Send</th>
               </tr>
             </thead>
             <tbody>
               {stats.map((s, idx) => (
                 <tr key={s.id} style={{ background: idx % 2 === 0 ? '#fff' : '#f8fafc' }}>
+                  {/* Checkbox for bulk selection */}
+                  <td style={{ padding: '8px 6px', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedParents.has(s.id)}
+                      onChange={() => toggleParentSelection(s.id)}
+                      title="Select for bulk notify"
+                    />
+                  </td>
+                  {/* Student name */}
                   <td style={{ padding: '8px', fontWeight: 600, color: '#1e293b', position: 'sticky', left: 0, background: idx % 2 === 0 ? '#fff' : '#f8fafc', zIndex: 1 }}>
                     {s.name}
                   </td>
+                  {/* Marks columns */}
                   {reportData.columns.map(col => {
                     const key = `${col.id}_${s.id}`;
                     const val = marksRef.current[key] !== undefined
@@ -485,24 +563,26 @@ export default function WeeklyQuizReport({ token, classId }) {
                           defaultValue={val !== null && val !== undefined ? val : ''}
                           onChange={e => handleMarkChange(col.id, s.id, e.target.value)}
                           style={{
-                            width: 52, padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 5,
-                            textAlign: 'center', fontSize: 13, background: '#fff',
+                            width: 48, padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 5,
+                            textAlign: 'center', fontSize: 13, background: '#fff', color: '#1e293b',
                           }}
                         />
                       </td>
                     );
                   })}
+                  {/* Total */}
                   <td style={{ padding: '8px', textAlign: 'center', fontWeight: 700, background: '#eff6ff', color: '#1e40af' }}>
                     {s.total.toFixed(1)}
                   </td>
-                  <td style={{ padding: '8px', textAlign: 'center', background: '#eff6ff' }}>{s.taken}</td>
-                  <td style={{ padding: '8px', textAlign: 'center', background: '#eff6ff' }}>{s.avg.toFixed(1)}</td>
+                  {/* Percentage */}
                   <td style={{ padding: '8px', textAlign: 'center', fontWeight: 700, background: '#eff6ff', color: s.pct >= 50 ? '#16a34a' : '#e11d48' }}>
                     {s.pct.toFixed(0)}%
                   </td>
+                  {/* Rank */}
                   <td style={{ padding: '8px', textAlign: 'center', background: '#fef3c7', fontWeight: 700, color: '#92400e' }}>
                     #{s.rank}
                   </td>
+                  {/* Parent Email — persists in class_members */}
                   <td style={{ padding: '4px', textAlign: 'center' }}>
                     <input
                       type="email"
@@ -510,11 +590,12 @@ export default function WeeklyQuizReport({ token, classId }) {
                       onChange={e => handleEmailChange(s.id, e.target.value)}
                       placeholder="parent@email.com"
                       style={{
-                        width: 160, padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 5,
-                        fontSize: 12, background: '#fff', color: '#475569',
+                        width: 150, padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6,
+                        fontSize: 12, background: '#fff', color: '#1e293b',
                       }}
                     />
                   </td>
+                  {/* Parent Phone — persists in class_members */}
                   <td style={{ padding: '4px', textAlign: 'center' }}>
                     <input
                       type="tel"
@@ -522,41 +603,44 @@ export default function WeeklyQuizReport({ token, classId }) {
                       onChange={e => handlePhoneChange(s.id, e.target.value)}
                       placeholder="+250..."
                       style={{
-                        width: 130, padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 5,
-                        fontSize: 12, background: '#fff', color: '#475569',
+                        width: 120, padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6,
+                        fontSize: 12, background: '#fff', color: '#1e293b',
                       }}
                     />
                   </td>
+                  {/* Teacher Message */}
                   <td style={{ padding: '4px', textAlign: 'center' }}>
                     <input
                       type="text"
                       defaultValue={reportData.comments?.find(c => c.student_id === s.id)?.comment || ''}
                       onBlur={e => saveComment(s.id, e.target.value)}
-                      placeholder="Add comment..."
+                      placeholder="Message..."
                       style={{
-                        width: 140, padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 5,
-                        fontSize: 12, background: '#fff', color: '#475569',
+                        width: 130, padding: '5px 8px', border: '1px solid #e2e8f0', borderRadius: 6,
+                        fontSize: 12, background: '#fff', color: '#1e293b',
                       }}
                     />
                   </td>
-                  <td style={{ padding: '8px', textAlign: 'center' }}>
+                  {/* Individual Send button */}
+                  <td style={{ padding: '4px', textAlign: 'center' }}>
                     <button
-                      onClick={() => generateAIReport(s.id)}
-                      disabled={aiLoading[s.id]}
+                      onClick={() => notifyOneParent(s.id, s.name)}
+                      disabled={notifyLoading}
+                      title="Send to this parent only"
                       style={{
-                        padding: '4px 10px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600,
-                        cursor: 'pointer', background: '#7c3aed', color: '#fff',
+                        padding: '5px 10px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600,
+                        cursor: 'pointer', background: '#25d366', color: '#fff',
                       }}
                     >
-                      {aiLoading[s.id] ? '⏳' : '🤖 AI'}
+                      📧 Send
                     </button>
                   </td>
                 </tr>
               ))}
               {stats.length === 0 && (
                 <tr>
-                  <td colSpan={reportData.columns.length + 9} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>
-                    No students in this class yet.
+                  <td colSpan={reportData.columns.length + 10} style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>
+                    No students in this class yet. Make sure students have joined with the class code.
                   </td>
                 </tr>
               )}
@@ -703,6 +787,76 @@ export default function WeeklyQuizReport({ token, classId }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Big Notify Parents bar at the bottom */}
+      {reportData && stats.length > 0 && (
+        <div style={{
+          marginTop: 20,
+          marginBottom: 20,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: 16,
+          padding: '20px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ color: '#fff' }}>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>📢 Notify Parents</div>
+              <div style={{ fontSize: 13, opacity: 0.9 }}>
+                {selectedParents.size > 0
+                  ? `${selectedParents.size} parent(s) selected — send to selected only`
+                  : `Send to all ${stats.length} parents in this class`}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#fff', fontSize: 13, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={alsoEmail}
+                  onChange={e => setAlsoEmail(e.target.checked)}
+                  style={{ width: 18, height: 18 }}
+                />
+                Also send via Email
+              </label>
+              {selectedParents.size > 0 && (
+                <button
+                  onClick={notifySelectedParents}
+                  disabled={notifyLoading}
+                  style={{
+                    padding: '12px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700,
+                    cursor: 'pointer', background: '#25d366', color: '#fff',
+                  }}
+                >
+                  {notifyLoading ? '⏳ Sending...' : `📮 Send to ${selectedParents.size} Selected`}
+                </button>
+              )}
+              <button
+                onClick={notifyParents}
+                disabled={notifyLoading}
+                style={{
+                  padding: '12px 28px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700,
+                  cursor: 'pointer', background: '#fff', color: '#667eea',
+                }}
+              >
+                {notifyLoading ? '⏳ Sending...' : '📢 Send to ALL Parents'}
+              </button>
+            </div>
+          </div>
+          {notifyResult && (
+            <div style={{
+              background: 'rgba(255,255,255,0.95)', borderRadius: 8, padding: '10px 14px',
+              fontSize: 13, color: '#1e293b', fontWeight: 600,
+            }}>
+              {notifyResult}
+            </div>
+          )}
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>
+            ✓ Parent emails and phones are saved automatically and stay for next week.
+            Each parent receives: student marks, quiz summary, teacher message, performance analysis, and a signup link.
+          </div>
         </div>
       )}
 
