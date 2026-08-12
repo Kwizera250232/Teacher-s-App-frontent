@@ -241,8 +241,25 @@ export default function WeeklyQuizReport({ token, classId }) {
   // Calculate stats for each student
   const computeStats = () => {
     if (!reportData) return [];
-    const { students, columns, marks, systemQuizzes, aiRevisionQuizzes } = reportData;
+    const { students, columns, marks, systemQuizzes, aiRevisionQuizzes, catMarks } = reportData;
     const stats = students.map(s => {
+      // CAT marks from Marks Sheet (auto-pulled, grouped by subject)
+      const myCatMarks = (catMarks || []).filter(cm => cm.student_id === s.id);
+      const catBySubject = {};
+      let catTotal = 0, catMax = 0, catCount = 0;
+      for (const cm of myCatMarks) {
+        const subj = cm.subject || 'General';
+        if (!catBySubject[subj]) catBySubject[subj] = { total: 0, max: 0, count: 0, items: [] };
+        catBySubject[subj].total += parseFloat(cm.marks_obtained || 0);
+        catBySubject[subj].max += parseFloat(cm.total_marks || 100);
+        catBySubject[subj].count++;
+        catBySubject[subj].items.push({ test: `CAT ${cm.test_number}`, marks: parseFloat(cm.marks_obtained), max: parseFloat(cm.total_marks || 100) });
+        catTotal += parseFloat(cm.marks_obtained || 0);
+        catMax += parseFloat(cm.total_marks || 100);
+        catCount++;
+      }
+
+      // Weekly report columns (legacy manual marks — still shown if any exist)
       let total = 0, taken = 0, totalMax = 0;
       const perQuiz = columns.map(c => {
         const m = marks.find(mk => mk.column_id === c.id && mk.student_id === s.id);
@@ -277,13 +294,14 @@ export default function WeeklyQuizReport({ token, classId }) {
         aiMax += parseFloat(ar.total || 0);
         aiCount++;
       }
-      // Grand total = teacher marks + system quizzes + AI revision
-      const grandTotal = total + autoTotal + aiTotal;
-      const grandMax = totalMax + autoMax + aiMax;
+      // Grand total = CAT marks + weekly columns + system quizzes + AI revision
+      const grandTotal = catTotal + total + autoTotal + aiTotal;
+      const grandMax = catMax + totalMax + autoMax + aiMax;
       const grandPct = grandMax ? (grandTotal / grandMax) * 100 : 0;
       return { ...s, total, taken, avg, pct, totalMax, perQuiz, bySubject,
                autoQuizzes, autoTotal, autoMax, autoCount,
                aiQuizzes, aiTotal, aiMax, aiCount,
+               catBySubject, catTotal, catMax, catCount,
                grandTotal, grandMax, grandPct };
     });
     stats.sort((a, b) => b.grandTotal - a.grandTotal);
@@ -593,19 +611,69 @@ export default function WeeklyQuizReport({ token, classId }) {
                   </div>
                 </div>
 
-                {/* Teacher-added marks section — grouped by subject */}
+                {/* CAT Marks from Marks Sheet — auto-pulled, grouped by subject */}
                 <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>
-                    ✍️ Teacher Marks — Enter CAT marks below
+                    ✍️ Teacher CAT Marks <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>(from Marks Sheet — auto)</span>
                   </div>
-                  {reportData.columns.length === 0 ? (
+                  {s.catCount === 0 ? (
                     <div style={{ fontSize: 13, color: '#94a3b8', padding: 8, background: '#f8fafc', borderRadius: 8, textAlign: 'center' }}>
-                      No quiz columns yet. Click "+ Add Quiz Column" above to start entering marks.
+                      No CAT marks yet. Add marks from the <strong>Marks Sheet</strong> tab — they'll appear here automatically.
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {/* Group columns by subject */}
-                      {(() => {
+                      {Object.entries(s.catBySubject).map(([subj, g]) => {
+                        const stPct = g.max ? ((g.total / g.max) * 100).toFixed(0) : 0;
+                        const stAvg = (g.total / g.count).toFixed(1);
+                        const stColor = stPct >= 70 ? '#16a34a' : stPct >= 50 ? '#facc15' : '#e11d48';
+                        return (
+                          <div key={subj} style={{
+                            background: '#f8fafc', borderRadius: 10, padding: 10,
+                            border: '1px solid #e2e8f0',
+                          }}>
+                            <div style={{
+                              fontSize: 12, fontWeight: 700, color: '#7c3aed', marginBottom: 8,
+                              background: '#f3e8ff', display: 'inline-block', padding: '2px 8px', borderRadius: 6,
+                            }}>
+                              📚 {subj}
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {g.items.map((item, i) => {
+                                const pct = item.max ? (item.marks / item.max) * 100 : 0;
+                                const color = pct >= 50 ? '#16a34a' : '#e11d48';
+                                return (
+                                  <div key={i} style={{
+                                    background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8,
+                                    padding: '6px 10px', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 70,
+                                  }}>
+                                    <div style={{ color: '#475569', fontWeight: 600, fontSize: 11 }}>{item.test}</div>
+                                    <div style={{ fontWeight: 700, fontSize: 16, color }}>{item.marks}/{item.max}</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {/* Per-subject summary */}
+                            <div style={{ marginTop: 8, display: 'flex', gap: 12, fontSize: 11, color: '#64748b' }}>
+                              <span>CATs: <b style={{ color: '#1e293b' }}>{g.count}</b></span>
+                              <span>Total: <b style={{ color: '#1e293b' }}>{g.total}/{g.max}</b></span>
+                              <span>Avg: <b style={{ color: '#1e293b' }}>{stAvg}</b></span>
+                              <span>%: <b style={{ color: stColor, fontSize: 14 }}>{stPct}%</b></span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Legacy weekly report columns — only show if any exist */}
+                {reportData.columns.length > 0 && (
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>
+                    📋 Weekly Columns <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>(manual)</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {(() => {
                         const groups = {};
                         for (const col of reportData.columns) {
                           const subj = col.subject || 'General';
@@ -686,8 +754,8 @@ export default function WeeklyQuizReport({ token, classId }) {
                         ));
                       })()}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Auto system quiz marks section */}
                 {s.autoQuizzes && s.autoQuizzes.length > 0 && (
