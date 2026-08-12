@@ -479,46 +479,98 @@ export default function WeeklyQuizReport({ token, classId }) {
                   </div>
                 </div>
 
-                {/* Teacher-added marks section */}
+                {/* Teacher-added marks section — grouped by subject */}
                 <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    ✍️ Teacher Marks (enter below)
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>
+                    ✍️ Teacher Marks — Enter CAT marks below
                   </div>
                   {reportData.columns.length === 0 ? (
-                    <div style={{ fontSize: 13, color: '#94a3b8' }}>No quiz columns yet. Click "+ Add Quiz Column" above.</div>
+                    <div style={{ fontSize: 13, color: '#94a3b8', padding: 8, background: '#f8fafc', borderRadius: 8, textAlign: 'center' }}>
+                      No quiz columns yet. Click "+ Add Quiz Column" above to start entering marks.
+                    </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {reportData.columns.map(col => {
-                        const key = `${col.id}_${s.id}`;
-                        const val = marksRef.current[key] !== undefined
-                          ? marksRef.current[key]
-                          : (reportData.marks.find(m => m.column_id === col.id && m.student_id === s.id)?.marks);
-                        return (
-                          <div key={col.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                            <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {col.name}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {/* Group columns by subject */}
+                      {(() => {
+                        const groups = {};
+                        for (const col of reportData.columns) {
+                          const subj = col.subject || 'General';
+                          if (!groups[subj]) groups[subj] = [];
+                          groups[subj].push(col);
+                        }
+                        return Object.entries(groups).map(([subj, cols]) => (
+                          <div key={subj} style={{
+                            background: '#f8fafc', borderRadius: 10, padding: 10,
+                            border: '1px solid #e2e8f0',
+                          }}>
+                            <div style={{
+                              fontSize: 12, fontWeight: 700, color: '#7c3aed', marginBottom: 8,
+                              background: '#f3e8ff', display: 'inline-block', padding: '2px 8px', borderRadius: 6,
+                            }}>
+                              📚 {subj}
                             </div>
-                            {col.subject && (
-                              <div style={{ fontSize: 9, color: '#7c3aed', background: '#f3e8ff', padding: '1px 4px', borderRadius: 3 }}>
-                                {col.subject.length > 12 ? col.subject.slice(0, 12) + '…' : col.subject}
-                              </div>
-                            )}
-                            <input
-                              type="number"
-                              step="0.5"
-                              min="0"
-                              max={parseFloat(col.max_marks)}
-                              defaultValue={val !== null && val !== undefined ? val : ''}
-                              onChange={e => handleMarkChange(col.id, s.id, e.target.value)}
-                              placeholder={`/${parseFloat(col.max_marks)}`}
-                              style={{
-                                width: 60, padding: '5px 6px', border: '1.5px solid #e2e8f0', borderRadius: 6,
-                                textAlign: 'center', fontSize: 14, fontWeight: 600, background: '#fff', color: '#1e293b',
-                              }}
-                            />
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {cols.map(col => {
+                                const key = `${col.id}_${s.id}`;
+                                const val = marksRef.current[key] !== undefined
+                                  ? marksRef.current[key]
+                                  : (reportData.marks.find(m => m.column_id === col.id && m.student_id === s.id)?.marks);
+                                const maxVal = parseFloat(col.max_marks);
+                                const numVal = parseFloat(val);
+                                const hasVal = val !== null && val !== undefined && val !== '';
+                                const pct = hasVal && maxVal ? (numVal / maxVal) * 100 : null;
+                                const inputColor = hasVal ? (pct >= 50 ? '#16a34a' : '#e11d48') : '#1e293b';
+                                return (
+                                  <div key={col.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                                    <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                      {col.name}
+                                    </div>
+                                    <input
+                                      type="number"
+                                      step="0.5"
+                                      min="0"
+                                      max={maxVal}
+                                      defaultValue={hasVal ? val : ''}
+                                      onChange={e => handleMarkChange(col.id, s.id, e.target.value)}
+                                      placeholder={`/${maxVal}`}
+                                      style={{
+                                        width: 70, padding: '8px 6px', border: '2px solid #e2e8f0', borderRadius: 8,
+                                        textAlign: 'center', fontSize: 16, fontWeight: 700, background: '#fff',
+                                        color: inputColor,
+                                      }}
+                                    />
+                                    <div style={{ fontSize: 10, color: '#94a3b8' }}>/ {maxVal}</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {/* Per-subject summary */}
+                            {(() => {
+                              let stTotal = 0, stMax = 0, stCount = 0;
+                              for (const col of cols) {
+                                const m = reportData.marks.find(mk => mk.column_id === col.id && mk.student_id === s.id);
+                                if (m && m.marks !== null) {
+                                  stTotal += parseFloat(m.marks);
+                                  stMax += parseFloat(col.max_marks);
+                                  stCount++;
+                                }
+                              }
+                              if (stCount === 0) return null;
+                              const stPct = stMax ? ((stTotal / stMax) * 100).toFixed(0) : 0;
+                              const stAvg = (stTotal / stCount).toFixed(1);
+                              const stColor = stPct >= 70 ? '#16a34a' : stPct >= 50 ? '#facc15' : '#e11d48';
+                              return (
+                                <div style={{ marginTop: 8, padding: '6px 10px', background: '#fff', borderRadius: 6, fontSize: 12, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
+                                  <span style={{ color: '#64748b' }}>CATs: <b style={{ color: '#1e293b' }}>{stCount}</b></span>
+                                  <span style={{ color: '#64748b' }}>Total: <b style={{ color: '#1e293b' }}>{stTotal}/{stMax}</b></span>
+                                  <span style={{ color: '#64748b' }}>Avg: <b style={{ color: '#1e293b' }}>{stAvg}</b></span>
+                                  <span style={{ color: '#64748b' }}>%: <b style={{ color: stColor, fontSize: 14 }}>{stPct}%</b></span>
+                                </div>
+                              );
+                            })()}
                           </div>
-                        );
-                      })}
+                        ));
+                      })()}
                     </div>
                   )}
                 </div>
