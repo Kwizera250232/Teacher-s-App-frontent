@@ -241,7 +241,7 @@ export default function WeeklyQuizReport({ token, classId }) {
   // Calculate stats for each student
   const computeStats = () => {
     if (!reportData) return [];
-    const { students, columns, marks, systemQuizzes } = reportData;
+    const { students, columns, marks, systemQuizzes, aiRevisionQuizzes } = reportData;
     const stats = students.map(s => {
       let total = 0, taken = 0, totalMax = 0;
       const perQuiz = columns.map(c => {
@@ -269,9 +269,24 @@ export default function WeeklyQuizReport({ token, classId }) {
         autoMax += parseFloat(aq.total || 0);
         autoCount++;
       }
-      return { ...s, total, taken, avg, pct, totalMax, perQuiz, bySubject, autoQuizzes, autoTotal, autoMax, autoCount };
+      // AI Revision quiz data
+      const aiQuizzes = (aiRevisionQuizzes || []).filter(ar => ar.student_id === s.id);
+      let aiTotal = 0, aiMax = 0, aiCount = 0;
+      for (const ar of aiQuizzes) {
+        aiTotal += parseFloat(ar.score || 0);
+        aiMax += parseFloat(ar.total || 0);
+        aiCount++;
+      }
+      // Grand total = teacher marks + system quizzes + AI revision
+      const grandTotal = total + autoTotal + aiTotal;
+      const grandMax = totalMax + autoMax + aiMax;
+      const grandPct = grandMax ? (grandTotal / grandMax) * 100 : 0;
+      return { ...s, total, taken, avg, pct, totalMax, perQuiz, bySubject,
+               autoQuizzes, autoTotal, autoMax, autoCount,
+               aiQuizzes, aiTotal, aiMax, aiCount,
+               grandTotal, grandMax, grandPct };
     });
-    stats.sort((a, b) => b.total - a.total);
+    stats.sort((a, b) => b.grandTotal - a.grandTotal);
     stats.forEach((s, i) => { s.rank = i + 1; });
     return stats;
   };
@@ -678,7 +693,7 @@ export default function WeeklyQuizReport({ token, classId }) {
                 {s.autoQuizzes && s.autoQuizzes.length > 0 && (
                   <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f0fdf4' }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      🤖 Auto System Marks (from quiz_attempts)
+                      💻 UCLASS System Quizzes (auto)
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {s.autoQuizzes.map((aq, i) => (
@@ -697,6 +712,59 @@ export default function WeeklyQuizReport({ token, classId }) {
                     </div>
                     <div style={{ fontSize: 11, color: '#15803d', marginTop: 6 }}>
                       Total: {s.autoTotal}/{s.autoMax} across {s.autoCount} system quiz{s.autoCount !== 1 ? 'zes' : ''}
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Revision quiz marks section */}
+                {s.aiQuizzes && s.aiQuizzes.length > 0 && (
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#fff7ed' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      🤖 AI Revision Quizzes
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {s.aiQuizzes.map((ar, i) => (
+                        <div key={i} style={{
+                          background: '#fff', border: '1px solid #fed7aa', borderRadius: 8,
+                          padding: '4px 8px', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 1,
+                        }}>
+                          <div style={{ color: '#1e293b', fontWeight: 600 }}>
+                            {ar.subject} <span style={{ color: '#94a3b8', fontSize: 10 }}>({ar.quiz_type})</span>
+                          </div>
+                          <div style={{ fontWeight: 700, color: ar.percentage >= 50 ? '#16a34a' : '#e11d48' }}>
+                            {ar.score}/{ar.total} ({ar.percentage}%)
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#c2410c', marginTop: 6 }}>
+                      Total: {s.aiTotal}/{s.aiMax} across {s.aiCount} AI revision quiz{s.aiCount !== 1 ? 'zes' : ''}
+                    </div>
+                  </div>
+                )}
+
+                {/* Grand Total — all marks combined */}
+                {(s.taken > 0 || s.autoCount > 0 || s.aiCount > 0) && (
+                  <div style={{
+                    padding: '14px 16px', borderBottom: '1px solid #f1f5f9',
+                    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Grand Total (Teacher + System + AI)
+                      </div>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ color: '#fff', fontSize: 20, fontWeight: 800 }}>
+                          {s.grandTotal.toFixed(1)}<span style={{ fontSize: 13, color: '#94a3b8' }}>/{s.grandMax.toFixed(0)}</span>
+                        </span>
+                        <span style={{
+                          color: '#fff', fontSize: 16, fontWeight: 700,
+                          background: s.grandPct >= 70 ? '#16a34a' : s.grandPct >= 50 ? '#facc15' : '#e11d48',
+                          padding: '2px 10px', borderRadius: 20,
+                        }}>
+                          {s.grandPct.toFixed(0)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
