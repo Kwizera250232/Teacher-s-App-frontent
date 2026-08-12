@@ -58,6 +58,7 @@ export default function ParentHub() {
   const [marksPeriod, setMarksPeriod] = useState('all');
   const [downloadingMarks, setDownloadingMarks] = useState(false);
   const [downloadingQuiz, setDownloadingQuiz] = useState(null);
+  const [weeklyReports, setWeeklyReports] = useState(null);
   const bottomRef = useRef();
   const threadRef = useRef();
 
@@ -172,6 +173,13 @@ export default function ParentHub() {
       .then(setSummary)
       .catch(() => setSummary(null));
   }, [selectedChild, marksPeriod, token]);
+
+  useEffect(() => {
+    if (!selectedChild) return;
+    api.get(`/parent/children/${selectedChild}/weekly-reports`, token)
+      .then(setWeeklyReports)
+      .catch(() => setWeeklyReports(null));
+  }, [selectedChild, token]);
 
   useEffect(() => {
     if (!activeChat) return;
@@ -621,6 +629,201 @@ export default function ParentHub() {
                         );
                       }) : <p className="phub-muted">No weekly updates yet.</p>}
                     </section>
+
+                    {/* Weekly Quiz Reports with teacher message + student photo */}
+                    <section className="phub-section">
+                      <h3>📊 Weekly Quiz Reports</h3>
+                      {!weeklyReports ? (
+                        <p className="phub-muted">Loading weekly reports…</p>
+                      ) : weeklyReports.reports?.length ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                          {weeklyReports.reports.map((rpt) => {
+                            const studentInfo = weeklyReports.student || child;
+                            const avatarSrc = studentInfo?.avatar_path
+                              ? `${UPLOADS_BASE}${studentInfo.avatar_path}`
+                              : DEFAULT_AVATAR;
+                            return (
+                              <div key={rpt.report_id} style={{
+                                background: '#fff',
+                                borderRadius: 16,
+                                border: '1.5px solid #e2e8f0',
+                                overflow: 'hidden',
+                                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                              }}>
+                                {/* Card header with student photo + week info */}
+                                <div style={{
+                                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                  padding: '14px 18px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 14,
+                                }}>
+                                  <img
+                                    src={avatarSrc}
+                                    alt={studentInfo?.name || 'Student'}
+                                    onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
+                                    style={{
+                                      width: 56, height: 56, borderRadius: '50%',
+                                      objectFit: 'cover', border: '3px solid rgba(255,255,255,0.5)',
+                                      background: '#e8eaf6', flexShrink: 0,
+                                    }}
+                                  />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ color: '#fff', fontWeight: 800, fontSize: 17 }}>
+                                      {studentInfo?.name || 'Student'}
+                                    </div>
+                                    <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 2 }}>
+                                      {rpt.class_name}{rpt.class_subject ? ` · ${rpt.class_subject}` : ''}
+                                    </div>
+                                    <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 2 }}>
+                                      {rpt.week_label} · {new Date(rpt.created_at).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                  <div style={{
+                                    background: 'rgba(255,255,255,0.2)',
+                                    borderRadius: 12,
+                                    padding: '8px 14px',
+                                    textAlign: 'center',
+                                    flexShrink: 0,
+                                  }}>
+                                    <div style={{ color: '#fff', fontSize: 22, fontWeight: 800, lineHeight: 1 }}>
+                                      {rpt.percentage.toFixed(0)}%
+                                    </div>
+                                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 10, marginTop: 2 }}>
+                                      {rpt.total}/{rpt.total_max} marks
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Stats row */}
+                                <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #f1f5f9' }}>
+                                  <div style={{ flex: 1, padding: '10px 12px', textAlign: 'center', borderRight: '1px solid #f1f5f9' }}>
+                                    <div style={{ fontSize: 11, color: '#64748b' }}>Rank</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#92400e' }}>
+                                      #{rpt.rank || '—'} <span style={{ fontSize: 11, color: '#94a3b8' }}>/ {rpt.total_students}</span>
+                                    </div>
+                                  </div>
+                                  <div style={{ flex: 1, padding: '10px 12px', textAlign: 'center', borderRight: '1px solid #f1f5f9' }}>
+                                    <div style={{ fontSize: 11, color: '#64748b' }}>Quizzes</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#16a34a' }}>
+                                      {rpt.quizzes.filter(q => q.marks !== null).length}
+                                    </div>
+                                  </div>
+                                  <div style={{ flex: 1, padding: '10px 12px', textAlign: 'center', borderRight: '1px solid #f1f5f9' }}>
+                                    <div style={{ fontSize: 11, color: '#64748b' }}>Average</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1e40af' }}>
+                                      {rpt.average.toFixed(1)}
+                                    </div>
+                                  </div>
+                                  <div style={{ flex: 1, padding: '10px 12px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: 11, color: '#64748b' }}>Total</div>
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1e293b' }}>
+                                      {rpt.total.toFixed(1)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Quiz list */}
+                                <div style={{ padding: '12px 18px', borderBottom: '1px solid #f1f5f9' }}>
+                                  <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                    Quiz Summary
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                    {rpt.quizzes.map((q, i) => (
+                                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                                        <span style={{ color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          {q.subject && (
+                                            <span style={{ fontSize: 10, color: '#7c3aed', background: '#f3e8ff', padding: '1px 6px', borderRadius: 4, marginRight: 6 }}>
+                                              {q.subject}
+                                            </span>
+                                          )}
+                                          {q.name}
+                                        </span>
+                                        <span style={{
+                                          fontWeight: 600, flexShrink: 0,
+                                          color: q.marks === null ? '#cbd5e1' : (q.marks / q.max_marks >= 0.5 ? '#16a34a' : '#e11d48'),
+                                        }}>
+                                          {q.marks === null ? 'Not taken' : `${q.marks}/${q.max_marks}`}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Weakness analysis & advice */}
+                                {rpt.weakness_analysis && (rpt.weakness_analysis.weakSubjects?.length > 0 || rpt.weakness_analysis.strongSubjects?.length > 0 || rpt.weakness_analysis.overallAdvice) && (
+                                  <div style={{ padding: '14px 18px', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                      🎯 Performance Analysis & Advice
+                                    </div>
+
+                                    {/* Overall advice */}
+                                    {rpt.weakness_analysis.overallAdvice && (
+                                      <div style={{ background: '#eff6ff', borderRadius: 10, padding: '10px 14px', borderLeft: '4px solid #3b82f6', marginBottom: 10 }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#1e40af', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                                          📊 Overall Assessment
+                                        </div>
+                                        <div style={{ fontSize: 13, color: '#1e293b', lineHeight: 1.6 }}>
+                                          {rpt.weakness_analysis.overallAdvice}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Weak subjects */}
+                                    {rpt.weakness_analysis.weakSubjects?.length > 0 && (
+                                      <div style={{ background: '#fef2f2', borderRadius: 10, padding: '10px 14px', borderLeft: '4px solid #ef4444', marginBottom: 10 }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#b91c1c', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                                          ⚠️ Areas Needing Attention
+                                        </div>
+                                        {rpt.weakness_analysis.adviceList?.map((a, i) => (
+                                          <div key={i} style={{ marginBottom: 8, paddingBottom: 6, borderBottom: i < rpt.weakness_analysis.adviceList.length - 1 ? '1px solid #fecaca' : 'none' }}>
+                                            <div style={{ fontSize: 13, fontWeight: 700, color: '#991b1b' }}>
+                                              {a.subject} — {a.percentage}%
+                                            </div>
+                                            <div style={{ fontSize: 12, color: '#7f1d1d', lineHeight: 1.5, marginTop: 3 }}>
+                                              {a.advice}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Strong subjects */}
+                                    {rpt.weakness_analysis.strongSubjects?.length > 0 && (
+                                      <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '10px 14px', borderLeft: '4px solid #22c55e' }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
+                                          ✅ Strong Areas — Keep It Up!
+                                        </div>
+                                        {rpt.weakness_analysis.strongSubjects.map((st, i) => (
+                                          <div key={i} style={{ fontSize: 13, color: '#166534', marginBottom: 3 }}>
+                                            {st.subject} — {st.percentage}% 🌟
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Teacher message */}
+                                {rpt.teacher_message && (
+                                  <div style={{ padding: '14px 18px', background: '#fefce8' }}>
+                                    <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                      ✍️ Teacher&apos;s Message
+                                    </div>
+                                    <div style={{ fontSize: 14, color: '#1e293b', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                                      {rpt.teacher_message}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="phub-muted">No weekly quiz reports yet. Your teacher will add them soon.</p>
+                      )}
+                    </section>
+
                     <section className="phub-section">
                       <h3>Compositions & shares</h3>
                       {summary.compositions?.length ? summary.compositions.map((c, i) => (

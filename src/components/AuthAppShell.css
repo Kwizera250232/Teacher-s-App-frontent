@@ -111,6 +111,12 @@
   border-radius: 10px;
   font-size: 15px;
   background: #f0f2f5;
+  color: #1e293b;
+}
+
+.auth-app-shell .form-group input::placeholder,
+.auth-app-shell .form-group textarea::placeholder {
+  color: #94a3b8;
 }
 
 .auth-app-shell .form-group input:focus,

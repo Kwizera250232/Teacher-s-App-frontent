@@ -485,6 +485,260 @@
   margin-top: 24px !important;
 }
 
+/* === Tab navigation (professional) === */
+.nav-tabs-professional {
+  display: flex !important;
+  gap: 4px !important;
+  background: var(--pro-card) !important;
+  border-bottom: 2px solid var(--pro-border) !important;
+  padding: 0 32px !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+.nav-tabs-professional::-webkit-scrollbar {
+  display: none !important;
+}
+
+.nav-tab-professional {
+  padding: 14px 20px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--pro-text-secondary) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.nav-tab-professional:hover {
+  color: var(--pro-purple) !important;
+  background: rgba(102, 126, 234, 0.06) !important;
+}
+
+.nav-tab-professional.active {
+  color: var(--pro-purple) !important;
+  border-bottom-color: var(--pro-purple) !important;
+  background: rgba(102, 126, 234, 0.08) !important;
+}
+
+/* Main content area (professional) */
+.dash-main-professional {
+  padding-top: 24px !important;
+}
+
+/* === Class card quick actions === */
+.class-card-quick-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  padding: 4px 0 !important;
+}
+
+.class-card-quick-btn {
+  flex: 1 1 calc(50% - 3px) !important;
+  min-width: 0 !important;
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border: 1.5px solid transparent !important;
+  font-family: inherit !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+}
+
+.class-card-quick-btn--quiz {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+.class-card-quick-btn--quiz:hover {
+  background: #fde68a !important;
+  transform: translateY(-1px) !important;
+}
+
+.class-card-quick-btn--hw {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  border-color: #bfdbfe !important;
+}
+.class-card-quick-btn--hw:hover {
+  background: #bfdbfe !important;
+  transform: translateY(-1px) !important;
+}
+
+.class-card-quick-btn--notes {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+  border-color: #bbf7d0 !important;
+}
+.class-card-quick-btn--notes:hover {
+  background: #bbf7d0 !important;
+  transform: translateY(-1px) !important;
+}
+
+.class-card-quick-btn--groups {
+  background: #f3e8ff !important;
+  color: #6b21a8 !important;
+  border-color: #e9d5ff !important;
+}
+.class-card-quick-btn--groups:hover {
+  background: #e9d5ff !important;
+  transform: translateY(-1px) !important;
+}
+
+.class-card-quick-btn--note {
+  background: #fff1f2 !important;
+  color: #9f1239 !important;
+  border-color: #fecdd3 !important;
+  flex: 1 1 100% !important;
+}
+.class-card-quick-btn--note:hover {
+  background: #fecdd3 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* === Tools tab === */
+.student-tools-section {
+  margin-top: 8px !important;
+}
+
+.student-tools-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.student-tool-card {
+  background: var(--pro-card) !important;
+  border: 1.5px solid var(--pro-border) !important;
+  border-radius: 14px !important;
+  padding: 22px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  font-family: inherit !important;
+  text-align: center !important;
+}
+
+.student-tool-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: var(--pro-purple) !important;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15) !important;
+}
+
+.student-tool-icon {
+  font-size: 32px !important;
+  line-height: 1 !important;
+}
+
+.student-tool-label {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--pro-text) !important;
+}
+
+/* === Profile tab === */
+.student-profile-tab {
+  margin-top: 8px !important;
+}
+
+.student-profile-card {
+  background: var(--pro-card) !important;
+  border: 1.5px solid var(--pro-border) !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px !important;
+  flex-wrap: wrap !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+  margin-bottom: 16px !important;
+}
+
+.student-profile-avatar-wrap {
+  flex-shrink: 0 !important;
+}
+
+.student-profile-avatar {
+  width: 88px !important;
+  height: 88px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 3px solid var(--pro-purple) !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
+  background: #e8eaf6 !important;
+}
+
+.student-profile-info {
+  flex: 1 1 200px !important;
+  min-width: 0 !important;
+}
+
+.student-profile-info h3 {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: var(--pro-text) !important;
+  margin: 0 0 6px 0 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.student-profile-role {
+  display: inline-block !important;
+  background: linear-gradient(135deg, var(--pro-purple) 0%, var(--pro-purple-dark) 100%) !important;
+  color: #fff !important;
+  padding: 3px 12px !important;
+  border-radius: 20px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+}
+
+.student-profile-email {
+  font-size: 14px !important;
+  color: var(--pro-text-secondary) !important;
+  margin: 0 !important;
+}
+
+.student-profile-edit-btn {
+  flex-shrink: 0 !important;
+}
+
+/* === Class Now section === */
+.student-classnow-section {
+  margin-top: 8px !important;
+}
+
+/* === Bottom nav (mobile) === */
+.student-bottom-nav {
+  z-index: 30 !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .student-dashboard-classic .dash-main {
@@ -542,5 +796,55 @@
   .student-parent-invite-banner {
     flex-direction: column !important;
     text-align: center !important;
+  }
+
+  /* Tab navigation — mobile */
+  .nav-tabs-professional {
+    padding: 0 14px !important;
+  }
+
+  .nav-tab-professional {
+    padding: 12px 14px !important;
+    font-size: 13px !important;
+  }
+
+  /* Tools grid — mobile */
+  .student-tools-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .student-tool-card {
+    padding: 16px 10px !important;
+  }
+
+  .student-tool-icon {
+    font-size: 26px !important;
+  }
+
+  /* Profile card — mobile */
+  .student-profile-card {
+    padding: 18px !important;
+    flex-direction: column !important;
+    text-align: center !important;
+  }
+
+  .student-profile-avatar {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .student-profile-info {
+    flex: 1 1 100% !important;
+  }
+
+  .student-profile-edit-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Class card quick actions — mobile: full width buttons */
+  .class-card-quick-btn {
+    flex: 1 1 calc(50% - 3px) !important;
   }
 }

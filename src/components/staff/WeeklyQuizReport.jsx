@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { api } from '../../api';
+import { api, UPLOADS_BASE } from '../../api';
+
+const DEFAULT_AVATAR = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"%3E%3Crect fill="%23e8eaf6" width="80" height="80"/%3E%3Ctext x="40" y="45" font-size="32" text-anchor="middle" fill="%23667eea"%3E👤%3C/text%3E%3C/svg%3E';
 
 const SUBJECTS = [
   'English', 'Mathematics', 'Kinyarwanda', 'French', 'Science and Elementary Technology (SET)',
@@ -37,11 +39,16 @@ export default function WeeklyQuizReport({ token, classId }) {
   const [newWeekLabel, setNewWeekLabel] = useState(getWeekLabel(0));
   const [alsoEmail, setAlsoEmail] = useState(false);
   const [showStudentReport, setShowStudentReport] = useState(null);
+  const [viewMode, setViewMode] = useState('gradebook'); // 'gradebook' | 'cards'
 
   const marksRef = useRef({});
   const saveTimer = useRef(null);
   const emailRef = useRef({});
   const emailSaveTimer = useRef({});
+  const phoneRef = useRef({});
+  const phoneSaveTimer = useRef({});
+  const messageRef = useRef({});
+  const messageSaveTimer = useRef({});
 
   // Load all reports for this class
   const loadReports = useCallback(async () => {
@@ -124,6 +131,34 @@ export default function WeeklyQuizReport({ token, classId }) {
         setError('Failed to save email: ' + err.message);
       }
     }, 1000);
+  };
+
+  const handlePhoneChange = (studentId, value) => {
+    phoneRef.current[studentId] = value;
+    if (phoneSaveTimer.current[studentId]) clearTimeout(phoneSaveTimer.current[studentId]);
+    phoneSaveTimer.current[studentId] = setTimeout(async () => {
+      try {
+        await api.put(`/classes/${classId}/students/${studentId}/parent-phone`, { parent_phone: value.trim() }, token);
+        setSuccessMsg('Phone saved');
+        setTimeout(() => setSuccessMsg(''), 2000);
+      } catch (err) {
+        setError('Failed to save phone: ' + err.message);
+      }
+    }, 1000);
+  };
+
+  const handleMessageChange = (studentId, value) => {
+    messageRef.current[studentId] = value;
+    if (messageSaveTimer.current[studentId]) clearTimeout(messageSaveTimer.current[studentId]);
+    messageSaveTimer.current[studentId] = setTimeout(async () => {
+      try {
+        await api.put(`/classes/${classId}/weekly-reports/${activeReport}/comments/${studentId}`, { comment: value.trim() }, token);
+        setSuccessMsg('Message saved');
+        setTimeout(() => setSuccessMsg(''), 2000);
+      } catch (err) {
+        setError('Failed to save message: ' + err.message);
+      }
+    }, 1200);
   };
 
   const createReport = async () => {
@@ -351,8 +386,26 @@ export default function WeeklyQuizReport({ token, classId }) {
         <div className="alert alert-success" style={{ marginBottom: 12 }}>{notifyResult}</div>
       )}
 
+      {/* View mode toggle */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        <button
+          className={`btn btn-sm${viewMode === 'gradebook' ? ' btn-primary' : ' btn-outline'}`}
+          style={{ fontSize: 13, padding: '6px 16px' }}
+          onClick={() => setViewMode('gradebook')}
+        >
+          📊 Gradebook
+        </button>
+        <button
+          className={`btn btn-sm${viewMode === 'cards' ? ' btn-primary' : ' btn-outline'}`}
+          style={{ fontSize: 13, padding: '6px 16px' }}
+          onClick={() => setViewMode('cards')}
+        >
+          📮 Parent Notify Cards
+        </button>
+      </div>
+
       {/* Gradebook Table */}
-      {reportData && reportData.columns && (
+      {viewMode === 'gradebook' && reportData && reportData.columns && (
         <div style={{ overflowX: 'auto', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 600 }}>
             <thead>
@@ -390,6 +443,7 @@ export default function WeeklyQuizReport({ token, classId }) {
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#eff6ff' }}>%</th>
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', background: '#fef3c7' }}>Rank</th>
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 180 }}>Parent Email</th>
+                <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 140 }}>Parent Phone</th>
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', minWidth: 160 }}>Teacher Comment</th>
                 <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '2px solid #e2e8f0' }}>AI Report</th>
               </tr>
@@ -447,6 +501,18 @@ export default function WeeklyQuizReport({ token, classId }) {
                   </td>
                   <td style={{ padding: '4px', textAlign: 'center' }}>
                     <input
+                      type="tel"
+                      defaultValue={s.parent_phone || ''}
+                      onChange={e => handlePhoneChange(s.id, e.target.value)}
+                      placeholder="+250..."
+                      style={{
+                        width: 130, padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 5,
+                        fontSize: 12, background: '#fff', color: '#475569',
+                      }}
+                    />
+                  </td>
+                  <td style={{ padding: '4px', textAlign: 'center' }}>
+                    <input
                       type="text"
                       defaultValue={reportData.comments?.find(c => c.student_id === s.id)?.comment || ''}
                       onBlur={e => saveComment(s.id, e.target.value)}
@@ -480,6 +546,147 @@ export default function WeeklyQuizReport({ token, classId }) {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Parent Notify Cards view */}
+      {viewMode === 'cards' && reportData && stats.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(360px, 100%), 1fr))', gap: 16 }}>
+          {stats.map((s) => {
+            const studentRow = reportData.students.find(st => st.id === s.id);
+            return (
+              <div key={s.id} style={{
+                background: '#fff',
+                borderRadius: 16,
+                border: '1.5px solid #e2e8f0',
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}>
+                {/* Card header: avatar + name + rank */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}>
+                  <img
+                    src={studentRow?.avatar_path ? `${UPLOADS_BASE}${studentRow.avatar_path}` : DEFAULT_AVATAR}
+                    alt={s.name}
+                    onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
+                    style={{
+                      width: 48, height: 48, borderRadius: '50%',
+                      objectFit: 'cover', border: '2px solid rgba(255,255,255,0.4)',
+                      background: '#e8eaf6', flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {s.name}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12 }}>
+                      Rank #{s.rank} of {stats.length} · {s.taken} quiz{s.taken !== 1 ? 'zes' : ''} taken
+                    </div>
+                  </div>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    borderRadius: 10,
+                    padding: '6px 12px',
+                    textAlign: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <div style={{ color: '#fff', fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{s.pct.toFixed(0)}%</div>
+                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10 }}>{s.total}/{s.totalMax}</div>
+                  </div>
+                </div>
+
+                {/* Quiz summary list */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Quiz Summary
+                  </div>
+                  {s.perQuiz.length === 0 ? (
+                    <div style={{ fontSize: 13, color: '#94a3b8' }}>No quizzes recorded yet.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {s.perQuiz.map((q, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                          <span style={{ color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>
+                            {q.subject && <span style={{ fontSize: 10, color: '#7c3aed', background: '#f3e8ff', padding: '1px 5px', borderRadius: 4, marginRight: 4 }}>{q.subject}</span>}
+                            {q.name}
+                          </span>
+                          <span style={{ fontWeight: 600, color: q.marks === null ? '#cbd5e1' : (q.marks / q.max >= 0.5 ? '#16a34a' : '#e11d48'), flexShrink: 0 }}>
+                            {q.marks === null ? 'N/A' : `${q.marks}/${q.max}`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Parent contact info */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Parent Contact
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input
+                      type="email"
+                      defaultValue={s.parent_email || ''}
+                      onChange={e => handleEmailChange(s.id, e.target.value)}
+                      placeholder="✉ parent@email.com"
+                      style={{
+                        flex: '1 1 140px', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 8,
+                        fontSize: 12, background: '#fff', color: '#475569',
+                      }}
+                    />
+                    <input
+                      type="tel"
+                      defaultValue={s.parent_phone || ''}
+                      onChange={e => handlePhoneChange(s.id, e.target.value)}
+                      placeholder="📞 +250..."
+                      style={{
+                        flex: '1 1 120px', padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 8,
+                        fontSize: 12, background: '#fff', color: '#475569',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Teacher message box */}
+                <div style={{ padding: '12px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    ✍️ Message to Parent
+                  </div>
+                  <textarea
+                    defaultValue={reportData.comments?.find(c => c.student_id === s.id)?.comment || ''}
+                    onChange={e => handleMessageChange(s.id, e.target.value)}
+                    placeholder="Write a personal message to this parent about their child's week..."
+                    rows={3}
+                    style={{
+                      width: '100%', padding: '8px 10px', border: '1.5px solid #e2e8f0', borderRadius: 8,
+                      fontSize: 13, background: '#fff', color: '#1e293b', resize: 'vertical',
+                      boxSizing: 'border-box', fontFamily: 'inherit', flex: 1, minHeight: 60,
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10, justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => generateAIReport(s.id)}
+                      disabled={aiLoading[s.id]}
+                      style={{
+                        padding: '5px 12px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 600,
+                        cursor: 'pointer', background: '#7c3aed', color: '#fff',
+                      }}
+                    >
+                      {aiLoading[s.id] ? '⏳ AI…' : '🤖 AI Report'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
