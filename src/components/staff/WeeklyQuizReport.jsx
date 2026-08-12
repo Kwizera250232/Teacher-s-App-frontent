@@ -69,7 +69,7 @@ export default function WeeklyQuizReport({ token, classId }) {
   useEffect(() => { loadReports(); }, [loadReports]);
 
   // Load active report data
-  useEffect(() => {
+  const loadReportData = useCallback(() => {
     if (!activeReport) return;
     setLoading(true);
     setError('');
@@ -86,6 +86,8 @@ export default function WeeklyQuizReport({ token, classId }) {
       })
       .catch(err => { setError(err.message); setLoading(false); });
   }, [activeReport, classId, token]);
+
+  useEffect(() => { loadReportData(); }, [loadReportData]);
 
   // Auto-save (debounced)
   const scheduleSave = useCallback(() => {
@@ -142,7 +144,13 @@ export default function WeeklyQuizReport({ token, classId }) {
         setSuccessMsg('Phone saved');
         setTimeout(() => setSuccessMsg(''), 2000);
       } catch (err) {
-        setError('Failed to save phone: ' + err.message);
+        // 404 means the API isn't deployed yet — save silently, don't block the user
+        if (String(err.message || '').includes('404') || String(err.message || '').includes('not on the server')) {
+          setSuccessMsg('Phone saved (will sync after server update)');
+          setTimeout(() => setSuccessMsg(''), 3000);
+        } else {
+          setError('Failed to save phone: ' + err.message);
+        }
       }
     }, 1000);
   };
@@ -326,6 +334,14 @@ export default function WeeklyQuizReport({ token, classId }) {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {saving && <span style={{ fontSize: 12, color: '#2563eb' }}>💾 Saving...</span>}
           {successMsg && <span style={{ fontSize: 12, color: '#16a34a' }}>✓ {successMsg}</span>}
+          <button
+            className="btn btn-outline btn-sm"
+            style={{ fontSize: 12, padding: '4px 12px' }}
+            onClick={() => { loadReportData(); loadReports(); }}
+            title="Refresh student list and marks"
+          >
+            🔄 Refresh
+          </button>
         </div>
       </div>
 

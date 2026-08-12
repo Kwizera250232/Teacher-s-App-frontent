@@ -183,7 +183,7 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
         {/* School selection */}
         {!teacherNeedsSchool && (
         <div className="form-group">
-          <label style={{ fontSize: 14, fontWeight: 600 }}>
+          <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>
             School *
             {linkedSchoolId && linkedSchoolName && (
               <span style={{ fontWeight: 400, color: '#16a34a', marginLeft: 8, fontSize: 12 }}>
@@ -195,12 +195,12 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
             <input
               readOnly
               value={linkedSchoolName || 'Your school'}
-              style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: '#f8fafc' }}
+              style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: '#f8fafc', color: '#1e293b' }}
             />
           ) : !showNewSchool ? (
             <div style={{ display: 'flex', gap: 8 }}>
               <select
-                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: 'white' }}
+                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: 'white', color: '#1e293b' }}
                 value={schoolId}
                 onChange={e => setSchoolId(e.target.value)}
               >
@@ -221,7 +221,7 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
           ) : (
             <div style={{ display: 'flex', gap: 8 }}>
               <input
-                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, color: '#1e293b' }}
                 placeholder="Enter new school name"
                 value={newSchoolName}
                 onChange={e => setNewSchoolName(e.target.value)}
@@ -253,18 +253,18 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
         {mode === 'single' && !results && !teacherNeedsSchool && (
           <div>
             <div className="form-group">
-              <label style={{ fontSize: 14, fontWeight: 600 }}>Full Name *</label>
+              <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>Full Name *</label>
               <input
-                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, color: '#1e293b' }}
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="Enter student full name"
               />
             </div>
             <div className="form-group">
-              <label style={{ fontSize: 14, fontWeight: 600 }}>Email (optional)</label>
+              <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>Email (optional)</label>
               <input
-                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, color: '#1e293b' }}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder={studentEmailDomain ? `name@${studentEmailDomain}` : 'name@schoolname.edu (auto-generated if empty)'}
@@ -276,9 +276,9 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
               )}
             </div>
             <div className="form-group">
-              <label style={{ fontSize: 14, fontWeight: 600 }}>Password (optional)</label>
+              <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>Password (optional)</label>
               <input
-                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, color: '#1e293b' }}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Leave empty for auto-generated password"
@@ -301,18 +301,18 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
         {mode === 'bulk' && !results && !teacherNeedsSchool && (
           <div>
             <div className="form-group">
-              <label style={{ fontSize: 14, fontWeight: 600 }}>Student Names (one per line) *</label>
+              <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>Student Names (one per line) *</label>
               <textarea
-                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, minHeight: 120, resize: 'vertical' }}
+                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, minHeight: 120, resize: 'vertical', color: '#1e293b' }}
                 value={bulkNames}
                 onChange={e => setBulkNames(e.target.value)}
                 placeholder={"Jean Mugisha\nMarie Uwimana\nPierre Habimana"}
               />
             </div>
             <div className="form-group">
-              <label style={{ fontSize: 14, fontWeight: 600 }}>Password for all students (optional)</label>
+              <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>Password for all students (optional)</label>
               <input
-                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14 }}
+                style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, color: '#1e293b' }}
                 value={bulkPassword}
                 onChange={e => setBulkPassword(e.target.value)}
                 placeholder="Same password for all students (leave empty for random)"

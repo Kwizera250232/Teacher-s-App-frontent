@@ -272,7 +272,18 @@ body {
   background: white; border-radius: 16px; padding: 32px;
   width: 100%; max-width: 460px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  color: #1e293b;
 }
+.modal h2, .modal h3, .modal h4 { color: #111827; }
+.modal label { color: #374151; }
+.modal input, .modal select, .modal textarea {
+  color: #1e293b !important;
+  background: #fff;
+}
+.modal input::placeholder, .modal textarea::placeholder { color: #94a3b8; }
+.modal .btn-outline { color: #667eea; }
+.modal .btn-secondary { color: #667eea; }
+.modal small { color: #64748b; }
 .assign-group-overlay {
   overflow: hidden;
   padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
