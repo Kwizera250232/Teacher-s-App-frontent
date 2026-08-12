@@ -600,119 +600,101 @@ export default function WeeklyQuizReport({ token, classId }) {
                   </div>
                 </div>
 
-                {/* CAT Marks from Marks Sheet — auto-pulled, grouped by subject */}
+                {/* Subject Summary — clean table, no individual CATs shown */}
                 <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginBottom: 10 }}>
-                    ✍️ Teacher CAT Marks <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>(from Marks Sheet — auto)</span>
+                    📊 Subject Summary
                   </div>
-                  {s.catCount === 0 ? (
+                  {s.catCount === 0 && (!s.autoQuizzes || s.autoQuizzes.length === 0) && (!s.aiQuizzes || s.aiQuizzes.length === 0) ? (
                     <div style={{ fontSize: 13, color: '#94a3b8', padding: 8, background: '#f8fafc', borderRadius: 8, textAlign: 'center' }}>
-                      No CAT marks yet. Add marks from the <strong>Marks Sheet</strong> tab — they'll appear here automatically.
+                      No marks recorded yet for this week.
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {Object.entries(s.catBySubject).map(([subj, g]) => {
-                        const stPct = g.max ? ((g.total / g.max) * 100).toFixed(0) : 0;
-                        const stAvg = (g.total / g.count).toFixed(1);
-                        const stColor = stPct >= 70 ? '#16a34a' : stPct >= 50 ? '#facc15' : '#e11d48';
-                        return (
-                          <div key={subj} style={{
-                            background: '#f8fafc', borderRadius: 10, padding: 10,
-                            border: '1px solid #e2e8f0',
-                          }}>
-                            <div style={{
-                              fontSize: 12, fontWeight: 700, color: '#7c3aed', marginBottom: 8,
-                              background: '#f3e8ff', display: 'inline-block', padding: '2px 8px', borderRadius: 6,
-                            }}>
-                              📚 {subj}
-                            </div>
-                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                              {g.items.map((item, i) => {
-                                const pct = item.max ? (item.marks / item.max) * 100 : 0;
-                                const color = pct >= 50 ? '#16a34a' : '#e11d48';
-                                return (
-                                  <div key={i} style={{
-                                    background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8,
-                                    padding: '6px 10px', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 70,
-                                  }}>
-                                    <div style={{ color: '#475569', fontWeight: 600, fontSize: 11 }}>{item.test}</div>
-                                    <div style={{ fontWeight: 700, fontSize: 16, color }}>{item.marks}/{item.max}</div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            {/* Per-subject summary */}
-                            <div style={{ marginTop: 8, display: 'flex', gap: 12, fontSize: 11, color: '#64748b' }}>
-                              <span>CATs: <b style={{ color: '#1e293b' }}>{g.count}</b></span>
-                              <span>Total: <b style={{ color: '#1e293b' }}>{g.total}/{g.max}</b></span>
-                              <span>Avg: <b style={{ color: '#1e293b' }}>{stAvg}</b></span>
-                              <span>%: <b style={{ color: stColor, fontSize: 14 }}>{stPct}%</b></span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: '#f1f5f9' }}>
+                          <th style={{ padding: '6px 10px', textAlign: 'left', borderRadius: '6px 0 0 6px', color: '#475569', fontSize: 11, fontWeight: 600 }}>Subject</th>
+                          <th style={{ padding: '6px 8px', textAlign: 'center', color: '#475569', fontSize: 11, fontWeight: 600 }}>Tests</th>
+                          <th style={{ padding: '6px 8px', textAlign: 'center', color: '#475569', fontSize: 11, fontWeight: 600 }}>Total</th>
+                          <th style={{ padding: '6px 8px', textAlign: 'center', color: '#475569', fontSize: 11, fontWeight: 600 }}>Avg</th>
+                          <th style={{ padding: '6px 10px', textAlign: 'center', borderRadius: '0 6px 6px 0', color: '#475569', fontSize: 11, fontWeight: 600 }}>%</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* CAT marks by subject */}
+                        {Object.entries(s.catBySubject).map(([subj, g]) => {
+                          const stPct = g.max ? ((g.total / g.max) * 100).toFixed(0) : 0;
+                          const stAvg = (g.total / g.count).toFixed(1);
+                          const stColor = stPct >= 70 ? '#16a34a' : stPct >= 50 ? '#facc15' : '#e11d48';
+                          return (
+                            <tr key={`cat_${subj}`}>
+                              <td style={{ padding: '6px 10px', borderBottom: '1px solid #f1f5f9', fontWeight: 600, color: '#1e293b' }}>📚 {subj}</td>
+                              <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', color: '#64748b' }}>{g.count}</td>
+                              <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', fontWeight: 600 }}>{g.total}/{g.max}</td>
+                              <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', color: '#64748b' }}>{stAvg}</td>
+                              <td style={{ padding: '6px 10px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', fontWeight: 700, color: stColor }}>{stPct}%</td>
+                            </tr>
+                          );
+                        })}
+                        {/* System quizzes by subject */}
+                        {(() => {
+                          const sysBySubj = {};
+                          for (const aq of (s.autoQuizzes || [])) {
+                            const subj = aq.subject || 'General';
+                            if (!sysBySubj[subj]) sysBySubj[subj] = { total: 0, max: 0, count: 0 };
+                            sysBySubj[subj].total += parseFloat(aq.score || 0);
+                            sysBySubj[subj].max += parseFloat(aq.total || 0);
+                            sysBySubj[subj].count++;
+                          }
+                          return Object.entries(sysBySubj).map(([subj, g]) => {
+                            const stPct = g.max ? ((g.total / g.max) * 100).toFixed(0) : 0;
+                            const stAvg = g.count ? (g.total / g.count).toFixed(1) : '0';
+                            const stColor = stPct >= 70 ? '#16a34a' : stPct >= 50 ? '#facc15' : '#e11d48';
+                            return (
+                              <tr key={`sys_${subj}`}>
+                                <td style={{ padding: '6px 10px', borderBottom: '1px solid #f1f5f9', fontWeight: 600, color: '#15803d' }}>💻 {subj}</td>
+                                <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', color: '#64748b' }}>{g.count}</td>
+                                <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', fontWeight: 600 }}>{g.total}/{g.max}</td>
+                                <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', color: '#64748b' }}>{stAvg}</td>
+                                <td style={{ padding: '6px 10px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', fontWeight: 700, color: stColor }}>{stPct}%</td>
+                              </tr>
+                            );
+                          });
+                        })()}
+                        {/* AI Revision quizzes by subject */}
+                        {(() => {
+                          const aiBySubj = {};
+                          for (const ar of (s.aiQuizzes || [])) {
+                            const subj = ar.subject || 'General';
+                            if (!aiBySubj[subj]) aiBySubj[subj] = { total: 0, max: 0, count: 0 };
+                            aiBySubj[subj].total += parseFloat(ar.score || 0);
+                            aiBySubj[subj].max += parseFloat(ar.total || 0);
+                            aiBySubj[subj].count++;
+                          }
+                          return Object.entries(aiBySubj).map(([subj, g]) => {
+                            const stPct = g.max ? ((g.total / g.max) * 100).toFixed(0) : 0;
+                            const stAvg = g.count ? (g.total / g.count).toFixed(1) : '0';
+                            const stColor = stPct >= 70 ? '#16a34a' : stPct >= 50 ? '#facc15' : '#e11d48';
+                            return (
+                              <tr key={`ai_${subj}`}>
+                                <td style={{ padding: '6px 10px', borderBottom: '1px solid #f1f5f9', fontWeight: 600, color: '#c2410c' }}>🤖 {subj}</td>
+                                <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', color: '#64748b' }}>{g.count}</td>
+                                <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', fontWeight: 600 }}>{g.total}/{g.max}</td>
+                                <td style={{ padding: '6px 8px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', color: '#64748b' }}>{stAvg}</td>
+                                <td style={{ padding: '6px 10px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', fontWeight: 700, color: stColor }}>{stPct}%</td>
+                              </tr>
+                            );
+                          });
+                        })()}
+                      </tbody>
+                    </table>
                   )}
                 </div>
 
                 {/* Legacy weekly report columns — hidden, marks managed in Marks Sheet */}
 
-                {/* Auto system quiz marks section */}
-                {s.autoQuizzes && s.autoQuizzes.length > 0 && (
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f0fdf4' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      💻 UCLASS System Quizzes (auto)
-                    </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {s.autoQuizzes.map((aq, i) => (
-                        <div key={i} style={{
-                          background: '#fff', border: '1px solid #bbf7d0', borderRadius: 8,
-                          padding: '4px 8px', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 1,
-                        }}>
-                          <div style={{ color: '#1e293b', fontWeight: 600, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {aq.title}
-                          </div>
-                          <div style={{ fontWeight: 700, color: parseFloat(aq.score) / parseFloat(aq.total) >= 0.5 ? '#16a34a' : '#e11d48' }}>
-                            {aq.score}/{aq.total}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#15803d', marginTop: 6 }}>
-                      Total: {s.autoTotal}/{s.autoMax} across {s.autoCount} system quiz{s.autoCount !== 1 ? 'zes' : ''}
-                    </div>
-                  </div>
-                )}
-
-                {/* AI Revision quiz marks section */}
-                {s.aiQuizzes && s.aiQuizzes.length > 0 && (
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#fff7ed' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      🤖 AI Revision Quizzes
-                    </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {s.aiQuizzes.map((ar, i) => (
-                        <div key={i} style={{
-                          background: '#fff', border: '1px solid #fed7aa', borderRadius: 8,
-                          padding: '4px 8px', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 1,
-                        }}>
-                          <div style={{ color: '#1e293b', fontWeight: 600 }}>
-                            {ar.subject} <span style={{ color: '#94a3b8', fontSize: 10 }}>({ar.quiz_type})</span>
-                          </div>
-                          <div style={{ fontWeight: 700, color: ar.percentage >= 50 ? '#16a34a' : '#e11d48' }}>
-                            {ar.score}/{ar.total} ({ar.percentage}%)
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#c2410c', marginTop: 6 }}>
-                      Total: {s.aiTotal}/{s.aiMax} across {s.aiCount} AI revision quiz{s.aiCount !== 1 ? 'zes' : ''}
-                    </div>
-                  </div>
-                )}
-
                 {/* Grand Total — all marks combined */}
-                {(s.taken > 0 || s.autoCount > 0 || s.aiCount > 0) && (
+                {(s.catCount > 0 || s.autoCount > 0 || s.aiCount > 0) && (
                   <div style={{
                     padding: '14px 16px', borderBottom: '1px solid #f1f5f9',
                     background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
