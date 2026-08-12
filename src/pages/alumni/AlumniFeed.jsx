@@ -125,6 +125,9 @@ export default function AlumniFeed() {
   const [composeText, setComposeText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [suggested, setSuggested] = useState([]);
+  const [suggestedOffset, setSuggestedOffset] = useState(0);
+  const [suggestedSchools, setSuggestedSchools] = useState([]);
+  const [schoolOffset, setSchoolOffset] = useState(0);
   const [showComposer, setShowComposer] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [offlineUsers, setOfflineUsers] = useState([]);
@@ -140,7 +143,7 @@ export default function AlumniFeed() {
   const [savingEdit, setSavingEdit] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { loadPosts(); loadSuggested(); loadStories(); }, [token]);
+  useEffect(() => { loadPosts(); loadSuggested(0); loadSuggestedSchools(0); loadStories(); }, [token]);
 
   // Heartbeat — send every 2 minutes
   useEffect(() => {
@@ -195,17 +198,64 @@ export default function AlumniFeed() {
     finally { setSavingStory(false); }
   };
 
-  const loadSuggested = async () => {
+  const loadSuggested = async (offset = 0) => {
     try {
-      const data = await api.get('/alumni/suggested-alumni', token);
+      const data = await api.get(`/alumni/suggested-alumni?offset=${offset}`, token);
+      const newSuggested = data.suggested || [];
+      if (offset === 0) {
+        setSuggested(newSuggested);
+      } else {
+        setSuggested(prev => [...prev, ...newSuggested]);
+      }
+      setSuggestedOffset(offset + newSuggested.length);
+    } catch (e) { console.error(e); }
+  };
+
+  const loadSuggestedSchools = async (offset = 0) => {
+    try {
+      const data = await api.get(`/alumni/suggested-schools?offset=${offset}`, token);
+      const newSchools = data.suggested || [];
+      if (offset === 0) {
+        setSuggestedSchools(newSchools);
+      } else {
+        setSuggestedSchools(prev => [...prev, ...newSchools]);
+      }
+      setSchoolOffset(offset + newSchools.length);
+    } catch (e) { console.error(e); }
+  };
+
+  // Rotate suggestions — refresh with new random set
+  const refreshSuggested = async () => {
+    try {
+      const data = await api.get('/alumni/suggested-alumni?offset=0', token);
       setSuggested(data.suggested || []);
+      setSuggestedOffset((data.suggested || []).length);
+    } catch (e) { console.error(e); }
+  };
+
+  const refreshSuggestedSchools = async () => {
+    try {
+      const data = await api.get('/alumni/suggested-schools?offset=0', token);
+      setSuggestedSchools(data.suggested || []);
+      setSchoolOffset((data.suggested || []).length);
     } catch (e) { console.error(e); }
   };
 
   const handleSubscribe = async (alumniId) => {
     try {
       await api.post(`/alumni/follow/${alumniId}`, {}, token);
-      loadSuggested();
+      // Remove from suggested and refresh
+      setSuggested(prev => prev.filter(s => s.id !== alumniId));
+      // If running low, load more
+      if (suggested.length <= 3) refreshSuggested();
+    } catch (e) { alert(e.message); }
+  };
+
+  const handleFollowSchool = async (schoolId) => {
+    try {
+      await api.post(`/alumni/follow-school/${schoolId}`, {}, token);
+      setSuggestedSchools(prev => prev.filter(s => s.id !== schoolId));
+      if (suggestedSchools.length <= 2) refreshSuggestedSchools();
     } catch (e) { alert(e.message); }
   };
 
@@ -731,38 +781,81 @@ export default function AlumniFeed() {
             {posts.map((item, idx) => (
               <React.Fragment key={item.id || `item-${idx}`}>
                 {item.itemType === 'composition' ? renderComposition(item) : renderPost(item)}
-                {idx === 2 && suggested.length > 0 && (
-                  <div className="af-suggested-carousel">
-                    <div className="af-suggested-carousel-header">
-                      <h3>✨ Suggested Alumni</h3>
-                      <button className="af-suggested-carousel-more" onClick={() => navigate('/alumni/colleagues')}>See all →</button>
-                    </div>
-                    <div className="af-suggested-carousel-track">
-                      {suggested.map((s) => {
-                        const isOnline = onlineUsers.some(u => u.user_id === s.id);
-                        return (
-                          <div key={s.id} className="af-suggested-carousel-card">
-                            <div className="af-suggested-carousel-top">
-                              <AvatarWithStatus id={s.id} name={s.name} avatarUrl={s.avatar_url} size="lg" online={isOnline} onClick={() => navigate(`/alumni/profile/${s.id}`)} />
-                              <div className="af-suggested-carousel-name-row">
-                                <span onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
-                                <VerifiedBadge size={14} userId={s.id} onViewProfile={() => navigate(`/alumni/profile/${s.id}`)} />
-                                <AIRevisionBadge size={14} userId={s.id} />
+                {/* Show suggestions after every 5 posts — alternate alumni and schools */}
+                {(idx + 1) % 5 === 0 && (
+                  <>
+                    {/* Suggested Alumni — after post 5, 15, 25... */}
+                    {suggested.length > 0 && (
+                      <div className="af-suggested-carousel">
+                        <div className="af-suggested-carousel-header">
+                          <h3>✨ Suggested Alumni</h3>
+                          <button className="af-suggested-carousel-more" onClick={refreshSuggested}>🔄 Refresh</button>
+                        </div>
+                        <div className="af-suggested-carousel-track">
+                          {suggested.slice(0, 6).map((s) => {
+                            const isOnline = onlineUsers.some(u => u.user_id === s.id);
+                            return (
+                              <div key={s.id} className="af-suggested-carousel-card">
+                                <div className="af-suggested-carousel-top">
+                                  <AvatarWithStatus id={s.id} name={s.name} avatarUrl={s.avatar_url} size="lg" online={isOnline} onClick={() => navigate(`/alumni/profile/${s.id}`)} />
+                                  <div className="af-suggested-carousel-name-row">
+                                    <span onClick={() => navigate(`/alumni/profile/${s.id}`)}>{s.name}</span>
+                                    <VerifiedBadge size={14} userId={s.id} onViewProfile={() => navigate(`/alumni/profile/${s.id}`)} />
+                                    <AIRevisionBadge size={14} userId={s.id} />
+                                  </div>
+                                  <div className="af-suggested-carousel-school">{s.school_name || 'UClass'}</div>
+                                  <div className="af-suggested-carousel-meta">{s.total_compositions || 0} articles · {s.graduation_year ? `Class of ${s.graduation_year}` : 'Alumni'}</div>
+                                </div>
+                                <button
+                                  onClick={() => handleSubscribe(s.id)}
+                                  className={s.is_following ? 'af-suggested-carousel-subscribed' : 'af-suggested-carousel-subscribe'}
+                                >
+                                  {s.is_following ? '✓ Subscribed' : 'Subscribe'}
+                                </button>
                               </div>
-                              <div className="af-suggested-carousel-school">{s.school_name || 'UClass'}</div>
-                              <div className="af-suggested-carousel-meta">{s.total_compositions || 0} articles · {s.graduation_year ? `Class of ${s.graduation_year}` : 'Alumni'}</div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {/* Suggested Schools — after post 10, 20, 30... */}
+                    {suggestedSchools.length > 0 && (idx + 1) % 10 === 0 && (
+                      <div className="af-suggested-carousel">
+                        <div className="af-suggested-carousel-header">
+                          <h3>🏫 Suggested Schools</h3>
+                          <button className="af-suggested-carousel-more" onClick={refreshSuggestedSchools}>🔄 Refresh</button>
+                        </div>
+                        <div className="af-suggested-carousel-track">
+                          {suggestedSchools.map((sch) => (
+                            <div key={sch.id} className="af-suggested-carousel-card">
+                              <div className="af-suggested-carousel-top">
+                                <div style={{
+                                  width: 56, height: 56, borderRadius: 14,
+                                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: 26, color: '#fff', fontWeight: 700, margin: '0 auto',
+                                }}>
+                                  🏫
+                                </div>
+                                <div className="af-suggested-carousel-name-row">
+                                  <span>{sch.name}</span>
+                                </div>
+                                <div className="af-suggested-carousel-meta">
+                                  {sch.alumni_count || 0} alumni · {sch.member_count || 0} members
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleFollowSchool(sch.id)}
+                                className={sch.is_following ? 'af-suggested-carousel-subscribed' : 'af-suggested-carousel-subscribe'}
+                              >
+                                {sch.is_following ? '✓ Following' : '+ Follow'}
+                              </button>
                             </div>
-                            <button
-                              onClick={() => handleSubscribe(s.id)}
-                              className={s.is_following ? 'af-suggested-carousel-subscribed' : 'af-suggested-carousel-subscribe'}
-                            >
-                              {s.is_following ? '✓ Subscribed' : 'Subscribe'}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </React.Fragment>
             ))}
