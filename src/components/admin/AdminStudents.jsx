@@ -66,14 +66,15 @@ export default function AdminStudents({ token }) {
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
-            <tr><th>Name</th><th>Email</th><th>School</th><th>Classes</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Email</th><th>Password</th><th>School</th><th>Classes</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {filtered.length === 0 && <tr><td colSpan={7} className="empty-text">No students found.</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={8} className="empty-text">No students found.</td></tr>}
             {filtered.map(s => (
               <tr key={s.id}>
                 <td><strong>{s.name}</strong></td>
                 <td>{s.email}</td>
+                <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#6b21a8' }}>{s.plaintext_password || <span style={{ color: '#94a3b8' }}>—</span>}</td>
                 <td>{s.school_name || '—'}</td>
                 <td>{s.class_count}</td>
                 <td><span className={`badge ${s.is_suspended ? 'badge-red' : 'badge-green'}`}>{s.is_suspended ? 'Suspended' : 'Active'}</span></td>
