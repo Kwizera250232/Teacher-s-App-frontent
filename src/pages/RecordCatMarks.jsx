@@ -33,6 +33,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const [showMigrate, setShowMigrate] = useState(false);
   const [showRecord, setShowRecord] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [editingCatTotal, setEditingCatTotal] = useState(null); // { num, value }
   const location = useLocation();
   const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
   const isEmbedded = Boolean(embeddedClassId);
@@ -99,6 +100,22 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
       await api.delete(`/catmarks/${classId}/entry/${studentId}/${testNumber}${subjParam}`, token);
       loadData();
     } catch (err) { setError(err.message); }
+  };
+
+  const saveCatTotal = async (num, totalRaw) => {
+    const total = parseInt(totalRaw, 10);
+    if (Number.isNaN(total) || total < 1) { setEditingCatTotal(null); return; }
+    setSaving(true);
+    try {
+      await api.put(`/catmarks/${classId}/cat-total`, {
+        test_number: num,
+        total_marks: total,
+        subject: selectedSubject || 'General',
+      }, token);
+      setEditingCatTotal(null);
+      setError('');
+      loadData();
+    } catch (err) { setError(err.message); } finally { setSaving(false); }
   };
 
   const roster = stats?.students || [];
@@ -340,7 +357,37 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                   <th>Student</th>
                   {CAT_NUMS.map((num) => {
                     const catTotal = stats?.cat_totals?.[num];
-                    return <th key={num}>CAT {num}{catTotal ? <span style={{ fontSize: 10, color: '#94a3b8', display: 'block', fontWeight: 400 }}>/{catTotal}</span> : null}</th>;
+                    const isEditingTotal = editingCatTotal?.num === num;
+                    return (
+                      <th key={num} style={{ cursor: 'pointer' }} title="Click to set 'out of' for this CAT">
+                        CAT {num}
+                        {isEditingTotal ? (
+                          <span style={{ display: 'block', marginTop: 2 }}>
+                            <input
+                              type="number"
+                              min={1}
+                              autoFocus
+                              value={editingCatTotal.value}
+                              style={{ width: 48, fontSize: 11, padding: '2px 4px', border: '1.5px solid #7c3aed', borderRadius: 4, textAlign: 'center' }}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => setEditingCatTotal({ num, value: e.target.value })}
+                              onBlur={() => saveCatTotal(num, editingCatTotal.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveCatTotal(num, editingCatTotal.value);
+                                if (e.key === 'Escape') setEditingCatTotal(null);
+                              }}
+                            />
+                          </span>
+                        ) : (
+                          <span
+                            style={{ fontSize: 10, color: '#7c3aed', display: 'block', fontWeight: 600, textDecoration: 'underline dotted' }}
+                            onClick={(e) => { e.stopPropagation(); setEditingCatTotal({ num, value: catTotal ? String(catTotal) : '' }); }}
+                          >
+                            {catTotal ? `/ ${catTotal}` : 'set total'}
+                          </span>
+                        )}
+                      </th>
+                    );
                   })}
                   <th>Total</th>
                   <th>%</th>
