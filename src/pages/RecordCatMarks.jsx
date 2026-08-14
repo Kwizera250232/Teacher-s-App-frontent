@@ -24,7 +24,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [recordForm, setRecordForm] = useState({ test_number: 1, student_id: '', marks_obtained: '' });
+  const [recordForm, setRecordForm] = useState({ test_number: 1, student_id: '', marks_obtained: '', total_marks: '' });
   const [quizzes, setQuizzes] = useState([]);
   const [migrateQuiz, setMigrateQuiz] = useState({ quiz_id: '', test_number: '' });
   const [saving, setSaving] = useState(false);
@@ -68,8 +68,9 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const saveCellMark = async (studentId, testNumber, marksRaw) => {
     if (marksRaw === '' || marksRaw === '—') { setEditing(null); return; }
     const marks = parseInt(marksRaw, 10);
-    if (Number.isNaN(marks) || marks < 0 || marks > 100) {
-      setError('Marks must be 0–100.');
+    const catTotal = stats?.cat_totals?.[testNumber] || 100;
+    if (Number.isNaN(marks) || marks < 0 || marks > catTotal) {
+      setError(`Marks must be 0–${catTotal}.`);
       return;
     }
     setSaving(true);
@@ -78,7 +79,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
         student_id: studentId,
         test_number: testNumber,
         marks_obtained: marks,
-        total_marks: 100,
+        total_marks: catTotal,
         subject: selectedSubject || 'General',
       }, token);
       setEditing(null);
@@ -238,6 +239,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
         {showMigrate && (
           <section className="cat-panel">
             <h2>Migrate quiz scores to CAT{selectedSubject && <span style={{ color: '#7c3aed', fontSize: 14 }}> — {selectedSubject}</span>}</h2>
+            <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 10px' }}>Quiz scores will be imported with their original total marks (e.g., 25/30).</p>
             <form className="cat-form-row" onSubmit={async (e) => {
               e.preventDefault();
               if (!migrateQuiz.quiz_id || !migrateQuiz.test_number) return setError('Select quiz and CAT number.');
@@ -277,16 +279,17 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
             <form className="cat-form-grid" onSubmit={async (e) => {
               e.preventDefault();
               if (!recordForm.student_id || recordForm.marks_obtained === '') return setError('Select student and marks.');
+              const totalMarks = parseInt(recordForm.total_marks, 10) || stats?.cat_totals?.[parseInt(recordForm.test_number, 10)] || 100;
               setSaving(true);
               try {
                 await api.post(`/catmarks/${classId}/entry`, {
                   student_id: parseInt(recordForm.student_id, 10),
                   test_number: parseInt(recordForm.test_number, 10),
                   marks_obtained: parseInt(recordForm.marks_obtained, 10),
-                  total_marks: 100,
+                  total_marks: totalMarks,
                   subject: selectedSubject || 'General',
                 }, token);
-                setRecordForm({ ...recordForm, student_id: '', marks_obtained: '' });
+                setRecordForm({ ...recordForm, student_id: '', marks_obtained: '', total_marks: '' });
                 setShowRecord(false);
                 setError('');
                 loadData();
@@ -303,7 +306,8 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                 </select>
               </label>
               <label>CAT #<input type="number" min="1" max="10" value={recordForm.test_number} onChange={(e) => setRecordForm({ ...recordForm, test_number: e.target.value })} /></label>
-              <label>Marks<input type="number" min="0" max="100" value={recordForm.marks_obtained} onChange={(e) => setRecordForm({ ...recordForm, marks_obtained: e.target.value })} /></label>
+              <label>Out of (total)<input type="number" min="1" placeholder={stats?.cat_totals?.[parseInt(recordForm.test_number, 10)] || '100'} value={recordForm.total_marks} onChange={(e) => setRecordForm({ ...recordForm, total_marks: e.target.value })} /></label>
+              <label>Marks<input type="number" min="0" max={parseInt(recordForm.total_marks, 10) || stats?.cat_totals?.[parseInt(recordForm.test_number, 10)] || 100} value={recordForm.marks_obtained} onChange={(e) => setRecordForm({ ...recordForm, marks_obtained: e.target.value })} /></label>
               <button type="submit" className="btn btn-primary" disabled={saving}>Record</button>
               <button type="button" className="btn btn-secondary" onClick={() => setShowRecord(false)}>Cancel</button>
             </form>
@@ -334,7 +338,10 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
               <thead>
                 <tr>
                   <th>Student</th>
-                  {CAT_NUMS.map((num) => <th key={num}>CAT {num}</th>)}
+                  {CAT_NUMS.map((num) => {
+                    const catTotal = stats?.cat_totals?.[num];
+                    return <th key={num}>CAT {num}{catTotal ? <span style={{ fontSize: 10, color: '#94a3b8', display: 'block', fontWeight: 400 }}>/{catTotal}</span> : null}</th>;
+                  })}
                   <th>Total</th>
                   <th>%</th>
                   <th>Avg %</th>
@@ -361,7 +368,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                               className="cat-cell-input"
                               type="number"
                               min={0}
-                              max={100}
+                              max={stats?.cat_totals?.[num] || 100}
                               autoFocus
                               value={editing.value}
                               onChange={(e) => setEditing({ ...editing, value: e.target.value })}
@@ -378,7 +385,12 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                         </td>
                       );
                     })}
-                    <td className="cat-total">{s.total_marks}</td>
+                    <td className="cat-total">{s.total_marks}{(() => {
+                      // Calculate sum of all CAT totals for this student
+                      let sumTotal = 0;
+                      for (const n of CAT_NUMS) { if (s.cat?.[n] != null) sumTotal += (stats?.cat_totals?.[n] || 100); }
+                      return sumTotal > 0 ? <span style={{ fontSize: 10, color: '#94a3b8' }}>/{sumTotal}</span> : null;
+                    })()}</td>
                     <td className="cat-pct">{s.percentage}%</td>
                     <td>{s.avg_percentage}%</td>
                   </tr>
