@@ -380,7 +380,12 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                               onClick={(e) => e.stopPropagation()}
                             />
                           ) : (
-                            val != null ? val : '—'
+                            val != null ? (
+                              <span>
+                                <strong>{val}</strong>
+                                <span style={{ fontSize: 10, color: '#94a3b8' }}>/{stats?.cat_totals?.[num] || 100}</span>
+                              </span>
+                            ) : '—'
                           )}
                         </td>
                       );
