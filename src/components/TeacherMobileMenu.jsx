@@ -91,10 +91,6 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
             <span className="teacher-menu-item__icon">👤</span>
             <span>My Profile</span>
           </Link>
-          <Link to="/alumni/graduation" className="teacher-menu-link" onClick={() => setOpen(false)}>
-            <span className="teacher-menu-item__icon">🎓</span>
-            <span>Graduate Students</span>
-          </Link>
           <Link to="/alumni/admin" className="teacher-menu-link" onClick={() => setOpen(false)}>
             <span className="teacher-menu-item__icon">⚙️</span>
             <span>Alumni Admin</span>
