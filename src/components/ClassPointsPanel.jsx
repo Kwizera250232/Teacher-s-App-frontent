@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api';
 import VerifiedBadge from './VerifiedBadge';
 import TeacherGroupsPanel from './TeacherGroupsPanel';
+import TransferStudentsModal from './TransferStudentsModal';
 
 const AVATAR_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
@@ -42,7 +43,7 @@ export default function ClassPointsPanel({
   const [data, setData] = useState(null);
   const [view, setView] = useState('students');
   const [studentView, setStudentView] = useState('cards');
-  const [showFeed, setShowFeed] = useState(true);
+  const [showFeed, setShowFeed] = useState(false);
   const [multiMode, setMultiMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [skillTarget, setSkillTarget] = useState(null);
@@ -55,6 +56,7 @@ export default function ClassPointsPanel({
   const [timerSecs, setTimerSecs] = useState(null);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [showTransfer, setShowTransfer] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -331,7 +333,7 @@ export default function ClassPointsPanel({
   return (
     <div className="class-points-panel">
       <p style={{ margin: '0 0 12px', fontSize: 14, color: '#4b5563' }}>
-        Tap a student to award <strong>+1</strong> points. Use <strong>Whole class</strong>, <strong>Groups</strong>, or the tools below.
+        Select the students you want to transfer, invite a parent, or view their profile.
       </p>
       <div className="class-roster-toolbar" style={{ flexWrap: 'wrap', gap: 8 }}>
         <div className="tabs" style={{ marginBottom: 0, flex: '1 1 auto', minWidth: 200 }}>
@@ -342,169 +344,166 @@ export default function ClassPointsPanel({
             Groups
           </button>
         </div>
-        {view === 'students' && (
-          <div className="tabs" style={{ marginBottom: 0 }}>
-            <button type="button" className={`tab ${studentView === 'cards' ? 'active' : ''}`} onClick={() => setStudentView('cards')}>
-              Cards
-            </button>
-            <button type="button" className={`tab ${studentView === 'table' ? 'active' : ''}`} onClick={() => setStudentView('table')}>
-              Table
-            </button>
-          </div>
-        )}
-        <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowFeed((v) => !v)}>
-          {showFeed ? 'Hide activity' : 'Show activity'}
-        </button>
+
         <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowGroupModal(true)}>
           Add group
         </button>
         <button type="button" className="btn btn-outline btn-sm" onClick={resetPoints}>
           Reset points
         </button>
-      </div>
-
-      <div className="class-roster-tools">
-        <button
-          type="button"
-          className={`btn btn-secondary btn-sm${multiMode ? ' active' : ''}`}
-          onClick={() => { setMultiMode((m) => !m); setSelectedIds(new Set()); }}
-        >
-          Select multiple
-        </button>
-        {multiMode && selectedIds.size > 0 && (
+        {view === 'students' && (
           <button
             type="button"
-            className="btn btn-primary btn-sm"
-            onClick={() => openSkillPicker({ type: 'multi', ids: [...selectedIds] })}
+            className="btn btn-sm"
+            onClick={() => {
+              if (selectedIds.size === 0) {
+                onError?.('Select at least one student to transfer.');
+              } else {
+                setShowTransfer(true);
+              }
+            }}
+            style={{
+              background: selectedIds.size > 0 ? '#0f4c3a' : 'transparent',
+              color: selectedIds.size > 0 ? '#fff' : '#0f4c3a',
+              border: '2px solid #0f4c3a',
+              borderRadius: 20,
+              fontWeight: 700,
+              padding: '6px 16px',
+            }}
           >
-            Award {selectedIds.size} selected
+            {selectedIds.size > 0 ? `TRANSFER ${selectedIds.size}` : 'TRANSFER'}
           </button>
         )}
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm"
-          onClick={() => {
-            if (!students.length) return;
-            const pick = students[Math.floor(Math.random() * students.length)];
-            openSkillPicker({ type: 'student', student: pick });
-          }}
-        >
-          Random
-        </button>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setTimerSecs(300)}>
-          Timer
-        </button>
       </div>
+
 
       <div className={`class-points-layout${showFeed ? ' with-feed' : ''}`}>
         <div>
           {view === 'students' && (
-            <>
-              {studentView === 'cards' ? (
-                <div className="class-roster-grid">
-                  {students.map((s, i) => renderStudentCard(s, i))}
+            <div className="class-roster-table-wrapper" style={{ overflowX: 'auto' }}>
+              <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
+                  {students.length} student(s) in this class
                 </div>
-              ) : (
-                <div className="class-roster-table-wrapper">
-                  <div className="class-roster-header">
-                    <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
-                      {students.length} student(s) in this class
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={() => {
-                        if (!selectedIds.size) return;
-                        openSkillPicker({ type: 'multi', ids: [...selectedIds] });
-                      }}
-                      disabled={!selectedIds.size}
-                    >
-                      SUBMIT ALL
-                    </button>
-                  </div>
-                  <div className="class-roster-search">
-                    <input
-                      type="text"
-                      placeholder="Search all columns..."
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        border: '2px solid #e8e8e8',
-                        borderRadius: 8,
-                        fontSize: 14
-                      }}
-                    />
-                  </div>
-                  <table className="class-roster-table">
-                    <thead>
-                      <tr>
-                        <th style={{ width: 50 }}>#</th>
-                        <th style={{ width: 60 }}>Image</th>
-                        <th>Name</th>
-                        <th>Gender</th>
-                        <th>Attendance Status</th>
-                        <th>Yesterday Status</th>
-                        <th style={{ width: 150 }}>Action</th>
+              </div>
+              <table className="class-roster-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: 60, textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={students.length > 0 && selectedIds.size === students.length}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(new Set(students.map((s) => s.id)));
+                          else setSelectedIds(new Set());
+                        }}
+                      />
+                      <div style={{ fontSize: 10, fontWeight: 700 }}>Transfer</div>
+                    </th>
+                    <th style={{ width: 40 }}>#</th>
+                    <th style={{ width: 50 }}>Image</th>
+                    <th>Name</th>
+                    <th style={{ width: 90 }}>Gender</th>
+                    <th style={{ width: 60 }}>Points</th>
+                    <th style={{ width: 110 }}>Parent</th>
+                    <th style={{ width: 80 }}>View</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((s, i) => {
+                    const displayName = String(s.name || 'Student').trim();
+                    const bg = AVATAR_COLORS[s.id % AVATAR_COLORS.length];
+                    const points = s.points || 0;
+                    const checked = selectedIds.has(s.id);
+                    return (
+                      <tr key={s.id}>
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              setSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(s.id)) next.delete(s.id);
+                                else next.add(s.id);
+                                return next;
+                              });
+                            }}
+                          />
+                        </td>
+                        <td>{i + 1}</td>
+                        <td>
+                          <div
+                            className="class-roster-avatar"
+                            style={{ background: bg, width: 40, height: 40, fontSize: 14, margin: 0 }}
+                          >
+                            {points > 0 && <span className="class-roster-point-badge">{points}</span>}
+                            {initials(displayName)}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: '#1e293b' }}>{displayName}</div>
+                          <div style={{ fontSize: 12, color: '#64748b' }}>{s.email || ''}</div>
+                        </td>
+                        <td>
+                          <select
+                            value={s.gender || ''}
+                            onChange={async (ev) => {
+                              const newGender = ev.target.value;
+                              try {
+                                await api.put(`/classes/${classId}/students/${s.id}/gender`, { gender: newGender }, token);
+                                setData((prev) => ({
+                                  ...prev,
+                                  students: prev.students.map((st) => (st.id === s.id ? { ...st, gender: newGender } : st)),
+                                }));
+                              } catch (err) {
+                                onError?.(err.message || 'Could not update gender.');
+                              }
+                            }}
+                            style={{
+                              padding: '6px 8px',
+                              borderRadius: 6,
+                              border: '1px solid #cbd5e1',
+                              fontSize: 13,
+                              width: '100%',
+                            }}
+                          >
+                            <option value="">—</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                          </select>
+                        </td>
+                        <td>{points}</td>
+                        <td>
+                          {onParentInvite && (
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              style={{ fontSize: 10, padding: '2px 6px' }}
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                onParentInvite({ studentId: s.id, studentName: displayName });
+                              }}
+                            >
+                              Parent invite
+                            </button>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-sm"
+                            onClick={() => onStudentClick?.(s)}
+                          >
+                            Profile
+                          </button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {students.map((s, i) => {
-                        const displayName = String(s.name || 'Student').trim();
-                        const bg = AVATAR_COLORS[s.id % AVATAR_COLORS.length];
-                        const points = s.points || 0;
-                        return (
-                          <tr key={s.id}>
-                            <td>{i + 1}</td>
-                            <td>
-                              <div
-                                className="class-roster-avatar"
-                                style={{
-                                  background: bg,
-                                  width: 40,
-                                  height: 40,
-                                  fontSize: 14,
-                                  margin: 0
-                                }}
-                              >
-                                {points > 0 && <span className="class-roster-point-badge">{points}</span>}
-                                {initials(displayName)}
-                              </div>
-                            </td>
-                            <td>
-                              <div style={{ fontWeight: 600, color: '#1e293b' }}>{displayName}</div>
-                              <div style={{ fontSize: 12, color: '#64748b' }}>{s.email || ''}</div>
-                            </td>
-                            <td>{s.gender || '—'}</td>
-                            <td>
-                              <span style={{
-                                padding: '4px 8px',
-                                borderRadius: 12,
-                                fontSize: 12,
-                                fontWeight: 600,
-                                background: '#dcfce7',
-                                color: '#166534'
-                              }}>
-                                Present
-                              </span>
-                            </td>
-                            <td>Not marked</td>
-                            <td>
-                              <button
-                                type="button"
-                                className="btn btn-primary btn-sm"
-                                onClick={() => handleStudentClick(s)}
-                              >
-                                MARK ATTENDANCE
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {view === 'groups' && (
@@ -681,6 +680,20 @@ export default function ClassPointsPanel({
           </div>
         </div>
       )}
+
+      <TransferStudentsModal
+        isOpen={showTransfer}
+        onClose={() => setShowTransfer(false)}
+        classId={classId}
+        token={token}
+        selectedIds={[...selectedIds]}
+        onSuccess={(msg) => {
+          onSuccess?.(msg);
+          setSelectedIds(new Set());
+          setMultiMode(false);
+          load();
+        }}
+      />
     </div>
   );
 }

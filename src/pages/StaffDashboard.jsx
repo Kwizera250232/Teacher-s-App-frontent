@@ -51,6 +51,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   const [showNotifyParents, setShowNotifyParents] = useState(false);
   const [showParentInvites, setShowParentInvites] = useState(false);
   const [hubTab, setHubTab] = useState('classes');
+  const [staffClassesView, setStaffClassesView] = useState('menu');
   const [showWeeklyDigest, setShowWeeklyDigest] = useState(false);
   const [momentPreview, setMomentPreview] = useState(null);
   const { online } = usePresence(token);
@@ -86,6 +87,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   };
 
   useEffect(() => { loadClasses(); }, []);
+  useEffect(() => { setStaffClassesView('menu'); }, [hubTab]);
 
   useEffect(() => {
     if (!token) return;
@@ -299,74 +301,86 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
         {hubTab === 'classes' && (
           <>
-            <div className="classes-actions-professional">
-              <button className="btn-professional btn-professional-primary" onClick={() => setShowCreate(true)}>
-                + Fungura Ishuri
-              </button>
-              <button className="btn-professional btn-professional-secondary" onClick={() => setShowAddStudents(true)} disabled={user?.role === 'teacher' && !hasSchool}>
-                👤 Add Students
-              </button>
-              <Link to="/alumni/graduation" className="btn-professional btn-professional-tertiary">
-                🎓 Graduate Students
-              </Link>
-            </div>
-
-            {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
-              <div key={a.id} className="announcement-card-professional">
-                <div className="announcement-content">
-                  <div className="announcement-header">
-                    <span className="announcement-icon">📢</span>
-                    <strong className="announcement-title">{a.title}</strong>
-                    <span className="announcement-author">— {a.admin_name}</span>
-                  </div>
-                  <p className="announcement-text">{a.message}</p>
-                  <span className="announcement-date">{new Date(a.created_at).toLocaleDateString()}</span>
+            {staffClassesView === 'menu' && (
+              <div className="staff-classes-menu" style={{ marginBottom: 16 }}>
+                <h2 className="section-title-professional">Classes</h2>
+                <div className="student-tools-grid">
+                  <button type="button" className="student-tool-card" onClick={() => setStaffClassesView('list')}>
+                    <span className="student-tool-icon">📚</span>
+                    <span className="student-tool-label">Classes</span>
+                  </button>
                 </div>
-                <button
-                  onClick={() => dismissAnnouncement(a.id)}
-                  className="announcement-dismiss"
-                  title="Dismiss"
-                >✕</button>
               </div>
-            ))}
+            )}
 
-            {classes.length === 0 ? (
-              <div className="empty-state-professional">
-                <div className="empty-icon-professional">📚</div>
-                <h3>Nta madarasa</h3>
-                <p>Fungura ishuri ryawe rya mbere utangire</p>
-                <button className="btn-professional btn-professional-primary" onClick={() => setShowCreate(true)}>Fungura Ishuri</button>
-              </div>
-            ) : (
+            {staffClassesView === 'list' && (
               <>
-                <h2 className="section-title-professional">Your classes</h2>
-                <div className="classes-grid classes-grid--professional">
-                  {classes.map(cls => (
-                    <Link key={cls.id} to={`${basePath}/classes/${cls.id}?tab=Students`} className="class-card class-card--professional">
-                      <div className="class-card-icon-professional">{(cls.name || 'C').slice(0, 1)}</div>
-                      <div className="class-card-content">
-                        <h3 className="class-card-title">{cls.name}</h3>
-                        {cls.subject && <span className="subject-tag-professional">{cls.subject}</span>}
-                        <div className="class-card-meta">
-                          <span className="class-card-code">Code {cls.class_code}</span>
-                          <span className="class-card-students">👥 {cls.student_count}</span>
-                          {Number(cls.graduated_count) > 0 && (
-                            <span className="class-card-graduated" title="Students who graduated to Alumni from this class">
-                              🎓 {cls.graduated_count}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="class-card-arrow">→</div>
-                    </Link>
-                  ))}
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setStaffClassesView('menu')} style={{ marginBottom: 16 }}>← Back</button>
+
+                <div className="classes-actions-professional">
+                  <button className="btn-professional btn-professional-primary" onClick={() => setShowCreate(true)}>
+                    + Fungura Ishuri
+                  </button>
+                  <button className="btn-professional btn-professional-secondary" onClick={() => setShowAddStudents(true)} disabled={user?.role === 'teacher' && !hasSchool}>
+                    👤 Add Students
+                  </button>
+                  <Link to="/alumni/graduation" className="btn-professional btn-professional-tertiary">
+                    🎓 Graduate Students
+                  </Link>
                 </div>
-                {classes[0] && (
-                  <div className="quick-actions-professional">
-                    <Link to={`${basePath}/classes/${classes[0].id}/record-marks`} className="action-pill-professional">
-                      📊 Marks Sheet
-                    </Link>
+
+                {announcements.filter(a => !dismissed.includes(a.id)).map(a => (
+                  <div key={a.id} className="announcement-card-professional">
+                    <div className="announcement-content">
+                      <div className="announcement-header">
+                        <span className="announcement-icon">📢</span>
+                        <strong className="announcement-title">{a.title}</strong>
+                        <span className="announcement-author">— {a.admin_name}</span>
+                      </div>
+                      <p className="announcement-text">{a.message}</p>
+                      <span className="announcement-date">{new Date(a.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <button
+                      onClick={() => dismissAnnouncement(a.id)}
+                      className="announcement-dismiss"
+                      title="Dismiss"
+                    >✕</button>
                   </div>
+                ))}
+
+                {classes.length === 0 ? (
+                  <div className="empty-state-professional">
+                    <div className="empty-icon-professional">📚</div>
+                    <h3>Nta madarasa</h3>
+                    <p>Fungura ishuri ryawe rya mbere utangire</p>
+                    <button className="btn-professional btn-professional-primary" onClick={() => setShowCreate(true)}>Fungura Ishuri</button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="section-title-professional">Your classes</h2>
+                    <div className="classes-grid classes-grid--professional">
+                      {classes.map(cls => (
+                        <Link key={cls.id} to={`${basePath}/classes/${cls.id}?tab=Students`} className="class-card class-card--professional">
+                          <div className="class-card-icon-professional">{(cls.name || 'C').slice(0, 1)}</div>
+                          <div className="class-card-content">
+                            <h3 className="class-card-title">{cls.name}</h3>
+                            {cls.subject && <span className="subject-tag-professional">{cls.subject}</span>}
+                            <div className="class-card-meta">
+                              <span className="class-card-code">Code {cls.class_code}</span>
+                            </div>
+                          </div>
+                          <div className="class-card-arrow">→</div>
+                        </Link>
+                      ))}
+                    </div>
+                    {classes[0] && (
+                      <div className="quick-actions-professional">
+                        <Link to={`${basePath}/classes/${classes[0].id}/record-marks`} className="action-pill-professional">
+                          📊 Marks Sheet
+                        </Link>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

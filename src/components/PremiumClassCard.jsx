@@ -22,46 +22,6 @@ export default function PremiumClassCard({
         </div>
       </div>
 
-      <div className="class-stats">
-        <div className="stat-card stat-card--students">
-          <div className="stat-icon">👥</div>
-          <div className="stat-content">
-            <div className="stat-label">Students</div>
-            <div className="stat-value">{studentCount}</div>
-          </div>
-        </div>
-
-        <div className="stat-card stat-card--present">
-          <div className="stat-icon">🎓</div>
-          <div className="stat-content">
-            <div className="stat-label">Graduated</div>
-            <div className="stat-value">{graduatedCount}</div>
-          </div>
-        </div>
-
-        <div className="stat-card stat-card--absent">
-          <div className="stat-icon">📋</div>
-          <div className="stat-content">
-            <div className="stat-label">Quiz reports</div>
-            <div className="stat-value">
-              <Link
-                to={`${basePath}/classes/${classData?.id}?tab=Quiz reports`}
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                Open
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {graduatedCount > 0 && studentCount === 0 && (
-        <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6B7280' }}>
-          All {graduatedCount} students of this class graduated to Alumni. Share code{' '}
-          <strong>{classData?.class_code}</strong> to add new students.
-        </p>
-      )}
-
       <div className="class-action">
         <Link to={`${basePath}/classes/${classData?.id}`} className="premium-action-button">
           Open Class

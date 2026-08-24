@@ -4,6 +4,9 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+}
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f5f6fa;
@@ -218,10 +221,40 @@ body {
 .class-card-header h3 { font-size: 17px; font-weight: 700; color: #1a1a2e; }
 .subject-tag { display: inline-block; background: #f0f2ff; color: #667eea; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 4px; }
 
-.class-code-display { background: #f8f9ff; border-radius: 8px; padding: 10px 14px; }
-.code-label { display: block; font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-.code-value { font-size: 22px; font-weight: 700; color: #667eea; letter-spacing: 3px; }
+.class-code-display {
+  background: #0f4c3a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(15, 76, 58, 0.3);
+}
+.code-label { display: block; font-size: 10px; color: #a7f3d0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.code-value { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: 3px; }
 .class-teacher { font-size: 13px; color: #666; }
+
+.student-parent-invite-banner {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+.student-parent-invite-banner strong {
+  font-size: 15px;
+  color: #1e293b;
+}
+.student-parent-invite-banner p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
 
 .class-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #888; }
 .arrow { color: #667eea; font-weight: 700; }
@@ -1000,6 +1033,9 @@ body {
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 .class-roster-header {
   display: flex;
@@ -1015,9 +1051,13 @@ body {
 .class-roster-table {
   width: 100%;
   border-collapse: collapse;
+  border-radius: 0;
+  min-width: 620px;
+  border: 2px solid #0f4c3a;
 }
 .class-roster-table thead {
-  background: #f8fafc;
+  background: #0f4c3a;
+  color: #fff;
 }
 .class-roster-table th {
   padding: 14px 12px;
@@ -1026,20 +1066,40 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #64748b;
-  border-bottom: 2px solid #e2e8f0;
+  color: #fff;
+  border: 1px solid #0a362a;
 }
 .class-roster-table td {
   padding: 14px 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border: 1px solid #e2e8f0;
   font-size: 14px;
   vertical-align: middle;
 }
-.class-roster-table tbody tr:hover {
-  background: #f8fafc;
+.class-roster-table tbody tr:nth-child(even) {
+  background: #f6fffc;
 }
-.class-roster-table tbody tr:last-child td {
-  border-bottom: none;
+.class-roster-table tbody tr:hover {
+  background: #e6f5f0;
+}
+.class-roster-table input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #0f4c3a;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .class-roster-table-wrapper {
+    padding: 12px;
+  }
+  .class-roster-table {
+    min-width: 580px;
+  }
+  .class-roster-table th,
+  .class-roster-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
 }
 
 /* ── Professional Teacher Dashboard Styling ───────────────────────────── */
@@ -1233,6 +1293,9 @@ body {
 }
 
 /* Main Content */
+.dash-main-professional, .admin-content {
+  overflow-x: hidden;
+}
 .dash-main-professional {
   max-width: none;
   width: 100%;
@@ -1310,6 +1373,18 @@ body {
   border-radius: 14px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
+.classes-actions-professional .btn-professional {
+  flex: 1 1 auto;
+  min-width: 160px;
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.classes-actions-professional .btn-professional-primary { background: #667eea; color: #fff; }
+.classes-actions-professional .btn-professional-secondary { background: #0f4c3a; color: #fff; }
+.classes-actions-professional .btn-professional-tertiary { background: #f59e0b; color: #fff; }
 
 /* Announcement Card */
 .announcement-card-professional {
@@ -1471,16 +1546,16 @@ body {
     padding: 0 10px 20px;
   }
   .classes-actions-professional {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;
-    margin-bottom: 14px;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
   }
   .classes-actions-professional .btn-professional {
-    width: auto;
-    flex: 1 1 auto;
-    min-width: 130px;
+    width: 100%;
+    min-width: 0;
+    padding: 14px 16px;
+    font-size: 15px;
   }
   .section-professional {
     padding: 14px 12px;
@@ -1523,4 +1598,20 @@ body {
   .mobile-staff-header {
     display: none !important;
   }
+}
+
+/* Admin-layout Student overrides */
+.admin-content.student-dashboard-classic {
+  min-height: 0;
+}
+
+.admin-topbar .btn-logout,
+.admin-user-info .btn-logout {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.admin-user-info .btn-logout:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
 }

@@ -147,19 +147,19 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
 
         {activeTab === 'classes' && (
           <>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
-              <button type="button" className="premium-action-button" onClick={() => setShowCreate(true)}>
+            <div className="premium-actions-row">
+              <button type="button" className="premium-action-button premium-action-button--create" onClick={() => setShowCreate(true)}>
                 + Fungura Ishuri
               </button>
               <button
                 type="button"
-                className="premium-action-button"
+                className="premium-action-button premium-action-button--add"
                 onClick={() => setShowAddStudents(true)}
                 disabled={user?.role === 'teacher' && !hasSchool}
               >
                 👤 Add Students
               </button>
-              <Link to="/alumni/graduation" className="premium-action-button">🎓 Graduate Students</Link>
+              <Link to="/alumni/graduation" className="premium-action-button premium-action-button--graduate">🎓 Graduate Students</Link>
             </div>
 
             {hasSchool && (

@@ -347,15 +347,21 @@ details summary {
   }
 
   .tabs {
-    gap: 4px !important;
-    overflow-x: auto !important;
-    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    overflow: visible !important;
+    flex-wrap: wrap !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 
   .tab {
-    padding: 8px 12px !important;
-    font-size: 13px !important;
+    padding: 10px 6px !important;
+    font-size: 12px !important;
     white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: center !important;
+    border-radius: 8px !important;
   }
 
   .item-card {
