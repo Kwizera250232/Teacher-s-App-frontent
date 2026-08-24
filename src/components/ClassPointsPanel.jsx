@@ -380,16 +380,17 @@ export default function ClassPointsPanel({
       <div className={`class-points-layout${showFeed ? ' with-feed' : ''}`}>
         <div>
           {view === 'students' && (
-            <div className="class-roster-table-wrapper" style={{ overflowX: 'auto' }}>
-              <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
-                  {students.length} student(s) in this class
-                </div>
+            <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
+                {students.length} student(s) in this class
               </div>
+              <span style={{ marginLeft: 'auto', fontSize: 11, color: '#64748b' }}>← scroll to see more →</span>
+            </div>
+            <div className="class-roster-table-wrapper">
               <table className="class-roster-table">
                 <thead>
                   <tr>
-                    <th style={{ width: 60, textAlign: 'center' }}>
+                    <th style={{ width: 50, textAlign: 'center' }}>
                       <input
                         type="checkbox"
                         checked={students.length > 0 && selectedIds.size === students.length}
@@ -398,7 +399,6 @@ export default function ClassPointsPanel({
                           else setSelectedIds(new Set());
                         }}
                       />
-                      <div style={{ fontSize: 10, fontWeight: 700 }}>Transfer</div>
                     </th>
                     <th style={{ width: 40 }}>#</th>
                     <th style={{ width: 50 }}>Image</th>
