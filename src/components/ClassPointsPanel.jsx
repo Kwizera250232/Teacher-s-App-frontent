@@ -380,6 +380,7 @@ export default function ClassPointsPanel({
       <div className={`class-points-layout${showFeed ? ' with-feed' : ''}`}>
         <div>
           {view === 'students' && (
+            <>
             <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
               <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
                 {students.length} student(s) in this class
@@ -517,6 +518,7 @@ export default function ClassPointsPanel({
                 </tbody>
               </table>
             </div>
+            </>
           )}
 
           {view === 'groups' && (
