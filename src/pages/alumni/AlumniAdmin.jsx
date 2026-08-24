@@ -73,7 +73,7 @@ export default function AlumniAdmin() {
       if (activeTab === 'books') endpoint = '/admin/alumni/books';
       else if (activeTab === 'library') endpoint = '/admin/alumni/library-items';
       else if (activeTab === 'opportunities') endpoint = '/admin/alumni/opportunities';
-      else if (activeTab === 'pastpapers') endpoint = '/admin/alumni/past-papers';
+      else if (activeTab === 'pastpapers') endpoint = '/alumni/admin/alumni/past-papers';
 
       if ((activeTab === 'library' || activeTab === 'pastpapers') && form._file) {
         const fd = new FormData();
@@ -104,7 +104,7 @@ export default function AlumniAdmin() {
       if (activeTab === 'books') endpoint = `/admin/alumni/books/${id}`;
       else if (activeTab === 'library') endpoint = `/admin/alumni/library-items/${id}`;
       else if (activeTab === 'opportunities') endpoint = `/admin/alumni/opportunities/${id}`;
-      else if (activeTab === 'pastpapers') endpoint = `/admin/alumni/past-papers/${id}`;
+      else if (activeTab === 'pastpapers') endpoint = `/alumni/admin/alumni/past-papers/${id}`;
       await api.delete(endpoint, token);
       loadItems();
     } catch (e) { alert('Failed to delete'); }
