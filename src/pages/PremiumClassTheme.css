@@ -368,34 +368,26 @@ details summary {
     border-radius: 14px !important;
   }
 
-  /* Allow student roster table to scroll horizontally on mobile */
-  .class-main,
-  .class-page .class-main,
-  .class-points-panel,
-  .class-points-layout {
-    overflow-x: visible !important;
-    max-width: 100% !important;
-  }
-
+  /* Roster table — flexible on mobile, fits screen */
   .class-roster-table-wrapper {
-    overflow-x: auto !important;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
-    max-width: 100% !important;
-    width: 100% !important;
-    display: block !important;
-    position: relative;
+    max-width: 100%;
+    width: 100%;
   }
 
   .class-roster-table {
-    min-width: 760px !important;
-    width: 760px !important;
-    border: 3px solid #0f4c3a !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 2px solid #0f4c3a !important;
+    table-layout: auto !important;
   }
 
   .class-roster-table th,
   .class-roster-table td {
-    border: 2px solid #0f4c3a !important;
-    white-space: nowrap !important;
+    border: 1.5px solid #0f4c3a !important;
+    padding: 6px 4px !important;
+    font-size: 11px !important;
+    word-break: break-word !important;
   }
 }

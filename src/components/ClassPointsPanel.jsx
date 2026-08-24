@@ -385,7 +385,6 @@ export default function ClassPointsPanel({
               <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
                 {students.length} student(s) in this class
               </div>
-              <span style={{ marginLeft: 'auto', fontSize: 11, color: '#64748b' }}>← scroll to see more →</span>
             </div>
             <div className="class-roster-table-wrapper">
               <table className="class-roster-table">
