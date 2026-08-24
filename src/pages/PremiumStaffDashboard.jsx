@@ -152,7 +152,6 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
               >
                 👤 Add Students
               </button>
-              <Link to="/alumni/graduation" className="premium-action-button premium-action-button--graduate">🎓 Graduate Students</Link>
             </div>
 
             {hasSchool && (
