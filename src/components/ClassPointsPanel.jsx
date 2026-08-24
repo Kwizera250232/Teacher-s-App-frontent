@@ -404,9 +404,9 @@ export default function ClassPointsPanel({
                     <th style={{ width: 50 }}>Image</th>
                     <th>Name</th>
                     <th style={{ width: 90 }}>Gender</th>
-                    <th style={{ width: 60 }}>Points</th>
                     <th style={{ width: 110 }}>Parent</th>
                     <th style={{ width: 80 }}>View</th>
+                    <th style={{ width: 90 }}>Transfer</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -473,7 +473,6 @@ export default function ClassPointsPanel({
                             <option value="Female">Female</option>
                           </select>
                         </td>
-                        <td>{points}</td>
                         <td>
                           {onParentInvite && (
                             <button
@@ -496,6 +495,20 @@ export default function ClassPointsPanel({
                             onClick={() => onStudentClick?.(s)}
                           >
                             Profile
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-sm"
+                            style={{ fontSize: 10, padding: '2px 6px' }}
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              setSelectedIds(new Set([s.id]));
+                              setShowTransfer(true);
+                            }}
+                          >
+                            Transfer
                           </button>
                         </td>
                       </tr>
