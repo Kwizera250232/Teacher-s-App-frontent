@@ -75,7 +75,7 @@ export default function AlumniAdmin() {
       else if (activeTab === 'opportunities') endpoint = '/admin/alumni/opportunities';
       else if (activeTab === 'pastpapers') endpoint = '/admin/alumni/past-papers';
 
-      if (activeTab === 'library' && form._file) {
+      if ((activeTab === 'library' || activeTab === 'pastpapers') && form._file) {
         const fd = new FormData();
         Object.keys(form).forEach((key) => {
           if (key !== '_file' && form[key] !== undefined && form[key] !== '') fd.append(key, form[key]);
@@ -191,7 +191,8 @@ export default function AlumniAdmin() {
           <select value={form.year || '2024'} onChange={(e) => setForm({...form, year: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
             {['2024','2023','2022','2021','2020','2019'].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <input placeholder="PDF URL" value={form.pdf_url || ''} onChange={(e) => setForm({...form, pdf_url: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
+          <input type="file" onChange={(e) => setForm({...form, _file: e.target.files[0]})} style={{ fontSize: 13 }} accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx" />
+          <div style={{ fontSize: 12, color: '#94a3b8' }}>Upload a Word, PDF, or other document</div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="submit" style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Past Paper'}</button>
             {editing && <button type="button" onClick={() => { setEditing(null); setForm({}); }} style={{ padding: '10px 20px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer' }}>Cancel</button>}
