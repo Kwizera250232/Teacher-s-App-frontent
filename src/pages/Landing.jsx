@@ -104,35 +104,35 @@ export default function Landing() {
   const studentFeatures = useMemo(() => ([
     {
       title: 'STUDENT JOIN CLASS',
-      text: 'Students join class first using a class code, then unlock lessons and class activities in one tap.',
+      text: 'Students work together in class using UClass on a laptop to learn and share ideas.',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
           <path d="M5 4h14a1 1 0 0 1 1 1v14l-4-2-4 2-4-2-4 2V5a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ),
-      image: '/images/landing/656642666_1404974461657878_6540421227514327794_n.jpg',
+      image: '/images/landing/new-students-group-2.jpg',
       tint: 'from-indigo-100 to-violet-100'
     },
     {
       title: 'Do Quiz, Homework, Get Notes',
-      text: 'Students do quizzes, submit homework, and get notes with auto grading feedback from teachers.',
+      text: 'Students take quizzes on the app, work through questions, and get instant feedback.',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
           <path d="M8 10h8M8 14h5M6 3h12a2 2 0 0 1 2 2v14l-4-2-4 2-4-2-4 2V5a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ),
-      image: '/images/landing/651284765_1401530122002312_2963162434047218533_n.jpg',
+      image: '/images/landing/new-students-quiz-1.jpg',
       tint: 'from-violet-100 to-fuchsia-100'
     },
     {
       title: 'Interact with Teacher & Classmates',
-      text: 'Interact with teacher and classmates about lessons and class activities through class discussions.',
+      text: 'Students gather around a laptop to discuss lessons and do group work in the app.',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
           <path d="M7 8h10M7 12h6m6 7-4-2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1v2Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ),
-      image: '/images/landing/678338657_1434981345323856_6442929879255025444_n.jpg',
+      image: '/images/landing/new-students-group-1.jpg',
       tint: 'from-blue-100 to-indigo-100'
     }
   ]), []);
@@ -372,13 +372,13 @@ export default function Landing() {
           <div className="relative">
             <div className="absolute -left-6 -top-6 hidden h-24 w-24 rounded-full bg-violet-200/60 blur-xl sm:block" />
             <img
-              src="/images/landing/656642666_1404974461657878_6540421227514327794_n.jpg"
-              alt="Students doing class activity"
+              src="/images/landing/new-students-quiz-3.jpg"
+              alt="Students doing a quiz on UClass"
               className="h-72 w-full rounded-3xl object-cover shadow-2xl shadow-indigo-100 sm:h-80 lg:h-96"
             />
             <div className="absolute -bottom-5 left-4 rounded-2xl bg-white/95 p-4 shadow-lg ring-1 ring-violet-100">
-              <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">Today</p>
-              <p className="text-sm font-bold text-slate-800">4 homework tasks completed</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">UClass in action</p>
+              <p className="text-sm font-bold text-slate-800">Students doing quizzes &amp; group work</p>
             </div>
           </div>
         </section>
@@ -428,8 +428,8 @@ export default function Landing() {
           </div>
           <div className="rounded-2xl bg-white/10 p-4 ring-1 ring-white/20">
             <img
-              src="/images/landing/651284765_1401530122002312_2963162434047218533_n.jpg"
-              alt="Teacher and students doing practical class projects"
+              src="/images/landing/new-students-quiz-2.jpg"
+              alt="Students using UClass for quizzes in the classroom"
               className="h-full min-h-64 w-full rounded-2xl object-cover"
             />
           </div>
@@ -438,8 +438,8 @@ export default function Landing() {
         <section className="mt-16 grid animate-fade-up gap-8 rounded-3xl bg-white p-6 shadow-xl shadow-indigo-100 ring-1 ring-indigo-100 md:grid-cols-2 md:items-center md:p-10" style={{ animationDelay: '320ms' }}>
           <div className="order-2 md:order-1">
             <img
-              src="/images/landing/678338657_1434981345323856_6442929879255025444_n.jpg"
-              alt="Children learning with practical activities"
+              src="/images/landing/new-students-group-1.jpg"
+              alt="Students doing group work on UClass"
               className="h-72 w-full rounded-3xl object-cover"
             />
           </div>
