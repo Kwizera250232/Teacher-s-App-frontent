@@ -207,11 +207,12 @@
 /* Class Card */
 .premium-class-card {
   background: var(--card-bg);
-  border-radius: 24px;
-  padding: 40px;
+  border-radius: 18px;
+  padding: 20px 24px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--border);
   transition: all 0.3s ease;
+  margin-bottom: 16px;
 }
 
 .premium-class-card:hover {
@@ -222,48 +223,50 @@
 .class-card-header {
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 40px;
+  gap: 16px;
+  justify-content: space-between;
 }
 
 .class-badge {
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
   background: linear-gradient(135deg, var(--primary-purple) 0%, #8B5CF6 100%);
-  border-radius: 20px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(90, 63, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(90, 63, 255, 0.3);
 }
 
 .class-badge-text {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   color: white;
 }
 
 .class-info {
   flex: 1;
+  min-width: 0;
 }
 
 .class-name {
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text);
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   line-height: 1.2;
 }
 
 .class-subject {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 }
 
 .class-code {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
   margin: 0;
@@ -351,22 +354,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 48px;
+  padding: 12px 24px;
   background: linear-gradient(135deg, var(--primary-purple) 0%, #8B5CF6 100%);
   color: white;
   border: none;
-  border-radius: 16px;
-  font-size: 18px;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 24px rgba(90, 63, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(90, 63, 255, 0.3);
   text-decoration: none;
 }
 
 .premium-action-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(90, 63, 255, 0.4);
+  box-shadow: 0 8px 20px rgba(90, 63, 255, 0.4);
 }
 
 .premium-action-button:active {
@@ -376,6 +379,12 @@
 .premium-action-button--create { background: linear-gradient(135deg, #667eea 0%, #7C3AED 100%); }
 .premium-action-button--add { background: linear-gradient(135deg, #059669 0%, #10B981 100%); }
 .premium-action-button--graduate { background: linear-gradient(135deg, #f59e0b 0%, #D97706 100%); }
+.premium-action-button--open {
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 10px;
+  margin-left: auto;
+}
 
 /* Footer */
 .premium-footer {
@@ -497,46 +506,51 @@
   }
 
   .class-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .class-badge {
-    width: 64px;
-    height: 64px;
-  }
-
-  .class-badge-text {
-    font-size: 24px;
-  }
-
-  .class-name {
-    font-size: 24px;
-  }
-
-  .class-stats {
-    grid-template-columns: 1fr;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 12px;
   }
 
-  .stat-card {
-    padding: 20px;
+  .class-badge {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 14px;
   }
 
-  .stat-value {
-    font-size: 36px;
+  .class-badge-text {
+    font-size: 18px;
+  }
+
+  .class-name {
+    font-size: 18px;
+  }
+
+  .class-subject {
+    font-size: 13px;
+  }
+
+  .class-code {
+    font-size: 11px;
   }
 
   .premium-actions-row {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 16px;
   }
   .premium-action-button {
     width: 100%;
-    padding: 16px 32px;
-    font-size: 16px;
-    border-radius: 14px;
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+  .premium-action-button--open {
+    margin-left: auto;
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 10px;
   }
 
   .premium-footer {

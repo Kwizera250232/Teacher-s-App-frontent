@@ -183,8 +183,6 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
                 <PremiumClassCard
                   key={cls.id}
                   classData={cls}
-                  studentCount={Number(cls.student_count) || 0}
-                  graduatedCount={Number(cls.graduated_count) || 0}
                   basePath={basePath}
                 />
               ))

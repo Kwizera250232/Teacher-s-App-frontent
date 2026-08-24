@@ -2,8 +2,6 @@ import { Link } from 'react-router-dom';
 
 export default function PremiumClassCard({
   classData,
-  studentCount,
-  graduatedCount = 0,
   basePath = '/teacher',
 }) {
   const name = classData?.name || 'Class';
@@ -20,11 +18,8 @@ export default function PremiumClassCard({
           {classData?.subject && <p className="class-subject">{classData.subject}</p>}
           <p className="class-code">Class Code: {classData?.class_code || '—'}</p>
         </div>
-      </div>
-
-      <div className="class-action">
-        <Link to={`${basePath}/classes/${classData?.id}`} className="premium-action-button">
-          Open Class
+        <Link to={`${basePath}/classes/${classData?.id}`} className="premium-action-button premium-action-button--open">
+          Open
         </Link>
       </div>
     </div>
