@@ -126,26 +126,43 @@
   background: #fff;
 }
 
+.auth-app-shell .btn,
+.auth-app-shell .btn-primary,
+.auth-app-shell .btn-secondary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  text-align: center !important;
+}
+
 .auth-app-shell .btn-primary {
-  background: linear-gradient(135deg, #25d366, #128c7e);
-  border: none;
-  color: #fff;
-  font-weight: 700;
-  border-radius: 10px;
-  padding: 12px 16px;
-  width: 100%;
-  font-size: 15px;
-  cursor: pointer;
+  background: linear-gradient(135deg, #25d366, #128c7e) !important;
+  border: none !important;
+  color: #fff !important;
+  width: 100% !important;
+  font-size: 15px !important;
+}
+
+.auth-app-shell .btn-primary:hover {
+  background: linear-gradient(135deg, #128c7e, #25d366) !important;
 }
 
 .auth-app-shell .btn-secondary {
-  background: #fff;
-  border: 1.5px solid #128c7e;
-  color: #128c7e;
-  font-weight: 600;
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
+  background: #fff !important;
+  border: 1.5px solid #128c7e !important;
+  color: #128c7e !important;
+  width: 100% !important;
+  font-size: 15px !important;
+}
+
+.auth-app-shell .btn-full,
+.auth-app-shell .btn-primary.btn-full,
+.auth-app-shell .btn-secondary.btn-full {
+  width: 100% !important;
 }
 
 .auth-app-shell .role-grid {
