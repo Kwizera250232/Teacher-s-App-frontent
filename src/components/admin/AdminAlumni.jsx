@@ -21,9 +21,9 @@ export default function AdminAlumni({ token }) {
     setLoading(true);
     try {
       let endpoint = '';
-      if (activeTab === 'books') endpoint = '/alumni/admin/books';
-      else if (activeTab === 'opportunities') endpoint = '/alumni/admin/opportunities';
-      else if (activeTab === 'pastpapers') endpoint = '/alumni/admin/past-papers';
+      if (activeTab === 'books') endpoint = '/alumni/admin/alumni/books';
+      else if (activeTab === 'opportunities') endpoint = '/alumni/admin/alumni/opportunities';
+      else if (activeTab === 'pastpapers') endpoint = '/alumni/admin/alumni/past-papers';
       const data = await api.get(endpoint, token);
       if (activeTab === 'books') setItems(data.books || []);
       else if (activeTab === 'opportunities') setItems(data.opportunities || []);
@@ -54,11 +54,18 @@ export default function AdminAlumni({ token }) {
     e.preventDefault();
     try {
       let endpoint = '';
-      if (activeTab === 'books') endpoint = '/alumni/admin/books';
-      else if (activeTab === 'opportunities') endpoint = '/alumni/admin/opportunities';
-      else if (activeTab === 'pastpapers') endpoint = '/alumni/admin/past-papers';
+      if (activeTab === 'books') endpoint = '/alumni/admin/alumni/books';
+      else if (activeTab === 'opportunities') endpoint = '/alumni/admin/alumni/opportunities';
+      else if (activeTab === 'pastpapers') endpoint = '/alumni/admin/alumni/past-papers';
 
-      if (editing) {
+      if (activeTab === 'pastpapers' && form._file) {
+        const fd = new FormData();
+        ['title','subject','year','description'].forEach((key) => {
+          if (form[key] !== undefined && form[key] !== '') fd.append(key, form[key]);
+        });
+        fd.append('file', form._file);
+        await uploadFile(endpoint, fd, token);
+      } else if (editing) {
         await api.put(`${endpoint}/${editing}`, form, token);
       } else {
         await api.post(endpoint, form, token);
@@ -75,9 +82,9 @@ export default function AdminAlumni({ token }) {
     if (!window.confirm('Delete this item?')) return;
     try {
       let endpoint = '';
-      if (activeTab === 'books') endpoint = `/alumni/admin/books/${id}`;
-      else if (activeTab === 'opportunities') endpoint = `/alumni/admin/opportunities/${id}`;
-      else if (activeTab === 'pastpapers') endpoint = `/alumni/admin/past-papers/${id}`;
+      if (activeTab === 'books') endpoint = `/alumni/admin/alumni/books/${id}`;
+      else if (activeTab === 'opportunities') endpoint = `/alumni/admin/alumni/opportunities/${id}`;
+      else if (activeTab === 'pastpapers') endpoint = `/alumni/admin/alumni/past-papers/${id}`;
       await api.delete(endpoint, token);
       loadItems();
     } catch (e) { alert('Failed to delete'); }
@@ -144,17 +151,9 @@ export default function AdminAlumni({ token }) {
           <select value={form.year || '2024'} onChange={(e) => setForm({...form, year: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
             {['2024','2023','2022','2021','2020','2019'].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <input placeholder="PDF URL" value={form.pdf_url || ''} onChange={(e) => setForm({...form, pdf_url: e.target.value})} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
-            <button type="button" onClick={() => fileInputRef.current?.click()} style={{ padding: '10px 16px', borderRadius: 8, border: '1.5px solid #667eea', background: '#fff', color: '#667eea', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              {uploading ? 'Uploading...' : '📁 Upload PDF'}
-            </button>
-            <input type="file" ref={fileInputRef} accept=".pdf" style={{ display: 'none' }} onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) { const url = await handleUpload(file); if (url) setForm(prev => ({ ...prev, pdf_url: url })); }
-            }} />
-          </div>
-          {form.pdf_url && <div style={{ fontSize: 13, color: '#059669', padding: '6px 10px', background: '#f0fdf4', borderRadius: 6 }}>✅ File ready: {form.pdf_url.split('/').pop()}</div>}
+          <input type="file" onChange={(e) => setForm({...form, _file: e.target.files[0]})} style={{ fontSize: 13 }} accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx" />
+          <div style={{ fontSize: 12, color: '#94a3b8' }}>Upload a Word, PDF, or other document</div>
+          {form._file && <div style={{ fontSize: 13, color: '#059669', padding: '6px 10px', background: '#f0fdf4', borderRadius: 6 }}>✅ File ready: {form._file.name}</div>}
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="submit" disabled={uploading} style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Past Paper'}</button>
             {editing && <button type="button" onClick={() => { setEditing(null); setForm({}); }} style={{ padding: '10px 20px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer' }}>Cancel</button>}
