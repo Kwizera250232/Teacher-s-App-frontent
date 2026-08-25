@@ -352,29 +352,6 @@ export default function ClassPointsPanel({
         <button type="button" className="btn btn-outline btn-sm" onClick={resetPoints}>
           Reset points
         </button>
-        {view === 'students' && (
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => {
-              if (selectedIds.size === 0) {
-                onError?.('Select at least one student to transfer.');
-              } else {
-                setShowTransfer(true);
-              }
-            }}
-            style={{
-              background: selectedIds.size > 0 ? '#0f4c3a' : 'transparent',
-              color: selectedIds.size > 0 ? '#fff' : '#0f4c3a',
-              border: '2px solid #0f4c3a',
-              borderRadius: 20,
-              fontWeight: 700,
-              padding: '6px 16px',
-            }}
-          >
-            {selectedIds.size > 0 ? `TRANSFER ${selectedIds.size}` : 'TRANSFER'}
-          </button>
-        )}
       </div>
 
 
@@ -382,27 +359,9 @@ export default function ClassPointsPanel({
         <div>
           {view === 'students' && (
             <>
-            <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
+            <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
               <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
                 {students.length} student(s) in this class
-              </div>
-              <div className="roster-scroll-controls" style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-                <button
-                  type="button"
-                  className="btn btn-sm roster-scroll-left"
-                  onClick={() => tableWrapperRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
-                  aria-label="Scroll table left"
-                >
-                  ←
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm roster-scroll-right"
-                  onClick={() => tableWrapperRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
-                  aria-label="Scroll table right"
-                >
-                  →
-                </button>
               </div>
             </div>
             <div className="class-roster-table-wrapper" ref={tableWrapperRef}>
