@@ -104,8 +104,8 @@ export default function Register() {
           return;
         }
       } else if (selectedRole === 'student') {
-        if (!form.studentEmailLocal.trim()) {
-          setError('Create your school email username.');
+        if (!form.email.trim()) {
+          setError('Andika imeyili.');
           setLoading(false);
           return;
         }
@@ -139,7 +139,7 @@ export default function Register() {
           payload.staff_school_name = form.staffSchoolName.trim();
         }
       } else if (selectedRole === 'student') {
-        payload.school_email_local = form.studentEmailLocal.trim();
+        payload.email = form.email.trim().toLowerCase();
       } else if (selectedRole === 'guest') {
         payload.email = form.email.trim().toLowerCase();
       }
@@ -403,50 +403,20 @@ export default function Register() {
                 />
               </div>
               <div className="form-group">
-                <label>Imeyili y&apos;ishuri (login)</label>
-                <div className="auth-school-email-row">
-                  <input
-                    type="text"
-                    value={form.studentEmailLocal}
-                    onChange={(e) => {
-                      setForm({ ...form, studentEmailLocal: e.target.value });
-                      setStudentEmailStatus('');
-                      const picked = schools.find((s) => String(s.id) === String(form.school_id));
-                      const dom = signupEmailDomain(picked || { name: form.newSchool });
-                      if (e.target.value.trim() && dom) {
-                        setSchoolEmailPreview(buildSchoolEmailPreview(e.target.value, dom));
-                      }
-                    }}
-                    onBlur={async () => {
-                      const local = form.studentEmailLocal.trim();
-                      const sid = form.school_id || null;
-                      if (!local || !sid) return;
-                      try {
-                        const r = await api.get(
-                          `/auth/check-school-email?local=${encodeURIComponent(local)}&school_id=${encodeURIComponent(sid)}`
-                        );
-                        setSchoolEmailPreview(r.email);
-                        setStudentEmailStatus(
-                          r.available ? `✓ ${r.email}` : `✗ ${r.email} is already taken`
-                        );
-                      } catch (err) {
-                        setStudentEmailStatus(err.message);
-                      }
-                    }}
-                    placeholder="john.doe"
-                    required
-                    className="auth-school-email-local"
-                  />
-                  <span className="auth-school-email-domain">
-                    @
-                    {signupEmailDomain(
-                      schools.find((s) => String(s.id) === String(form.school_id))
-                        || { name: form.newSchool }
-                    ) || 'schoolname.edu'}
-                  </span>
-                </div>
+                <label>Imeyili (Gmail cyangwa iy&apos;umubyeyi)</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => {
+                    setForm({ ...form, email: e.target.value });
+                    setStudentEmailStatus('');
+                    setSchoolEmailPreview('');
+                  }}
+                  placeholder="parent@gmail.com"
+                  required
+                />
                 <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-                  {STUDENT_SCHOOL_EMAIL_HELP}
+                  If your teacher already added you, use the school email they gave you. Otherwise use a Gmail or parent/guardian email.
                 </p>
                 {schoolEmailPreview && (
                   <p style={{ fontSize: 12, marginTop: 4, color: '#0f766e' }}>
