@@ -363,6 +363,9 @@ export default function ClassPointsPanel({
               <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
                 {students.length} student(s) in this class
               </div>
+              <span style={{ fontSize: 12, color: '#64748b' }}>
+                Swipe the table left/right to see all columns
+              </span>
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
@@ -379,7 +382,6 @@ export default function ClassPointsPanel({
                     const lines = [];
                     lines.push(`UCLASS - Class Student Credentials`);
                     lines.push(`School,${esc(sch.name)}`);
-                    lines.push(`School Code,${esc(sch.code)}`);
                     lines.push(`Class,${esc(cls.name)}`);
                     lines.push(`Class Code,${esc(cls.class_code)}`);
                     lines.push(`Teacher,${esc(tch.name)}`);

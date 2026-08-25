@@ -1111,21 +1111,23 @@ body {
 
   .class-roster-table-wrapper {
     padding: 8px;
-    overflow-x: auto !important;
+    overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
-    touch-action: pan-x;
     max-width: 100%;
     width: 100%;
     display: block;
     border-radius: 10px;
     position: relative;
-    scroll-snap-type: x proximity;
+    scroll-behavior: smooth;
+    touch-action: pan-x pan-y;
+    box-sizing: border-box;
   }
   .class-roster-table {
-    min-width: 820px;
-    width: 820px;
+    min-width: 860px;
+    width: 860px;
+    max-width: none;
     border: 3px solid #0f4c3a;
   }
   .class-roster-table th,
@@ -1135,27 +1137,10 @@ body {
     white-space: nowrap;
     border: 2px solid #0f4c3a;
   }
-  /* Scroll hint gradient on edges */
-  .class-roster-table-wrapper::after {
-    content: '';
-    position: absolute;
+  .class-roster-table th {
+    position: sticky;
     top: 0;
-    right: 0;
-    width: 24px;
-    height: 100%;
-    background: linear-gradient(to left, rgba(15, 76, 58, 0.12), transparent);
-    pointer-events: none;
-  }
-  .class-roster-table-wrapper::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 24px;
-    height: 100%;
-    background: linear-gradient(to right, rgba(15, 76, 58, 0.12), transparent);
-    pointer-events: none;
-    z-index: 1;
+    z-index: 2;
   }
 }
 
