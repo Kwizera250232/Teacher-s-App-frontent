@@ -20,6 +20,8 @@ export default function InviteSignup() {
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [form, setForm] = useState({
     name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     schoolEmailLocal: '',
     password: '',
@@ -87,9 +89,17 @@ export default function InviteSignup() {
         payload.invite_token = token;
         payload.new_school_name = preview.can_create_school ? form.new_school_name : undefined;
         payload.new_school_location = preview.can_create_school ? form.new_school_location : undefined;
-        payload.school_email_local = form.schoolEmailLocal.trim();
-        if (!payload.school_email_local) {
-          setError('Create your school email username.');
+        const first = form.firstName.trim();
+        const last = form.lastName.trim();
+        if (!first || !last) {
+          setError('Enter your first name and last name.');
+          setSubmitting(false);
+          return;
+        }
+        payload.name = `${first} ${last}`;
+        payload.email = form.email.trim().toLowerCase();
+        if (!payload.email) {
+          setError('Enter your Gmail address.');
           setSubmitting(false);
           return;
         }
@@ -217,45 +227,29 @@ export default function InviteSignup() {
                 <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </label>
               {staffInvite ? (
-                <label className="form-group">
-                  School email (your login) *
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                <>
+                  <label className="form-group">
+                    First name *
+                    <input required value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="John" />
+                  </label>
+                  <label className="form-group">
+                    Last name *
+                    <input required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Doe" />
+                  </label>
+                  <label className="form-group">
+                    Gmail *
                     <input
+                      type="email"
                       required
-                      value={form.schoolEmailLocal}
-                      onChange={(e) => {
-                        setForm({ ...form, schoolEmailLocal: e.target.value });
-                        setSchoolEmailStatus('');
-                      }}
-                      onBlur={async () => {
-                        const local = form.schoolEmailLocal.trim();
-                        if (!local || !preview.school_code) return;
-                        try {
-                          const r = await api.get(
-                            `/auth/check-school-email?local=${encodeURIComponent(local)}&code=${encodeURIComponent(preview.school_code)}`
-                          );
-                          setSchoolEmailPreview(r.email);
-                          setSchoolEmailStatus(r.available ? `✓ ${r.email}` : '✗ Already taken');
-                        } catch (err) {
-                          setSchoolEmailStatus(err.message);
-                        }
-                      }}
-                      placeholder="john.doe"
-                      style={{ flex: '1 1 140px' }}
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="you@gmail.com"
                     />
-                    <span style={{ fontWeight: 600, color: '#475569' }}>
-                      @{inviteSchoolDomain || 'school.edu'}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
-                    {SCHOOL_EMAIL_IN_APP_HELP}
-                  </p>
-                  {schoolEmailStatus && (
-                    <span style={{ fontSize: 12, color: schoolEmailStatus.startsWith('✓') ? '#059669' : '#dc2626' }}>
-                      {schoolEmailStatus}
-                    </span>
-                  )}
-                </label>
+                    <p style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
+                      Use your real Gmail address. You will log in with this email.
+                    </p>
+                  </label>
+                </>
               ) : (
                 <label className="form-group">
                   {isParentInvite ? 'Personal email (Gmail, Yahoo, Outlook…) *' : 'Email *'}
