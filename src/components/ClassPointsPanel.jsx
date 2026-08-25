@@ -359,10 +359,53 @@ export default function ClassPointsPanel({
         <div>
           {view === 'students' && (
             <>
-            <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+            <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12, gap: 12, flexWrap: 'wrap' }}>
               <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
                 {students.length} student(s) in this class
               </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                style={{ marginLeft: 'auto', fontSize: 12, padding: '6px 12px' }}
+                onClick={async () => {
+                  try {
+                    const data = await api.get(`/classes/${classId}/students/credentials`, token);
+                    const cls = data.class || {};
+                    const sch = data.school || {};
+                    const tch = data.teacher || {};
+                    const studs = data.students || [];
+                    const loginUrl = `${window.location.origin}/login`;
+                    const esc = (v) => String(v ?? '').replace(/"/g, '""');
+                    const lines = [];
+                    lines.push(`UCLASS - Class Student Credentials`);
+                    lines.push(`School,${esc(sch.name)}`);
+                    lines.push(`School Code,${esc(sch.code)}`);
+                    lines.push(`Class,${esc(cls.name)}`);
+                    lines.push(`Class Code,${esc(cls.class_code)}`);
+                    lines.push(`Teacher,${esc(tch.name)}`);
+                    lines.push(`Login URL,${loginUrl}`);
+                    lines.push('');
+                    lines.push(`#,Name,Email,Password,Phone`);
+                    studs.forEach((s, i) => {
+                      lines.push(`${i + 1},"${esc(s.name)}","${esc(s.email)}","${esc(s.plaintext_password)}","${esc(s.phone)}"`);
+                    });
+                    const csv = lines.join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `class-${cls.class_code || classId}-students.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  } catch (e) {
+                    onError?.(e.message || 'Could not download credentials.');
+                  }
+                }}
+              >
+                Download
+              </button>
             </div>
             <div className="class-roster-table-wrapper" ref={tableWrapperRef}>
               <table className="class-roster-table">
@@ -381,6 +424,7 @@ export default function ClassPointsPanel({
                     <th style={{ width: 40 }}>#</th>
                     <th style={{ width: 50 }}>Image</th>
                     <th>Name</th>
+                    <th style={{ width: 120 }}>Password</th>
                     <th style={{ width: 90 }}>Gender</th>
                     <th style={{ width: 110 }}>Parent</th>
                     <th style={{ width: 80 }}>View</th>
@@ -422,6 +466,11 @@ export default function ClassPointsPanel({
                         <td>
                           <div style={{ fontWeight: 600, color: '#1e293b' }}>{displayName}</div>
                           <div style={{ fontSize: 12, color: '#64748b' }}>{s.email || ''}</div>
+                        </td>
+                        <td>
+                          <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#6b21a8' }}>
+                            {s.plaintext_password || <span style={{ color: '#94a3b8' }}>—</span>}
+                          </span>
                         </td>
                         <td>
                           <select
