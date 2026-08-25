@@ -5,7 +5,7 @@
 }
 
 html, body {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Roster table wrapper — flexible on all screens */
@@ -1101,12 +1101,19 @@ body {
 
 @media (max-width: 768px) {
   /* Allow parents to not block table scroll */
+  html, body {
+    overflow-x: clip !important;
+  }
   .dash-main-professional,
   .dash-main,
   .class-main,
   .class-points-panel,
+  .class-points-layout,
   .class-points-layout > div {
+    overflow: visible !important;
     overflow-x: visible !important;
+    max-width: 100% !important;
+    width: 100% !important;
   }
 
   .class-roster-table-wrapper {
