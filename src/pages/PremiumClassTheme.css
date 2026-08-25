@@ -377,10 +377,10 @@ details summary {
   }
 
   .class-roster-table-wrapper {
-    overflow-x: scroll !important;
+    overflow-x: auto !important;
     overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x !important;
+    overscroll-behavior-x: contain;
     max-width: 100% !important;
     width: 100% !important;
     display: block !important;
@@ -389,8 +389,8 @@ details summary {
   }
 
   .class-roster-table {
-    min-width: 620px !important;
-    width: 620px !important;
+    min-width: 700px !important;
+    width: 700px !important;
     border: 3px solid #0f4c3a !important;
   }
 
@@ -400,5 +400,13 @@ details summary {
     padding: 8px 6px !important;
     font-size: 12px !important;
     white-space: nowrap !important;
+  }
+
+  .roster-scroll-controls .btn-sm {
+    padding: 4px 10px !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+    border-radius: 6px !important;
+    min-width: 32px !important;
   }
 }

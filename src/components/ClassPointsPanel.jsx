@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 import VerifiedBadge from './VerifiedBadge';
 import TeacherGroupsPanel from './TeacherGroupsPanel';
@@ -57,6 +57,7 @@ export default function ClassPointsPanel({
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [showTransfer, setShowTransfer] = useState(false);
+  const tableWrapperRef = useRef(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -381,12 +382,30 @@ export default function ClassPointsPanel({
         <div>
           {view === 'students' && (
             <>
-            <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+            <div className="class-roster-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
               <div style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>
                 {students.length} student(s) in this class
               </div>
+              <div className="roster-scroll-controls" style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+                <button
+                  type="button"
+                  className="btn btn-sm roster-scroll-left"
+                  onClick={() => tableWrapperRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
+                  aria-label="Scroll table left"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm roster-scroll-right"
+                  onClick={() => tableWrapperRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
+                  aria-label="Scroll table right"
+                >
+                  →
+                </button>
+              </div>
             </div>
-            <div className="class-roster-table-wrapper">
+            <div className="class-roster-table-wrapper" ref={tableWrapperRef}>
               <table className="class-roster-table">
                 <thead>
                   <tr>
