@@ -20,6 +20,7 @@ import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
 import ParentInviteModal from '../components/ParentInviteModal';
 import CompositionStatusList from '../components/CompositionStatusList';
+import { LiveCoachingTeacherPanel } from '../components/LiveCoachingPanel';
 import ClassDeanHelp from '../components/ClassDeanHelp';
 import GuestMarksPanel from '../components/GuestMarksPanel';
 import ClassPointsPanel from '../components/ClassPointsPanel';
@@ -33,7 +34,7 @@ import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 import '../pages/PremiumClassTheme.css';
 
-const TABS = ['Students', 'Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Quiz reports', 'Marks', 'Leaderboard', 'Discussion', 'C. Status'];
+const TABS = ['Students', 'Feed', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Quiz reports', 'Marks', 'Leaderboard', 'Discussion', 'C. Status', 'Coaching'];
 
 export default function TeacherClassPage() {
   const { id } = useParams();
@@ -738,6 +739,18 @@ export default function TeacherClassPage() {
         {tab === 'C. Status' && (
           <div style={{ padding: '1rem 0' }}>
             <CompositionStatusList token={token} classId={id} />
+          </div>
+        )}
+
+        {tab === 'Coaching' && (
+          <div style={{ padding: '1rem 0' }}>
+            <LiveCoachingTeacherPanel
+              classId={id}
+              token={token}
+              user={user}
+              onError={(msg) => setError(msg)}
+              onSuccess={(msg) => showSuccess(msg)}
+            />
           </div>
         )}
 

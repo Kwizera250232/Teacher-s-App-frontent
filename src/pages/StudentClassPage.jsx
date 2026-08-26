@@ -10,6 +10,7 @@ import ClassmateProfileModal from '../components/ClassmateProfileModal';
 import ClassroomFeed from '../components/ClassroomFeed';
 import ClassDeanHelp from '../components/ClassDeanHelp';
 import ClassMomentsClassFold from '../components/classMoments/ClassMomentsClassFold';
+import { LiveCoachingStudentPanel } from '../components/LiveCoachingPanel';
 import '../components/classMoments/ClassMoments.css';
 import VerifiedBadge from '../components/VerifiedBadge';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
@@ -23,7 +24,7 @@ import '../pages/PremiumClassTheme.css';
 const CLASSMATE_DEFAULT_AVATAR =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2325d366'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
 
-const TABS = ['Feed', 'Groups', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Classmates'];
+const TABS = ['Feed', 'Groups', 'Announcements', 'Notes', 'Homework', 'Quizzes', 'Leaderboard', 'Discussion', 'Classmates', 'Coaching'];
 
 export default function StudentClassPage() {
   const { id } = useParams();
@@ -554,6 +555,18 @@ export default function StudentClassPage() {
                 <span className="wa-class-time">›</span>
               </button>
             ))}
+          </div>
+        )}
+
+        {tab === 'Coaching' && (
+          <div style={{ padding: '1rem 0' }}>
+            <LiveCoachingStudentPanel
+              classId={id}
+              token={token}
+              user={user}
+              onError={(msg) => setError(msg)}
+              onSuccess={(msg) => showSuccess(msg)}
+            />
           </div>
         )}
 
