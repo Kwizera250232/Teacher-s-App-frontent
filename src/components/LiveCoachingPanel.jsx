@@ -855,7 +855,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
 
   // WebRTC audio
   const audio = useCoachingAudio({
-    classId, sessionId, token, user, canSpeak, participants,
+    classId, sessionId, token, user, canSpeak, participants, isTeacher: true,
   });
 
   const updateState = async (changes) => {
@@ -1080,8 +1080,8 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
         </div>
       </div>
 
-      {/* Question Controls with progressive grouping */}
-      {questions.length > 0 && (
+      {/* Question Controls — hidden when exercises are shown on the board */}
+      {questions.length > 0 && !showExercises && (
         <div style={{ marginTop: 16, background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
             <h3 style={{ margin: 0, fontSize: 16, color: '#0f4c3a' }}>
@@ -1125,8 +1125,8 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
             </div>
           )}
 
-          {/* Progressive group preview */}
-          {questions.length > groupSize && (
+          {/* Progressive group preview — hidden when exercises are on the board */}
+          {questions.length > groupSize && !showExercises && (
             <div style={{ marginTop: 12, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {groupQuestions.map((q, i) => {
                 const qIdx = groupStart + i;
@@ -1297,7 +1297,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
 
   // WebRTC audio — only connect if we have speak permission
   const audio = useCoachingAudio({
-    classId, sessionId, token, user, canSpeak: hasSpeakPermission, participants,
+    classId, sessionId, token, user, canSpeak: hasSpeakPermission, participants, isTeacher: false,
   });
 
   // Debounced whiteboard save for student with pen
@@ -1333,10 +1333,13 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, { hand_raised: currentList }, token).catch(() => {});
   };
 
-  // Student Next button — advance to next question
-  const studentNext = () => {
-    const idx = state?.current_question_index || 0;
-    api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, { current_question_index: idx + 1, show_answer: false }, token).catch(() => {});
+  // Student Next button — advance to next question via dedicated endpoint
+  const studentNext = async () => {
+    try {
+      await api.post(`/classes/${classId}/coaching-sessions/${sessionId}/next-question`, {}, token);
+    } catch (e) {
+      onError?.(e.message);
+    }
   };
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Joining session…</div>;

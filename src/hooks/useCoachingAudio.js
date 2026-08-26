@@ -6,6 +6,12 @@ import { api } from '../api';
  * Uses mesh networking — each participant connects to every other participant.
  * Signaling goes through the backend polling endpoints.
  *
+ * Key design:
+ * - ALL participants create peer connections to ALL others (for receiving audio)
+ * - Mic tracks are only ADDED when the user has permission to speak and enables mic
+ * - Teacher always has speak permission
+ * - Students get speak permission when teacher grants it (speak_permission_id)
+ *
  * @param {Object} opts
  * @param {string} opts.classId
  * @param {string} opts.sessionId
@@ -13,8 +19,9 @@ import { api } from '../api';
  * @param {Object} opts.user — { id, name }
  * @param {boolean} opts.canSpeak — whether this user has permission to speak
  * @param {Array}  opts.participants — [{ student_id, name }]
+ * @param {boolean} opts.isTeacher — whether this user is the teacher
  */
-export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, participants }) {
+export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, participants, isTeacher }) {
   const [micOn, setMicOn] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -22,36 +29,53 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   const [peerCount, setPeerCount] = useState(0);
 
   const localStreamRef = useRef(null);
-  const peersRef = useRef({}); // userId -> { pc, audioEl }
+  const peersRef = useRef({}); // userId -> { pc, audioEl, hasLocalTracks }
   const signalLastIdRef = useRef(0);
   const micOnRef = useRef(false);
   const canSpeakRef = useRef(canSpeak);
+  const isTeacherRef = useRef(isTeacher);
   const volumeRef = useRef(volume);
+  const audioEnabledRef = useRef(audioEnabled);
+  const participantsRef = useRef(participants);
 
   useEffect(() => { micOnRef.current = micOn; }, [micOn]);
   useEffect(() => { canSpeakRef.current = canSpeak; }, [canSpeak]);
+  useEffect(() => { isTeacherRef.current = isTeacher; }, [isTeacher]);
   useEffect(() => { volumeRef.current = volume; }, [volume]);
+  useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
+  useEffect(() => { participantsRef.current = participants; }, [participants]);
 
   // Get local mic stream
   const startMic = useCallback(async () => {
+    // Students can only use mic if they have speak permission
+    if (!canSpeakRef.current && !isTeacherRef.current) {
+      console.warn('[audio] No speak permission to use mic');
+      return false;
+    }
     try {
+      if (localStreamRef.current) {
+        // Already have a stream, just re-enable tracks
+        localStreamRef.current.getTracks().forEach(t => { t.enabled = true; });
+        setMicOn(true);
+        micOnRef.current = true;
+        return true;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false,
       });
       localStreamRef.current = stream;
-      // Apply volume via Web Audio API
-      applyVolumeToStream(stream, volumeRef.current);
       setMicOn(true);
       micOnRef.current = true;
-      // Add tracks to existing peer connections
+      // Add tracks to ALL existing peer connections
       Object.values(peersRef.current).forEach(peer => {
-        stream.getTracks().forEach(track => {
-          if (!peer.pc.getSenders().find(s => s.track === track)) {
+        if (!peer.hasLocalTracks) {
+          stream.getTracks().forEach(track => {
             peer.pc.addTrack(track, stream);
-          }
-        });
-        // Renegotiate
+          });
+          peer.hasLocalTracks = true;
+        }
+        // Renegotiate by sending a new offer
         createOffer(peer);
       });
       return true;
@@ -63,18 +87,12 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
 
   const stopMic = useCallback(() => {
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(t => t.stop());
-      localStreamRef.current = null;
+      localStreamRef.current.getTracks().forEach(t => { t.enabled = false; });
     }
     setMicOn(false);
     micOnRef.current = false;
-    // Remove senders from peer connections
-    Object.values(peersRef.current).forEach(peer => {
-      peer.pc.getSenders().forEach(s => {
-        if (s.track) peer.pc.removeTrack(s);
-      });
-      createOffer(peer);
-    });
+    // Note: we keep the peer connections and don't remove tracks,
+    // just disable them. This avoids renegotiation issues.
   }, []);
 
   const toggleMic = useCallback(() => {
@@ -82,34 +100,20 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     else startMic();
   }, [startMic, stopMic]);
 
-  // Apply volume to a stream using Web Audio API
-  const applyVolumeToStream = (stream, vol) => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const source = ctx.createMediaStreamSource(stream);
-      const gain = ctx.createGain();
-      gain.gain.value = vol;
-      source.connect(gain);
-      // Note: the modified stream for output would need a destination,
-      // but for peer connections we use the original stream tracks.
-      // Volume control on received audio is done via the audio element.
-    } catch (e) {
-      console.error('[audio] volume error:', e);
-    }
-  };
-
   const changeVolume = useCallback((vol) => {
-    setVolume(vol);
-    volumeRef.current = vol;
+    const clamped = Math.max(0, Math.min(1, vol));
+    setVolume(clamped);
+    volumeRef.current = clamped;
     // Apply to all received audio elements
     Object.values(peersRef.current).forEach(peer => {
-      if (peer.audioEl) peer.audioEl.volume = vol;
+      if (peer.audioEl) peer.audioEl.volume = clamped;
     });
   }, []);
 
   const toggleAudio = useCallback(() => {
     setAudioEnabled(prev => {
       const next = !prev;
+      audioEnabledRef.current = next;
       Object.values(peersRef.current).forEach(peer => {
         if (peer.audioEl) peer.audioEl.muted = !next;
       });
@@ -117,7 +121,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     });
   }, []);
 
-  // Create a peer connection for a user
+  // Create a peer connection for a user — always for receiving audio
   const createPeer = useCallback((otherUserId) => {
     if (peersRef.current[otherUserId]) return peersRef.current[otherUserId];
     const pc = new RTCPeerConnection({
@@ -130,11 +134,12 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     const audioEl = new Audio();
     audioEl.autoplay = true;
     audioEl.volume = volumeRef.current;
-    audioEl.muted = !audioEnabled;
+    audioEl.muted = !audioEnabledRef.current;
 
     pc.ontrack = (e) => {
       audioEl.srcObject = e.streams[0];
       audioEl.play().catch(() => {});
+      setConnected(true);
     };
 
     pc.onicecandidate = (e) => {
@@ -147,23 +152,23 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       }
     };
 
-    // Add local tracks if mic is on
-    if (localStreamRef.current) {
+    // Add local tracks if mic is on and we have a stream
+    if (localStreamRef.current && micOnRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
         pc.addTrack(track, localStreamRef.current);
       });
     }
 
-    const peer = { pc, audioEl, userId: otherUserId };
+    const peer = { pc, audioEl, userId: otherUserId, hasLocalTracks: !!(localStreamRef.current && micOnRef.current) };
     peersRef.current[otherUserId] = peer;
     setPeerCount(Object.keys(peersRef.current).length);
     return peer;
-  }, [classId, sessionId, token, audioEnabled]);
+  }, [classId, sessionId, token]);
 
   // Create and send an offer
   const createOffer = useCallback(async (peer) => {
     try {
-      const offer = await peer.pc.createOffer();
+      const offer = await peer.pc.createOffer({ offerToReceiveAudio: true });
       await peer.pc.setLocalDescription(offer);
       await api.post(
         `/classes/${classId}/coaching-sessions/${sessionId}/signal`,
@@ -186,7 +191,6 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     if (sig.signal_type === 'offer') {
       if (!peer) peer = createPeer(fromId);
       await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
-      // Only add local tracks if we can speak
       const answer = await peer.pc.createAnswer();
       await peer.pc.setLocalDescription(answer);
       await api.post(
@@ -230,20 +234,35 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token, handleSignal]);
 
-  // Create offers to new participants (only if we can speak or are the teacher)
+  // Create peer connections to ALL participants — everyone connects to everyone
+  // This ensures all participants can RECEIVE audio from the teacher and permitted students
   useEffect(() => {
     if (!participants || participants.length === 0) return;
-    // Only initiate offers if we have mic on or can speak
-    if (!micOnRef.current && !canSpeakRef.current) return;
     participants.forEach(p => {
       const pid = p.student_id || p.id;
       if (pid === user.id) return;
       if (!peersRef.current[pid]) {
         const peer = createPeer(pid);
+        // Initiate offer to establish connection
         createOffer(peer);
       }
     });
-  }, [participants, user.id, canSpeak, createPeer, createOffer]);
+  }, [participants, user.id, createPeer, createOffer]);
+
+  // When speak permission changes and mic was pending, auto-start mic
+  useEffect(() => {
+    if (canSpeak && !micOnRef.current && isTeacherRef.current === false) {
+      // Don't auto-start, but enable the toggle button
+      // User must press mic button themselves for browser permission
+    }
+  }, [canSpeak]);
+
+  // When speak permission is revoked, stop mic
+  useEffect(() => {
+    if (!canSpeak && !isTeacherRef.current && micOnRef.current) {
+      stopMic();
+    }
+  }, [canSpeak, stopMic]);
 
   // Cleanup on unmount
   useEffect(() => {
