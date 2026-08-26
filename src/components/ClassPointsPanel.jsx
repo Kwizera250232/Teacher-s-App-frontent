@@ -547,9 +547,37 @@ export default function ClassPointsPanel({
                           <div style={{ fontSize: 12, color: '#64748b' }}>{s.email || ''}</div>
                         </td>
                         <td>
-                          <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#6b21a8' }}>
-                            {s.plaintext_password || <span style={{ color: '#94a3b8' }}>—</span>}
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#6b21a8' }}>
+                              {s.plaintext_password || <span style={{ color: '#94a3b8' }}>—</span>}
+                            </span>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              style={{ fontSize: 9, padding: '1px 5px', lineHeight: 1 }}
+                              title="Set password"
+                              onClick={async () => {
+                                const newPw = window.prompt(`Set password for ${displayName}:`, s.plaintext_password || '');
+                                if (newPw === null) return;
+                                if (newPw.length < 4) {
+                                  onError?.('Password must be at least 4 characters.');
+                                  return;
+                                }
+                                try {
+                                  await api.put(`/classes/${classId}/students/${s.id}/password`, { new_password: newPw }, token);
+                                  setData((prev) => ({
+                                    ...prev,
+                                    students: prev.students.map((st) => (st.id === s.id ? { ...st, plaintext_password: newPw } : st)),
+                                  }));
+                                  onSuccess?.('Password updated.');
+                                } catch (err) {
+                                  onError?.(err.message || 'Could not update password.');
+                                }
+                              }}
+                            >
+                              ✎
+                            </button>
+                          </div>
                         </td>
                         <td>
                           <select
