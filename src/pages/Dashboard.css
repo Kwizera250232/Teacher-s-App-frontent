@@ -917,7 +917,8 @@ body {
   align-items: center;
   margin-bottom: 1rem;
 }
-.class-points-layout { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.class-points-layout { display: grid; grid-template-columns: 1fr; gap: 1rem; min-width: 0; }
+.class-points-layout > div { min-width: 0; }
 @media (min-width: 900px) {
   .class-points-layout.with-feed { grid-template-columns: 1fr 300px; }
 }
@@ -1041,11 +1042,13 @@ body {
   padding: 20px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
   max-width: 100%;
   width: 100%;
   display: block;
+  min-height: 80px;
 }
 .class-roster-header {
   display: flex;
@@ -1062,7 +1065,7 @@ body {
   width: 100%;
   border-collapse: collapse;
   border-radius: 0;
-  min-width: 620px;
+  min-width: 860px;
   border: 3px solid #0f4c3a;
 }
 .class-roster-table thead {

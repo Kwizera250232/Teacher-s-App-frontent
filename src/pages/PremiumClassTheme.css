@@ -372,13 +372,16 @@ details summary {
   .dash-main-professional,
   .class-main,
   .class-points-panel,
+  .class-points-layout,
   .class-points-layout > div {
     overflow: visible !important;
+    overflow-x: auto !important;
+    min-width: 0 !important;
   }
 
   .class-roster-table-wrapper {
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
     max-width: 100%;
@@ -390,6 +393,7 @@ details summary {
     padding: 8px;
     box-sizing: border-box;
     touch-action: pan-x pan-y;
+    min-height: 80px;
   }
 
   .class-roster-table {
