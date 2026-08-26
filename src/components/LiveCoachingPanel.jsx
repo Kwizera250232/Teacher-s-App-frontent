@@ -88,129 +88,137 @@ function AnswerTimer({ seconds, startedAt }) {
 }
 
 // ── Participant Avatar (used in grid and sidebar) ────────────────────────────
-// ── Exercise written directly ON the whiteboard (no card, just text) ──────────
+// ── Exercise displayed as original quiz UI (same as TakeQuiz) ─────────────────
 function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, onSelectAnswer, onNext, isTeacher }) {
   if (!question) return null;
-  const isMC = question.question_type === 'multiple_choice';
-  const letters = ['a', 'b', 'c', 'd', 'e'].filter(l => question[`option_${l}`]);
+  const qtype = question.question_type || 'multiple_choice';
+  const letters = ['a', 'b', 'c', 'd'].filter(l => question[`option_${l}`]);
 
   return (
     <div style={{
       position: 'absolute',
       top: 0, left: 0, right: 0, bottom: 0,
-      pointerEvents: 'none',
-      zIndex: 5,
-      padding: '24px 32px',
+      zIndex: 10,
+      overflowY: 'auto',
+      padding: '16px 20px',
       boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'stretch',
+      background: 'rgba(255,255,255,0.98)',
     }}>
-      {/* Question number */}
-      <div style={{
-        fontSize: 14, color: '#94a3b8', marginBottom: 8,
-        fontFamily: "'Caveat', 'Comic Sans MS', cursive",
-      }}>
-        Q{index + 1}{total ? ` of ${total}` : ''}
+      <div className="quiz-question" style={{ marginBottom: 0 }}>
+        {/* Reading passage */}
+        {question.passage && qtype !== 'matching' && (
+          <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: '12px 16px', marginBottom: 14, fontSize: 14, color: '#1e293b', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+            <strong style={{ fontSize: 12, color: '#0369a1', display: 'block', marginBottom: 6 }}>Reading Passage</strong>
+            {question.passage}
+          </div>
+        )}
+
+        {/* Question header — same as quiz */}
+        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>
+          Q{index + 1}{total ? ` of ${total}` : ''}: {question.question}
+        </h3>
+
+        {/* Multiple choice — same as quiz system */}
+        {qtype === 'multiple_choice' && (
+          <div className="quiz-options">
+            {letters.map(opt => {
+              const isSelected = selectedAnswer === opt;
+              const isCorrect = showAnswer && question.correct_answer === opt;
+              const isWrong = showAnswer && isSelected && !isCorrect;
+              let cls = 'quiz-option';
+              if (isSelected) cls += ' selected';
+              if (isCorrect) cls += ' correct';
+              if (isWrong) cls += ' wrong';
+              return (
+                <label key={opt} className={cls} onClick={() => !isTeacher && onSelectAnswer?.(opt)} style={isTeacher ? { cursor: 'default' } : {}}>
+                  <span className="quiz-option-text">
+                    <strong>{opt.toUpperCase()}.</strong> {question[`option_${opt}`]}
+                  </span>
+                  {isSelected && !showAnswer && (
+                    <span className="quiz-option-check" aria-label="Selected">V</span>
+                  )}
+                  {isCorrect && <span style={{ color: '#27ae60', fontWeight: 700 }}>✅</span>}
+                  {isWrong && <span style={{ color: '#e74c3c', fontWeight: 700 }}>❌</span>}
+                </label>
+              );
+            })}
+          </div>
+        )}
+
+        {/* True / False — same as quiz */}
+        {qtype === 'true_false' && (
+          <div className="quiz-options">
+            {[{ val: 'a', label: 'True' }, { val: 'b', label: 'False' }].map(({ val, label }) => {
+              const isSelected = selectedAnswer === val;
+              const isCorrect = showAnswer && question.correct_answer === val;
+              const isWrong = showAnswer && isSelected && !isCorrect;
+              let cls = 'quiz-option';
+              if (isSelected) cls += ' selected';
+              if (isCorrect) cls += ' correct';
+              if (isWrong) cls += ' wrong';
+              return (
+                <label key={val} className={cls} onClick={() => !isTeacher && onSelectAnswer?.(val)} style={{ fontSize: 15, fontWeight: 600, ...(isTeacher ? { cursor: 'default' } : {}) }}>
+                  <span className="quiz-option-text">{label}</span>
+                  {isSelected && !showAnswer && <span className="quiz-option-check" aria-label="Selected">V</span>}
+                  {isCorrect && <span style={{ color: '#27ae60', fontWeight: 700 }}>✅</span>}
+                  {isWrong && <span style={{ color: '#e74c3c', fontWeight: 700 }}>❌</span>}
+                </label>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Fill in blank — same as quiz */}
+        {qtype === 'fill_blank' && !isTeacher && (
+          <div style={{ marginTop: 12 }}>
+            <input
+              type="text"
+              value={selectedAnswer || ''}
+              onChange={e => onSelectAnswer?.(e.target.value)}
+              placeholder="Type your answer here..."
+              style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', border: `2px solid ${selectedAnswer && selectedAnswer.trim() ? '#128c7e' : '#e2e8f0'}`, borderRadius: 9, fontSize: 15, outline: 'none', fontFamily: 'inherit' }}
+            />
+          </div>
+        )}
+
+        {/* Fill in blank — teacher view (read-only) */}
+        {qtype === 'fill_blank' && isTeacher && (
+          <div style={{ marginTop: 12, padding: '10px 14px', background: '#f8fafc', borderRadius: 9, border: '2px solid #e2e8f0', fontSize: 14, color: '#64748b' }}>
+            Students type their answer here...
+          </div>
+        )}
+
+        {/* Answer reveal for fill_blank */}
+        {showAnswer && question.correct_answer && qtype === 'fill_blank' && (
+          <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fff4', borderRadius: 6, border: '1px solid #27ae60', fontSize: 14 }}>
+            Correct Answer: <strong>{question.correct_answer}</strong> ✅
+          </div>
+        )}
+
+        {/* Submit + Next row — same as quiz flow */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 16, flexWrap: 'wrap' }}>
+          {!isTeacher && (
+            <button
+              onClick={onNext}
+              style={{
+                padding: '10px 24px', borderRadius: 9, border: 'none',
+                background: '#128c7e', color: '#fff', fontSize: 15, fontWeight: 700,
+                cursor: 'pointer', boxShadow: '0 2px 8px rgba(18,140,126,0.3)',
+              }}
+            >
+              Next →
+            </button>
+          )}
+          {isTeacher && (
+            <span style={{ fontSize: 13, color: '#64748b' }}>
+              Question {index + 1}{total ? ` of ${total}` : ''} — students answer and press Next
+            </span>
+          )}
+          {showAnswer && (
+            <span style={{ fontSize: 13, color: '#27ae60', fontWeight: 700 }}>✓ Answer revealed</span>
+          )}
+        </div>
       </div>
-
-      {/* Question text — written on the board, no card */}
-      <div style={{
-        fontSize: 26, lineHeight: 1.4, color: '#1e293b',
-        fontFamily: "'Caveat', 'Comic Sans MS', cursive",
-        fontWeight: 600,
-        marginBottom: 16,
-        maxWidth: 700,
-      }}>
-        {question.question}
-      </div>
-
-      {/* Multiple choice — written on board */}
-      {isMC && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12, pointerEvents: 'auto' }}>
-          {letters.map(letter => {
-            const opt = question[`option_${letter}`];
-            const isSelected = selectedAnswer === letter;
-            const isCorrect = showAnswer && question.correct_answer === letter;
-            const showWrong = showAnswer && isSelected && !isCorrect;
-            return (
-              <div
-                key={letter}
-                onClick={() => !isTeacher && onSelectAnswer?.(letter)}
-                style={{
-                  fontSize: 20,
-                  fontFamily: "'Caveat', 'Comic Sans MS', cursive",
-                  color: isCorrect ? '#059669' : showWrong ? '#dc2626' : isSelected ? '#4f46e5' : '#374151',
-                  cursor: isTeacher ? 'default' : 'pointer',
-                  padding: '2px 8px',
-                  fontWeight: isCorrect || isSelected ? 700 : 500,
-                  textDecoration: showWrong ? 'line-through' : 'none',
-                  display: 'inline-block',
-                  width: 'fit-content',
-                  maxWidth: 600,
-                }}
-              >
-                {letter.toUpperCase()}. {opt}{isCorrect ? ' \u2713' : ''}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Short answer input */}
-      {!isMC && !isTeacher && (
-        <div style={{ marginBottom: 12, pointerEvents: 'auto' }}>
-          <input
-            type="text"
-            value={selectedAnswer || ''}
-            onChange={e => onSelectAnswer?.(e.target.value)}
-            placeholder="Write your answer..."
-            style={{
-              width: '100%', maxWidth: 500, padding: '6px 12px',
-              border: 'none', borderBottom: '2px dashed #94a3b8',
-              background: 'transparent',
-              fontSize: 22,
-              fontFamily: "'Caveat', 'Comic Sans MS', cursive",
-              color: '#1e293b', outline: 'none',
-            }}
-          />
-        </div>
-      )}
-
-      {/* Answer reveal for text questions */}
-      {showAnswer && question.correct_answer && !isMC && (
-        <div style={{
-          fontSize: 22,
-          fontFamily: "'Caveat', 'Comic Sans MS', cursive",
-          color: '#059669', fontWeight: 700,
-          marginBottom: 12,
-        }}>
-          Answer: {question.correct_answer}
-        </div>
-      )}
-
-      {/* Next button — minimal, bottom-right */}
-      {!isTeacher && onNext && (
-        <div style={{
-          position: 'absolute', bottom: 16, right: 24,
-          pointerEvents: 'auto',
-        }}>
-          <button
-            onClick={onNext}
-            style={{
-              background: 'transparent',
-              color: '#4f46e5', border: 'none',
-              fontSize: 22,
-              fontFamily: "'Caveat', 'Comic Sans MS', cursive",
-              fontWeight: 700, cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
-          >
-            Next \u2192
-          </button>
-        </div>
-      )}
     </div>
   );
 }

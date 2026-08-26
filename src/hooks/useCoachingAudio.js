@@ -61,7 +61,16 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
         return true;
       }
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          googEchoCancellation: true,
+          googAutoGainControl: true,
+          googNoiseSuppression: true,
+          googHighpassFilter: true,
+          channelCount: 1,
+        },
         video: false,
       });
       localStreamRef.current = stream;
@@ -74,9 +83,9 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
             peer.pc.addTrack(track, stream);
           });
           peer.hasLocalTracks = true;
+          // Renegotiate by sending a new offer
+          createOffer(peer);
         }
-        // Renegotiate by sending a new offer
-        createOffer(peer);
       });
       return true;
     } catch (e) {
@@ -133,8 +142,11 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
 
     const audioEl = new Audio();
     audioEl.autoplay = true;
+    audioEl.setAttribute('playsinline', '');
     audioEl.volume = volumeRef.current;
     audioEl.muted = !audioEnabledRef.current;
+    // Prevent echo — don't route remote audio back through speakers at high volume
+    audioEl.setAttribute('type', 'audio/ogg; codecs=opus');
 
     pc.ontrack = (e) => {
       audioEl.srcObject = e.streams[0];
@@ -236,6 +248,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
 
   // Create peer connections to ALL participants — everyone connects to everyone
   // This ensures all participants can RECEIVE audio from the teacher and permitted students
+  // But only initiate offers to participants who are likely to have audio (teacher + those with speak permission)
   useEffect(() => {
     if (!participants || participants.length === 0) return;
     participants.forEach(p => {
@@ -243,8 +256,11 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       if (pid === user.id) return;
       if (!peersRef.current[pid]) {
         const peer = createPeer(pid);
-        // Initiate offer to establish connection
-        createOffer(peer);
+        // Only send offer if we have mic on or can speak (we have audio to send)
+        // Otherwise, wait for the other side to initiate
+        if (micOnRef.current || canSpeakRef.current || isTeacherRef.current) {
+          createOffer(peer);
+        }
       }
     });
   }, [participants, user.id, createPeer, createOffer]);
