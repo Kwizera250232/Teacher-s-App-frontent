@@ -66,11 +66,17 @@
               const w = reg.installing;
               if (w) w.addEventListener('statechange', () => {
                 if (w.state === 'activated' && navigator.serviceWorker.controller) {
-                  console.log('[SW] New version active');
+                  console.log('[SW] New version active — reloading');
+                  window.location.reload();
                 }
               });
             });
           });
+          // Force reload when new SW takes control
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            window.location.reload();
+          });
+        });
         });
         window.addEventListener('online', () => {
           navigator.serviceWorker.ready.then(reg => {
