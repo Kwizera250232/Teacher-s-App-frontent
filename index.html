@@ -61,26 +61,18 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(reg => {
-            reg.addEventListener('updatefound', () => {
-              const w = reg.installing;
-              if (w) w.addEventListener('statechange', () => {
-                if (w.state === 'activated' && navigator.serviceWorker.controller) {
-                  console.log('[SW] New version active — reloading');
-                  window.location.reload();
-                }
-              });
-            });
+          // Unregister ALL existing service workers and clear caches
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(r => r.unregister());
           });
-          // Force reload when new SW takes control
+          caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+          // Register fresh SW (which will also self-unregister)
+          navigator.serviceWorker.register('/sw.js').then(() => {
+            console.log('[SW] Fresh SW registered');
+          }).catch(err => console.warn('[SW] Registration failed:', err));
+          // Reload when controller changes
           navigator.serviceWorker.addEventListener('controllerchange', () => {
             window.location.reload();
-          });
-        });
-        });
-        window.addEventListener('online', () => {
-          navigator.serviceWorker.ready.then(reg => {
-            reg.active?.postMessage('SYNC_PENDING_QUIZZES');
           });
         });
       }
