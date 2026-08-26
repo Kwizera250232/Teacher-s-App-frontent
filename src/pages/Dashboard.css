@@ -1111,7 +1111,7 @@ body {
   .class-points-layout,
   .class-points-layout > div {
     overflow: visible !important;
-    overflow-x: visible !important;
+    overflow-x: auto !important;
     max-width: 100% !important;
     width: 100% !important;
   }
@@ -1664,3 +1664,7 @@ body {
 .admin-user-info .btn-logout:hover {
   background: rgba(239, 68, 68, 0.2) !important;
 }
+
+.table-scroll-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+.class-students-tab { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.students-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }

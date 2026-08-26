@@ -89,7 +89,7 @@ function AnswerTimer({ seconds, startedAt }) {
 
 // ── Participant Avatar (used in grid and sidebar) ────────────────────────────
 // ── Exercise displayed as original quiz UI (same as TakeQuiz) ─────────────────
-function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, onSelectAnswer, onNext, isTeacher }) {
+function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, onSelectAnswer, onNext, isTeacher, answers = [] }) {
   if (!question) return null;
   const qtype = question.question_type || 'multiple_choice';
   const letters = ['a', 'b', 'c', 'd'].filter(l => question[`option_${l}`]);
@@ -218,6 +218,44 @@ function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, o
             <span style={{ fontSize: 13, color: '#27ae60', fontWeight: 700 }}>✓ Answer revealed</span>
           )}
         </div>
+
+        {/* Student answers + marks/feedback - visible to everyone on the board */}
+        {answers.length > 0 && (
+          <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f4c3a', marginBottom: 8 }}>
+              Student Answers & Marks
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {answers.map((a, i) => {
+                const fb = a.requires_review ? 'review' : (a.is_correct ? 'correct' : 'incorrect');
+                const fbColor = fb === 'correct' ? '#27ae60' : fb === 'incorrect' ? '#e74c3c' : '#f59e0b';
+                const fbIcon = fb === 'correct' ? '✅' : fb === 'incorrect' ? '❌' : '⏳';
+                return (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '8px 12px', borderRadius: 8,
+                    background: fb === 'correct' ? '#f0fff4' : fb === 'incorrect' ? '#fff0f0' : '#fffbeb',
+                    border: '1px solid ' + fbColor + '33',
+                    fontSize: 14,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontWeight: 600, color: '#1e293b' }}>{a.name}</span>
+                      <span style={{ color: '#64748b', fontSize: 13 }}>
+                        Answer: <strong>{a.answer}</strong>
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 16 }}>{fbIcon}</span>
+                      <span style={{ fontWeight: 700, color: fbColor, fontSize: 14 }}>
+                        {a.awarded_marks}/1 mark
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1051,73 +1089,6 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
         </div>
       </div>
 
-      {/* Question Controls — hidden when exercises are shown on the board */}
-      {questions.length > 0 && !showExercises && (
-        <div style={{ marginTop: 16, background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-            <h3 style={{ margin: 0, fontSize: 16, color: '#0f4c3a' }}>
-              Question {currentIdx + 1} of {questions.length}
-              {questions.length > groupSize && (
-                <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8 }}>
-                  (Group {currentGroup + 1}: Q{groupStart + 1}–Q{groupEnd})
-                </span>
-              )}
-            </h3>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <button style={{ ...btnOutline, ...btnSm, opacity: currentIdx === 0 ? 0.5 : 1 }} disabled={currentIdx === 0} onClick={() => updateState({ current_question_index: currentIdx - 1, show_answer: false })}>← Prev</button>
-              <button style={{ ...btnOutline, ...btnSm }} onClick={() => updateState({ show_answer: !state?.show_answer })}>{state?.show_answer ? 'Hide Answer' : 'Show Answer'}</button>
-              <button style={{ ...btnOutline, ...btnSm }} onClick={() => updateState({ is_paused: !isPaused })}>{isPaused ? '▶ Resume' : '⏸ Pause'}</button>
-              <button style={{ ...btnPrimary, ...btnSm, opacity: currentIdx >= questions.length - 1 ? 0.5 : 1 }} disabled={currentIdx >= questions.length - 1} onClick={() => updateState({ current_question_index: currentIdx + 1, show_answer: false })}>Next →</button>
-            </div>
-          </div>
-
-          {/* Current Question Display (below board) */}
-          {currentQ && !showExercises && (
-            <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16 }}>
-              <p style={{ fontSize: 16, fontWeight: 600, color: '#1e293b', marginBottom: 12 }}>{currentQ.question}</p>
-              {currentQ.question_type === 'multiple_choice' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
-                  {['a', 'b', 'c', 'd'].map(letter => {
-                    const opt = currentQ[`option_${letter}`];
-                    if (!opt) return null;
-                    const isCorrect = state?.show_answer && currentQ.correct_answer === letter;
-                    return (
-                      <div key={letter} style={{ padding: '10px 14px', borderRadius: 8, border: `2px solid ${isCorrect ? '#10b981' : '#e2e8f0'}`, background: isCorrect ? '#f0fdf4' : '#fff', fontSize: 14 }}>
-                        <strong>{letter.toUpperCase()}.</strong> {opt}
-                        {isCorrect && <span style={{ marginLeft: 8, color: '#10b981' }}>✓</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {state?.show_answer && currentQ.correct_answer && (
-                <div style={{ marginTop: 12, padding: '10px 14px', background: '#f0fdf4', borderRadius: 8, fontSize: 14, color: '#10b981', fontWeight: 600 }}>✓ Correct Answer: {currentQ.correct_answer}</div>
-              )}
-            </div>
-          )}
-
-          {/* Progressive group preview — hidden when exercises are on the board */}
-          {questions.length > groupSize && !showExercises && (
-            <div style={{ marginTop: 12, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {groupQuestions.map((q, i) => {
-                const qIdx = groupStart + i;
-                return (
-                  <button key={qIdx} onClick={() => updateState({ current_question_index: qIdx, show_answer: false })}
-                    style={{ width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 600, border: qIdx === currentIdx ? '2px solid #0f4c3a' : '1px solid #e2e8f0', background: qIdx === currentIdx ? '#0f4c3a' : '#fff', color: qIdx === currentIdx ? '#fff' : '#64748b', cursor: 'pointer' }}>
-                    {qIdx + 1}
-                  </button>
-                );
-              })}
-              {groupEnd < questions.length && (
-                <button onClick={() => updateState({ current_question_index: groupEnd, show_answer: false })}
-                  style={{ width: 'auto', height: 32, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: '1px solid #667eea', background: '#f0f2ff', color: '#667eea', cursor: 'pointer' }}>
-                  Next group →
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
