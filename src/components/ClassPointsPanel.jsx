@@ -409,7 +409,7 @@ export default function ClassPointsPanel({
                 Download
               </button>
             </div>
-            <div className="class-roster-table-wrapper" ref={tableWrapperRef}>
+            <div className="class-roster-table-wrapper" ref={tableWrapperRef} style={{ overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y', display: 'block', width: '100%', maxWidth: '100%' }}>
               <table className="class-roster-table">
                 <thead>
                   <tr>
