@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 import Whiteboard from './Whiteboard';
+import { useCoachingAudio } from '../hooks/useCoachingAudio';
 
 const POLL_MS = 3000;
 
@@ -19,6 +20,116 @@ const btnOutline = {
 };
 const btnSm = { padding: '5px 12px', fontSize: 13 };
 const btnDanger = { ...btnPrimary, ...btnSm, background: '#ef4444' };
+
+// ── Audio Controls (mic + volume) ────────────────────────────────────────────
+function AudioControls({ micOn, volume, audioEnabled, onToggleMic, onVolume, onToggleAudio, canSpeak, label }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+      {canSpeak && (
+        <button
+          onClick={onToggleMic}
+          style={{
+            ...btnSm, padding: '4px 10px', fontSize: 12, cursor: 'pointer',
+            background: micOn ? '#10b981' : '#e2e8f0', color: micOn ? '#fff' : '#64748b',
+            border: 'none', borderRadius: 6, fontWeight: 700,
+          }}
+          title={micOn ? 'Mic is ON' : 'Mic is OFF'}
+        >
+          {micOn ? '🎙 ON' : '🔇 OFF'}
+        </button>
+      )}
+      <button
+        onClick={onToggleAudio}
+        style={{
+          ...btnSm, padding: '4px 10px', fontSize: 12, cursor: 'pointer',
+          background: audioEnabled ? '#3b82f6' : '#e2e8f0', color: audioEnabled ? '#fff' : '#64748b',
+          border: 'none', borderRadius: 6, fontWeight: 700,
+        }}
+        title={audioEnabled ? 'Speaker ON' : 'Speaker OFF'}
+      >
+        {audioEnabled ? '🔊' : '🔈'}
+      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <button onClick={() => onVolume(Math.max(0, volume - 0.1))} style={{ ...btnSm, padding: '2px 8px', fontSize: 14, border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer' }}>−</button>
+        <div style={{ width: 50, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ width: `${volume * 100}%`, height: '100%', background: '#3b82f6' }} />
+        </div>
+        <button onClick={() => onVolume(Math.min(1, volume + 0.1))} style={{ ...btnSm, padding: '2px 8px', fontSize: 14, border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer' }}>+</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Answer Timer ─────────────────────────────────────────────────────────────
+function AnswerTimer({ seconds, startedAt }) {
+  const [remaining, setRemaining] = useState(0);
+  useEffect(() => {
+    if (!seconds || !startedAt) { setRemaining(0); return; }
+    const calc = () => {
+      const elapsed = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+      setRemaining(Math.max(0, seconds - elapsed));
+    };
+    calc();
+    const interval = setInterval(calc, 1000);
+    return () => clearInterval(interval);
+  }, [seconds, startedAt]);
+
+  if (!seconds || !startedAt) return null;
+  const pct = (remaining / seconds) * 100;
+  const color = remaining <= 5 ? '#ef4444' : remaining <= 15 ? '#f59e0b' : '#10b981';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#fff', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+      <span style={{ fontSize: 16, fontWeight: 700, color }}>⏱ {remaining}s</span>
+      <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: color, transition: 'width 1s linear' }} />
+      </div>
+    </div>
+  );
+}
+
+// ── Participant Avatar (used in grid and sidebar) ────────────────────────────
+function ParticipantAvatar({ p, size = 56, penHolder, speakPermission, handRaised, isSelf, onGivePen, onRevokePen, onGiveSpeak, onRevokeSpeak, isTeacher, compact }) {
+  const hasPen = penHolder === p.student_id;
+  const canSpeak = speakPermission === p.student_id;
+  const raised = handRaised?.includes(p.student_id);
+  return (
+    <div style={{ textAlign: 'center', position: 'relative' }}>
+      <div style={{
+        width: size, height: size, borderRadius: '50%',
+        background: `linear-gradient(135deg, #6366f1, #764ba2)`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#fff', fontWeight: 700, fontSize: size > 40 ? 18 : 14, margin: '0 auto 4px',
+        border: hasPen ? '3px solid #f59e0b' : canSpeak ? '3px solid #10b981' : '3px solid transparent',
+        position: 'relative',
+        boxShadow: canSpeak ? '0 0 8px rgba(16,185,129,0.5)' : 'none',
+      }}>
+        {p.name?.charAt(0)?.toUpperCase()}
+        {hasPen && <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: size > 40 ? 14 : 10 }}>✍️</span>}
+        {canSpeak && <span style={{ position: 'absolute', top: -2, left: -2, fontSize: size > 40 ? 14 : 10 }}>🎙️</span>}
+        {raised && <span style={{ position: 'absolute', top: -4, right: -4, fontSize: size > 40 ? 16 : 12, animation: 'bounce 1s infinite' }}>✋</span>}
+      </div>
+      {!compact && (
+        <>
+          <div style={{ fontSize: 11, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: size + 10 }}>
+            {p.name?.split(' ')[0]}{isSelf && ' (You)'}
+          </div>
+          {isTeacher && (
+            <div style={{ display: 'flex', gap: 2, justifyContent: 'center', marginTop: 2, flexWrap: 'wrap' }}>
+              <button onClick={() => hasPen ? onRevokePen?.(p.student_id) : onGivePen?.(p.student_id)}
+                style={{ fontSize: 9, padding: '1px 5px', border: '1px solid #e2e8f0', borderRadius: 4, background: hasPen ? '#fef3c7' : '#fff', cursor: 'pointer' }}>
+                {hasPen ? 'Revoke Pen' : 'Give Pen'}
+              </button>
+              <button onClick={() => canSpeak ? onRevokeSpeak?.(p.student_id) : onGiveSpeak?.(p.student_id)}
+                style={{ fontSize: 9, padding: '1px 5px', border: '1px solid #e2e8f0', borderRadius: 4, background: canSpeak ? '#d1fae5' : '#fff', cursor: 'pointer' }}>
+                {canSpeak ? 'Mute' : 'Speak'}
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 // ============ Teacher Panel: List + Create ============
 export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSuccess }) {
@@ -538,6 +649,8 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showWhiteboard, setShowWhiteboard] = useState(true);
+  const [showExercises, setShowExercises] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
   const canvasRef = useRef(null);
   const saveTimer = useRef(null);
 
@@ -573,6 +686,14 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token]);
 
+  const participants = state?.participants || [];
+  const canSpeak = true; // Teacher can always speak
+
+  // WebRTC audio
+  const audio = useCoachingAudio({
+    classId, sessionId, token, user, canSpeak, participants,
+  });
+
   const updateState = async (changes) => {
     try {
       await api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, changes, token);
@@ -581,7 +702,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     }
   };
 
-  // Debounced whiteboard save — only save after drawing stops for 500ms
+  // Debounced whiteboard save
   const onWhiteboardChange = useCallback(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
@@ -604,11 +725,40 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     }
   };
 
+  const deleteSession = async () => {
+    if (!confirm('DELETE this coaching session permanently? This cannot be undone.')) return;
+    if (!confirm('Are you absolutely sure? All data will be lost.')) return;
+    try {
+      await api.delete(`/classes/${classId}/coaching-sessions/${sessionId}`, token);
+      onSuccess?.('Session deleted.');
+      onExit();
+    } catch (e) {
+      onError?.(e.message);
+    }
+  };
+
+  // Hand raise management
+  const handRaised = state?.hand_raised ? (typeof state.hand_raised === 'string' ? JSON.parse(state.hand_raised) : state.hand_raised) : [];
+
+  const startTimer = (secs) => {
+    setTimerSeconds(secs);
+    updateState({ answer_timer_seconds: secs, answer_timer_started_at: new Date().toISOString() });
+  };
+  const stopTimer = () => {
+    setTimerSeconds(0);
+    updateState({ answer_timer_seconds: null, answer_timer_started_at: null });
+  };
+
+  const toggleExercises = () => {
+    const next = !showExercises;
+    setShowExercises(next);
+    updateState({ show_exercises: next });
+  };
+
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}>Loading session…</div>;
 
   const questions = session?.questions || [];
   const currentQ = state?.current_question;
-  const participants = state?.participants || [];
   const penHolder = state?.pen_holder_id;
   const canDraw = !penHolder || penHolder === user.id;
   const isPaused = state?.is_paused;
@@ -618,36 +768,70 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   const groupStart = currentGroup * groupSize;
   const groupEnd = Math.min(groupStart + groupSize, questions.length);
   const groupQuestions = questions.slice(groupStart, groupEnd);
+  const speakPermission = state?.speak_permission_id;
 
   return (
     <div style={{ padding: '8px 0', minHeight: '60vh' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 20, color: '#0f4c3a' }}>🎓 {session?.title}</h2>
           {session?.topic && <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748b' }}>{session.topic}</p>}
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ background: '#fef2f2', color: '#ef4444', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ background: isPaused ? '#fef3c7' : '#fef2f2', color: isPaused ? '#92400e' : '#ef4444', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
             {isPaused ? '⏸ PAUSED' : '🔴 LIVE'}
           </span>
-          <button style={{ ...btnOutline, ...btnSm }} onClick={() => setShowWhiteboard(!showWhiteboard)}>
-            {showWhiteboard ? 'Hide Board' : 'Show Board'}
-          </button>
-          <button style={{ ...btnOutline, ...btnSm }} onClick={() => updateState({ is_paused: !isPaused })}>
-            {isPaused ? '▶ Resume' : '⏸ Pause'}
-          </button>
-          <button style={btnDanger} onClick={finishSession}>
-            Finish
-          </button>
-          <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Exit</button>
+          <span style={{ fontSize: 11, color: '#64748b' }}>👥 {participants.length}</span>
+          {audio.connected && <span style={{ fontSize: 11, color: '#10b981' }}>🎙 {audio.peerCount}</span>}
         </div>
       </div>
 
-      {/* Main area: whiteboard (auto-maximizes) + minimized participants */}
+      {/* Control bar */}
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12, padding: 8, background: '#fff', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+        <AudioControls
+          micOn={audio.micOn} volume={audio.volume} audioEnabled={audio.audioEnabled}
+          onToggleMic={audio.toggleMic} onVolume={audio.changeVolume} onToggleAudio={audio.toggleAudio}
+          canSpeak={true} label="Teacher"
+        />
+        <div style={{ width: 1, height: 24, background: '#e2e8f0' }} />
+        <button style={{ ...btnOutline, ...btnSm }} onClick={() => setShowWhiteboard(!showWhiteboard)}>
+          {showWhiteboard ? 'Hide Board' : 'Show Board'}
+        </button>
+        {questions.length > 0 && (
+          <button style={{ ...btnSm, padding: '4px 10px', fontSize: 12, border: 'none', borderRadius: 6, cursor: 'pointer', background: showExercises ? '#667eea' : '#e2e8f0', color: showExercises ? '#fff' : '#64748b', fontWeight: 700 }} onClick={toggleExercises}>
+            {showExercises ? '📋 Hide Exercises' : '📋 Show Exercises'}
+          </button>
+        )}
+        <button style={{ ...btnOutline, ...btnSm }} onClick={() => updateState({ is_paused: !isPaused })}>
+          {isPaused ? '▶ Resume' : '⏸ Pause'}
+        </button>
+        {/* Timer controls */}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          {[30, 60, 120, 300].map(s => (
+            <button key={s} onClick={() => startTimer(s)} style={{ ...btnSm, padding: '3px 8px', fontSize: 11, border: '1px solid #e2e8f0', borderRadius: 4, background: timerSeconds === s ? '#dbeafe' : '#fff', cursor: 'pointer' }}>
+              {s < 60 ? `${s}s` : `${s / 60}m`}
+            </button>
+          ))}
+          {state?.answer_timer_seconds && <button onClick={stopTimer} style={{ ...btnSm, padding: '3px 8px', fontSize: 11, border: '1px solid #ef4444', borderRadius: 4, background: '#fef2f2', color: '#ef4444', cursor: 'pointer' }}>Stop</button>}
+        </div>
+        <div style={{ width: 1, height: 24, background: '#e2e8f0' }} />
+        <button style={btnDanger} onClick={finishSession}>Finish</button>
+        <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Exit</button>
+        <button style={{ ...btnSm, padding: '4px 10px', fontSize: 11, border: '1px solid #ef4444', borderRadius: 6, background: '#fff', color: '#ef4444', cursor: 'pointer' }} onClick={deleteSession}>🗑 Delete</button>
+      </div>
+
+      {/* Timer display */}
+      {state?.answer_timer_seconds && state?.answer_timer_started_at && (
+        <div style={{ marginBottom: 12 }}>
+          <AnswerTimer seconds={state.answer_timer_seconds} startedAt={state.answer_timer_started_at} />
+        </div>
+      )}
+
+      {/* Main area: whiteboard + participants */}
       <div style={{ display: 'flex', gap: 12, flexDirection: showWhiteboard ? 'row' : 'column' }}>
         {showWhiteboard && (
-          <div style={{ flex: 1, minWidth: 0, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+          <div style={{ flex: 1, minWidth: 0, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', position: 'relative' }}>
             <Whiteboard
               live
               canDraw={canDraw}
@@ -661,29 +845,57 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
                 ✍️ {state?.pen_holder_name} has the pen
               </div>
             )}
+
+            {/* Exercises overlay ON the whiteboard */}
+            {showExercises && currentQ && (
+              <div style={{
+                position: 'absolute', top: 50, left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(255,255,255,0.97)', borderRadius: 12, padding: '16px 24px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)', maxWidth: '80%', zIndex: 10,
+                border: '2px solid #667eea',
+              }}>
+                <div style={{ fontSize: 11, color: '#667eea', fontWeight: 700, marginBottom: 4 }}>
+                  Question {currentIdx + 1} of {questions.length}
+                </div>
+                <p style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', margin: '0 0 8px' }}>{currentQ.question}</p>
+                {currentQ.question_type === 'multiple_choice' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 6 }}>
+                    {['a', 'b', 'c', 'd'].map(letter => {
+                      const opt = currentQ[`option_${letter}`];
+                      if (!opt) return null;
+                      const isCorrect = state?.show_answer && currentQ.correct_answer === letter;
+                      return (
+                        <div key={letter} style={{ padding: '8px 12px', borderRadius: 6, border: `2px solid ${isCorrect ? '#10b981' : '#e2e8f0'}`, background: isCorrect ? '#f0fdf4' : '#fff', fontSize: 13 }}>
+                          <strong>{letter.toUpperCase()}.</strong> {opt}
+                          {isCorrect && <span style={{ marginLeft: 6, color: '#10b981' }}>✓</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {state?.show_answer && currentQ.correct_answer && currentQ.question_type !== 'multiple_choice' && (
+                  <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', borderRadius: 6, fontSize: 14, color: '#10b981', fontWeight: 600 }}>
+                    ✓ Answer: {currentQ.correct_answer}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Participants — minimized when whiteboard is open, full grid when closed */}
+        {/* Participants panel */}
         <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-          padding: 8,
-          background: '#fff',
-          borderRadius: 12,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          minWidth: showWhiteboard ? 120 : '100%',
-          maxWidth: showWhiteboard ? 180 : '100%',
+          padding: 8, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          minWidth: showWhiteboard ? 140 : '100%', maxWidth: showWhiteboard ? 200 : '100%',
         }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textAlign: 'center' }}>
-            👥 {participants.length}
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textAlign: 'center', marginBottom: 8 }}>
+            👥 Online ({participants.length})
           </div>
           <div style={{
             display: showWhiteboard ? 'flex' : 'grid',
             flexDirection: 'column',
-            gridTemplateColumns: showWhiteboard ? 'none' : 'repeat(auto-fill, minmax(80px, 1fr))',
-            gap: showWhiteboard ? 6 : 12,
+            gridTemplateColumns: showWhiteboard ? 'none' : 'repeat(auto-fill, minmax(90px, 1fr))',
+            gap: showWhiteboard ? 8 : 16,
             overflowY: showWhiteboard ? 'auto' : 'visible',
             maxHeight: showWhiteboard ? 480 : 'none',
           }}>
@@ -691,47 +903,38 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
               <p style={{ color: '#64748b', textAlign: 'center', fontSize: 12 }}>Waiting…</p>
             )}
             {participants.map(p => (
-              <div key={p.student_id} style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: showWhiteboard ? 36 : 56, height: showWhiteboard ? 36 : 56, borderRadius: '50%',
-                  background: `linear-gradient(135deg, #6366f1, #764ba2)`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontWeight: 700, fontSize: showWhiteboard ? 14 : 18, margin: '0 auto 4px',
-                  border: penHolder === p.student_id ? '3px solid #f59e0b' : '3px solid transparent',
-                  position: 'relative',
-                }}>
-                  {p.name?.charAt(0)?.toUpperCase()}
-                  {penHolder === p.student_id && (
-                    <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: 10 }}>✍️</span>
-                  )}
-                </div>
-                {!showWhiteboard && (
-                  <>
-                    <div style={{ fontSize: 11, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.name?.split(' ')[0]}
-                    </div>
-                    <button
-                      onClick={() => updateState({ pen_holder_id: penHolder === p.student_id ? null : p.student_id })}
-                      style={{ fontSize: 10, padding: '2px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: penHolder === p.student_id ? '#fef3c7' : '#fff', cursor: 'pointer', marginTop: 2 }}
-                    >
-                      {penHolder === p.student_id ? 'Revoke Pen' : 'Give Pen'}
-                    </button>
-                  </>
-                )}
-                {showWhiteboard && penHolder === p.student_id && (
-                  <button
-                    onClick={() => updateState({ pen_holder_id: null })}
-                    style={{ fontSize: 9, padding: '1px 4px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fef3c7', cursor: 'pointer' }}
-                  >
-                    Revoke
-                  </button>
-                )}
-              </div>
+              <ParticipantAvatar
+                key={p.student_id}
+                p={p}
+                size={showWhiteboard ? 40 : 64}
+                penHolder={penHolder}
+                speakPermission={speakPermission}
+                handRaised={handRaised}
+                isTeacher={true}
+                compact={showWhiteboard}
+                onGivePen={(sid) => updateState({ pen_holder_id: sid })}
+                onRevokePen={() => updateState({ pen_holder_id: null })}
+                onGiveSpeak={(sid) => updateState({ speak_permission_id: sid })}
+                onRevokeSpeak={() => updateState({ speak_permission_id: null })}
+              />
             ))}
           </div>
-          {!showWhiteboard && participants.length > 0 && (
-            <div style={{ fontSize: 11, color: '#64748b', textAlign: 'center', marginTop: 4 }}>
-              Click a student to give/revoke pen
+          {/* Hand-raised queue */}
+          {handRaised.length > 0 && (
+            <div style={{ marginTop: 8, padding: 6, background: '#fef3c7', borderRadius: 6, fontSize: 11 }}>
+              <div style={{ fontWeight: 700, color: '#92400e', marginBottom: 4 }}>✋ Raised hands:</div>
+              {handRaised.map(sid => {
+                const stu = participants.find(p => p.student_id === sid);
+                return (
+                  <div key={sid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0' }}>
+                    <span>{stu?.name?.split(' ')[0] || 'Student'}</span>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => { updateState({ speak_permission_id: sid, hand_raised: handRaised.filter(id => id !== sid) }); }} style={{ fontSize: 9, padding: '1px 5px', border: '1px solid #10b981', borderRadius: 3, background: '#d1fae5', cursor: 'pointer' }}>Allow</button>
+                      <button onClick={() => updateState({ hand_raised: handRaised.filter(id => id !== sid) })} style={{ fontSize: 9, padding: '1px 5px', border: '1px solid #e2e8f0', borderRadius: 3, background: '#fff', cursor: 'pointer' }}>Clear</button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -750,37 +953,15 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
               )}
             </h3>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <button
-                style={{ ...btnOutline, ...btnSm, opacity: currentIdx === 0 ? 0.5 : 1 }}
-                disabled={currentIdx === 0}
-                onClick={() => updateState({ current_question_index: currentIdx - 1, show_answer: false })}
-              >
-                ← Prev
-              </button>
-              <button
-                style={{ ...btnOutline, ...btnSm }}
-                onClick={() => updateState({ show_answer: !state?.show_answer })}
-              >
-                {state?.show_answer ? 'Hide Answer' : 'Show Answer'}
-              </button>
-              <button
-                style={{ ...btnOutline, ...btnSm }}
-                onClick={() => updateState({ is_paused: !isPaused })}
-              >
-                {isPaused ? '▶ Resume' : '⏸ Pause'}
-              </button>
-              <button
-                style={{ ...btnPrimary, ...btnSm, opacity: currentIdx >= questions.length - 1 ? 0.5 : 1 }}
-                disabled={currentIdx >= questions.length - 1}
-                onClick={() => updateState({ current_question_index: currentIdx + 1, show_answer: false })}
-              >
-                Next →
-              </button>
+              <button style={{ ...btnOutline, ...btnSm, opacity: currentIdx === 0 ? 0.5 : 1 }} disabled={currentIdx === 0} onClick={() => updateState({ current_question_index: currentIdx - 1, show_answer: false })}>← Prev</button>
+              <button style={{ ...btnOutline, ...btnSm }} onClick={() => updateState({ show_answer: !state?.show_answer })}>{state?.show_answer ? 'Hide Answer' : 'Show Answer'}</button>
+              <button style={{ ...btnOutline, ...btnSm }} onClick={() => updateState({ is_paused: !isPaused })}>{isPaused ? '▶ Resume' : '⏸ Pause'}</button>
+              <button style={{ ...btnPrimary, ...btnSm, opacity: currentIdx >= questions.length - 1 ? 0.5 : 1 }} disabled={currentIdx >= questions.length - 1} onClick={() => updateState({ current_question_index: currentIdx + 1, show_answer: false })}>Next →</button>
             </div>
           </div>
 
-          {/* Current Question Display */}
-          {currentQ && (
+          {/* Current Question Display (below board) */}
+          {currentQ && !showExercises && (
             <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16 }}>
               <p style={{ fontSize: 16, fontWeight: 600, color: '#1e293b', marginBottom: 12 }}>{currentQ.question}</p>
               {currentQ.question_type === 'multiple_choice' && (
@@ -790,10 +971,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
                     if (!opt) return null;
                     const isCorrect = state?.show_answer && currentQ.correct_answer === letter;
                     return (
-                      <div key={letter} style={{
-                        padding: '10px 14px', borderRadius: 8, border: `2px solid ${isCorrect ? '#10b981' : '#e2e8f0'}`,
-                        background: isCorrect ? '#f0fdf4' : '#fff', fontSize: 14,
-                      }}>
+                      <div key={letter} style={{ padding: '10px 14px', borderRadius: 8, border: `2px solid ${isCorrect ? '#10b981' : '#e2e8f0'}`, background: isCorrect ? '#f0fdf4' : '#fff', fontSize: 14 }}>
                         <strong>{letter.toUpperCase()}.</strong> {opt}
                         {isCorrect && <span style={{ marginLeft: 8, color: '#10b981' }}>✓</span>}
                       </div>
@@ -802,42 +980,26 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
                 </div>
               )}
               {state?.show_answer && currentQ.correct_answer && (
-                <div style={{ marginTop: 12, padding: '10px 14px', background: '#f0fdf4', borderRadius: 8, fontSize: 14, color: '#10b981', fontWeight: 600 }}>
-                  ✓ Correct Answer: {currentQ.correct_answer}
-                </div>
+                <div style={{ marginTop: 12, padding: '10px 14px', background: '#f0fdf4', borderRadius: 8, fontSize: 14, color: '#10b981', fontWeight: 600 }}>✓ Correct Answer: {currentQ.correct_answer}</div>
               )}
             </div>
           )}
 
-          {/* Progressive group preview — show which questions are in current group */}
+          {/* Progressive group preview */}
           {questions.length > groupSize && (
             <div style={{ marginTop: 12, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {groupQuestions.map((q, i) => {
                 const qIdx = groupStart + i;
                 return (
-                  <button
-                    key={qIdx}
-                    onClick={() => updateState({ current_question_index: qIdx, show_answer: false })}
-                    style={{
-                      width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 600,
-                      border: qIdx === currentIdx ? '2px solid #0f4c3a' : '1px solid #e2e8f0',
-                      background: qIdx === currentIdx ? '#0f4c3a' : '#fff',
-                      color: qIdx === currentIdx ? '#fff' : '#64748b',
-                      cursor: 'pointer',
-                    }}
-                  >
+                  <button key={qIdx} onClick={() => updateState({ current_question_index: qIdx, show_answer: false })}
+                    style={{ width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 600, border: qIdx === currentIdx ? '2px solid #0f4c3a' : '1px solid #e2e8f0', background: qIdx === currentIdx ? '#0f4c3a' : '#fff', color: qIdx === currentIdx ? '#fff' : '#64748b', cursor: 'pointer' }}>
                     {qIdx + 1}
                   </button>
                 );
               })}
               {groupEnd < questions.length && (
-                <button
-                  onClick={() => updateState({ current_question_index: groupEnd, show_answer: false })}
-                  style={{
-                    width: 'auto', height: 32, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                    border: '1px solid #667eea', background: '#f0f2ff', color: '#667eea', cursor: 'pointer',
-                  }}
-                >
+                <button onClick={() => updateState({ current_question_index: groupEnd, show_answer: false })}
+                  style={{ width: 'auto', height: 32, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: '1px solid #667eea', background: '#f0f2ff', color: '#667eea', cursor: 'pointer' }}>
                   Next group →
                 </button>
               )}
@@ -945,6 +1107,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const [stateLoading, setStateLoading] = useState(true);
   const [myAnswer, setMyAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
+  const [handRaised, setHandRaised] = useState(false);
   const canvasRef = useRef(null);
   const saveTimer = useRef(null);
 
@@ -988,6 +1151,15 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token]);
 
+  const participants = state?.participants || [];
+  const hasSpeakPermission = state?.speak_permission_id === user.id;
+  const handRaisedList = state?.hand_raised ? (typeof state.hand_raised === 'string' ? JSON.parse(state.hand_raised) : state.hand_raised) : [];
+
+  // WebRTC audio — only connect if we have speak permission
+  const audio = useCoachingAudio({
+    classId, sessionId, token, user, canSpeak: hasSpeakPermission, participants,
+  });
+
   // Debounced whiteboard save for student with pen
   const onWhiteboardChange = useCallback(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -1012,6 +1184,21 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     }
   };
 
+  // Hand raise
+  const toggleHandRaise = () => {
+    const next = !handRaised;
+    setHandRaised(next);
+    const currentList = handRaisedList.filter(id => id !== user.id);
+    if (next) currentList.push(user.id);
+    api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, { hand_raised: currentList }, token).catch(() => {});
+  };
+
+  // Student Next button — advance to next question
+  const studentNext = () => {
+    const idx = state?.current_question_index || 0;
+    api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, { current_question_index: idx + 1, show_answer: false }, token).catch(() => {});
+  };
+
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Joining session…</div>;
   if (stateLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Loading live session…</div>;
 
@@ -1020,6 +1207,9 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const canDraw = hasPen;
   const isLive = state?.status === 'live';
   const isPaused = state?.is_paused;
+  const showExercises = state?.show_exercises;
+  const penHolder = state?.pen_holder_id;
+  const speakPermission = state?.speak_permission_id;
 
   if (!isLive) {
     return (
@@ -1033,34 +1223,117 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   return (
     <div style={{ padding: '8px 0', minHeight: '60vh' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 20, color: '#0f4c3a' }}>🎓 {session?.title}</h2>
-          <span style={{
-            background: isPaused ? '#fef3c7' : '#fef2f2',
-            color: isPaused ? '#92400e' : '#ef4444',
-            padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700,
-          }}>
+          <span style={{ background: isPaused ? '#fef3c7' : '#fef2f2', color: isPaused ? '#92400e' : '#ef4444', padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
             {isPaused ? '⏸ PAUSED' : '🔴 LIVE'}
           </span>
         </div>
-        <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Leave</button>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, color: '#64748b' }}>👥 {participants.length} online</span>
+          {audio.connected && <span style={{ fontSize: 11, color: '#10b981' }}>🎙 on</span>}
+          <button style={{ ...btnSm, padding: '4px 10px', fontSize: 12, border: handRaised ? 'none' : '1px solid #f59e0b', borderRadius: 6, background: handRaised ? '#f59e0b' : '#fff', color: handRaised ? '#fff' : '#f59e0b', cursor: 'pointer', fontWeight: 700 }} onClick={toggleHandRaise}>
+            {handRaised ? '✋ Lower' : '✋ Raise Hand'}
+          </button>
+          <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Leave</button>
+        </div>
       </div>
 
-      {/* Whiteboard — uses existing Whiteboard component */}
-      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', marginBottom: 16 }}>
-        <div style={{ padding: 8, borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#64748b' }}>
-          {hasPen ? '✍️ You have the pen — write on the board!' : state?.pen_holder_name ? `${state.pen_holder_name} is writing…` : 'Watch the whiteboard'}
-        </div>
-        <Whiteboard
-          live
-          canDraw={canDraw}
-          externalCanvasRef={canvasRef}
-          onDataChange={onWhiteboardChange}
-          initialData={state?.whiteboard_data}
-          height={500}
+      {/* Audio controls + timer */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12, padding: 8, background: '#fff', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+        <AudioControls
+          micOn={audio.micOn} volume={audio.volume} audioEnabled={audio.audioEnabled}
+          onToggleMic={audio.toggleMic} onVolume={audio.changeVolume} onToggleAudio={audio.toggleAudio}
+          canSpeak={hasSpeakPermission}
         />
+        {!hasSpeakPermission && <span style={{ fontSize: 11, color: '#94a3b8' }}>Raise hand to speak</span>}
+        {hasSpeakPermission && <span style={{ fontSize: 11, color: '#10b981', fontWeight: 700 }}>🎙️ You can speak!</span>}
+        {state?.answer_timer_seconds && state?.answer_timer_started_at && (
+          <AnswerTimer seconds={state.answer_timer_seconds} startedAt={state.answer_timer_started_at} />
+        )}
       </div>
+
+      {/* Paused indicator */}
+      {isPaused && (
+        <div style={{ textAlign: 'center', padding: 20, color: '#92400e', fontSize: 16, fontWeight: 600 }}>
+          ⏸ Session paused by teacher. Please wait…
+        </div>
+      )}
+
+      {/* Whiteboard with exercises overlay */}
+      {!isPaused && (
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', marginBottom: 16, position: 'relative' }}>
+          <div style={{ padding: 8, borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{hasPen ? '✍️ You have the pen!' : state?.pen_holder_name ? `${state.pen_holder_name} is writing…` : 'Watch the whiteboard'}</span>
+            {hasSpeakPermission && <span style={{ color: '#10b981', fontWeight: 600 }}>🎙️ Speaking</span>}
+          </div>
+          <Whiteboard
+            live
+            canDraw={canDraw}
+            externalCanvasRef={canvasRef}
+            onDataChange={onWhiteboardChange}
+            initialData={state?.whiteboard_data}
+            height={500}
+          />
+
+          {/* Exercises overlay ON the whiteboard */}
+          {showExercises && currentQ && (
+            <div style={{
+              position: 'absolute', top: 50, left: '50%', transform: 'translateX(-50%)',
+              background: 'rgba(255,255,255,0.97)', borderRadius: 12, padding: '16px 24px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)', maxWidth: '80%', zIndex: 10,
+              border: '2px solid #667eea',
+            }}>
+              <div style={{ fontSize: 11, color: '#667eea', fontWeight: 700, marginBottom: 4 }}>
+                Question {(state?.current_question_index || 0) + 1}
+              </div>
+              <p style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', margin: '0 0 8px' }}>{currentQ.question}</p>
+              {currentQ.question_type === 'multiple_choice' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 6 }}>
+                  {['a', 'b', 'c', 'd'].map(letter => {
+                    const opt = currentQ[`option_${letter}`];
+                    if (!opt) return null;
+                    return (
+                      <button key={letter} onClick={() => setMyAnswer(letter)}
+                        style={{ padding: '8px 12px', borderRadius: 6, border: `2px solid ${myAnswer === letter ? '#0f4c3a' : '#e2e8f0'}`, background: myAnswer === letter ? '#f0fdf4' : '#fff', fontSize: 13, cursor: 'pointer', textAlign: 'left' }}>
+                        <strong>{letter.toUpperCase()}.</strong> {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {state?.show_answer && currentQ.correct_answer && (
+                <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fdf4', borderRadius: 6, fontSize: 14, color: '#10b981', fontWeight: 600 }}>✓ Answer: {currentQ.correct_answer}</div>
+              )}
+              <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button style={{ ...btnPrimary, ...btnSm }} onClick={studentNext}>Next →</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Online participants grid — students see each other */}
+      {!isPaused && (
+        <div style={{ background: '#fff', borderRadius: 12, padding: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 16 }}>
+          <h3 style={{ margin: '0 0 10px', fontSize: 14, color: '#0f4c3a' }}>👥 Online ({participants.length})</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: 12 }}>
+            {participants.map(p => (
+              <ParticipantAvatar
+                key={p.student_id}
+                p={p}
+                size={48}
+                penHolder={penHolder}
+                speakPermission={speakPermission}
+                handRaised={handRaisedList}
+                isSelf={p.student_id === user.id}
+                isTeacher={false}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Paused indicator */}
       {isPaused && (
