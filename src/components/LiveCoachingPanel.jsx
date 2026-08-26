@@ -3,6 +3,53 @@ import { api } from '../api';
 
 const POLL_MS = 3000;
 
+// Shared button styles — explicit inline so CSS !important doesn't hide them
+const btnPrimary = {
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  background: '#667eea', color: '#fff', border: 'none', borderRadius: 8,
+  padding: '8px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+  transition: 'background 0.2s', textDecoration: 'none',
+};
+const btnOutline = {
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  background: 'transparent', color: '#667eea', border: '2px solid #667eea',
+  borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  transition: 'all 0.2s', textDecoration: 'none',
+};
+const btnSm = { padding: '5px 12px', fontSize: 13 };
+const btnDanger = { ...btnPrimary, ...btnSm, background: '#ef4444' };
+
+// Draw ruled lines on the whiteboard (like notebook paper for handwriting)
+function drawRuledLines(ctx, w, h) {
+  ctx.save();
+  ctx.strokeStyle = '#c7e3f4';
+  ctx.lineWidth = 1;
+  const lineSpacing = 40;
+  for (let y = lineSpacing; y < h; y += lineSpacing) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+  // Red margin line on the left
+  ctx.strokeStyle = '#f4c7c7';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(50, 0);
+  ctx.lineTo(50, h);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Initialize canvas with white background + ruled lines
+function initCanvas(canvas) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawRuledLines(ctx, canvas.width, canvas.height);
+}
+
 // ============ Teacher Panel: List + Create ============
 export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSuccess }) {
   const [sessions, setSessions] = useState([]);
@@ -61,9 +108,8 @@ export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSucc
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <h2 style={{ margin: 0, fontSize: 22, color: '#0f4c3a' }}>🎓 Live Coaching Session</h2>
         <button
-          className="btn btn-primary"
           onClick={() => setShowCreate(true)}
-          style={{ fontSize: 14, padding: '8px 16px' }}
+          style={{ ...btnPrimary, fontSize: 14, padding: '8px 16px' }}
         >
           + New Session
         </button>
@@ -160,13 +206,13 @@ function SessionCard({ session, classId, token, onJoin, onError }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {session.status === 'scheduled' && (
-            <button className="btn btn-primary btn-sm" onClick={onJoin}>Start Session</button>
+            <button onClick={onJoin} style={btnPrimary}>Start Session</button>
           )}
           {session.status === 'live' && (
-            <button className="btn btn-primary btn-sm" style={{ background: '#ef4444' }} onClick={onJoin}>Enter Session</button>
+            <button onClick={onJoin} style={{ ...btnPrimary, background: '#ef4444' }}>Enter Session</button>
           )}
           {session.status === 'completed' && (
-            <button className="btn btn-outline btn-sm" onClick={loadResults}>View Results</button>
+            <button onClick={loadResults} style={btnOutline}>View Results</button>
           )}
         </div>
       </div>
@@ -348,8 +394,8 @@ function CreateSessionModal({ classId, token, quizzes, students, onClose, onCrea
         </label>
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={submit} disabled={saving}>
+          <button style={btnOutline} onClick={onClose}>Cancel</button>
+          <button style={btnPrimary} onClick={submit} disabled={saving}>
             {saving ? 'Creating…' : 'Create Session'}
           </button>
         </div>
@@ -368,6 +414,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   const wsRef = useRef(null);
   const isDrawing = useRef(false);
   const lastPos = useRef(null);
+  const midPos = useRef(null);
   const penColor = useRef('#1e293b');
   const penSize = useRef(3);
 
@@ -404,6 +451,13 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token]);
 
+  // Initialize canvas with ruled lines when whiteboard opens
+  useEffect(() => {
+    if (showWhiteboard && canvasRef.current && !state?.whiteboard_data) {
+      initCanvas(canvasRef.current);
+    }
+  }, [showWhiteboard, state?.whiteboard_data]);
+
   // Load whiteboard data when it changes
   useEffect(() => {
     if (state?.whiteboard_data && canvasRef.current) {
@@ -431,7 +485,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     await updateState({ whiteboard_data: dataUrl });
   };
 
-  // Drawing handlers
+  // Drawing handlers — smooth handwriting using quadratic curves
   const getPos = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const touch = e.touches?.[0];
@@ -443,7 +497,15 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   const startDraw = (e) => {
     e.preventDefault();
     isDrawing.current = true;
-    lastPos.current = getPos(e);
+    const pos = getPos(e);
+    lastPos.current = pos;
+    midPos.current = pos;
+    // Draw a dot for single taps
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.fillStyle = penColor.current;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, penSize.current / 2, 0, Math.PI * 2);
+    ctx.fill();
   };
 
   const draw = (e) => {
@@ -451,14 +513,17 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     e.preventDefault();
     const pos = getPos(e);
     const ctx = canvasRef.current.getContext('2d');
+    // Smooth stroke using quadratic curve through midpoint
+    const mid = { x: (lastPos.current.x + pos.x) / 2, y: (lastPos.current.y + pos.y) / 2 };
     ctx.strokeStyle = penColor.current;
     ctx.lineWidth = penSize.current;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(lastPos.current.x, lastPos.current.y);
-    ctx.lineTo(pos.x, pos.y);
+    ctx.moveTo(midPos.current.x, midPos.current.y);
+    ctx.quadraticCurveTo(lastPos.current.x, lastPos.current.y, mid.x, mid.y);
     ctx.stroke();
+    midPos.current = mid;
     lastPos.current = pos;
   };
 
@@ -474,6 +539,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    drawRuledLines(ctx, canvasRef.current.width, canvasRef.current.height);
     saveWhiteboard();
   };
 
@@ -509,13 +575,13 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
           <span style={{ background: '#fef2f2', color: '#ef4444', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
             🔴 LIVE
           </span>
-          <button className="btn btn-outline btn-sm" onClick={() => setShowWhiteboard(!showWhiteboard)}>
+          <button style={{ ...btnOutline, ...btnSm }} onClick={() => setShowWhiteboard(!showWhiteboard)}>
             {showWhiteboard ? 'Hide Board' : 'Show Board'}
           </button>
-          <button className="btn btn-primary btn-sm" style={{ background: '#ef4444' }} onClick={finishSession}>
+          <button style={btnDanger} onClick={finishSession}>
             Finish
           </button>
-          <button className="btn btn-outline btn-sm" onClick={onExit}>Exit</button>
+          <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Exit</button>
         </div>
       </div>
 
@@ -529,24 +595,24 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
                 style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: penColor.current === c ? '3px solid #0f4c3a' : '2px solid #e2e8f0', cursor: 'pointer' }} />
             ))}
             <select onChange={e => { penSize.current = parseInt(e.target.value); }} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
-              <option value="2">Fine</option>
-              <option value="3" selected>Medium</option>
-              <option value="6">Bold</option>
-              <option value="12">Marker</option>
+              <option value="2">Fine pen</option>
+              <option value="3" selected>Medium pen</option>
+              <option value="5">Bold pen</option>
+              <option value="10">Marker</option>
             </select>
-            <button className="btn btn-outline btn-sm" onClick={clearBoard} style={{ fontSize: 12 }}>Clear</button>
+            <button style={{ ...btnOutline, ...btnSm, fontSize: 12 }} onClick={clearBoard}>Clear</button>
             {penHolder && (
               <span style={{ fontSize: 12, color: '#6b21a8', marginLeft: 'auto' }}>
                 ✍️ {state?.pen_holder_name} has the pen
               </span>
             )}
           </div>
-          {/* Canvas */}
-          <div style={{ position: 'relative', width: '100%' }}>
+          {/* Canvas — large writing surface with ruled lines */}
+          <div style={{ position: 'relative', width: '100%', background: '#fff' }}>
             <canvas
               ref={canvasRef}
-              width={1200}
-              height={700}
+              width={1400}
+              height={800}
               style={{ width: '100%', height: 'auto', display: 'block', touchAction: 'none', cursor: canDraw ? 'crosshair' : 'default', background: '#fff' }}
               onMouseDown={canDraw ? startDraw : undefined}
               onMouseMove={canDraw ? draw : undefined}
@@ -607,20 +673,20 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
             </h3>
             <div style={{ display: 'flex', gap: 6 }}>
               <button
-                className="btn btn-outline btn-sm"
+                style={{ ...btnOutline, ...btnSm, opacity: (state?.current_question_index || 0) === 0 ? 0.5 : 1 }}
                 disabled={(state?.current_question_index || 0) === 0}
                 onClick={() => updateState({ current_question_index: (state?.current_question_index || 0) - 1, show_answer: false })}
               >
                 ← Prev
               </button>
               <button
-                className="btn btn-outline btn-sm"
+                style={{ ...btnOutline, ...btnSm }}
                 onClick={() => updateState({ show_answer: !state?.show_answer })}
               >
                 {state?.show_answer ? 'Hide Answer' : 'Show Answer'}
               </button>
               <button
-                className="btn btn-primary btn-sm"
+                style={{ ...btnPrimary, ...btnSm, opacity: (state?.current_question_index || 0) >= questions.length - 1 ? 0.5 : 1 }}
                 disabled={(state?.current_question_index || 0) >= questions.length - 1}
                 onClick={() => updateState({ current_question_index: (state?.current_question_index || 0) + 1, show_answer: false })}
               >
@@ -739,7 +805,7 @@ function StudentSessionCard({ session, onJoin }) {
         </div>
         <div>
           {session.status === 'live' && session.is_invited && (
-            <button className="btn btn-primary" style={{ background: '#ef4444' }} onClick={onJoin}>Join Now</button>
+            <button style={{ ...btnPrimary, background: '#ef4444' }} onClick={onJoin}>Join Now</button>
           )}
           {session.status === 'scheduled' && session.is_invited && (
             <span style={{ fontSize: 13, color: '#3b82f6' }}>📅 Invited</span>
@@ -757,6 +823,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const [session, setSession] = useState(null);
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stateLoading, setStateLoading] = useState(true);
   const [myAnswer, setMyAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
   const canvasRef = useRef(null);
@@ -789,6 +856,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         const s = await api.get(`/classes/${classId}/coaching-sessions/${sessionId}/state`, token);
         if (active) {
           setState(s);
+          setStateLoading(false);
           // Reset answer when question changes
           if (s.current_question?.id !== state?.current_question?.id) {
             setMyAnswer('');
@@ -801,6 +869,13 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     const interval = setInterval(poll, POLL_MS);
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token]);
+
+  // Initialize canvas with ruled lines if no saved data
+  useEffect(() => {
+    if (canvasRef.current && !state?.whiteboard_data) {
+      initCanvas(canvasRef.current);
+    }
+  }, [state?.whiteboard_data]);
 
   // Render whiteboard
   useEffect(() => {
@@ -828,14 +903,17 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     }
   };
 
-  if (loading) return <div style={{ padding: 20, textAlign: 'center' }}>Joining session…</div>;
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Joining session…</div>;
+
+  // Wait for state to load before deciding if live
+  if (stateLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Loading live session…</div>;
 
   const currentQ = state?.current_question;
   const hasPen = state?.pen_holder_id === user.id;
   const canDraw = hasPen;
   const isLive = state?.status === 'live';
 
-  // Drawing handlers for student with pen
+  // Drawing handlers for student with pen — smooth handwriting
   const getPos = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const touch = e.touches?.[0];
@@ -845,25 +923,36 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   };
   const isDrawing = useRef(false);
   const lastPos = useRef(null);
+  const midPos = useRef(null);
 
   const startDraw = (e) => {
     if (!canDraw) return;
     e.preventDefault();
     isDrawing.current = true;
-    lastPos.current = getPos(e);
+    const pos = getPos(e);
+    lastPos.current = pos;
+    midPos.current = pos;
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI * 2);
+    ctx.fill();
   };
   const draw = (e) => {
     if (!canDraw || !isDrawing.current || !canvasRef.current) return;
     e.preventDefault();
     const pos = getPos(e);
     const ctx = canvasRef.current.getContext('2d');
+    const mid = { x: (lastPos.current.x + pos.x) / 2, y: (lastPos.current.y + pos.y) / 2 };
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(lastPos.current.x, lastPos.current.y);
-    ctx.lineTo(pos.x, pos.y);
+    ctx.moveTo(midPos.current.x, midPos.current.y);
+    ctx.quadraticCurveTo(lastPos.current.x, lastPos.current.y, mid.x, mid.y);
     ctx.stroke();
+    midPos.current = mid;
     lastPos.current = pos;
   };
   const endDraw = (e) => {
@@ -880,7 +969,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     return (
       <div style={{ padding: 20, textAlign: 'center' }}>
         <p style={{ fontSize: 18, color: '#64748b' }}>This session is not live.</p>
-        <button className="btn btn-outline" onClick={onExit} style={{ marginTop: 12 }}>Back</button>
+        <button style={{ ...btnOutline, marginTop: 12 }} onClick={onExit}>Back</button>
       </div>
     );
   }
@@ -893,18 +982,18 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
           <h2 style={{ margin: 0, fontSize: 20, color: '#0f4c3a' }}>🎓 {session?.title}</h2>
           <span style={{ background: '#fef2f2', color: '#ef4444', padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>🔴 LIVE</span>
         </div>
-        <button className="btn btn-outline btn-sm" onClick={onExit}>Leave</button>
+        <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Leave</button>
       </div>
 
-      {/* Whiteboard */}
+      {/* Whiteboard — large writing surface */}
       <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', marginBottom: 16 }}>
         <div style={{ padding: 8, borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#64748b' }}>
-          {hasPen ? '✍️ You have the pen — draw on the board!' : state?.pen_holder_name ? `${state.pen_holder_name} is drawing…` : 'Watch the whiteboard'}
+          {hasPen ? '✍️ You have the pen — write on the board!' : state?.pen_holder_name ? `${state.pen_holder_name} is writing…` : 'Watch the whiteboard'}
         </div>
         <canvas
           ref={canvasRef}
-          width={1200}
-          height={600}
+          width={1400}
+          height={800}
           style={{ width: '100%', height: 'auto', display: 'block', touchAction: 'none', cursor: canDraw ? 'crosshair' : 'default', background: '#fff' }}
           onMouseDown={canDraw ? startDraw : undefined}
           onMouseMove={canDraw ? draw : undefined}
@@ -955,7 +1044,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
 
           <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
-              className="btn btn-primary"
+              style={{ ...btnPrimary, opacity: (!myAnswer.trim() || feedback) ? 0.6 : 1 }}
               onClick={submitAnswer}
               disabled={!myAnswer.trim() || feedback}
             >
