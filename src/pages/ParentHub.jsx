@@ -837,6 +837,19 @@ export default function ParentHub() {
                         </div>
                       )) : <p className="phub-muted">No compositions or drawings yet.</p>}
                     </section>
+
+                    <section className="phub-section">
+                      <h3>🎓 Coaching Sessions</h3>
+                      {summary.coaching_sessions?.length ? summary.coaching_sessions.map((cs, i) => (
+                        <div key={i} className="phub-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                          <span><strong>{cs.title}</strong> · {cs.class_name}</span>
+                          <span className="phub-muted" style={{ fontSize: 13, marginTop: 4 }}>
+                            {cs.topic ? `Topic: ${cs.topic} · ` : ''}Teacher: {cs.teacher_name} · Status: {cs.status}
+                            {cs.total_questions > 0 && ` · Score: ${cs.total_marks || 0}/${cs.total_questions}`}
+                          </span>
+                        </div>
+                      )) : <p className="phub-muted">No coaching sessions attended yet.</p>}
+                    </section>
                   </>
                 )}
               </>

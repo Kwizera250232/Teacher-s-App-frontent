@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
+import Whiteboard from './Whiteboard';
 
 const POLL_MS = 3000;
 
@@ -18,37 +19,6 @@ const btnOutline = {
 };
 const btnSm = { padding: '5px 12px', fontSize: 13 };
 const btnDanger = { ...btnPrimary, ...btnSm, background: '#ef4444' };
-
-// Draw ruled lines on the whiteboard (like notebook paper for handwriting)
-function drawRuledLines(ctx, w, h) {
-  ctx.save();
-  ctx.strokeStyle = '#c7e3f4';
-  ctx.lineWidth = 1;
-  const lineSpacing = 40;
-  for (let y = lineSpacing; y < h; y += lineSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
-    ctx.stroke();
-  }
-  // Red margin line on the left
-  ctx.strokeStyle = '#f4c7c7';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(50, 0);
-  ctx.lineTo(50, h);
-  ctx.stroke();
-  ctx.restore();
-}
-
-// Initialize canvas with white background + ruled lines
-function initCanvas(canvas) {
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawRuledLines(ctx, canvas.width, canvas.height);
-}
 
 // ============ Teacher Panel: List + Create ============
 export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSuccess }) {
@@ -124,13 +94,39 @@ export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSucc
         </div>
       )}
 
-      {sessions.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {sessions.map(s => (
-            <SessionCard key={s.id} session={s} classId={classId} token={token} onJoin={() => setActiveSession(s.id)} onError={onError} />
-          ))}
-        </div>
-      )}
+      {sessions.length > 0 && (() => {
+        const liveSessions = sessions.filter(s => s.status === 'live');
+        const upcoming = sessions.filter(s => s.status === 'scheduled');
+        const completed = sessions.filter(s => s.status === 'completed');
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {liveSessions.length > 0 && (
+              <div>
+                <h3 style={{ fontSize: 15, color: '#ef4444', margin: '0 0 8px', fontWeight: 700 }}>🔴 Live Now ({liveSessions.length})</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {liveSessions.map(s => <SessionCard key={s.id} session={s} classId={classId} token={token} onJoin={() => setActiveSession(s.id)} onError={onError} />)}
+                </div>
+              </div>
+            )}
+            {upcoming.length > 0 && (
+              <div>
+                <h3 style={{ fontSize: 15, color: '#3b82f6', margin: '0 0 8px', fontWeight: 700 }}>📅 Upcoming ({upcoming.length})</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {upcoming.map(s => <SessionCard key={s.id} session={s} classId={classId} token={token} onJoin={() => setActiveSession(s.id)} onError={onError} />)}
+                </div>
+              </div>
+            )}
+            {completed.length > 0 && (
+              <div>
+                <h3 style={{ fontSize: 15, color: '#10b981', margin: '0 0 8px', fontWeight: 700 }}>✓ Completed ({completed.length})</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {completed.map(s => <SessionCard key={s.id} session={s} classId={classId} token={token} onJoin={() => setActiveSession(s.id)} onError={onError} />)}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {showCreate && (
         <CreateSessionModal
@@ -276,6 +272,14 @@ function CreateSessionModal({ classId, token, quizzes, students, onClose, onCrea
   const [selectedStudents, setSelectedStudents] = useState(new Set());
   const [countOfficial, setCountOfficial] = useState(false);
   const [saving, setSaving] = useState(false);
+  // AI question generation
+  const [showAI, setShowAI] = useState(false);
+  const [aiSubject, setAiSubject] = useState('');
+  const [aiGrade, setAiGrade] = useState('');
+  const [aiNumQuestions, setAiNumQuestions] = useState(5);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPreview, setAiPreview] = useState(null);
+  const [aiApproved, setAiApproved] = useState(false);
 
   const toggleStudent = (id) => {
     setSelectedStudents(prev => {
@@ -284,6 +288,53 @@ function CreateSessionModal({ classId, token, quizzes, students, onClose, onCrea
       else next.add(id);
       return next;
     });
+  };
+
+  // Generate AI questions for preview
+  const generateAIPreview = async () => {
+    if (!aiSubject.trim() || !aiGrade.trim()) {
+      onError?.('Please select subject and grade for AI generation.');
+      return;
+    }
+    setAiLoading(true);
+    setAiApproved(false);
+    try {
+      const r = await api.post(`/classes/${classId}/ai-quiz/preview`, {
+        content: `Generate ${aiNumQuestions} ${aiSubject} questions for ${aiGrade} level. Topic: ${topic || title || 'general'}.`,
+        grade_level: aiGrade,
+        subject: aiSubject,
+      }, token);
+      setAiPreview(r.questions || []);
+    } catch (e) {
+      onError?.(e.message || 'AI generation failed. You can still pick an existing quiz.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Create quiz from approved AI questions and link to session
+  const createQuizFromAI = async () => {
+    if (!aiPreview || aiPreview.length === 0) return;
+    setAiLoading(true);
+    try {
+      const r = await api.post(`/classes/${classId}/ai-quiz/generate`, {
+        content: `Generate ${aiPreview.length} ${aiSubject} questions for ${aiGrade} level. Topic: ${topic || title}.`,
+        title: `${title || 'Coaching'} — AI Questions`,
+        description: `AI-generated for coaching session: ${topic || title}`,
+        subject: aiSubject,
+        grade_level: aiGrade,
+      }, token);
+      // Link the new quiz
+      if (r.quiz?.id) {
+        setQuizId(String(r.quiz.id));
+        setAiApproved(true);
+        onSuccess?.(`AI quiz created with ${r.questions?.length || aiPreview.length} questions. Review complete — linked to session.`);
+      }
+    } catch (e) {
+      onError?.(e.message || 'Could not create AI quiz.');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const submit = async () => {
@@ -368,6 +419,83 @@ function CreateSessionModal({ classId, token, quizzes, students, onClose, onCrea
               <option key={q.id} value={q.id}>{q.title}</option>
             ))}
           </select>
+          {quizId && (
+            <p style={{ fontSize: 11, color: '#10b981', margin: '4px 0 0' }}>✓ Linked to existing quiz (original quiz won't be modified)</p>
+          )}
+        </div>
+
+        {/* AI Question Generation */}
+        <div style={{ marginBottom: 12, padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <button
+            onClick={() => setShowAI(!showAI)}
+            style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #667eea', background: '#f0f2ff', color: '#667eea', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            🤖 Generate AI Questions {showAI ? '▲' : '▼'}
+          </button>
+          {showAI && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 8px' }}>
+                AI generates questions → you review & approve → quiz is created and linked to this session.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                <select value={aiSubject} onChange={e => setAiSubject(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }}>
+                  <option value="">Subject…</option>
+                  <option>Mathematics</option>
+                  <option>English</option>
+                  <option>Kinyarwanda</option>
+                  <option>Science and Elementary Technology (SET)</option>
+                  <option>Social and Religious Studies (SST)</option>
+                  <option>Physics</option>
+                  <option>Chemistry</option>
+                  <option>Biology</option>
+                  <option>Geography</option>
+                  <option>History</option>
+                </select>
+                <select value={aiGrade} onChange={e => setAiGrade(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }}>
+                  <option value="">Grade…</option>
+                  {['P1','P2','P3','P4','P5','P6','S1','S2','S3','S4','S5','S6'].map(g => <option key={g}>{g}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ fontSize: 12, color: '#64748b' }}>Questions:</label>
+                <select value={aiNumQuestions} onChange={e => setAiNumQuestions(parseInt(e.target.value))} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0', fontSize: 13 }}>
+                  {[3, 5, 8, 10, 15].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+                <button onClick={generateAIPreview} disabled={aiLoading} style={{ ...btnPrimary, ...btnSm, marginLeft: 'auto' }}>
+                  {aiLoading ? 'Generating…' : 'Preview Questions'}
+                </button>
+              </div>
+
+              {/* AI Preview — teacher reviews before approving */}
+              {aiPreview && aiPreview.length > 0 && (
+                <div style={{ marginTop: 8, padding: 8, background: '#fff', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: '#0f4c3a', margin: '0 0 8px' }}>
+                    📋 Review {aiPreview.length} AI-generated questions:
+                  </p>
+                  <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                    {aiPreview.map((q, i) => (
+                      <div key={i} style={{ padding: '6px 0', borderBottom: i < aiPreview.length - 1 ? '1px solid #f1f5f9' : 'none', fontSize: 12 }}>
+                        <strong>Q{i + 1}.</strong> {q.question}
+                        {q.correct_answer && <span style={{ color: '#10b981', marginLeft: 8 }}>→ {q.correct_answer}</span>}
+                      </div>
+                    ))}
+                  </div>
+                  {!aiApproved ? (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <button onClick={createQuizFromAI} disabled={aiLoading} style={{ ...btnPrimary, ...btnSm }}>
+                        {aiLoading ? 'Creating…' : '✓ Approve & Create Quiz'}
+                      </button>
+                      <button onClick={() => setAiPreview(null)} style={{ ...btnOutline, ...btnSm }}>Discard</button>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: 12, color: '#10b981', fontWeight: 600, margin: '8px 0 0' }}>
+                      ✓ Approved! AI quiz created and linked to this session.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: 12 }}>
@@ -409,14 +537,9 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   const [session, setSession] = useState(null);
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const [showWhiteboard, setShowWhiteboard] = useState(true);
   const canvasRef = useRef(null);
-  const wsRef = useRef(null);
-  const isDrawing = useRef(false);
-  const lastPos = useRef(null);
-  const midPos = useRef(null);
-  const penColor = useRef('#1e293b');
-  const penSize = useRef(3);
+  const saveTimer = useRef(null);
 
   // Load session detail
   useEffect(() => {
@@ -425,7 +548,6 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
         const data = await api.get(`/classes/${classId}/coaching-sessions/${sessionId}`, token);
         setSession(data);
         if (data.status === 'scheduled') {
-          // Auto-start
           await api.put(`/classes/${classId}/coaching-sessions/${sessionId}`, { status: 'live' }, token);
         }
       } catch (e) {
@@ -451,26 +573,6 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token]);
 
-  // Initialize canvas with ruled lines when whiteboard opens
-  useEffect(() => {
-    if (showWhiteboard && canvasRef.current && !state?.whiteboard_data) {
-      initCanvas(canvasRef.current);
-    }
-  }, [showWhiteboard, state?.whiteboard_data]);
-
-  // Load whiteboard data when it changes
-  useEffect(() => {
-    if (state?.whiteboard_data && canvasRef.current) {
-      const img = new Image();
-      img.onload = () => {
-        const ctx = canvasRef.current.getContext('2d');
-        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        ctx.drawImage(img, 0, 0);
-      };
-      img.src = state.whiteboard_data;
-    }
-  }, [state?.whiteboard_data]);
-
   const updateState = async (changes) => {
     try {
       await api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, changes, token);
@@ -479,69 +581,16 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     }
   };
 
-  const saveWhiteboard = async () => {
-    if (!canvasRef.current) return;
-    const dataUrl = canvasRef.current.toDataURL('image/png');
-    await updateState({ whiteboard_data: dataUrl });
-  };
-
-  // Drawing handlers — smooth handwriting using quadratic curves
-  const getPos = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const touch = e.touches?.[0];
-    const x = (touch ? touch.clientX : e.clientX) - rect.left;
-    const y = (touch ? touch.clientY : e.clientY) - rect.top;
-    return { x: x * (canvasRef.current.width / rect.width), y: y * (canvasRef.current.height / rect.height) };
-  };
-
-  const startDraw = (e) => {
-    e.preventDefault();
-    isDrawing.current = true;
-    const pos = getPos(e);
-    lastPos.current = pos;
-    midPos.current = pos;
-    // Draw a dot for single taps
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.fillStyle = penColor.current;
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, penSize.current / 2, 0, Math.PI * 2);
-    ctx.fill();
-  };
-
-  const draw = (e) => {
-    if (!isDrawing.current || !canvasRef.current) return;
-    e.preventDefault();
-    const pos = getPos(e);
-    const ctx = canvasRef.current.getContext('2d');
-    // Smooth stroke using quadratic curve through midpoint
-    const mid = { x: (lastPos.current.x + pos.x) / 2, y: (lastPos.current.y + pos.y) / 2 };
-    ctx.strokeStyle = penColor.current;
-    ctx.lineWidth = penSize.current;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(midPos.current.x, midPos.current.y);
-    ctx.quadraticCurveTo(lastPos.current.x, lastPos.current.y, mid.x, mid.y);
-    ctx.stroke();
-    midPos.current = mid;
-    lastPos.current = pos;
-  };
-
-  const endDraw = (e) => {
-    if (isDrawing.current) {
-      e?.preventDefault();
-      isDrawing.current = false;
-      saveWhiteboard();
-    }
-  };
-
-  const clearBoard = () => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    drawRuledLines(ctx, canvasRef.current.width, canvasRef.current.height);
-    saveWhiteboard();
-  };
+  // Debounced whiteboard save — only save after drawing stops for 500ms
+  const onWhiteboardChange = useCallback(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      if (canvasRef.current) {
+        const dataUrl = canvasRef.current.toDataURL('image/png');
+        await updateState({ whiteboard_data: dataUrl });
+      }
+    }, 500);
+  }, []);
 
   const finishSession = async () => {
     if (!confirm('Finish this coaching session? Results will be available.')) return;
@@ -562,6 +611,13 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   const participants = state?.participants || [];
   const penHolder = state?.pen_holder_id;
   const canDraw = !penHolder || penHolder === user.id;
+  const isPaused = state?.is_paused;
+  const groupSize = state?.question_group_size || 5;
+  const currentIdx = state?.current_question_index || 0;
+  const currentGroup = Math.floor(currentIdx / groupSize);
+  const groupStart = currentGroup * groupSize;
+  const groupEnd = Math.min(groupStart + groupSize, questions.length);
+  const groupQuestions = questions.slice(groupStart, groupEnd);
 
   return (
     <div style={{ padding: '8px 0', minHeight: '60vh' }}>
@@ -571,12 +627,15 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
           <h2 style={{ margin: 0, fontSize: 20, color: '#0f4c3a' }}>🎓 {session?.title}</h2>
           {session?.topic && <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748b' }}>{session.topic}</p>}
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ background: '#fef2f2', color: '#ef4444', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
-            🔴 LIVE
+            {isPaused ? '⏸ PAUSED' : '🔴 LIVE'}
           </span>
           <button style={{ ...btnOutline, ...btnSm }} onClick={() => setShowWhiteboard(!showWhiteboard)}>
             {showWhiteboard ? 'Hide Board' : 'Show Board'}
+          </button>
+          <button style={{ ...btnOutline, ...btnSm }} onClick={() => updateState({ is_paused: !isPaused })}>
+            {isPaused ? '▶ Resume' : '⏸ Pause'}
           </button>
           <button style={btnDanger} onClick={finishSession}>
             Finish
@@ -585,97 +644,116 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
         </div>
       </div>
 
-      {/* Main area: whiteboard or participants */}
-      {showWhiteboard ? (
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-          {/* Whiteboard toolbar */}
-          <div style={{ display: 'flex', gap: 6, padding: 8, borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', alignItems: 'center' }}>
-            {['#1e293b', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'].map(c => (
-              <button key={c} onClick={() => { penColor.current = c; }}
-                style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: penColor.current === c ? '3px solid #0f4c3a' : '2px solid #e2e8f0', cursor: 'pointer' }} />
-            ))}
-            <select onChange={e => { penSize.current = parseInt(e.target.value); }} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: '1px solid #e2e8f0' }}>
-              <option value="2">Fine pen</option>
-              <option value="3" selected>Medium pen</option>
-              <option value="5">Bold pen</option>
-              <option value="10">Marker</option>
-            </select>
-            <button style={{ ...btnOutline, ...btnSm, fontSize: 12 }} onClick={clearBoard}>Clear</button>
-            {penHolder && (
-              <span style={{ fontSize: 12, color: '#6b21a8', marginLeft: 'auto' }}>
-                ✍️ {state?.pen_holder_name} has the pen
-              </span>
-            )}
-          </div>
-          {/* Canvas — large writing surface with ruled lines */}
-          <div style={{ position: 'relative', width: '100%', background: '#fff' }}>
-            <canvas
-              ref={canvasRef}
-              width={1400}
-              height={800}
-              style={{ width: '100%', height: 'auto', display: 'block', touchAction: 'none', cursor: canDraw ? 'crosshair' : 'default', background: '#fff' }}
-              onMouseDown={canDraw ? startDraw : undefined}
-              onMouseMove={canDraw ? draw : undefined}
-              onMouseUp={canDraw ? endDraw : undefined}
-              onMouseLeave={canDraw ? endDraw : undefined}
-              onTouchStart={canDraw ? startDraw : undefined}
-              onTouchMove={canDraw ? draw : undefined}
-              onTouchEnd={canDraw ? endDraw : undefined}
+      {/* Main area: whiteboard (auto-maximizes) + minimized participants */}
+      <div style={{ display: 'flex', gap: 12, flexDirection: showWhiteboard ? 'row' : 'column' }}>
+        {showWhiteboard && (
+          <div style={{ flex: 1, minWidth: 0, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+            <Whiteboard
+              live
+              canDraw={canDraw}
+              externalCanvasRef={canvasRef}
+              onDataChange={onWhiteboardChange}
+              initialData={state?.whiteboard_data}
+              height={500}
             />
             {!canDraw && (
-              <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 12px', borderRadius: 8, fontSize: 12 }}>
-                {state?.pen_holder_name} is drawing…
+              <div style={{ padding: '6px 12px', background: '#fef3c7', fontSize: 12, color: '#92400e', textAlign: 'center' }}>
+                ✍️ {state?.pen_holder_name} has the pen
               </div>
             )}
           </div>
-        </div>
-      ) : (
-        /* Participants view */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 12, padding: 8 }}>
-          {participants.length === 0 && (
-            <p style={{ color: '#64748b', textAlign: 'center', gridColumn: '1 / -1' }}>Waiting for students to join…</p>
-          )}
-          {participants.map(p => (
-            <div key={p.student_id} style={{ textAlign: 'center' }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: '50%',
-                background: `linear-gradient(135deg, #6366f1, #764ba2)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontWeight: 700, fontSize: 18, margin: '0 auto 4px',
-                border: penHolder === p.student_id ? '3px solid #f59e0b' : '3px solid transparent',
-                position: 'relative',
-              }}>
-                {p.name?.charAt(0)?.toUpperCase()}
-                {penHolder === p.student_id && (
-                  <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: 14 }}>✍️</span>
+        )}
+
+        {/* Participants — minimized when whiteboard is open, full grid when closed */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          padding: 8,
+          background: '#fff',
+          borderRadius: 12,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          minWidth: showWhiteboard ? 120 : '100%',
+          maxWidth: showWhiteboard ? 180 : '100%',
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textAlign: 'center' }}>
+            👥 {participants.length}
+          </div>
+          <div style={{
+            display: showWhiteboard ? 'flex' : 'grid',
+            flexDirection: 'column',
+            gridTemplateColumns: showWhiteboard ? 'none' : 'repeat(auto-fill, minmax(80px, 1fr))',
+            gap: showWhiteboard ? 6 : 12,
+            overflowY: showWhiteboard ? 'auto' : 'visible',
+            maxHeight: showWhiteboard ? 480 : 'none',
+          }}>
+            {participants.length === 0 && (
+              <p style={{ color: '#64748b', textAlign: 'center', fontSize: 12 }}>Waiting…</p>
+            )}
+            {participants.map(p => (
+              <div key={p.student_id} style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: showWhiteboard ? 36 : 56, height: showWhiteboard ? 36 : 56, borderRadius: '50%',
+                  background: `linear-gradient(135deg, #6366f1, #764ba2)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontWeight: 700, fontSize: showWhiteboard ? 14 : 18, margin: '0 auto 4px',
+                  border: penHolder === p.student_id ? '3px solid #f59e0b' : '3px solid transparent',
+                  position: 'relative',
+                }}>
+                  {p.name?.charAt(0)?.toUpperCase()}
+                  {penHolder === p.student_id && (
+                    <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: 10 }}>✍️</span>
+                  )}
+                </div>
+                {!showWhiteboard && (
+                  <>
+                    <div style={{ fontSize: 11, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {p.name?.split(' ')[0]}
+                    </div>
+                    <button
+                      onClick={() => updateState({ pen_holder_id: penHolder === p.student_id ? null : p.student_id })}
+                      style={{ fontSize: 10, padding: '2px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: penHolder === p.student_id ? '#fef3c7' : '#fff', cursor: 'pointer', marginTop: 2 }}
+                    >
+                      {penHolder === p.student_id ? 'Revoke Pen' : 'Give Pen'}
+                    </button>
+                  </>
+                )}
+                {showWhiteboard && penHolder === p.student_id && (
+                  <button
+                    onClick={() => updateState({ pen_holder_id: null })}
+                    style={{ fontSize: 9, padding: '1px 4px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fef3c7', cursor: 'pointer' }}
+                  >
+                    Revoke
+                  </button>
                 )}
               </div>
-              <div style={{ fontSize: 11, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {p.name?.split(' ')[0]}
-              </div>
-              <button
-                onClick={() => updateState({ pen_holder_id: penHolder === p.student_id ? null : p.student_id })}
-                style={{ fontSize: 10, padding: '2px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: penHolder === p.student_id ? '#fef3c7' : '#fff', cursor: 'pointer', marginTop: 2 }}
-              >
-                {penHolder === p.student_id ? 'Revoke Pen' : 'Give Pen'}
-              </button>
+            ))}
+          </div>
+          {!showWhiteboard && participants.length > 0 && (
+            <div style={{ fontSize: 11, color: '#64748b', textAlign: 'center', marginTop: 4 }}>
+              Click a student to give/revoke pen
             </div>
-          ))}
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Question Controls */}
+      {/* Question Controls with progressive grouping */}
       {questions.length > 0 && (
         <div style={{ marginTop: 16, background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
             <h3 style={{ margin: 0, fontSize: 16, color: '#0f4c3a' }}>
-              Question {state?.current_question_index + 1 || 0} of {questions.length}
+              Question {currentIdx + 1} of {questions.length}
+              {questions.length > groupSize && (
+                <span style={{ fontSize: 12, color: '#64748b', marginLeft: 8 }}>
+                  (Group {currentGroup + 1}: Q{groupStart + 1}–Q{groupEnd})
+                </span>
+              )}
             </h3>
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button
-                style={{ ...btnOutline, ...btnSm, opacity: (state?.current_question_index || 0) === 0 ? 0.5 : 1 }}
-                disabled={(state?.current_question_index || 0) === 0}
-                onClick={() => updateState({ current_question_index: (state?.current_question_index || 0) - 1, show_answer: false })}
+                style={{ ...btnOutline, ...btnSm, opacity: currentIdx === 0 ? 0.5 : 1 }}
+                disabled={currentIdx === 0}
+                onClick={() => updateState({ current_question_index: currentIdx - 1, show_answer: false })}
               >
                 ← Prev
               </button>
@@ -686,9 +764,15 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
                 {state?.show_answer ? 'Hide Answer' : 'Show Answer'}
               </button>
               <button
-                style={{ ...btnPrimary, ...btnSm, opacity: (state?.current_question_index || 0) >= questions.length - 1 ? 0.5 : 1 }}
-                disabled={(state?.current_question_index || 0) >= questions.length - 1}
-                onClick={() => updateState({ current_question_index: (state?.current_question_index || 0) + 1, show_answer: false })}
+                style={{ ...btnOutline, ...btnSm }}
+                onClick={() => updateState({ is_paused: !isPaused })}
+              >
+                {isPaused ? '▶ Resume' : '⏸ Pause'}
+              </button>
+              <button
+                style={{ ...btnPrimary, ...btnSm, opacity: currentIdx >= questions.length - 1 ? 0.5 : 1 }}
+                disabled={currentIdx >= questions.length - 1}
+                onClick={() => updateState({ current_question_index: currentIdx + 1, show_answer: false })}
               >
                 Next →
               </button>
@@ -721,6 +805,41 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
                 <div style={{ marginTop: 12, padding: '10px 14px', background: '#f0fdf4', borderRadius: 8, fontSize: 14, color: '#10b981', fontWeight: 600 }}>
                   ✓ Correct Answer: {currentQ.correct_answer}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Progressive group preview — show which questions are in current group */}
+          {questions.length > groupSize && (
+            <div style={{ marginTop: 12, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {groupQuestions.map((q, i) => {
+                const qIdx = groupStart + i;
+                return (
+                  <button
+                    key={qIdx}
+                    onClick={() => updateState({ current_question_index: qIdx, show_answer: false })}
+                    style={{
+                      width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 600,
+                      border: qIdx === currentIdx ? '2px solid #0f4c3a' : '1px solid #e2e8f0',
+                      background: qIdx === currentIdx ? '#0f4c3a' : '#fff',
+                      color: qIdx === currentIdx ? '#fff' : '#64748b',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {qIdx + 1}
+                  </button>
+                );
+              })}
+              {groupEnd < questions.length && (
+                <button
+                  onClick={() => updateState({ current_question_index: groupEnd, show_answer: false })}
+                  style={{
+                    width: 'auto', height: 32, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                    border: '1px solid #667eea', background: '#f0f2ff', color: '#667eea', cursor: 'pointer',
+                  }}
+                >
+                  Next group →
+                </button>
               )}
             </div>
           )}
@@ -827,6 +946,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const [myAnswer, setMyAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
   const canvasRef = useRef(null);
+  const saveTimer = useRef(null);
 
   // Join session
   useEffect(() => {
@@ -841,7 +961,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         setLoading(false);
       }
     })();
-    // Leave on unmount
     return () => {
       api.post(`/classes/${classId}/coaching-sessions/${sessionId}/leave`, {}, token).catch(() => {});
     };
@@ -857,7 +976,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         if (active) {
           setState(s);
           setStateLoading(false);
-          // Reset answer when question changes
           if (s.current_question?.id !== state?.current_question?.id) {
             setMyAnswer('');
             setFeedback(null);
@@ -870,25 +988,16 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token]);
 
-  // Initialize canvas with ruled lines if no saved data
-  useEffect(() => {
-    if (canvasRef.current && !state?.whiteboard_data) {
-      initCanvas(canvasRef.current);
-    }
-  }, [state?.whiteboard_data]);
-
-  // Render whiteboard
-  useEffect(() => {
-    if (state?.whiteboard_data && canvasRef.current) {
-      const img = new Image();
-      img.onload = () => {
-        const ctx = canvasRef.current.getContext('2d');
-        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        ctx.drawImage(img, 0, 0);
-      };
-      img.src = state.whiteboard_data;
-    }
-  }, [state?.whiteboard_data]);
+  // Debounced whiteboard save for student with pen
+  const onWhiteboardChange = useCallback(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      if (canvasRef.current) {
+        const dataUrl = canvasRef.current.toDataURL('image/png');
+        api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, { whiteboard_data: dataUrl }, token).catch(() => {});
+      }
+    }, 500);
+  }, [classId, sessionId, token]);
 
   const submitAnswer = async () => {
     if (!myAnswer.trim() || !state?.current_question) return;
@@ -904,66 +1013,13 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   };
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Joining session…</div>;
-
-  // Wait for state to load before deciding if live
   if (stateLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Loading live session…</div>;
 
   const currentQ = state?.current_question;
   const hasPen = state?.pen_holder_id === user.id;
   const canDraw = hasPen;
   const isLive = state?.status === 'live';
-
-  // Drawing handlers for student with pen — smooth handwriting
-  const getPos = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const touch = e.touches?.[0];
-    const x = (touch ? touch.clientX : e.clientX) - rect.left;
-    const y = (touch ? touch.clientY : e.clientY) - rect.top;
-    return { x: x * (canvasRef.current.width / rect.width), y: y * (canvasRef.current.height / rect.height) };
-  };
-  const isDrawing = useRef(false);
-  const lastPos = useRef(null);
-  const midPos = useRef(null);
-
-  const startDraw = (e) => {
-    if (!canDraw) return;
-    e.preventDefault();
-    isDrawing.current = true;
-    const pos = getPos(e);
-    lastPos.current = pos;
-    midPos.current = pos;
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.fillStyle = '#1e293b';
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 1.5, 0, Math.PI * 2);
-    ctx.fill();
-  };
-  const draw = (e) => {
-    if (!canDraw || !isDrawing.current || !canvasRef.current) return;
-    e.preventDefault();
-    const pos = getPos(e);
-    const ctx = canvasRef.current.getContext('2d');
-    const mid = { x: (lastPos.current.x + pos.x) / 2, y: (lastPos.current.y + pos.y) / 2 };
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(midPos.current.x, midPos.current.y);
-    ctx.quadraticCurveTo(lastPos.current.x, lastPos.current.y, mid.x, mid.y);
-    ctx.stroke();
-    midPos.current = mid;
-    lastPos.current = pos;
-  };
-  const endDraw = (e) => {
-    if (isDrawing.current && canDraw) {
-      e?.preventDefault();
-      isDrawing.current = false;
-      // Save whiteboard
-      const dataUrl = canvasRef.current.toDataURL('image/png');
-      api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, { whiteboard_data: dataUrl }, token).catch(() => {});
-    }
-  };
+  const isPaused = state?.is_paused;
 
   if (!isLive) {
     return (
@@ -980,33 +1036,41 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 20, color: '#0f4c3a' }}>🎓 {session?.title}</h2>
-          <span style={{ background: '#fef2f2', color: '#ef4444', padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>🔴 LIVE</span>
+          <span style={{
+            background: isPaused ? '#fef3c7' : '#fef2f2',
+            color: isPaused ? '#92400e' : '#ef4444',
+            padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700,
+          }}>
+            {isPaused ? '⏸ PAUSED' : '🔴 LIVE'}
+          </span>
         </div>
         <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Leave</button>
       </div>
 
-      {/* Whiteboard — large writing surface */}
+      {/* Whiteboard — uses existing Whiteboard component */}
       <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', marginBottom: 16 }}>
         <div style={{ padding: 8, borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#64748b' }}>
           {hasPen ? '✍️ You have the pen — write on the board!' : state?.pen_holder_name ? `${state.pen_holder_name} is writing…` : 'Watch the whiteboard'}
         </div>
-        <canvas
-          ref={canvasRef}
-          width={1400}
-          height={800}
-          style={{ width: '100%', height: 'auto', display: 'block', touchAction: 'none', cursor: canDraw ? 'crosshair' : 'default', background: '#fff' }}
-          onMouseDown={canDraw ? startDraw : undefined}
-          onMouseMove={canDraw ? draw : undefined}
-          onMouseUp={canDraw ? endDraw : undefined}
-          onMouseLeave={canDraw ? endDraw : undefined}
-          onTouchStart={canDraw ? startDraw : undefined}
-          onTouchMove={canDraw ? draw : undefined}
-          onTouchEnd={canDraw ? endDraw : undefined}
+        <Whiteboard
+          live
+          canDraw={canDraw}
+          externalCanvasRef={canvasRef}
+          onDataChange={onWhiteboardChange}
+          initialData={state?.whiteboard_data}
+          height={500}
         />
       </div>
 
+      {/* Paused indicator */}
+      {isPaused && (
+        <div style={{ textAlign: 'center', padding: 20, color: '#92400e', fontSize: 16, fontWeight: 600 }}>
+          ⏸ Session paused by teacher. Please wait…
+        </div>
+      )}
+
       {/* Current Question */}
-      {currentQ && (
+      {currentQ && !isPaused && (
         <div style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#0f4c3a' }}>Question {state.current_question_index + 1}</h3>
           <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>{currentQ.question}</p>

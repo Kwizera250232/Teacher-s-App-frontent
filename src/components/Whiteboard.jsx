@@ -10,7 +10,14 @@ const PENS = [
   { key: 'highlighter', label: 'Highlight', size: 18, alpha: 0.25 },
 ];
 
-export default function Whiteboard({ onSave, onCancel }) {
+/**
+ * Whiteboard component.
+ * - Default mode: standalone board for posting drawings to feed (onSave returns blob)
+ * - Live mode (live=true): exposes canvas via canvasRef prop for data URL sync,
+ *   supports loading saved board state, and calls onDataChange when board changes.
+ *   Uses canDraw to control pen access (teacher or student-with-pen only).
+ */
+export default function Whiteboard({ onSave, onCancel, live = false, canDraw = true, externalCanvasRef, onDataChange, initialData, height = 320 }) {
   const canvasRef = useRef(null);
   const [mode, setMode] = useState('draw');
   const [drawing, setDrawing] = useState(false);
@@ -28,15 +35,35 @@ export default function Whiteboard({ onSave, onCancel }) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const w = canvas.offsetWidth || 600;
-    canvas.width = w;
-    canvas.height = 320;
+    canvas.width = live ? Math.max(w, 800) : w;
+    canvas.height = live ? (height || 500) : 320;
     if (blank) {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-  }, []);
+  }, [live, height]);
 
   useEffect(() => { initCanvas(true); }, [initCanvas]);
+
+  // Expose canvas ref to parent in live mode
+  useEffect(() => {
+    if (live && externalCanvasRef) {
+      externalCanvasRef.current = canvasRef.current;
+    }
+  }, [live, externalCanvasRef]);
+
+  // Load initial data in live mode
+  useEffect(() => {
+    if (live && initialData && canvasRef.current) {
+      const img = new Image();
+      img.onload = () => {
+        const ctx = canvasRef.current.getContext('2d');
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        ctx.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height);
+      };
+      img.src = initialData;
+    }
+  }, [live, initialData]);
 
   const applyGraph = () => {
     const canvas = canvasRef.current;
@@ -51,6 +78,7 @@ export default function Whiteboard({ onSave, onCancel }) {
       const lines = overlayText.trim().split('\n');
       lines.forEach((line, i) => ctx.fillText(line, 24, canvas.height - 24 - (lines.length - 1 - i) * 18));
     }
+    if (live && onDataChange) onDataChange();
   };
 
   const getPos = (e) => {
@@ -65,7 +93,7 @@ export default function Whiteboard({ onSave, onCancel }) {
   };
 
   const start = (e) => {
-    if (mode !== 'draw') return;
+    if (mode !== 'draw' || !canDraw) return;
     e.preventDefault();
     const ctx = canvasRef.current.getContext('2d');
     const { x, y } = getPos(e);
@@ -87,7 +115,7 @@ export default function Whiteboard({ onSave, onCancel }) {
   };
 
   const move = (e) => {
-    if (!drawing || mode !== 'draw') return;
+    if (!drawing || mode !== 'draw' || !canDraw) return;
     e.preventDefault();
     const ctx = canvasRef.current.getContext('2d');
     const { x, y } = getPos(e);
@@ -97,12 +125,17 @@ export default function Whiteboard({ onSave, onCancel }) {
   };
 
   const end = () => {
+    if (!drawing) return;
     setDrawing(false);
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx) ctx.globalCompositeOperation = 'source-over';
+    if (live && onDataChange) onDataChange();
   };
 
-  const clear = () => initCanvas(true);
+  const clear = () => {
+    initCanvas(true);
+    if (live && onDataChange) onDataChange();
+  };
 
   const saveCanvasBlob = (cb) => {
     canvasRef.current?.toBlob((blob) => {
@@ -119,53 +152,16 @@ export default function Whiteboard({ onSave, onCancel }) {
 
   return (
     <div className="whiteboard-wrap">
-      <div className="whiteboard-tabs">
-        <button type="button" className={mode === 'draw' ? 'active' : ''} onClick={() => setMode('draw')}>✏️ Draw</button>
-        <button type="button" className={mode === 'graph' ? 'active' : ''} onClick={() => setMode('graph')}>📊 REB Graphs</button>
-      </div>
-
-      {mode === 'graph' && (
-        <div className="wb-graph-panel">
-          <label>
-            Primary level
-            <select value={primary} onChange={(e) => setPrimary(e.target.value)}>
-              {PRIMARY_LEVELS.map((p) => (
-                <option key={p.key} value={p.key}>{p.label}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Graph type
-            <select value={graphType} onChange={(e) => setGraphType(e.target.value)}>
-              {GRAPH_TYPES.map((g) => (
-                <option key={g.key} value={g.key}>{g.icon} {g.label}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Lesson text (optional)
-            <textarea
-              rows={2}
-              value={overlayText}
-              onChange={(e) => setOverlayText(e.target.value)}
-              placeholder="Title, labels, or instructions..."
-            />
-          </label>
-          <button type="button" className="btn btn-primary btn-sm" onClick={applyGraph}>
-            Add graph to board
-          </button>
-        </div>
-      )}
-
-      {mode === 'draw' && (
-        <div className="whiteboard-tools">
+      {live ? (
+        /* Live mode toolbar — compact, includes eraser + highlighter */
+        <div className="whiteboard-tools" style={{ display: 'flex', gap: 4, padding: 6, flexWrap: 'wrap', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
           {COLORS.map((c) => (
             <button
               key={c}
               type="button"
               className={`wb-color ${!eraser && color === c ? 'active' : ''}`}
-              style={{ background: c }}
-              onClick={() => { setColor(c); setEraser(false); }}
+              style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: !eraser && color === c ? '3px solid #0f4c3a' : '2px solid #e2e8f0', cursor: canDraw ? 'pointer' : 'not-allowed', opacity: canDraw ? 1 : 0.4 }}
+              onClick={() => { if (canDraw) { setColor(c); setEraser(false); } }}
             />
           ))}
           {PENS.map((p) => (
@@ -173,20 +169,101 @@ export default function Whiteboard({ onSave, onCancel }) {
               key={p.key}
               type="button"
               className={`feed-type-btn ${penKey === p.key && !eraser ? 'active' : ''}`}
-              onClick={() => { setPenKey(p.key); setEraser(false); }}
+              style={{ fontSize: 11, padding: '3px 8px', opacity: canDraw ? 1 : 0.4, cursor: canDraw ? 'pointer' : 'not-allowed' }}
+              onClick={() => { if (canDraw) { setPenKey(p.key); setEraser(false); } }}
             >
               {p.label}
             </button>
           ))}
-          <button type="button" className={`feed-type-btn ${eraser ? 'active' : ''}`} onClick={() => setEraser(true)}>Eraser</button>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={clear}>Clear</button>
+          <button
+            type="button"
+            className={`feed-type-btn ${eraser ? 'active' : ''}`}
+            style={{ fontSize: 11, padding: '3px 8px', opacity: canDraw ? 1 : 0.4, cursor: canDraw ? 'pointer' : 'not-allowed' }}
+            onClick={() => { if (canDraw) setEraser(true); }}
+          >
+            🧹 Eraser
+          </button>
+          <button
+            type="button"
+            className="feed-type-btn"
+            style={{ fontSize: 11, padding: '3px 8px', opacity: canDraw ? 1 : 0.4, cursor: canDraw ? 'pointer' : 'not-allowed' }}
+            onClick={() => { if (canDraw) clear(); }}
+          >
+            Clear
+          </button>
         </div>
+      ) : (
+        <>
+          <div className="whiteboard-tabs">
+            <button type="button" className={mode === 'draw' ? 'active' : ''} onClick={() => setMode('draw')}>✏️ Draw</button>
+            <button type="button" className={mode === 'graph' ? 'active' : ''} onClick={() => setMode('graph')}>📊 REB Graphs</button>
+          </div>
+
+          {mode === 'graph' && (
+            <div className="wb-graph-panel">
+              <label>
+                Primary level
+                <select value={primary} onChange={(e) => setPrimary(e.target.value)}>
+                  {PRIMARY_LEVELS.map((p) => (
+                    <option key={p.key} value={p.key}>{p.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Graph type
+                <select value={graphType} onChange={(e) => setGraphType(e.target.value)}>
+                  {GRAPH_TYPES.map((g) => (
+                    <option key={g.key} value={g.key}>{g.icon} {g.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Lesson text (optional)
+                <textarea
+                  rows={2}
+                  value={overlayText}
+                  onChange={(e) => setOverlayText(e.target.value)}
+                  placeholder="Title, labels, or instructions..."
+                />
+              </label>
+              <button type="button" className="btn btn-primary btn-sm" onClick={applyGraph}>
+                Add graph to board
+              </button>
+            </div>
+          )}
+
+          {mode === 'draw' && (
+            <div className="whiteboard-tools">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`wb-color ${!eraser && color === c ? 'active' : ''}`}
+                  style={{ background: c }}
+                  onClick={() => { setColor(c); setEraser(false); }}
+                />
+              ))}
+              {PENS.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  className={`feed-type-btn ${penKey === p.key && !eraser ? 'active' : ''}`}
+                  onClick={() => { setPenKey(p.key); setEraser(false); }}
+                >
+                  {p.label}
+                </button>
+              ))}
+              <button type="button" className={`feed-type-btn ${eraser ? 'active' : ''}`} onClick={() => setEraser(true)}>Eraser</button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={clear}>Clear</button>
+            </div>
+          )}
+        </>
       )}
 
       <canvas
         ref={canvasRef}
         className="whiteboard-canvas"
-        style={{ pointerEvents: mode === 'draw' ? 'auto' : 'none' }}
+        style={{ pointerEvents: (mode === 'draw' && canDraw) ? 'auto' : 'none', width: '100%', height: 'auto', touchAction: 'none', background: '#fff', display: 'block', cursor: canDraw ? 'crosshair' : 'default' }}
         onMouseDown={start}
         onMouseMove={move}
         onMouseUp={end}
@@ -195,12 +272,15 @@ export default function Whiteboard({ onSave, onCancel }) {
         onTouchMove={move}
         onTouchEnd={end}
       />
-      <div className="whiteboard-actions">
-        <button type="button" className="btn btn-primary btn-sm" onClick={postGraphToFeed}>
-          {mode === 'graph' ? 'Post graph to feed' : 'Post drawing to feed'}
-        </button>
-        <button type="button" className="btn btn-outline btn-sm" onClick={onCancel}>Cancel</button>
-      </div>
+
+      {!live && (
+        <div className="whiteboard-actions">
+          <button type="button" className="btn btn-primary btn-sm" onClick={postGraphToFeed}>
+            {mode === 'graph' ? 'Post graph to feed' : 'Post drawing to feed'}
+          </button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={onCancel}>Cancel</button>
+        </div>
+      )}
     </div>
   );
 }
