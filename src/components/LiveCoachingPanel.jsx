@@ -1027,6 +1027,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
                 total={questions.length}
                 showAnswer={state?.show_answer}
                 isTeacher={true}
+                answers={state?.answers || []}
               />
             )}
           </div>
@@ -1219,12 +1220,14 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
       try {
         const s = await api.get(`/classes/${classId}/coaching-sessions/${sessionId}/state`, token);
         if (active) {
-          setState(s);
+          setState(prev => {
+            if (s.current_question?.id !== prev?.current_question?.id) {
+              setMyAnswer('');
+              setFeedback(null);
+            }
+            return s;
+          });
           setStateLoading(false);
-          if (s.current_question?.id !== state?.current_question?.id) {
-            setMyAnswer('');
-            setFeedback(null);
-          }
         }
       } catch (e) { /* silent */ }
     };
@@ -1295,6 +1298,65 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const showExercises = state?.show_exercises;
   const penHolder = state?.pen_holder_id;
   const speakPermission = state?.speak_permission_id;
+
+  // Fetch results when session ends
+  const [results, setResults] = useState(null);
+  useEffect(() => {
+    if (isLive === false && state?.status === 'completed' && !results) {
+      api.get(`/classes/${classId}/coaching-sessions/${sessionId}/results`, token)
+        .then(r => setResults(r))
+        .catch(() => {});
+    }
+  }, [isLive, state?.status, classId, sessionId, token, results]);
+
+  if (!isLive && state?.status === 'completed' && results) {
+    const myResult = results.students?.find(s => s.student_id === user.id);
+    return (
+      <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
+        <div style={{ background: 'white', borderRadius: 16, padding: 32, textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: 48 }}>{myResult ? (myResult.percentage >= 70 ? '🎉' : myResult.percentage >= 50 ? '👍' : '📚') : '🙏'}</div>
+          <h2 style={{ margin: '8px 0', fontSize: 22 }}>Coaching Session Complete!</h2>
+          {myResult && (
+            <>
+              <div style={{ fontSize: 42, fontWeight: 700, color: '#667eea', margin: '16px 0' }}>
+                {myResult.total_marks}/{results.total_questions}
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: myResult.percentage >= 70 ? '#27ae60' : myResult.percentage >= 50 ? '#f59e0b' : '#e74c3c', marginBottom: 8 }}>
+                {myResult.percentage}%
+              </div>
+              <div style={{ fontSize: 15, color: '#666', marginBottom: 20 }}>
+                {myResult.correct_count} correct, {myResult.total_answered - myResult.correct_count - myResult.review_count} incorrect{myResult.review_count > 0 ? ', ' + myResult.review_count + ' pending review' : ''}
+              </div>
+            </>
+          )}
+          {!myResult && (
+            <p style={{ color: '#666', fontSize: 15, margin: '16px 0 20px' }}>You did not answer any questions in this session.</p>
+          )}
+          <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginTop: 16, textAlign: 'left' }}>
+            <strong style={{ fontSize: 14, color: '#0f4c3a' }}>Class Results</strong>
+            <p style={{ fontSize: 13, color: '#666', margin: '4px 0' }}>
+              {results.attended_count} student(s) attended, class average: {results.class_average}%
+            </p>
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {results.students?.slice(0, 10).map((s, i) => (
+                <div key={s.student_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: 8, background: s.student_id === user.id ? '#eef2ff' : '#fff', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontWeight: 700, color: '#64748b', fontSize: 13 }}>#{i + 1}</span>
+                    <span style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</span>
+                    {s.student_id === user.id && <span style={{ fontSize: 11, color: '#667eea', fontWeight: 700 }}>(You)</span>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{s.total_marks}/{results.total_questions}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: s.percentage >= 70 ? '#27ae60' : s.percentage >= 50 ? '#f59e0b' : '#e74c3c' }}>{s.percentage}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isLive) {
     return (
@@ -1373,6 +1435,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
               onSelectAnswer={setMyAnswer}
               onNext={studentNext}
               isTeacher={false}
+              answers={state?.answers || []}
             />
           )}
         </div>
@@ -1403,72 +1466,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
       {isPaused && (
         <div style={{ textAlign: 'center', padding: 20, color: '#92400e', fontSize: 16, fontWeight: 600 }}>
           ⏸ Session paused by teacher. Please wait…
-        </div>
-      )}
-
-      {/* Current Question */}
-      {currentQ && !isPaused && (
-        <div style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#0f4c3a' }}>Question {state.current_question_index + 1}</h3>
-          <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>{currentQ.question}</p>
-
-          {currentQ.question_type === 'multiple_choice' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
-              {['a', 'b', 'c', 'd'].map(letter => {
-                const opt = currentQ[`option_${letter}`];
-                if (!opt) return null;
-                return (
-                  <button
-                    key={letter}
-                    onClick={() => setMyAnswer(letter)}
-                    style={{
-                      padding: '10px 14px', borderRadius: 8, border: `2px solid ${myAnswer === letter ? '#0f4c3a' : '#e2e8f0'}`,
-                      background: myAnswer === letter ? '#f0fdf4' : '#fff', fontSize: 14, cursor: 'pointer', textAlign: 'left',
-                    }}
-                  >
-                    <strong>{letter.toUpperCase()}.</strong> {opt}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {currentQ.question_type !== 'multiple_choice' && (
-            <input
-              type="text"
-              value={myAnswer}
-              onChange={e => setMyAnswer(e.target.value)}
-              placeholder="Type your answer…"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '2px solid #e2e8f0', fontSize: 14, boxSizing: 'border-box' }}
-            />
-          )}
-
-          <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button
-              style={{ ...btnPrimary, opacity: (!myAnswer.trim() || feedback) ? 0.6 : 1 }}
-              onClick={submitAnswer}
-              disabled={!myAnswer.trim() || feedback}
-            >
-              {feedback ? 'Submitted' : 'Submit Answer'}
-            </button>
-
-            {feedback?.feedback === 'correct' && (
-              <span style={{ color: '#10b981', fontWeight: 700, fontSize: 16 }}>✅ Correct! +1 mark</span>
-            )}
-            {feedback?.feedback === 'incorrect' && (
-              <span style={{ color: '#ef4444', fontWeight: 700, fontSize: 16 }}>❌ Incorrect</span>
-            )}
-            {feedback?.feedback === 'review' && (
-              <span style={{ color: '#f59e0b', fontWeight: 700, fontSize: 16 }}>⏳ Waiting for teacher review</span>
-            )}
-          </div>
-
-          {/* Show correct answer if teacher revealed it */}
-          {state?.show_answer && currentQ.correct_answer && (
-            <div style={{ marginTop: 12, padding: '10px 14px', background: '#f0fdf4', borderRadius: 8, fontSize: 14, color: '#10b981', fontWeight: 600 }}>
-              ✓ Correct Answer: {currentQ.correct_answer}
-            </div>
-          )}
         </div>
       )}
 
