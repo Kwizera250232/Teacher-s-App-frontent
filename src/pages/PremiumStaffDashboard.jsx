@@ -26,6 +26,7 @@ import OnlineNowStrip from '../components/classMoments/OnlineNowStrip';
 import { usePresence } from '../hooks/usePresence';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import TeacherMobileMenu from '../components/TeacherMobileMenu';
+import { LiveCoachingTeacherPanel } from '../components/LiveCoachingPanel';
 import '../components/classMoments/ClassMoments.css';
 import '../components/StudentNotifications.css';
 import './PremiumDashboard.css';
@@ -232,6 +233,39 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
 
         {activeTab === 'inyandiko' && (
           <StaffInyandikoDashboard token={token} basePath={basePath} />
+        )}
+
+        {activeTab === 'coaching' && (
+          <div style={{ padding: '8px 0' }}>
+            <h2 style={{ fontSize: 22, color: '#111827', marginBottom: 16 }}>🎓 Live Coaching</h2>
+            {classes.length === 0 ? (
+              <p style={{ color: '#6B7280', padding: '20px', textAlign: 'center' }}>Create a class first to start coaching sessions.</p>
+            ) : (
+              <>
+                <div style={{ marginBottom: 16 }}>
+                  <select
+                    value={selectedReportClass || ''}
+                    onChange={e => setSelectedReportClass(parseInt(e.target.value, 10))}
+                    style={{ padding: '8px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: 14, minWidth: 240 }}
+                  >
+                    <option value="">— Select a class —</option>
+                    {classes.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}{c.subject ? ` (${c.subject})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                {selectedReportClass && (
+                  <LiveCoachingTeacherPanel
+                    classId={selectedReportClass}
+                    token={token}
+                    user={user}
+                    onError={(msg) => setError(msg)}
+                    onSuccess={(msg) => setError('')}
+                  />
+                )}
+              </>
+            )}
+          </div>
         )}
 
         {activeTab === 'ai-quiz' && (

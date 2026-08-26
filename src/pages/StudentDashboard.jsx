@@ -8,6 +8,7 @@ import ParentInviteModal from '../components/ParentInviteModal';
 import CompositionStatusPanel from '../components/CompositionStatusPanel';
 import ClassMomentsFold from '../components/classMoments/ClassMomentsFold';
 import QuizTeacherCommentPopup from '../components/quizReflection/QuizTeacherCommentPopup';
+import { LiveCoachingStudentPanel } from '../components/LiveCoachingPanel';
 import AlumniWelcome from '../pages/alumni/AlumniWelcome';
 import { useClassMomentAlerts } from '../hooks/useClassMomentAlerts';
 import { classMomentDetailPath } from '../utils/classMomentPaths';
@@ -22,6 +23,7 @@ const DEFAULT_AVATAR = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/
 const TABS = [
   { id: 'classes', icon: '📚', label: 'My Classes' },
   { id: 'classnow', icon: '📸', label: 'Class Now' },
+  { id: 'coaching', icon: '🎓', label: 'Coaching' },
   { id: 'tools', icon: '⚡', label: 'Tools' },
   { id: 'profile', icon: '👤', label: 'Profile' },
 ];
@@ -44,6 +46,7 @@ export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('classes');
   const [classesView, setClassesView] = useState('menu');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [coachingClassId, setCoachingClassId] = useState(null);
 
   const openStatus = () => {
     setStatusPickerOpen(false);
@@ -274,6 +277,43 @@ export default function StudentDashboard() {
                 token={token}
                 userRole={user?.role || 'student'}
               />
+            </section>
+          )}
+
+          {activeTab === 'coaching' && (
+            <section className="student-tools-section">
+              <h2 className="student-classes-heading">🎓 Live Coaching</h2>
+              {classes.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">🎓</div>
+                  <h3>No classes yet</h3>
+                  <p>Join a class to participate in coaching sessions.</p>
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: 16 }}>
+                    <select
+                      value={coachingClassId || ''}
+                      onChange={e => setCoachingClassId(parseInt(e.target.value, 10))}
+                      style={{ padding: '8px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: 14, minWidth: 240 }}
+                    >
+                      <option value="">— Select a class —</option>
+                      {classes.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}{c.subject ? ` (${c.subject})` : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {coachingClassId && (
+                    <LiveCoachingStudentPanel
+                      classId={coachingClassId}
+                      token={token}
+                      user={user}
+                      onError={(msg) => setError(msg)}
+                      onSuccess={(msg) => setError('')}
+                    />
+                  )}
+                </>
+              )}
             </section>
           )}
 

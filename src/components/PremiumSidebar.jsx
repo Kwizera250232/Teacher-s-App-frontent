@@ -8,6 +8,7 @@ export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout,
     { id: 'quiz-reports', icon: '📊', label: 'Quiz Reports' },
     { id: 'ai-quiz', icon: '🤖', label: 'AI Quiz Gen' },
     { id: 'inyandiko', icon: '✍️', label: 'Inyandiko' },
+    { id: 'coaching', icon: '🎓', label: 'Coaching' },
     { id: 'alumni', icon: '🎓', label: 'Alumni' },
     { id: 'tools', icon: '⚡', label: 'Tools' },
   ];
