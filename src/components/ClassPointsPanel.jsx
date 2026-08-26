@@ -78,6 +78,39 @@ export default function ClassPointsPanel({
     load();
   }, [load]);
 
+  // Force touch scrolling on the table wrapper for mobile
+  useEffect(() => {
+    const el = tableWrapperRef.current;
+    if (!el) return;
+    let startX = 0;
+    let startScroll = 0;
+    let active = false;
+
+    const onTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      startScroll = el.scrollLeft;
+      active = true;
+    };
+    const onTouchMove = (e) => {
+      if (!active || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - startX;
+      if (Math.abs(dx) > 5) {
+        el.scrollLeft = startScroll - dx;
+      }
+    };
+    const onTouchEnd = () => { active = false; };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []);
+
   useEffect(() => {
     if (timerSecs == null || timerSecs <= 0) return undefined;
     const t = setTimeout(() => setTimerSecs((s) => s - 1), 1000);
@@ -378,25 +411,69 @@ export default function ClassPointsPanel({
                     const tch = data.teacher || {};
                     const studs = data.students || [];
                     const loginUrl = `${window.location.origin}/login`;
-                    const esc = (v) => String(v ?? '').replace(/"/g, '""');
-                    const lines = [];
-                    lines.push(`UCLASS - Class Student Credentials`);
-                    lines.push(`School,${esc(sch.name)}`);
-                    lines.push(`Class,${esc(cls.name)}`);
-                    lines.push(`Class Code,${esc(cls.class_code)}`);
-                    lines.push(`Teacher,${esc(tch.name)}`);
-                    lines.push(`Login URL,${loginUrl}`);
-                    lines.push('');
-                    lines.push(`#,Name,Email,Password,Phone`);
-                    studs.forEach((s, i) => {
-                      lines.push(`${i + 1},"${esc(s.name)}","${esc(s.email)}","${esc(s.plaintext_password)}","${esc(s.phone)}"`);
-                    });
-                    const csv = lines.join('\n');
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const esc = (v) => String(v ?? '').replace(/[<>&]/g, (ch) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[ch]));
+
+                    const rowsHtml = studs.length > 0
+                      ? studs.map((s, i) => `
+                        <tr>
+                          <td style="text-align:center;border:1px solid #0f4c3a;padding:8px;">${i + 1}</td>
+                          <td style="border:1px solid #0f4c3a;padding:8px;font-weight:600;">${esc(s.name)}</td>
+                          <td style="border:1px solid #0f4c3a;padding:8px;">${esc(s.email)}</td>
+                          <td style="border:1px solid #0f4c3a;padding:8px;font-family:Courier New;color:#6b21a8;font-weight:700;">${esc(s.plaintext_password) || '—'}</td>
+                          <td style="border:1px solid #0f4c3a;padding:8px;">${esc(s.phone) || '—'}</td>
+                        </tr>`).join('')
+                      : '<tr><td colspan="5" style="border:1px solid #0f4c3a;padding:12px;text-align:center;color:#888;">No students in this class.</td></tr>';
+
+                    const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>UCLASS Student Credentials</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; }
+  h1 { color: #0f4c3a; font-size: 22px; margin-bottom: 4px; }
+  .info { margin-bottom: 16px; font-size: 14px; }
+  .info p { margin: 2px 0; }
+  .info strong { color: #0f4c3a; }
+  table { border-collapse: collapse; width: 100%; }
+  th { background: #0f4c3a; color: #fff; border: 1px solid #0a362a; padding: 10px 8px; font-size: 12px; text-transform: uppercase; }
+  td { font-size: 13px; }
+  tr:nth-child(even) td { background: #f0fdf4; }
+  .footer { margin-top: 16px; font-size: 12px; color: #64748b; }
+  .login-url { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 8px 12px; margin-top: 8px; font-size: 14px; }
+</style></head>
+<body>
+  <h1>UCLASS — Class Student Credentials</h1>
+  <div class="info">
+    <p><strong>School:</strong> ${esc(sch.name) || '—'}</p>
+    <p><strong>Class:</strong> ${esc(cls.name) || '—'}</p>
+    <p><strong>Class Code:</strong> ${esc(cls.class_code) || '—'}</p>
+    <p><strong>Teacher:</strong> ${esc(tch.name) || '—'}</p>
+  </div>
+  <div class="login-url">Login URL: <strong>${loginUrl}</strong></div>
+  <table style="margin-top:16px;">
+    <thead>
+      <tr>
+        <th style="width:40px;">#</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Password</th>
+        <th>Phone</th>
+      </tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+  <div class="footer">
+    <p>Share these credentials with parents so students can log in and access quizzes, notes, and class materials.</p>
+    <p>Generated on ${new Date().toLocaleString()}</p>
+  </div>
+</body></html>`;
+
+                    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `class-${cls.class_code || classId}-students.csv`;
+                    a.download = `UCLASS-${cls.class_code || classId}-students.doc`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
