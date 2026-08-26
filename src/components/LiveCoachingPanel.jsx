@@ -88,7 +88,7 @@ function AnswerTimer({ seconds, startedAt }) {
 }
 
 // ── Participant Avatar (used in grid and sidebar) ────────────────────────────
-// ── Exercise displayed ON the whiteboard (well-designed, readable) ──────────
+// ── Exercise written directly ON the whiteboard (no card, just text) ──────────
 function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, onSelectAnswer, onNext, isTeacher }) {
   if (!question) return null;
   const isMC = question.question_type === 'multiple_choice';
@@ -97,55 +97,38 @@ function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, o
   return (
     <div style={{
       position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      background: '#fffdf7',
-      borderRadius: 16,
-      padding: '28px 36px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 0 0 1px rgba(102,126,234,0.15)',
-      width: 'min(560px, 88%)',
-      maxWidth: 560,
-      zIndex: 20,
-      border: '3px solid #667eea',
-      fontFamily: "'Georgia', 'Times New Roman', serif",
+      top: 0, left: 0, right: 0, bottom: 0,
+      pointerEvents: 'none',
+      zIndex: 5,
+      padding: '24px 32px',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'stretch',
     }}>
-      {/* Header bar */}
+      {/* Question number */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 16, paddingBottom: 12,
-        borderBottom: '2px dashed #c7d2fe',
+        fontSize: 14, color: '#94a3b8', marginBottom: 8,
+        fontFamily: "'Caveat', 'Comic Sans MS', cursive",
       }}>
-        <div style={{
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-          color: '#fff', padding: '4px 14px', borderRadius: 20,
-          fontSize: 13, fontWeight: 700, letterSpacing: 0.5,
-          fontFamily: "'Inter', sans-serif",
-        }}>
-          📝 Question {index + 1}{total ? ` of ${total}` : ''}
-        </div>
-        {showAnswer && (
-          <span style={{
-            background: '#d1fae5', color: '#065f46',
-            padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 700,
-            fontFamily: "'Inter', sans-serif",
-          }}>✓ Answer Revealed</span>
-        )}
+        Q{index + 1}{total ? ` of ${total}` : ''}
       </div>
 
-      {/* Question text — large, serif, board-like */}
+      {/* Question text — written on the board, no card */}
       <div style={{
-        fontSize: 22, lineHeight: 1.5, color: '#1a1a2e', fontWeight: 600,
-        marginBottom: 20, textAlign: 'left',
-        minHeight: 60,
-        padding: '8px 0',
+        fontSize: 26, lineHeight: 1.4, color: '#1e293b',
+        fontFamily: "'Caveat', 'Comic Sans MS', cursive",
+        fontWeight: 600,
+        marginBottom: 16,
+        maxWidth: 700,
       }}>
         {question.question}
       </div>
 
-      {/* Multiple choice options — clean cards */}
+      {/* Multiple choice — written on board */}
       {isMC && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12, pointerEvents: 'auto' }}>
           {letters.map(letter => {
             const opt = question[`option_${letter}`];
             const isSelected = selectedAnswer === letter;
@@ -156,52 +139,41 @@ function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, o
                 key={letter}
                 onClick={() => !isTeacher && onSelectAnswer?.(letter)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '12px 16px', borderRadius: 10,
-                  border: `2.5px solid ${isCorrect ? '#10b981' : showWrong ? '#ef4444' : isSelected ? '#667eea' : '#e2e8f0'}`,
-                  background: isCorrect ? '#ecfdf5' : showWrong ? '#fef2f2' : isSelected ? '#eef2ff' : '#fff',
+                  fontSize: 20,
+                  fontFamily: "'Caveat', 'Comic Sans MS', cursive",
+                  color: isCorrect ? '#059669' : showWrong ? '#dc2626' : isSelected ? '#4f46e5' : '#374151',
                   cursor: isTeacher ? 'default' : 'pointer',
-                  transition: 'all 0.15s ease',
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 15,
-                  color: '#374151',
-                  fontWeight: 500,
+                  padding: '2px 8px',
+                  fontWeight: isCorrect || isSelected ? 700 : 500,
+                  textDecoration: showWrong ? 'line-through' : 'none',
+                  display: 'inline-block',
+                  width: 'fit-content',
+                  maxWidth: 600,
                 }}
               >
-                <div style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: isCorrect ? '#10b981' : showWrong ? '#ef4444' : isSelected ? '#667eea' : '#f1f5f9',
-                  color: isCorrect || showWrong || isSelected ? '#fff' : '#64748b',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 700, fontSize: 14, flexShrink: 0,
-                }}>
-                  {letter.toUpperCase()}
-                </div>
-                <span style={{ flex: 1 }}>{opt}</span>
-                {isCorrect && <span style={{ fontSize: 18, color: '#10b981' }}>✓</span>}
-                {showWrong && <span style={{ fontSize: 18, color: '#ef4444' }}>✗</span>}
+                {letter.toUpperCase()}. {opt}{isCorrect ? ' \u2713' : ''}
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Short answer / text input */}
+      {/* Short answer input */}
       {!isMC && !isTeacher && (
-        <div style={{ marginBottom: 16, fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ marginBottom: 12, pointerEvents: 'auto' }}>
           <input
             type="text"
             value={selectedAnswer || ''}
             onChange={e => onSelectAnswer?.(e.target.value)}
-            placeholder="Type your answer here…"
+            placeholder="Write your answer..."
             style={{
-              width: '100%', padding: '12px 16px', borderRadius: 10,
-              border: '2.5px solid #e2e8f0', fontSize: 16,
-              fontFamily: "'Inter', sans-serif", color: '#1e293b',
-              boxSizing: 'border-box', outline: 'none',
+              width: '100%', maxWidth: 500, padding: '6px 12px',
+              border: 'none', borderBottom: '2px dashed #94a3b8',
+              background: 'transparent',
+              fontSize: 22,
+              fontFamily: "'Caveat', 'Comic Sans MS', cursive",
+              color: '#1e293b', outline: 'none',
             }}
-            onFocus={e => { e.target.style.borderColor = '#667eea'; }}
-            onBlur={e => { e.target.style.borderColor = '#e2e8f0'; }}
           />
         </div>
       )}
@@ -209,43 +181,34 @@ function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, o
       {/* Answer reveal for text questions */}
       {showAnswer && question.correct_answer && !isMC && (
         <div style={{
-          padding: '12px 16px', background: '#ecfdf5', borderRadius: 10,
-          border: '2px solid #10b981', marginBottom: 16,
-          fontFamily: "'Inter', sans-serif",
+          fontSize: 22,
+          fontFamily: "'Caveat', 'Comic Sans MS', cursive",
+          color: '#059669', fontWeight: 700,
+          marginBottom: 12,
         }}>
-          <span style={{ fontSize: 12, color: '#065f46', fontWeight: 700 }}>CORRECT ANSWER</span>
-          <div style={{ fontSize: 18, color: '#065f46', fontWeight: 600, marginTop: 4 }}>{question.correct_answer}</div>
+          Answer: {question.correct_answer}
         </div>
       )}
 
-      {/* Footer — Next button (students only) */}
+      {/* Next button — minimal, bottom-right */}
       {!isTeacher && onNext && (
         <div style={{
-          display: 'flex', justifyContent: 'flex-end',
-          paddingTop: 12, borderTop: '1px solid #f1f5f9',
-          fontFamily: "'Inter', sans-serif",
+          position: 'absolute', bottom: 16, right: 24,
+          pointerEvents: 'auto',
         }}>
           <button
             onClick={onNext}
             style={{
-              background: 'linear-gradient(135deg, #667eea, #764ba2)',
-              color: '#fff', border: 'none', borderRadius: 10,
-              padding: '10px 24px', fontSize: 15, fontWeight: 700,
-              cursor: 'pointer', boxShadow: '0 2px 8px rgba(102,126,234,0.3)',
+              background: 'transparent',
+              color: '#4f46e5', border: 'none',
+              fontSize: 22,
+              fontFamily: "'Caveat', 'Comic Sans MS', cursive",
+              fontWeight: 700, cursor: 'pointer',
+              textDecoration: 'underline',
             }}
           >
-            Next Question →
+            Next \u2192
           </button>
-        </div>
-      )}
-
-      {/* Teacher note */}
-      {isTeacher && (
-        <div style={{
-          textAlign: 'center', fontSize: 11, color: '#94a3b8',
-          paddingTop: 8, fontFamily: "'Inter', sans-serif",
-        }}>
-          Students see this question on their board
         </div>
       )}
     </div>
