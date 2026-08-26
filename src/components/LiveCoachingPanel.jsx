@@ -929,6 +929,14 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
 
   // Results state - must be before any early returns (React hooks rule)
   const [results, setResults] = useState(null);
+  // Fetch results when session completes
+  useEffect(() => {
+    if (state?.status === 'completed' && !results) {
+      api.get(`/classes/${classId}/coaching-sessions/${sessionId}/results`, token)
+        .then(r => setResults(r))
+        .catch(() => {});
+    }
+  }, [state?.status, classId, sessionId, token, results]);
 
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}>Loading session…</div>;
 
@@ -1291,6 +1299,14 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
 
   // Results state - must be before any early returns (React hooks rule)
   const [results, setResults] = useState(null);
+  // Fetch results when session completes
+  useEffect(() => {
+    if (state?.status === 'completed' && !results) {
+      api.get(`/classes/${classId}/coaching-sessions/${sessionId}/results`, token)
+        .then(r => setResults(r))
+        .catch(() => {});
+    }
+  }, [state?.status, classId, sessionId, token, results]);
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Joining session…</div>;
   if (stateLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Loading live session…</div>;
@@ -1303,15 +1319,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const showExercises = state?.show_exercises;
   const penHolder = state?.pen_holder_id;
   const speakPermission = state?.speak_permission_id;
-
-  // Fetch results when session ends - useEffect after all state vars are defined
-  useEffect(() => {
-    if (isLive === false && state?.status === 'completed' && !results) {
-      api.get(`/classes/${classId}/coaching-sessions/${sessionId}/results`, token)
-        .then(r => setResults(r))
-        .catch(() => {});
-    }
-  }, [isLive, state?.status, classId, sessionId, token, results]);
 
 
 
