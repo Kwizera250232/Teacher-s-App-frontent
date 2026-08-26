@@ -429,7 +429,6 @@ export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSucc
 }
 
 function SessionCard({ session, classId, token, onJoin, onError }) {
-  const [results, setResults] = useState(null);
   const statusColor = {
     scheduled: '#3b82f6',
     live: '#ef4444',
@@ -928,6 +927,9 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
     updateState({ show_exercises: next });
   };
 
+  // Results state - must be before any early returns (React hooks rule)
+  const [results, setResults] = useState(null);
+
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}>Loading session…</div>;
 
   const questions = session?.questions || [];
@@ -1287,6 +1289,9 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     }
   };
 
+  // Results state - must be before any early returns (React hooks rule)
+  const [results, setResults] = useState(null);
+
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Joining session…</div>;
   if (stateLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Loading live session…</div>;
 
@@ -1299,8 +1304,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const penHolder = state?.pen_holder_id;
   const speakPermission = state?.speak_permission_id;
 
-  // Fetch results when session ends
-  const [results, setResults] = useState(null);
+  // Fetch results when session ends - useEffect after all state vars are defined
   useEffect(() => {
     if (isLive === false && state?.status === 'completed' && !results) {
       api.get(`/classes/${classId}/coaching-sessions/${sessionId}/results`, token)
@@ -1308,6 +1312,8 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         .catch(() => {});
     }
   }, [isLive, state?.status, classId, sessionId, token, results]);
+
+
 
   if (!isLive && state?.status === 'completed' && results) {
     const myResult = results.students?.find(s => s.student_id === user.id);
