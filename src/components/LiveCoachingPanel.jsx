@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 import Whiteboard from './Whiteboard';
 import { useCoachingAudio } from '../hooks/useCoachingAudio';
@@ -429,6 +429,7 @@ export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSucc
 }
 
 function SessionCard({ session, classId, token, onJoin, onError }) {
+  const [results, setResults] = useState(null);
   const statusColor = {
     scheduled: '#3b82f6',
     live: '#ef4444',
