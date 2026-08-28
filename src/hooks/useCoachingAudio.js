@@ -272,6 +272,16 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     }
   }, [canSpeak, createOffer]);
 
+  // Auto-start teacher's mic when entering session (requires user gesture in some browsers)
+  useEffect(() => {
+    if (isTeacher && !micOnRef.current) {
+      // Try to auto-start — browser may prompt for mic permission
+      startMic().then(ok => {
+        if (!ok) console.log('[audio] Teacher mic auto-start deferred — press mic button');
+      }).catch(() => {});
+    }
+  }, [isTeacher, startMic]);
+
   // When speak permission is revoked, stop mic
   useEffect(() => {
     if (!canSpeak && !isTeacherRef.current && micOnRef.current) {
