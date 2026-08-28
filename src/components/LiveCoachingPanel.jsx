@@ -1455,8 +1455,15 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
           onToggleMic={audio.toggleMic} onVolume={audio.changeVolume} onToggleAudio={audio.toggleAudio}
           canSpeak={hasSpeakPermission}
         />
-        {!hasSpeakPermission && <span style={{ fontSize: 11, color: '#94a3b8' }}>Raise hand to speak</span>}
-        {hasSpeakPermission && <span style={{ fontSize: 11, color: '#10b981', fontWeight: 700 }}>🎙️ You can speak!</span>}
+        {audio.micOn && <SoundWave level={audio.speakingLevel} color="#10b981" label="You" />}
+        {Object.entries(audio.remoteSpeaking || {}).filter(([_, lvl]) => lvl > 0.05).map(([uid, lvl]) => {
+          const p = participants.find(pp => String(pp.student_id) === String(uid));
+          const isTeacher = !p;
+          return <SoundWave key={uid} level={lvl} color={isTeacher ? '#ef4444' : '#3b82f6'} label={isTeacher ? 'Teacher' : (p?.name?.split(' ')[0] || 'Student')} size="small" />;
+        })}
+        {!hasSpeakPermission && <span style={{ fontSize: 11, color: '#94a3b8' }}>✋ Raise hand to ask for mic</span>}
+        {hasSpeakPermission && !audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700, animation: 'pulse 1.5s infinite' }}>🎙️ Teacher gave you mic — tap "Speak" to talk!</span>}
+        {hasSpeakPermission && audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700 }}>🎙️ You are speaking — everyone can hear you</span>}
         {state?.answer_timer_seconds && state?.answer_timer_started_at && (
           <AnswerTimer seconds={state.answer_timer_seconds} startedAt={state.answer_timer_started_at} />
         )}

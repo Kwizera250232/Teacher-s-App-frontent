@@ -3,34 +3,25 @@ import { api } from '../api';
 
 /**
  * WebRTC audio hook for Live Coaching.
- * Uses mesh networking — each participant connects to every other participant.
- * Signaling goes through the backend polling endpoints.
+ * Mesh networking with polling-based signaling.
  *
- * Key design:
- * - ALL participants create peer connections to ALL others and exchange offers/answers
- * - This ensures everyone can RECEIVE audio from anyone who is speaking
- * - Mic tracks are only ADDED when the user has permission to speak and enables mic
- * - Teacher always has speak permission
- * - Students get speak permission when teacher grants it (speak_permission_id)
- *
- * @param {Object} opts
- * @param {string} opts.classId
- * @param {string} opts.sessionId
- * @param {string} opts.token
- * @param {Object} opts.user — { id, name }
- * @param {boolean} opts.canSpeak — whether this user has permission to speak
- * @param {Array}  opts.participants — [{ student_id, name }]
- * @param {boolean} opts.isTeacher — whether this user is the teacher
+ * Key fixes:
+ * - Deterministic offerer: higher user ID sends offer (avoids glare)
+ * - ICE candidate buffering until remote description is set
+ * - Audio level detection for sound wave visualizer
+ * - Proper renegotiation when mic tracks are added
  */
 export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, participants, isTeacher }) {
   const [micOn, setMicOn] = useState(false);
-  const [volume, setVolume] = useState(0.7);
+  const [volume, setVolume] = useState(0.9);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [connected, setConnected] = useState(false);
   const [peerCount, setPeerCount] = useState(0);
+  const [speakingLevel, setSpeakingLevel] = useState(0); // 0-1 for local mic
+  const [remoteSpeaking, setRemoteSpeaking] = useState({}); // userId -> level
 
   const localStreamRef = useRef(null);
-  const peersRef = useRef({}); // userId -> { pc, audioEl, hasLocalTracks }
+  const peersRef = useRef({}); // userId -> { pc, audioEl, hasLocalTracks, iceBuffer, analyser, ctx }
   const signalLastIdRef = useRef(0);
   const micOnRef = useRef(false);
   const canSpeakRef = useRef(canSpeak);
@@ -38,6 +29,8 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   const volumeRef = useRef(volume);
   const audioEnabledRef = useRef(audioEnabled);
   const participantsRef = useRef(participants);
+  const analyserRef = useRef(null);
+  const animFrameRef = useRef(null);
 
   useEffect(() => { micOnRef.current = micOn; }, [micOn]);
   useEffect(() => { canSpeakRef.current = canSpeak; }, [canSpeak]);
@@ -46,19 +39,54 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
   useEffect(() => { participantsRef.current = participants; }, [participants]);
 
+  // Audio level detection for local mic (sound wave)
+  const startLevelDetection = useCallback(() => {
+    if (!localStreamRef.current) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = ctx.createMediaStreamSource(localStreamRef.current);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        if (!analyserRef.current) return;
+        analyser.getByteFrequencyData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += data[i];
+        const avg = sum / data.length / 255; // 0-1
+        setSpeakingLevel(avg);
+        animFrameRef.current = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch (e) {
+      console.error('[audio] level detection error:', e);
+    }
+  }, []);
+
+  const stopLevelDetection = useCallback(() => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    analyserRef.current = null;
+    setSpeakingLevel(0);
+  }, []);
+
   // Get local mic stream
   const startMic = useCallback(async () => {
-    // Students can only use mic if they have speak permission
     if (!canSpeakRef.current && !isTeacherRef.current) {
       console.warn('[audio] No speak permission to use mic');
       return false;
     }
     try {
       if (localStreamRef.current) {
-        // Already have a stream, just re-enable tracks
         localStreamRef.current.getTracks().forEach(t => { t.enabled = true; });
         setMicOn(true);
         micOnRef.current = true;
+        if (!analyserRef.current) startLevelDetection();
         return true;
       }
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -73,23 +101,32 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       localStreamRef.current = stream;
       setMicOn(true);
       micOnRef.current = true;
+      startLevelDetection();
+
       // Add tracks to ALL existing peer connections and renegotiate
-      Object.values(peersRef.current).forEach(peer => {
+      const peerList = Object.values(peersRef.current);
+      for (const peer of peerList) {
         if (!peer.hasLocalTracks) {
           stream.getTracks().forEach(track => {
             peer.pc.addTrack(track, stream);
           });
           peer.hasLocalTracks = true;
-          // Renegotiate by sending a new offer
+        }
+      }
+      // Renegotiate: only the offerer (higher ID) sends new offer
+      for (const peer of peerList) {
+        const myId = String(user.id);
+        const otherId = String(peer.userId);
+        if (myId > otherId) {
           createOffer(peer);
         }
-      });
+      }
       return true;
     } catch (e) {
       console.error('[audio] mic error:', e);
       return false;
     }
-  }, []);
+  }, [startLevelDetection, user.id]);
 
   const stopMic = useCallback(() => {
     if (localStreamRef.current) {
@@ -97,7 +134,8 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     }
     setMicOn(false);
     micOnRef.current = false;
-  }, []);
+    stopLevelDetection();
+  }, [stopLevelDetection]);
 
   const toggleMic = useCallback(() => {
     if (micOnRef.current) stopMic();
@@ -108,7 +146,6 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     const clamped = Math.max(0, Math.min(1, vol));
     setVolume(clamped);
     volumeRef.current = clamped;
-    // Apply to all received audio elements
     Object.values(peersRef.current).forEach(peer => {
       if (peer.audioEl) peer.audioEl.volume = clamped;
     });
@@ -125,13 +162,16 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     });
   }, []);
 
-  // Create a peer connection for a user — always for receiving audio
+  // Create a peer connection for a user
   const createPeer = useCallback((otherUserId) => {
     if (peersRef.current[otherUserId]) return peersRef.current[otherUserId];
+    console.log('[audio] Creating peer connection to', otherUserId);
+
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
       ],
     });
 
@@ -141,10 +181,48 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     audioEl.volume = volumeRef.current;
     audioEl.muted = !audioEnabledRef.current;
 
+    const peer = {
+      pc,
+      audioEl,
+      userId: otherUserId,
+      hasLocalTracks: false,
+      iceBuffer: [],
+      remoteDescSet: false,
+      analyser: null,
+      ctx: null,
+      levelFrame: null,
+    };
+
     pc.ontrack = (e) => {
+      console.log('[audio] Got remote track from', otherUserId);
       audioEl.srcObject = e.streams[0];
-      audioEl.play().catch(() => {});
+      audioEl.play().catch(err => console.warn('[audio] play error:', err));
       setConnected(true);
+
+      // Set up remote audio level detection (sound wave for remote speaker)
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = ctx.createMediaStreamSource(e.streams[0]);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        peer.analyser = analyser;
+        peer.ctx = ctx;
+
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const tick = () => {
+          if (!peer.analyser) return;
+          peer.analyser.getByteFrequencyData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) sum += data[i];
+          const avg = sum / data.length / 255;
+          setRemoteSpeaking(prev => ({ ...prev, [otherUserId]: avg }));
+          peer.levelFrame = requestAnimationFrame(tick);
+        };
+        tick();
+      } catch (err) {
+        console.warn('[audio] remote level detection error:', err);
+      }
     };
 
     pc.onicecandidate = (e) => {
@@ -157,18 +235,26 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       }
     };
 
+    pc.oniceconnectionstatechange = () => {
+      console.log('[audio] ICE state:', pc.iceConnectionState, 'with', otherUserId);
+      if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        setConnected(true);
+      }
+    };
+
     pc.onconnectionstatechange = () => {
+      console.log('[audio] Connection state:', pc.connectionState, 'with', otherUserId);
       if (pc.connectionState === 'connected') setConnected(true);
     };
 
-    // Add local tracks if mic is on and we have a stream
+    // Add local tracks if mic is on
     if (localStreamRef.current && micOnRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
         pc.addTrack(track, localStreamRef.current);
       });
+      peer.hasLocalTracks = true;
     }
 
-    const peer = { pc, audioEl, userId: otherUserId, hasLocalTracks: !!(localStreamRef.current && micOnRef.current) };
     peersRef.current[otherUserId] = peer;
     setPeerCount(Object.keys(peersRef.current).length);
     return peer;
@@ -177,6 +263,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   // Create and send an offer
   const createOffer = useCallback(async (peer) => {
     try {
+      console.log('[audio] Creating offer to', peer.userId);
       const offer = await peer.pc.createOffer({ offerToReceiveAudio: true });
       await peer.pc.setLocalDescription(offer);
       await api.post(
@@ -189,6 +276,20 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     }
   }, [classId, sessionId, token]);
 
+  // Flush buffered ICE candidates
+  const flushIceBuffer = useCallback(async (peer) => {
+    if (peer.iceBuffer.length > 0 && peer.remoteDescSet) {
+      for (const candidate of peer.iceBuffer) {
+        try {
+          await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.warn('[audio] buffered ICE error:', e);
+        }
+      }
+      peer.iceBuffer = [];
+    }
+  }, []);
+
   // Handle incoming signal
   const handleSignal = useCallback(async (sig) => {
     const fromId = sig.from_user_id;
@@ -199,30 +300,53 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
 
     if (sig.signal_type === 'offer') {
       if (!peer) peer = createPeer(fromId);
-      // Handle renegotiation — if we already have a remote description, this is a re-offer
-      const sd = new RTCSessionDescription(data);
-      await peer.pc.setRemoteDescription(sd);
-      const answer = await peer.pc.createAnswer();
-      await peer.pc.setLocalDescription(answer);
-      await api.post(
-        `/classes/${classId}/coaching-sessions/${sessionId}/signal`,
-        { to_user_id: fromId, signal_type: 'answer', signal_data: JSON.stringify(answer) },
-        token
-      );
-      setConnected(true);
+      console.log('[audio] Got offer from', fromId);
+
+      // If we already have a remote description, this is renegotiation
+      try {
+        await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
+        peer.remoteDescSet = true;
+        // Flush any buffered ICE candidates
+        await flushIceBuffer(peer);
+
+        const answer = await peer.pc.createAnswer();
+        await peer.pc.setLocalDescription(answer);
+        await api.post(
+          `/classes/${classId}/coaching-sessions/${sessionId}/signal`,
+          { to_user_id: fromId, signal_type: 'answer', signal_data: JSON.stringify(answer) },
+          token
+        );
+        setConnected(true);
+      } catch (e) {
+        console.error('[audio] offer handling error:', e);
+      }
     } else if (sig.signal_type === 'answer') {
       if (!peer) peer = createPeer(fromId);
-      await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
-      setConnected(true);
+      console.log('[audio] Got answer from', fromId);
+      try {
+        await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
+        peer.remoteDescSet = true;
+        await flushIceBuffer(peer);
+        setConnected(true);
+      } catch (e) {
+        console.error('[audio] answer handling error:', e);
+      }
     } else if (sig.signal_type === 'ice') {
       if (!peer) peer = createPeer(fromId);
       try {
-        await peer.pc.addIceCandidate(new RTCIceCandidate(data));
-      } catch (e) { /* ignore */ }
+        if (peer.remoteDescSet) {
+          await peer.pc.addIceCandidate(new RTCIceCandidate(data));
+        } else {
+          // Buffer until remote description is set
+          peer.iceBuffer.push(data);
+        }
+      } catch (e) {
+        console.warn('[audio] ICE error:', e);
+      }
     }
-  }, [classId, sessionId, token, user, createPeer]);
+  }, [classId, sessionId, token, user, createPeer, flushIceBuffer]);
 
-  // Poll for signals
+  // Poll for signals — faster polling for better real-time
   useEffect(() => {
     if (!sessionId || !token) return;
     let active = true;
@@ -241,43 +365,48 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
         }
       } catch (e) { /* silent */ }
     };
-    const interval = setInterval(pollSignals, 2000);
+    pollSignals(); // immediate first poll
+    const interval = setInterval(pollSignals, 1000); // faster: 1 second
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token, handleSignal]);
 
-  // KEY FIX: ALL participants create peer connections and send offers to ALL others
-  // This ensures everyone can receive audio from anyone who speaks
+  // Create peer connections to ALL participants
+  // Deterministic offerer: higher user ID sends the offer (avoids glare)
   useEffect(() => {
     if (!participants || participants.length === 0) return;
+    const myId = String(user.id);
     participants.forEach(p => {
-      const pid = p.student_id || p.id;
-      if (pid === user.id) return;
+      const pid = String(p.student_id || p.id);
+      if (pid === myId) return;
       if (!peersRef.current[pid]) {
         const peer = createPeer(pid);
-        // ALWAYS send offer — everyone connects to everyone
-        // This ensures audio can flow in both directions
-        createOffer(peer);
+        // Only the user with the higher ID sends the initial offer
+        // This prevents both sides from offering simultaneously (glare)
+        if (myId > pid) {
+          createOffer(peer);
+        }
+        // If myId < pid, we wait for their offer and respond with answer
       }
     });
   }, [participants, user.id, createPeer, createOffer]);
 
-  // KEY FIX: When speak permission is granted, send offers to all existing peers
-  // This ensures connections are ready for the student to send audio
+  // When speak permission is granted, renegotiate if we're the offerer
   useEffect(() => {
-    if (canSpeak) {
-      // Send offers to all existing peers to establish/refresh connections
+    if (canSpeak && micOnRef.current) {
+      const myId = String(user.id);
       Object.values(peersRef.current).forEach(peer => {
-        createOffer(peer);
+        if (myId > String(peer.userId)) {
+          createOffer(peer);
+        }
       });
     }
-  }, [canSpeak, createOffer]);
+  }, [canSpeak, createOffer, user.id]);
 
-  // Auto-start teacher's mic when entering session (requires user gesture in some browsers)
+  // Auto-start teacher's mic
   useEffect(() => {
     if (isTeacher && !micOnRef.current) {
-      // Try to auto-start — browser may prompt for mic permission
       startMic().then(ok => {
-        if (!ok) console.log('[audio] Teacher mic auto-start deferred — press mic button');
+        if (!ok) console.log('[audio] Teacher mic auto-start deferred');
       }).catch(() => {});
     }
   }, [isTeacher, startMic]);
@@ -292,7 +421,10 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      stopLevelDetection();
       Object.values(peersRef.current).forEach(peer => {
+        if (peer.levelFrame) cancelAnimationFrame(peer.levelFrame);
+        if (peer.ctx) peer.ctx.close();
         peer.pc.close();
         if (peer.audioEl) peer.audioEl.srcObject = null;
       });
@@ -301,10 +433,11 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
         localStreamRef.current.getTracks().forEach(t => t.stop());
       }
     };
-  }, []);
+  }, [stopLevelDetection]);
 
   return {
     micOn, volume, audioEnabled, connected, peerCount,
+    speakingLevel, remoteSpeaking,
     toggleMic, changeVolume, toggleAudio, startMic, stopMic,
   };
 }
