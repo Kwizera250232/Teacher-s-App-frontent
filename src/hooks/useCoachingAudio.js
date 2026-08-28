@@ -7,7 +7,8 @@ import { api } from '../api';
  * Signaling goes through the backend polling endpoints.
  *
  * Key design:
- * - ALL participants create peer connections to ALL others (for receiving audio)
+ * - ALL participants create peer connections to ALL others and exchange offers/answers
+ * - This ensures everyone can RECEIVE audio from anyone who is speaking
  * - Mic tracks are only ADDED when the user has permission to speak and enables mic
  * - Teacher always has speak permission
  * - Students get speak permission when teacher grants it (speak_permission_id)
@@ -65,10 +66,6 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          googEchoCancellation: true,
-          googAutoGainControl: true,
-          googNoiseSuppression: true,
-          googHighpassFilter: true,
           channelCount: 1,
         },
         video: false,
@@ -76,7 +73,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       localStreamRef.current = stream;
       setMicOn(true);
       micOnRef.current = true;
-      // Add tracks to ALL existing peer connections
+      // Add tracks to ALL existing peer connections and renegotiate
       Object.values(peersRef.current).forEach(peer => {
         if (!peer.hasLocalTracks) {
           stream.getTracks().forEach(track => {
@@ -100,8 +97,6 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     }
     setMicOn(false);
     micOnRef.current = false;
-    // Note: we keep the peer connections and don't remove tracks,
-    // just disable them. This avoids renegotiation issues.
   }, []);
 
   const toggleMic = useCallback(() => {
@@ -145,8 +140,6 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     audioEl.setAttribute('playsinline', '');
     audioEl.volume = volumeRef.current;
     audioEl.muted = !audioEnabledRef.current;
-    // Prevent echo — don't route remote audio back through speakers at high volume
-    audioEl.setAttribute('type', 'audio/ogg; codecs=opus');
 
     pc.ontrack = (e) => {
       audioEl.srcObject = e.streams[0];
@@ -162,6 +155,10 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
           token
         ).catch(() => {});
       }
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'connected') setConnected(true);
     };
 
     // Add local tracks if mic is on and we have a stream
@@ -202,7 +199,9 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
 
     if (sig.signal_type === 'offer') {
       if (!peer) peer = createPeer(fromId);
-      await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
+      // Handle renegotiation — if we already have a remote description, this is a re-offer
+      const sd = new RTCSessionDescription(data);
+      await peer.pc.setRemoteDescription(sd);
       const answer = await peer.pc.createAnswer();
       await peer.pc.setLocalDescription(answer);
       await api.post(
@@ -246,9 +245,8 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     return () => { active = false; clearInterval(interval); };
   }, [classId, sessionId, token, handleSignal]);
 
-  // Create peer connections to ALL participants — everyone connects to everyone
-  // This ensures all participants can RECEIVE audio from the teacher and permitted students
-  // But only initiate offers to participants who are likely to have audio (teacher + those with speak permission)
+  // KEY FIX: ALL participants create peer connections and send offers to ALL others
+  // This ensures everyone can receive audio from anyone who speaks
   useEffect(() => {
     if (!participants || participants.length === 0) return;
     participants.forEach(p => {
@@ -256,22 +254,23 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       if (pid === user.id) return;
       if (!peersRef.current[pid]) {
         const peer = createPeer(pid);
-        // Only send offer if we have mic on or can speak (we have audio to send)
-        // Otherwise, wait for the other side to initiate
-        if (micOnRef.current || canSpeakRef.current || isTeacherRef.current) {
-          createOffer(peer);
-        }
+        // ALWAYS send offer — everyone connects to everyone
+        // This ensures audio can flow in both directions
+        createOffer(peer);
       }
     });
   }, [participants, user.id, createPeer, createOffer]);
 
-  // When speak permission changes and mic was pending, auto-start mic
+  // KEY FIX: When speak permission is granted, send offers to all existing peers
+  // This ensures connections are ready for the student to send audio
   useEffect(() => {
-    if (canSpeak && !micOnRef.current && isTeacherRef.current === false) {
-      // Don't auto-start, but enable the toggle button
-      // User must press mic button themselves for browser permission
+    if (canSpeak) {
+      // Send offers to all existing peers to establish/refresh connections
+      Object.values(peersRef.current).forEach(peer => {
+        createOffer(peer);
+      });
     }
-  }, [canSpeak]);
+  }, [canSpeak, createOffer]);
 
   // When speak permission is revoked, stop mic
   useEffect(() => {
