@@ -312,6 +312,7 @@ export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSucc
   const [activeSession, setActiveSession] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
   const [students, setStudents] = useState([]);
+  const [teacherClasses, setTeacherClasses] = useState([]);
 
   const load = useCallback(async () => {
     try {
@@ -328,12 +329,14 @@ export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSucc
 
   const loadCreateData = useCallback(async () => {
     try {
-      const [qz, studs] = await Promise.all([
+      const [qz, studs, myClasses] = await Promise.all([
         api.get(`/classes/${classId}/quizzes`, token),
         api.get(`/classes/${classId}/classroom`, token),
+        api.get(`/classes/my`, token),
       ]);
       setQuizzes(qz || []);
       setStudents(studs?.students || []);
+      setTeacherClasses((myClasses || []).filter(cl => String(cl.id) !== String(classId)));
     } catch (e) {
       onError?.(e.message || 'Could not load data.');
     }
@@ -418,6 +421,7 @@ export function LiveCoachingTeacherPanel({ classId, token, user, onError, onSucc
           token={token}
           quizzes={quizzes}
           students={students}
+          teacherClasses={teacherClasses}
           onClose={() => setShowCreate(false)}
           onCreated={(sid) => { setShowCreate(false); setActiveSession(sid); load(); }}
           onError={onError}
@@ -547,7 +551,7 @@ function SessionResults({ results }) {
   );
 }
 
-function CreateSessionModal({ classId, token, quizzes, students, onClose, onCreated, onError, onSuccess }) {
+function CreateSessionModal({ classId, token, quizzes, students, teacherClasses = [], onClose, onCreated, onError, onSuccess }) {
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
@@ -556,6 +560,16 @@ function CreateSessionModal({ classId, token, quizzes, students, onClose, onCrea
   const [selectedStudents, setSelectedStudents] = useState(new Set());
   const [countOfficial, setCountOfficial] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [selectedClassIds, setSelectedClassIds] = useState(new Set());
+
+  const toggleClass = (id) => {
+    setSelectedClassIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   // AI question generation
   const [showAI, setShowAI] = useState(false);
   const [aiSubject, setAiSubject] = useState('');
@@ -633,8 +647,10 @@ function CreateSessionModal({ classId, token, quizzes, students, onClose, onCrea
         quiz_id: quizId ? parseInt(quizId) : undefined,
         invited_student_ids: selectedStudents.size > 0 ? [...selectedStudents] : undefined,
         count_toward_official: countOfficial,
+        additional_class_ids: selectedClassIds.size > 0 ? [...selectedClassIds].map(id => parseInt(id)) : undefined,
       }, token);
-      onSuccess?.('Session created. Students notified.');
+      const extraMsg = selectedClassIds.size > 0 ? ` (+${selectedClassIds.size} other class${selectedClassIds.size > 1 ? 'es' : ''})` : '';
+      onSuccess?.(`Session created. Students notified${extraMsg}.`);
       onCreated(result.id);
     } catch (e) {
       onError?.(e.message || 'Could not create session.');
@@ -690,6 +706,37 @@ function CreateSessionModal({ classId, token, quizzes, students, onClose, onCrea
             style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '2px solid #e2e8f0', fontSize: 14, boxSizing: 'border-box' }}
           />
         </div>
+
+        {/* Multi-class selector — invite students from other classes */}
+        {teacherClasses.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+              Also include other classes (optional)
+            </label>
+            <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px' }}>
+              Students from selected classes will be invited to this session too.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 140, overflowY: 'auto', border: '2px solid #e2e8f0', borderRadius: 8, padding: 8 }}>
+              {teacherClasses.map(cl => (
+                <label key={cl.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', padding: '4px 6px', borderRadius: 6, background: selectedClassIds.has(String(cl.id)) ? '#eef2ff' : 'transparent' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedClassIds.has(String(cl.id))}
+                    onChange={() => toggleClass(String(cl.id))}
+                    style={{ width: 16, height: 16, cursor: 'pointer' }}
+                  />
+                  <span style={{ fontWeight: 600 }}>{cl.name}</span>
+                  {cl.subject && <span style={{ fontSize: 11, color: '#64748b' }}>— {cl.subject}</span>}
+                </label>
+              ))}
+            </div>
+            {selectedClassIds.size > 0 && (
+              <p style={{ fontSize: 11, color: '#667eea', margin: '4px 0 0', fontWeight: 600 }}>
+                ✓ {selectedClassIds.size} additional class{selectedClassIds.size > 1 ? 'es' : ''} selected
+              </p>
+            )}
+          </div>
+        )}
 
         <div style={{ marginBottom: 12 }}>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Exercise / Quiz (optional)</label>
