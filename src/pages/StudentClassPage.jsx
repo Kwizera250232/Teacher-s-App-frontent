@@ -17,6 +17,7 @@ import SharedQuizAttribution from '../components/SharedQuizAttribution';
 import SharedNoteAttribution from '../components/SharedNoteAttribution';
 import StudentMyGroupsPanel from '../components/StudentMyGroupsPanel';
 import StudentNotificationsBell from '../components/StudentNotificationsBell';
+import DiscussionPanel from '../components/DiscussionPanel';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 import '../pages/PremiumClassTheme.css';
@@ -506,26 +507,7 @@ export default function StudentClassPage() {
         )}
 
         {tab === 'Discussion' && (
-          <>
-            <div className="discussion-list">
-              {data.map(d => (
-                <div key={d.id} className="discussion-msg">
-                  <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    {d.author_name}<VerifiedBadge size={13} info={{ items: [
-                      { icon: '👤', label: 'Role', value: d.author_role },
-                    ] }} />
-                    <span className="role-badge">{d.author_role}</span>
-                  </div>
-                  <div className="body">{d.content}</div>
-                  <div className="time">{new Date(d.created_at).toLocaleString()}</div>
-                </div>
-              ))}
-            </div>
-            <form onSubmit={postDiscussion} className="discussion-input">
-              <input placeholder="Write a message..." value={discussionText} onChange={e => setDiscussionText(e.target.value)} required />
-              <button type="submit" className="btn btn-primary">Send</button>
-            </form>
-          </>
+          <DiscussionPanel classId={id} token={token} user={user} />
         )}
 
         {tab === 'Classmates' && (

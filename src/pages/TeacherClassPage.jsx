@@ -27,6 +27,7 @@ import ClassPointsPanel from '../components/ClassPointsPanel';
 import AssignWorkToGroupModal from '../components/AssignWorkToGroupModal';
 import TeacherQuizReportsPanel from '../components/quizReflection/TeacherQuizReportsPanel';
 import AppNotificationsBell from '../components/AppNotificationsBell';
+import DiscussionPanel from '../components/DiscussionPanel';
 import '../components/StudentNotifications.css';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import RecordCatMarks from './RecordCatMarks';
@@ -714,26 +715,7 @@ export default function TeacherClassPage() {
 
         {/* Discussion */}
         {tab === 'Discussion' && (
-          <>
-            <div className="discussion-list">
-              {data.map(d => (
-                <div key={d.id} className={`discussion-msg ${d.author_role === 'teacher' ? 'teacher-msg' : ''}`}>
-                  <div className="author" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    {d.author_name}<VerifiedBadge size={13} info={{ items: [
-                      { icon: '👤', label: 'Role', value: d.author_role },
-                    ] }} />
-                    <span className="role-badge">{d.author_role}</span>
-                  </div>
-                  <div className="body">{d.content}</div>
-                  <div className="time">{new Date(d.created_at).toLocaleString()}</div>
-                </div>
-              ))}
-            </div>
-            <form onSubmit={postDiscussion} className="discussion-input">
-              <input placeholder="Write a message..." value={discussionText} onChange={e => setDiscussionText(e.target.value)} required />
-              <button type="submit" className="btn btn-primary">Send</button>
-            </form>
-          </>
+          <DiscussionPanel classId={id} token={token} user={user} />
         )}
 
         {tab === 'C. Status' && (
