@@ -5,11 +5,12 @@ import { api } from '../api';
  * WebRTC audio hook for Live Coaching.
  * Mesh networking with polling-based signaling.
  *
- * Key design:
- * - Deterministic offerer: higher user ID sends offer (avoids glare)
- * - ICE candidate buffering until remote description is set
- * - Throttled audio level detection (updates ~10fps, not 60fps)
- * - TURN server for NAT traversal
+ * Audio routing:
+ * - Remote audio plays through AudioContext → GainNode → ctx.destination
+ *   This follows the system output device (headphones when plugged in).
+ * - The Audio element is kept muted as fallback only.
+ * - Volume is controlled via GainNode, not audioEl.volume.
+ * - Local mic uses echoCancellation + noiseSuppression + autoGainControl.
  */
 export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, participants, isTeacher }) {
   const [micOn, setMicOn] = useState(false);
@@ -32,7 +33,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   const analyserRef = useRef(null);
   const animFrameRef = useRef(null);
   const lastLevelUpdateRef = useRef(0);
-  const remoteLevelsRef = useRef({}); // userId -> level (not state, updated by rAF)
+  const remoteLevelsRef = useRef({});
   const lastRemoteUpdateRef = useRef(0);
 
   useEffect(() => { micOnRef.current = micOn; }, [micOn]);
@@ -42,11 +43,39 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
   useEffect(() => { participantsRef.current = participants; }, [participants]);
 
-  // ── Audio level detection (throttled to ~10fps to prevent re-render storms) ──
+  // ── Apply volume to all peers (GainNode + fallback audioEl) ──
+  const applyVolumeToAll = useCallback((vol) => {
+    Object.values(peersRef.current).forEach(peer => {
+      if (peer.gainNode) {
+        try {
+          peer.gainNode.gain.setValueAtTime(vol, peer.audioCtx.currentTime);
+        } catch (e) {
+          peer.gainNode.gain.value = vol;
+        }
+      }
+      if (peer.audioEl) peer.audioEl.volume = vol;
+    });
+  }, []);
+
+  // ── Apply mute to all peers ──
+  const applyMuteToAll = useCallback((muted) => {
+    Object.values(peersRef.current).forEach(peer => {
+      if (peer.gainNode) {
+        try {
+          peer.gainNode.gain.setValueAtTime(muted ? 0 : volumeRef.current, peer.audioCtx.currentTime);
+        } catch (e) {
+          peer.gainNode.gain.value = muted ? 0 : volumeRef.current;
+        }
+      }
+      if (peer.audioEl) peer.audioEl.muted = muted;
+    });
+  }, []);
+
+  // ── Local mic audio level detection (throttled) ──
   const startLevelDetection = useCallback(() => {
     if (!localStreamRef.current) return;
     try {
-      if (analyserRef.current) return; // already running
+      if (analyserRef.current) return;
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const source = ctx.createMediaStreamSource(localStreamRef.current);
       const analyser = ctx.createAnalyser();
@@ -62,7 +91,6 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
         for (let i = 0; i < data.length; i++) sum += data[i];
         const avg = sum / data.length / 255;
         const now = performance.now();
-        // Throttle: only update state every 100ms
         if (now - lastLevelUpdateRef.current > 100) {
           lastLevelUpdateRef.current = now;
           setSpeakingLevel(avg);
@@ -126,11 +154,12 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       ],
     });
 
+    // Audio element as fallback — muted because we play through AudioContext
     const audioEl = new Audio();
     audioEl.autoplay = true;
     audioEl.setAttribute('playsinline', '');
     audioEl.volume = volumeRef.current;
-    audioEl.muted = !audioEnabledRef.current;
+    audioEl.muted = true; // always muted — AudioContext handles playback
 
     const peer = {
       pc,
@@ -141,21 +170,36 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       remoteDescSet: false,
       levelFrame: null,
       analyser: null,
+      audioCtx: null,
+      gainNode: null,
     };
 
     pc.ontrack = (e) => {
       console.log('[audio] Got remote track from', otherUserId);
       audioEl.srcObject = e.streams[0];
-      audioEl.play().catch(err => console.warn('[audio] play error:', err));
       setConnected(true);
 
-      // Remote audio level detection (throttled)
+      // Route audio through AudioContext → GainNode → destination
+      // This ensures audio follows the system output device (headphones)
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Resume if suspended (browser autoplay policy)
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
         const source = ctx.createMediaStreamSource(e.streams[0]);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = audioEnabledRef.current ? volumeRef.current : 0;
+
+        // Audio graph: source → analyser → gainNode → destination
         source.connect(analyser);
+        analyser.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        peer.audioCtx = ctx;
+        peer.gainNode = gainNode;
         peer.analyser = analyser;
 
         const data = new Uint8Array(analyser.frequencyBinCount);
@@ -175,7 +219,10 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
         };
         tick();
       } catch (err) {
-        console.warn('[audio] remote level detection error:', err);
+        console.warn('[audio] AudioContext routing failed, falling back to Audio element:', err);
+        // Fallback: play through Audio element directly
+        audioEl.muted = !audioEnabledRef.current;
+        audioEl.play().catch(playErr => console.warn('[audio] fallback play error:', playErr));
       }
     };
 
@@ -317,7 +364,6 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
           peer.hasLocalTracks = true;
         }
       }
-      // Renegotiate: only the offerer (higher ID) sends new offer
       for (const peer of peerList) {
         const myId = String(user.id);
         const otherId = String(peer.userId);
@@ -350,21 +396,17 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     const clamped = Math.max(0, Math.min(1, vol));
     setVolume(clamped);
     volumeRef.current = clamped;
-    Object.values(peersRef.current).forEach(peer => {
-      if (peer.audioEl) peer.audioEl.volume = clamped;
-    });
-  }, []);
+    applyVolumeToAll(clamped);
+  }, [applyVolumeToAll]);
 
   const toggleAudio = useCallback(() => {
     setAudioEnabled(prev => {
       const next = !prev;
       audioEnabledRef.current = next;
-      Object.values(peersRef.current).forEach(peer => {
-        if (peer.audioEl) peer.audioEl.muted = !next;
-      });
+      applyMuteToAll(!next);
       return next;
     });
-  }, []);
+  }, [applyMuteToAll]);
 
   // ── Poll for signals ──
   useEffect(() => {
@@ -399,7 +441,6 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       if (pid === myId) return;
       if (!peersRef.current[pid]) {
         const peer = createPeer(pid);
-        // Deterministic offerer: higher ID sends offer
         if (myId > pid) {
           createOffer(peer);
         }
@@ -435,14 +476,34 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     }
   }, [canSpeak, stopMic]);
 
+  // ── Handle device changes (headphone plug/unplug) ──
+  // When headphones are plugged in, resume all AudioContexts so audio
+  // routes to the new output device automatically.
+  useEffect(() => {
+    const handleDeviceChange = () => {
+      console.log('[audio] Audio device changed (headphone plug/unplug)');
+      Object.values(peersRef.current).forEach(peer => {
+        if (peer.audioCtx && peer.audioCtx.state === 'suspended') {
+          peer.audioCtx.resume().catch(() => {});
+        }
+      });
+    };
+    if (navigator.mediaDevices) {
+      navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+      return () => {
+        navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+      };
+    }
+  }, []);
+
   // ── Cleanup on unmount ──
   useEffect(() => {
     return () => {
       stopLevelDetection();
       Object.values(peersRef.current).forEach(peer => {
         if (peer.levelFrame) cancelAnimationFrame(peer.levelFrame);
-        if (peer.analyser) {
-          try { peer.analyser.context.close(); } catch (e) {}
+        if (peer.audioCtx) {
+          try { peer.audioCtx.close(); } catch (e) {}
         }
         try { peer.pc.close(); } catch (e) {}
         if (peer.audioEl) peer.audioEl.srcObject = null;
