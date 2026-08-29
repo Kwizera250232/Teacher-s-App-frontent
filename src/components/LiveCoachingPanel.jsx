@@ -60,6 +60,40 @@ function AudioControls({ micOn, volume, audioEnabled, onToggleMic, onVolume, onT
   );
 }
 
+// ── Sound Wave Visualizer ────────────────────────────────────────────────────
+// Deterministic bar heights — NO Math.random() to avoid re-render loops.
+const WAVE_BAR_HEIGHTS = [0.4, 0.7, 1.0, 0.85, 0.6, 0.95, 0.75, 0.5];
+function SoundWave({ level, color = '#10b981', label, size = 'normal' }) {
+  const bars = size === 'small' ? 5 : 8;
+  const h = size === 'small' ? 16 : 28;
+  const active = level > 0.02;
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2, height: h }}>
+        {Array.from({ length: bars }).map((_, i) => {
+          const barFactor = WAVE_BAR_HEIGHTS[i % WAVE_BAR_HEIGHTS.length];
+          const baseHeight = 3;
+          const activeHeight = active ? Math.max(baseHeight, level * h * barFactor) : baseHeight;
+          return (
+            <div
+              key={i}
+              style={{
+                width: size === 'small' ? 2 : 3,
+                height: activeHeight,
+                background: color,
+                borderRadius: 2,
+                transition: 'height 0.1s ease',
+                opacity: active ? 1 : 0.25,
+              }}
+            />
+          );
+        })}
+      </div>
+      {label && <span style={{ fontSize: 11, color, fontWeight: 600 }}>{label}</span>}
+    </div>
+  );
+}
+
 // ── Answer Timer ─────────────────────────────────────────────────────────────
 function AnswerTimer({ seconds, startedAt }) {
   const [remaining, setRemaining] = useState(0);
