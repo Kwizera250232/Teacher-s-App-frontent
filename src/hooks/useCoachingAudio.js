@@ -171,7 +171,17 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:93.127.186.217:3478' },
+        {
+          urls: 'turn:93.127.186.217:3478',
+          username: 'umunsi',
+          credential: 'umunsi2024',
+        },
+        {
+          urls: 'turn:93.127.186.217:3478?transport=tcp',
+          username: 'umunsi',
+          credential: 'umunsi2024',
+        },
       ],
     });
 
