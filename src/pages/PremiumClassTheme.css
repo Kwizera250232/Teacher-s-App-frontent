@@ -1,5 +1,16 @@
 /* Premium Class Theme — overrides wa-theme green with premium purple */
 
+/* Define fallback values at root so btn-primary works on ALL pages, not just wa-theme */
+:root {
+  --premium-purple: #5A3FFF;
+  --premium-purple-light: #8B5CF6;
+  --premium-bg: #F8F9FC;
+  --premium-card: #ffffff;
+  --premium-border: #ECECEC;
+  --premium-text: #111827;
+  --premium-text-secondary: #6B7280;
+}
+
 .class-page.wa-theme {
   --premium-purple: #5A3FFF;
   --premium-purple-light: #8B5CF6;
@@ -163,9 +174,10 @@
   color: var(--premium-text) !important;
 }
 
-/* Buttons — premium gradient */
+/* Buttons — premium gradient with solid fallback */
 .btn-primary {
-  background: linear-gradient(135deg, var(--premium-purple) 0%, var(--premium-purple-light) 100%) !important;
+  background: #5A3FFF !important;
+  background: linear-gradient(135deg, var(--premium-purple, #5A3FFF) 0%, var(--premium-purple-light, #8B5CF6) 100%) !important;
   border: none !important;
   border-radius: 12px !important;
   font-weight: 600 !important;
