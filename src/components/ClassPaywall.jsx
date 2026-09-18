@@ -105,22 +105,41 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
             <p style={{ color: '#16a34a', fontWeight: 700 }}>Payment confirmed! Unlocking…</p>
           </div>
         ) : status && referenceId ? (
-          /* Pending state — MoMo USSD flow */
+          /* Pending state — MoMo USSD flow (writer.umunsi.com style) */
           <div>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>📱</div>
-            <p style={{ fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>Check your phone</p>
-            <p style={{ color: '#6b7280', fontSize: 13, margin: '0 0 16px' }}>
-              Approve the MTN MoMo payment on <strong>{phone}</strong> (dial the prompt / enter PIN).
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%', background: '#eff6ff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+            }}>
+              <span style={{ fontSize: 30 }}>�</span>
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, color: '#111827' }}>Check your phone</h3>
+            <p style={{ color: '#4b5563', fontSize: 14, margin: '0 0 16px', lineHeight: 1.5 }}>
+              We sent a payment request to <strong>{phone.replace(/\D/g, '').replace(/^0/, '250')}</strong>.
+              Approve it on your phone to unlock this class.
             </p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-              <button onClick={checkNow} className="btn btn-primary" style={{ padding: '10px 20px' }}>
-                ✓ Check status
-              </button>
-              <button onClick={() => { setReferenceId(null); setStatus(null); }} style={{ padding: '10px 16px', borderRadius: 8, border: '2px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontWeight: 600 }}>
-                Change number
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 18 }}>
+              <span className="paywall-spinner" style={{
+                width: 16, height: 16, border: '2px solid #e2e8f0', borderTopColor: '#5A3FFF',
+                borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite',
+              }} />
+              <span style={{ fontSize: 13, color: '#6b7280' }}>Waiting for your approval…</span>
+            </div>
+            <div style={{
+              background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8,
+              padding: '10px 14px', fontSize: 12, color: '#854d0e', textAlign: 'left',
+              display: 'flex', gap: 8, marginBottom: 16,
+            }}>
+              <span>⚠️</span>
+              <span>The payment prompt expires after a few minutes. If you don't see it, dial <strong>*182#</strong> on your MTN phone.</span>
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center' }}>
+              <button onClick={() => { setReferenceId(null); setStatus(null); setError(''); }}
+                style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
+                Cancel and go back
               </button>
             </div>
-            <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 14 }}>Status: {status} — checking automatically every 5s</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : (
           /* Phone entry */
