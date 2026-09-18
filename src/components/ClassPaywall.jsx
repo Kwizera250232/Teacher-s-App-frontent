@@ -31,7 +31,7 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
           setTimeout(() => onUnlocked?.(), 1500);
         } else if (s.status === 'FAILED' || s.status === 'REJECTED' || s.status === 'EXPIRED') {
           clearInterval(pollRef.current);
-          setError('Payment was not completed. Try again.');
+          setError(s.reason_message || 'Payment was not completed. Try again.');
         }
       } catch { /* keep polling */ }
     }, 5000);
@@ -66,6 +66,8 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
       if (s.status === 'SUCCESSFUL') {
         if (pollRef.current) clearInterval(pollRef.current);
         setTimeout(() => onUnlocked?.(), 1200);
+      } else if (s.status === 'FAILED' && s.reason_message) {
+        setError(s.reason_message);
       }
     } catch (e) { setError(e.message); }
   };
