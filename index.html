@@ -70,10 +70,6 @@
           navigator.serviceWorker.register('/sw.js').then(() => {
             console.log('[SW] Fresh SW registered');
           }).catch(err => console.warn('[SW] Registration failed:', err));
-          // Reload when controller changes
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            window.location.reload();
-          });
         });
       }
     </script>
