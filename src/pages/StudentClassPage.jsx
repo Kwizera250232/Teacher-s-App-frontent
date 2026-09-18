@@ -18,6 +18,7 @@ import SharedNoteAttribution from '../components/SharedNoteAttribution';
 import StudentMyGroupsPanel from '../components/StudentMyGroupsPanel';
 import StudentNotificationsBell from '../components/StudentNotificationsBell';
 import DiscussionPanel from '../components/DiscussionPanel';
+import ClassPaywall from '../components/ClassPaywall';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 import '../pages/PremiumClassTheme.css';
@@ -49,6 +50,7 @@ export default function StudentClassPage() {
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [groupsError, setGroupsError] = useState('');
   const [quizzesLoading, setQuizzesLoading] = useState(false);
+  const [access, setAccess] = useState(null); // { requires_payment, paid, amount_rwf, ... }
   const showSuccess = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3000); };
 
   useEffect(() => {
@@ -58,6 +60,8 @@ export default function StudentClassPage() {
 
   useEffect(() => {
     setPageLoading(true);
+    // Check payment access alongside class info
+    api.get(`/classes/${id}/my-access`, token).then(setAccess).catch(() => setAccess({ requires_payment: false, paid: true }));
     api.get(`/classes/${id}`, token).then(data => {
       setCls(data);
       setPageLoading(false);
@@ -220,6 +224,34 @@ export default function StudentClassPage() {
             <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
             <p>Loading class...</p>
           </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Paywall — student must pay before accessing class content
+  if (access && access.requires_payment && !access.paid) {
+    return (
+      <div className="class-page wa-theme">
+        <header className="dash-header wa-class-header">
+          <button type="button" className="wa-back-btn" onClick={() => navigate('/student/dashboard')}>←</button>
+          <div className="wa-class-header-title">
+            <strong>{cls?.name || 'Class'}</strong>
+            <span>{cls?.subject || 'UClass'}</span>
+          </div>
+        </header>
+        <main className="class-main">
+          <ClassPaywall
+            classId={id}
+            className={cls?.name}
+            teacherName={cls?.teacher_name}
+            access={access}
+            token={token}
+            onUnlocked={() => {
+              setAccess({ ...access, paid: true });
+              loadTab();
+            }}
+          />
         </main>
       </div>
     );

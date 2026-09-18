@@ -43,6 +43,10 @@ const Whiteboard = forwardRef(function Whiteboard({ onSave, onCancel, live = fal
   const [graphType, setGraphType] = useState('bar');
   const [overlayText, setOverlayText] = useState('');
   const [background, setBackground] = useState(BG_WHITEBOARD);
+  // Text input area for typing text onto the board
+  const [textInput, setTextInput] = useState('');
+  const [textFontSize, setTextFontSize] = useState(20);
+  const textAreaRef = useRef(null);
 
   // Stroke storage — each stroke = { points: [[x,y,pressure]], color, pen, eraser }
   const strokesRef = useRef([]);
@@ -396,6 +400,68 @@ const Whiteboard = forwardRef(function Whiteboard({ onSave, onCancel, live = fal
     if (live && onDataChange) onDataChange();
   };
 
+  // ── Add typed text to the board ──
+  // Renders text directly on the canvas at the next available vertical position.
+  // The text becomes part of the saved board image (synced to all students).
+  const addTextToBoard = () => {
+    const text = textInput.trim();
+    if (!text) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.width / dpr;
+    const cssH = canvas.height / dpr;
+
+    // Find a Y position: start near top with some padding, or below existing content
+    // Simple approach: place text at a fixed position from top, wrapping lines
+    const padding = 30;
+    const lineHeight = textFontSize * 1.4;
+    const maxWidth = cssW - padding * 2;
+
+    ctx.save();
+    ctx.fillStyle = isEraser ? '#ffffff' : color;
+    ctx.font = `${textFontSize}px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+    ctx.textBaseline = 'top';
+
+    // Word-wrap the text
+    const words = text.split(/\s+/);
+    let line = '';
+    let y = padding;
+    const lines = [];
+
+    for (const word of words) {
+      const testLine = line ? line + ' ' + word : word;
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) lines.push(line);
+
+    // Handle explicit newlines
+    const finalLines = [];
+    for (const l of lines) {
+      const parts = l.split('\n');
+      for (const p of parts) finalLines.push(p);
+    }
+
+    // Draw each line
+    for (const l of finalLines) {
+      ctx.fillText(l, padding, y);
+      y += lineHeight;
+    }
+
+    ctx.restore();
+
+    // Clear the text input
+    setTextInput('');
+    if (live && onDataChange) onDataChange();
+  };
+
   // ── Graph mode ──
   const applyGraph = () => {
     const canvas = canvasRef.current;
@@ -479,7 +545,8 @@ const Whiteboard = forwardRef(function Whiteboard({ onSave, onCancel, live = fal
       />
 
       {live ? (
-        /* Live mode toolbar */
+        <>
+        {/* Live mode toolbar */}
         <div className="whiteboard-tools" style={{
           display: 'flex', gap: 4, padding: 6, flexWrap: 'wrap', alignItems: 'center',
           borderBottom: '1px solid #e2e8f0', position: 'relative', zIndex: 2, background: '#fff',
@@ -531,6 +598,66 @@ const Whiteboard = forwardRef(function Whiteboard({ onSave, onCancel, live = fal
             🗑 Clear
           </button>
         </div>
+
+        {/* Text input area — type text and add it to the board */}
+        {canDraw && (
+          <div style={{
+            display: 'flex', gap: 6, padding: 8, background: '#f8fafc',
+            borderTop: '1px solid #e2e8f0', alignItems: 'flex-end', flexWrap: 'wrap',
+            position: 'relative', zIndex: 2,
+          }}>
+            <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', whiteSpace: 'nowrap' }}>📝 Type to board:</label>
+                <select
+                  value={textFontSize}
+                  onChange={e => setTextFontSize(parseInt(e.target.value))}
+                  style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, border: '1px solid #e2e8f0', cursor: 'pointer' }}
+                  title="Font size"
+                >
+                  <option value={14}>Small</option>
+                  <option value={20}>Medium</option>
+                  <option value={28}>Large</option>
+                  <option value={36}>XL</option>
+                  <option value={48}>XXL</option>
+                </select>
+              </div>
+              <textarea
+                ref={textAreaRef}
+                value={textInput}
+                onChange={e => setTextInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    addTextToBoard();
+                  }
+                }}
+                placeholder="Type text here, then press Add to put it on the board… (Ctrl+Enter to add)"
+                rows={2}
+                style={{
+                  width: '100%', padding: '8px 12px', borderRadius: 8,
+                  border: '2px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit',
+                  outline: 'none', resize: 'vertical', minHeight: 36, boxSizing: 'border-box',
+                }}
+                onFocus={e => e.target.style.borderColor = '#667eea'}
+                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={addTextToBoard}
+              disabled={!textInput.trim()}
+              style={{
+                padding: '8px 16px', borderRadius: 8, border: 'none', cursor: textInput.trim() ? 'pointer' : 'not-allowed',
+                background: textInput.trim() ? '#667eea' : '#cbd5e1', color: '#fff', fontWeight: 700,
+                fontSize: 13, whiteSpace: 'nowrap', opacity: textInput.trim() ? 1 : 0.6,
+              }}
+            >
+              ➕ Add to Board
+            </button>
+          </div>
+        )}
+        </>
       ) : (
         <>
           <div className="whiteboard-tabs">

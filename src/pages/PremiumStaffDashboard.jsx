@@ -26,6 +26,7 @@ import OnlineNowStrip from '../components/classMoments/OnlineNowStrip';
 import { usePresence } from '../hooks/usePresence';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import TeacherMobileMenu from '../components/TeacherMobileMenu';
+import TeacherEarningsCard from '../components/TeacherEarningsCard';
 import { LiveCoachingTeacherPanel } from '../components/LiveCoachingPanel';
 import '../components/classMoments/ClassMoments.css';
 import '../components/StudentNotifications.css';
@@ -141,6 +142,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
 
         {activeTab === 'classes' && (
           <>
+            <TeacherEarningsCard token={token} />
             <div className="premium-actions-row">
               <button type="button" className="premium-action-button premium-action-button--create" onClick={() => setShowCreate(true)}>
                 + Fungura Ishuri
