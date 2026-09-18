@@ -72,16 +72,39 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
     } catch (e) { setError(e.message); }
   };
 
-  const card = { background: '#fff', borderRadius: 16, padding: 28, maxWidth: 440, margin: '40px auto', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', textAlign: 'center' };
+  const goBack = () => { window.history.back(); };
 
   return (
-    <div style={{ padding: '20px 16px' }}>
-      <div style={card}>
-        <div style={{ fontSize: 44, marginBottom: 8 }}>🔒</div>
-        <h2 style={{ margin: '0 0 6px', fontSize: 20, color: '#111827' }}>This class requires a subscription</h2>
-        <p style={{ color: '#6b7280', fontSize: 14, margin: '0 0 18px' }}>
-          <strong>{className}</strong>{teacherName ? ` · by ${teacherName}` : ''}
-        </p>
+    /* Modal overlay — writer-style popup */
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16,
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 20, padding: 0, maxWidth: 420, width: '100%',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.25)', textAlign: 'center', maxHeight: '90vh', overflowY: 'auto',
+        position: 'relative',
+      }}>
+        {/* Header — icon + title + subtitle + close */}
+        <div style={{ padding: '24px 24px 0', position: 'relative' }}>
+          <button onClick={goBack} aria-label="Close" style={{
+            position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: '50%',
+            border: 'none', background: '#f1f5f9', color: '#64748b', fontSize: 16, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>✕</button>
+          <div style={{
+            width: 56, height: 56, borderRadius: '50%', background: '#ede9fe',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
+          }}>
+            <span style={{ fontSize: 26 }}>⚡</span>
+          </div>
+          <h2 style={{ margin: '0 0 4px', fontSize: 19, color: '#111827' }}>Pay for Class Access</h2>
+          <p style={{ color: '#6b7280', fontSize: 13, margin: '0 0 0' }}>
+            {className}{teacherName ? ` · by ${teacherName}` : ''}
+          </p>
+        </div>
+        <div style={{ borderTop: '1px solid #f1f5f9', margin: '16px 0 0' }} />
+        <div style={{ padding: '8px 24px 24px' }}>
 
         {/* Package card */}
         <div style={{ background: 'linear-gradient(135deg,#5A3FFF,#8B5CF6)', borderRadius: 12, padding: '18px 20px', color: '#fff', marginBottom: 18, textAlign: 'left' }}>
@@ -111,11 +134,11 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
               width: 64, height: 64, borderRadius: '50%', background: '#eff6ff',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
             }}>
-              <span style={{ fontSize: 30 }}>�</span>
+              <span style={{ fontSize: 30 }}>🔔</span>
             </div>
             <h3 style={{ margin: '0 0 8px', fontSize: 18, color: '#111827' }}>Check your phone</h3>
             <p style={{ color: '#4b5563', fontSize: 14, margin: '0 0 16px', lineHeight: 1.5 }}>
-              We sent a payment request to <strong>{phone.replace(/\D/g, '').replace(/^0/, '250')}</strong>.
+              We sent a payment request to <strong>{(() => { let p = phone.replace(/\D/g, ''); if (p.startsWith('250')) return p; if (p.startsWith('0')) return '250' + p.slice(1); if (p.length === 9) return '250' + p; return p; })()}</strong>.
               Approve it on your phone to unlock this class.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 18 }}>
@@ -177,6 +200,7 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
         )}
 
         {error && <div className="alert alert-error" style={{ marginTop: 14 }}>{error}</div>}
+        </div>
       </div>
     </div>
   );
