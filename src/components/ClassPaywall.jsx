@@ -12,6 +12,7 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
   const [referenceId, setReferenceId] = useState(null);
   const [status, setStatus] = useState(null); // PENDING | SUCCESSFUL | FAILED
   const [error, setError] = useState('');
+  const [failPopup, setFailPopup] = useState(''); // MTN rejection shown as popup
   const pollRef = useRef(null);
 
   const amount = access?.amount_rwf || 0;
@@ -31,7 +32,7 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
           setTimeout(() => onUnlocked?.(), 1500);
         } else if (s.status === 'FAILED' || s.status === 'REJECTED' || s.status === 'EXPIRED') {
           clearInterval(pollRef.current);
-          setError(s.reason_message || 'Payment was not completed. Try again.');
+          setFailPopup(s.reason_message || 'Ubwishyu ntibwashobotse. Gerageza ukundi. (Payment was not completed — try again)');
         }
       } catch { /* keep polling */ }
     }, 5000);
@@ -52,7 +53,13 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
         startPolling(r.reference_id);
       }
     } catch (e) {
-      setError(e.message || 'Payment failed. Try again.');
+      const msg = e.message || 'Payment failed. Try again.';
+      // MTN rejections (e.g. Nta mafaranga) are shown as a popup, not inline text
+      if (/mafaranga|not approved|not allowed|rejected|limit/i.test(msg)) {
+        setFailPopup(msg);
+      } else {
+        setError(msg);
+      }
     } finally {
       setPaying(false);
     }
@@ -66,8 +73,9 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
       if (s.status === 'SUCCESSFUL') {
         if (pollRef.current) clearInterval(pollRef.current);
         setTimeout(() => onUnlocked?.(), 1200);
-      } else if (s.status === 'FAILED' && s.reason_message) {
-        setError(s.reason_message);
+      } else if (s.status === 'FAILED' || s.status === 'REJECTED' || s.status === 'EXPIRED') {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setFailPopup(s.reason_message || 'Ubwishyu ntibwashobotse. Gerageza ukundi. (Payment was not completed — try again)');
       }
     } catch (e) { setError(e.message); }
   };
@@ -201,6 +209,39 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
 
         {error && <div className="alert alert-error" style={{ marginTop: 14 }}>{error}</div>}
         </div>
+
+        {/* MTN rejection popup — e.g. "Nta mafaranga ahagije" */}
+        {failPopup && (
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: 20, background: 'rgba(15,23,42,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 10,
+          }}>
+            <div style={{
+              background: '#fff', borderRadius: 16, padding: '28px 24px', maxWidth: 300, width: '100%',
+              textAlign: 'center', boxShadow: '0 12px 40px rgba(0,0,0,0.3)',
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: '50%', background: '#fef2f2',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
+              }}>
+                <span style={{ fontSize: 28 }}>⚠️</span>
+              </div>
+              <h3 style={{ margin: '0 0 8px', fontSize: 17, color: '#111827' }}>Ubwishyu ntibwashobotse</h3>
+              <p style={{ color: '#dc2626', fontSize: 14, fontWeight: 600, margin: '0 0 20px', lineHeight: 1.5 }}>
+                {failPopup}
+              </p>
+              <button
+                onClick={() => { setFailPopup(''); setReferenceId(null); setStatus(null); setError(''); }}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: 10, border: 'none',
+                  background: '#5A3FFF', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                }}
+              >
+                Gerageza ukundi
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
