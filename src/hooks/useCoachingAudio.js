@@ -241,6 +241,15 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
         setConnected(true);
       }
+      // Reconnect automatically when the network drops (e.g. switching
+      // Wi‑Fi ↔ mobile data or a sleeping phone) instead of staying silent.
+      if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+        try { pc.restartIce(); } catch (e) {}
+        const myId = String(user.id);
+        if (pc.iceConnectionState === 'failed' && myId > String(otherUserId)) {
+          setTimeout(() => { createOffer(peer).catch(() => {}); }, 1000);
+        }
+      }
     };
 
     pc.onconnectionstatechange = () => {
@@ -259,7 +268,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     peersRef.current[otherUserId] = peer;
     setPeerCount(Object.keys(peersRef.current).length);
     return peer;
-  }, [classId, sessionId, token]);
+  }, [classId, sessionId, token, user.id, createOffer]);
 
   // ── Flush buffered ICE candidates ──
   const flushIceBuffer = useCallback(async (peer) => {
@@ -475,6 +484,27 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       stopMic();
     }
   }, [canSpeak, stopMic]);
+
+  // ── Resume audio playback on first user gesture ──
+  // Mobile browsers (and some desktop ones) keep AudioContext suspended until
+  // the user taps/clicks — without this the listener hears nothing.
+  useEffect(() => {
+    const resumeAll = () => {
+      Object.values(peersRef.current).forEach(peer => {
+        if (peer.audioCtx && peer.audioCtx.state === 'suspended') {
+          peer.audioCtx.resume().catch(() => {});
+        }
+      });
+    };
+    window.addEventListener('pointerdown', resumeAll);
+    window.addEventListener('touchstart', resumeAll);
+    window.addEventListener('keydown', resumeAll);
+    return () => {
+      window.removeEventListener('pointerdown', resumeAll);
+      window.removeEventListener('touchstart', resumeAll);
+      window.removeEventListener('keydown', resumeAll);
+    };
+  }, []);
 
   // ── Handle device changes (headphone plug/unplug) ──
   // When headphones are plugged in, resume all AudioContexts so audio
