@@ -1059,6 +1059,14 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
           onToggleMic={audio.toggleMic} onVolume={audio.changeVolume} onToggleAudio={audio.toggleAudio}
           canSpeak={true} label="Teacher"
         />
+        {audio.needsTap && (
+          <button
+            onClick={audio.resumeAudio}
+            style={{ padding: '6px 14px', fontSize: 13, fontWeight: 700, border: 'none', borderRadius: 8, background: '#ef4444', color: '#fff', cursor: 'pointer' }}
+          >
+            🔊 Tap to enable sound
+          </button>
+        )}
         <div style={{ width: 1, height: 24, background: '#e2e8f0' }} />
         <button style={{ ...btnOutline, ...btnSm }} onClick={() => setShowWhiteboard(!showWhiteboard)}>
           {showWhiteboard ? 'Hide Board' : 'Show Board'}
@@ -1489,6 +1497,14 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
           onToggleMic={audio.toggleMic} onVolume={audio.changeVolume} onToggleAudio={audio.toggleAudio}
           canSpeak={hasSpeakPermission}
         />
+        {audio.needsTap && (
+          <button
+            onClick={audio.resumeAudio}
+            style={{ padding: '6px 14px', fontSize: 13, fontWeight: 700, border: 'none', borderRadius: 8, background: '#ef4444', color: '#fff', cursor: 'pointer' }}
+          >
+            🔊 Tap to hear the teacher
+          </button>
+        )}
         {audio.micOn && <SoundWave level={audio.speakingLevel} color="#10b981" label="You" />}
         {Object.entries(audio.remoteSpeaking || {}).filter(([_, lvl]) => lvl > 0.05).map(([uid, lvl]) => {
           const p = participants.find(pp => String(pp.student_id) === String(uid));

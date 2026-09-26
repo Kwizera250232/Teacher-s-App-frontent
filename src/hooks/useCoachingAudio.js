@@ -20,6 +20,9 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   const [peerCount, setPeerCount] = useState(0);
   const [speakingLevel, setSpeakingLevel] = useState(0);
   const [remoteSpeaking, setRemoteSpeaking] = useState({});
+  // True when remote audio arrived but the browser is blocking playback
+  // (autoplay policy) — UI should show a "tap to hear" button.
+  const [needsTap, setNeedsTap] = useState(false);
 
   const localStreamRef = useRef(null);
   const peersRef = useRef({});
@@ -117,7 +120,9 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
 
   // ── Create and send an offer ──
   const createOffer = useCallback(async (peer) => {
+    if (peer.makingOffer) return;
     try {
+      peer.makingOffer = true;
       console.log('[audio] Creating offer to', peer.userId);
       const offer = await peer.pc.createOffer({ offerToReceiveAudio: true });
       await peer.pc.setLocalDescription(offer);
@@ -128,6 +133,8 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       );
     } catch (e) {
       console.error('[audio] offer error:', e);
+    } finally {
+      peer.makingOffer = false;
     }
   }, [classId, sessionId, token]);
 
@@ -166,12 +173,19 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       audioEl,
       userId: otherUserId,
       hasLocalTracks: false,
+      makingOffer: false,
       iceBuffer: [],
       remoteDescSet: false,
       levelFrame: null,
       analyser: null,
       audioCtx: null,
       gainNode: null,
+    };
+
+    // Renegotiate automatically when local tracks are added/removed —
+    // this is what actually delivers a mic started after the initial offer.
+    pc.onnegotiationneeded = () => {
+      createOffer(peer).catch(() => {});
     };
 
     pc.ontrack = (e) => {
@@ -183,9 +197,10 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       // This ensures audio follows the system output device (headphones)
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        // Resume if suspended (browser autoplay policy)
+        // Resume if suspended (browser autoplay policy) — flag UI if a tap is needed
         if (ctx.state === 'suspended') {
           ctx.resume().catch(() => {});
+          setNeedsTap(true);
         }
         const source = ctx.createMediaStreamSource(e.streams[0]);
         const analyser = ctx.createAnalyser();
@@ -296,6 +311,18 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       if (!peer) peer = createPeer(fromId);
       console.log('[audio] Got offer from', fromId);
       try {
+        // Glare resolution (both sides offered at once): the polite peer —
+        // the one with the smaller user id — rolls back its own offer and
+        // answers; the impolite peer ignores the incoming offer.
+        const polite = String(user.id) < String(fromId);
+        const collision = peer.makingOffer || peer.pc.signalingState !== 'stable';
+        if (collision && !polite) {
+          console.warn('[audio] glare: ignoring colliding offer from', fromId);
+          return;
+        }
+        if (collision && polite) {
+          try { await peer.pc.setLocalDescription({ type: 'rollback' }); } catch (e) {}
+        }
         await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
         peer.remoteDescSet = true;
         await flushIceBuffer(peer);
@@ -363,7 +390,8 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       micOnRef.current = true;
       startLevelDetection();
 
-      // Add tracks to ALL existing peer connections and renegotiate
+      // Add tracks to ALL existing peer connections — onnegotiationneeded
+      // renegotiates automatically, plus an explicit re-offer as a safety net.
       const peerList = Object.values(peersRef.current);
       for (const peer of peerList) {
         if (!peer.hasLocalTracks) {
@@ -372,13 +400,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
           });
           peer.hasLocalTracks = true;
         }
-      }
-      for (const peer of peerList) {
-        const myId = String(user.id);
-        const otherId = String(peer.userId);
-        if (myId > otherId) {
-          createOffer(peer);
-        }
+        createOffer(peer);
       }
       return true;
     } catch (e) {
@@ -417,6 +439,17 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     });
   }, [applyMuteToAll]);
 
+  // ── Manually resume all suspended AudioContexts (called by "tap to hear") ──
+  const resumeAudio = useCallback(async () => {
+    const peers = Object.values(peersRef.current);
+    await Promise.all(peers.map(peer =>
+      (peer.audioCtx && peer.audioCtx.state === 'suspended')
+        ? peer.audioCtx.resume().catch(() => {})
+        : null
+    ));
+    setNeedsTap(peers.some(peer => peer.audioCtx && peer.audioCtx.state === 'suspended'));
+  }, []);
+
   // ── Poll for signals ──
   useEffect(() => {
     if (!sessionId || !token) return;
@@ -442,6 +475,9 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   }, [classId, sessionId, token, handleSignal]);
 
   // ── Create peer connections to ALL participants ──
+  // The teacher always initiates (independent of user-id order — this is
+  // what makes students reliably hear the teacher). Between two students
+  // the higher id initiates, so exactly one side offers.
   useEffect(() => {
     if (!participants || participants.length === 0) return;
     const myId = String(user.id);
@@ -450,7 +486,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       if (pid === myId) return;
       if (!peersRef.current[pid]) {
         const peer = createPeer(pid);
-        if (myId > pid) {
+        if (isTeacherRef.current || myId > pid) {
           createOffer(peer);
         }
       }
@@ -460,11 +496,8 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   // ── When speak permission is granted, renegotiate ──
   useEffect(() => {
     if (canSpeak && micOnRef.current) {
-      const myId = String(user.id);
       Object.values(peersRef.current).forEach(peer => {
-        if (myId > String(peer.userId)) {
-          createOffer(peer);
-        }
+        createOffer(peer);
       });
     }
   }, [canSpeak, createOffer, user.id]);
@@ -495,6 +528,9 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
           peer.audioCtx.resume().catch(() => {});
         }
       });
+      setNeedsTap(Object.values(peersRef.current).some(
+        peer => peer.audioCtx && peer.audioCtx.state === 'suspended'
+      ));
     };
     window.addEventListener('pointerdown', resumeAll);
     window.addEventListener('touchstart', resumeAll);
@@ -547,7 +583,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
 
   return {
     micOn, volume, audioEnabled, connected, peerCount,
-    speakingLevel, remoteSpeaking,
-    toggleMic, changeVolume, toggleAudio, startMic, stopMic,
+    speakingLevel, remoteSpeaking, needsTap,
+    toggleMic, changeVolume, toggleAudio, startMic, stopMic, resumeAudio,
   };
 }
