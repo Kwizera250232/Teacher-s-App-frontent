@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
-import Whiteboard from './Whiteboard';
+
 import { useCoachingAudio } from '../hooks/useCoachingAudio';
 
 const POLL_MS = 3000;
@@ -295,8 +295,7 @@ function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, o
   );
 }
 
-function ParticipantAvatar({ p, size = 56, penHolder, speakPermission, handRaised, isSelf, onGivePen, onRevokePen, onGiveSpeak, onRevokeSpeak, isTeacher, compact }) {
-  const hasPen = penHolder === p.student_id;
+function ParticipantAvatar({ p, size = 56, speakPermission, handRaised, isSelf, onGiveSpeak, onRevokeSpeak, isTeacher, compact }) {
   const canSpeak = speakPermission === p.student_id;
   const raised = handRaised?.includes(p.student_id);
   return (
@@ -306,12 +305,11 @@ function ParticipantAvatar({ p, size = 56, penHolder, speakPermission, handRaise
         background: `linear-gradient(135deg, #6366f1, #764ba2)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: '#fff', fontWeight: 700, fontSize: size > 40 ? 18 : 14, margin: '0 auto 4px',
-        border: hasPen ? '3px solid #f59e0b' : canSpeak ? '3px solid #10b981' : '3px solid transparent',
+        border: canSpeak ? '3px solid #10b981' : '3px solid transparent',
         position: 'relative',
         boxShadow: canSpeak ? '0 0 8px rgba(16,185,129,0.5)' : 'none',
       }}>
         {p.name?.charAt(0)?.toUpperCase()}
-        {hasPen && <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: size > 40 ? 14 : 10 }}>✍️</span>}
         {canSpeak && <span style={{ position: 'absolute', top: -2, left: -2, fontSize: size > 40 ? 14 : 10 }}>🎙️</span>}
         {raised && <span style={{ position: 'absolute', top: -4, right: -4, fontSize: size > 40 ? 16 : 12, animation: 'bounce 1s infinite' }}>✋</span>}
       </div>
@@ -322,10 +320,6 @@ function ParticipantAvatar({ p, size = 56, penHolder, speakPermission, handRaise
           </div>
           {isTeacher && (
             <div style={{ display: 'flex', gap: 2, justifyContent: 'center', marginTop: 2, flexWrap: 'wrap' }}>
-              <button onClick={() => hasPen ? onRevokePen?.(p.student_id) : onGivePen?.(p.student_id)}
-                style={{ fontSize: 9, padding: '1px 5px', border: '1px solid #e2e8f0', borderRadius: 4, background: hasPen ? '#fef3c7' : '#fff', cursor: 'pointer' }}>
-                {hasPen ? 'Revoke Pen' : 'Give Pen'}
-              </button>
               <button onClick={() => canSpeak ? onRevokeSpeak?.(p.student_id) : onGiveSpeak?.(p.student_id)}
                 style={{ fontSize: 9, padding: '1px 5px', border: '1px solid #e2e8f0', borderRadius: 4, background: canSpeak ? '#d1fae5' : '#fff', cursor: 'pointer' }}>
                 {canSpeak ? 'Mute' : 'Speak'}
@@ -779,7 +773,7 @@ function CreateSessionModal({ classId, token, quizzes, students, teacherClasses 
             onChange={e => setQuizId(e.target.value)}
             style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '2px solid #e2e8f0', fontSize: 14, boxSizing: 'border-box' }}
           >
-            <option value="">No exercise (whiteboard only)</option>
+            <option value="">No exercise (audio only)</option>
             {quizzes.map(q => (
               <option key={q.id} value={q.id}>{q.title}</option>
             ))}
@@ -902,11 +896,8 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   const [session, setSession] = useState(null);
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showWhiteboard, setShowWhiteboard] = useState(true);
   const [showExercises, setShowExercises] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const canvasRef = useRef(null);
-  const saveTimer = useRef(null);
 
   // Load session detail
   useEffect(() => {
@@ -955,17 +946,6 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
       onError?.(e.message);
     }
   };
-
-  // Debounced whiteboard save
-  const onWhiteboardChange = useCallback(() => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(async () => {
-      if (canvasRef.current) {
-        const dataUrl = canvasRef.current.toDataURL('image/png');
-        await updateState({ whiteboard_data: dataUrl });
-      }
-    }, 500);
-  }, []);
 
   const finishSession = async () => {
     if (!confirm('Finish this coaching session? Results will be available.')) return;
@@ -1024,8 +1004,6 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
 
   const questions = session?.questions || [];
   const currentQ = state?.current_question;
-  const penHolder = state?.pen_holder_id;
-  const canDraw = !penHolder || penHolder === user.id;
   const isPaused = state?.is_paused;
   const groupSize = state?.question_group_size || 5;
   const currentIdx = state?.current_question_index || 0;
@@ -1068,9 +1046,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
           </button>
         )}
         <div style={{ width: 1, height: 24, background: '#e2e8f0' }} />
-        <button style={{ ...btnOutline, ...btnSm }} onClick={() => setShowWhiteboard(!showWhiteboard)}>
-          {showWhiteboard ? 'Hide Board' : 'Show Board'}
-        </button>
+        <span />
         {questions.length > 0 && (
           <button style={{ ...btnSm, padding: '4px 10px', fontSize: 12, border: 'none', borderRadius: 6, cursor: 'pointer', background: showExercises ? '#667eea' : '#e2e8f0', color: showExercises ? '#fff' : '#64748b', fontWeight: 700 }} onClick={toggleExercises}>
             {showExercises ? '📋 Hide Exercises' : '📋 Show Exercises'}
@@ -1101,53 +1077,32 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
         </div>
       )}
 
-      {/* Main area: whiteboard + participants */}
-      <div style={{ display: 'flex', gap: 12, flexDirection: showWhiteboard ? 'row' : 'column' }}>
-        {showWhiteboard && (
-          <div style={{ flex: 1, minWidth: 0, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', position: 'relative' }}>
-            <Whiteboard
-              live
-              canDraw={canDraw}
-              externalCanvasRef={canvasRef}
-              onDataChange={onWhiteboardChange}
-              initialData={state?.whiteboard_data}
-              height={500}
+      {/* Main area: exercises + participants */}
+      <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+        {showExercises && currentQ && (
+          <div style={{ flex: 1, minWidth: 0, minHeight: 420, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', position: 'relative' }}>
+            <ExerciseOnBoard
+              question={currentQ}
+              index={currentIdx}
+              total={questions.length}
+              showAnswer={state?.show_answer}
+              isTeacher={true}
+              answers={state?.answers || []}
             />
-            {!canDraw && (
-              <div style={{ padding: '6px 12px', background: '#fef3c7', fontSize: 12, color: '#92400e', textAlign: 'center' }}>
-                ✍️ {state?.pen_holder_name} has the pen
-              </div>
-            )}
-
-            {/* Exercises overlay ON the whiteboard */}
-            {showExercises && currentQ && (
-              <ExerciseOnBoard
-                question={currentQ}
-                index={currentIdx}
-                total={questions.length}
-                showAnswer={state?.show_answer}
-                isTeacher={true}
-                answers={state?.answers || []}
-              />
-            )}
           </div>
         )}
 
         {/* Participants panel */}
         <div style={{
           padding: 8, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          minWidth: showWhiteboard ? 140 : '100%', maxWidth: showWhiteboard ? 200 : '100%',
         }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textAlign: 'center', marginBottom: 8 }}>
             👥 Online ({participants.length})
           </div>
           <div style={{
-            display: showWhiteboard ? 'flex' : 'grid',
-            flexDirection: 'column',
-            gridTemplateColumns: showWhiteboard ? 'none' : 'repeat(auto-fill, minmax(90px, 1fr))',
-            gap: showWhiteboard ? 8 : 16,
-            overflowY: showWhiteboard ? 'auto' : 'visible',
-            maxHeight: showWhiteboard ? 480 : 'none',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+            gap: 16,
           }}>
             {participants.length === 0 && (
               <p style={{ color: '#64748b', textAlign: 'center', fontSize: 12 }}>Waiting…</p>
@@ -1156,14 +1111,10 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
               <ParticipantAvatar
                 key={p.student_id}
                 p={p}
-                size={showWhiteboard ? 40 : 64}
-                penHolder={penHolder}
+                size={64}
                 speakPermission={speakPermission}
                 handRaised={handRaised}
                 isTeacher={true}
-                compact={showWhiteboard}
-                onGivePen={(sid) => updateState({ pen_holder_id: sid })}
-                onRevokePen={() => updateState({ pen_holder_id: null })}
                 onGiveSpeak={(sid) => updateState({ speak_permission_id: sid })}
                 onRevokeSpeak={() => updateState({ speak_permission_id: null })}
               />
@@ -1291,8 +1242,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const [myAnswer, setMyAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [handRaised, setHandRaised] = useState(false);
-  const canvasRef = useRef(null);
-  const saveTimer = useRef(null);
 
   // Join session
   useEffect(() => {
@@ -1345,17 +1294,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     classId, sessionId, token, user, canSpeak: hasSpeakPermission, participants, isTeacher: false,
   });
 
-  // Debounced whiteboard save for student with pen
-  const onWhiteboardChange = useCallback(() => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      if (canvasRef.current) {
-        const dataUrl = canvasRef.current.toDataURL('image/png');
-        api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, { whiteboard_data: dataUrl }, token).catch(() => {});
-      }
-    }, 500);
-  }, [classId, sessionId, token]);
-
   const submitAnswer = async () => {
     if (!myAnswer.trim() || !state?.current_question) return;
     try {
@@ -1402,12 +1340,9 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   if (stateLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Loading live session…</div>;
 
   const currentQ = state?.current_question;
-  const hasPen = state?.pen_holder_id === user.id;
-  const canDraw = hasPen;
   const isLive = state?.status === 'live';
   const isPaused = state?.is_paused;
   const showExercises = state?.show_exercises;
-  const penHolder = state?.pen_holder_id;
   const speakPermission = state?.speak_permission_id;
 
 
@@ -1526,36 +1461,24 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         </div>
       )}
 
-      {/* Whiteboard with exercises overlay */}
-      {!isPaused && (
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', marginBottom: 16, position: 'relative' }}>
+      {/* Live exercises */}
+      {!isPaused && showExercises && currentQ && (
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', marginBottom: 16, position: 'relative', minHeight: 420 }}>
           <div style={{ padding: 8, borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>{hasPen ? '✍️ You have the pen!' : state?.pen_holder_name ? `${state.pen_holder_name} is writing…` : 'Watch the whiteboard'}</span>
+            <span>📋 Live exercise</span>
             {hasSpeakPermission && <span style={{ color: '#10b981', fontWeight: 600 }}>🎙️ Speaking</span>}
           </div>
-          <Whiteboard
-            live
-            canDraw={canDraw}
-            externalCanvasRef={canvasRef}
-            onDataChange={onWhiteboardChange}
-            initialData={state?.whiteboard_data}
-            height={500}
+          <ExerciseOnBoard
+            question={currentQ}
+            index={state?.current_question_index || 0}
+            total={state?.total_questions}
+            showAnswer={state?.show_answer}
+            selectedAnswer={myAnswer}
+            onSelectAnswer={setMyAnswer}
+            onNext={studentNext}
+            isTeacher={false}
+            answers={state?.answers || []}
           />
-
-          {/* Exercises overlay ON the whiteboard */}
-          {showExercises && currentQ && (
-            <ExerciseOnBoard
-              question={currentQ}
-              index={state?.current_question_index || 0}
-              total={state?.total_questions}
-              showAnswer={state?.show_answer}
-              selectedAnswer={myAnswer}
-              onSelectAnswer={setMyAnswer}
-              onNext={studentNext}
-              isTeacher={false}
-              answers={state?.answers || []}
-            />
-          )}
         </div>
       )}
 
@@ -1569,7 +1492,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
                 key={p.student_id}
                 p={p}
                 size={48}
-                penHolder={penHolder}
                 speakPermission={speakPermission}
                 handRaised={handRaisedList}
                 isSelf={p.student_id === user.id}
