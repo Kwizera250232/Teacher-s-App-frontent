@@ -848,9 +848,38 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
       {/* Main area: quiz status + participants */}
       <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
         {showExercises && session?.quiz_id && (
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', padding: 18, textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 4px', fontSize: 16, color: '#0f4c3a' }}>📋 Quiz is open{session.quiz_title ? `: ${session.quiz_title}` : ''}</h3>
-            <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>Students take it in the normal quiz view — marking and reports are the same as class quizzes.</p>
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', padding: 18 }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 16, color: '#0f4c3a', textAlign: 'center' }}>📋 Quiz is open{session.quiz_title ? `: ${session.quiz_title}` : ''}</h3>
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: '#64748b', textAlign: 'center' }}>Students take it in the normal quiz view — marking and reports are the same as class quizzes.</p>
+            {/* Read-only preview for the teacher — same quiz-option styling as TakeQuiz */}
+            <div className="quiz-question" style={{ maxHeight: 420, overflowY: 'auto' }}>
+              {questions.map((q, i) => {
+                const qtype = q.question_type || 'multiple_choice';
+                const letters = ['a', 'b', 'c', 'd'].filter(l => q[`option_${l}`]);
+                return (
+                  <div key={q.id} style={{ marginBottom: 18 }}>
+                    {q.passage && (
+                      <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: '10px 14px', marginBottom: 8, fontSize: 13, color: '#1e293b', whiteSpace: 'pre-wrap' }}>
+                        {q.passage}
+                      </div>
+                    )}
+                    <h4 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 8px' }}>Q{i + 1}: {q.question}</h4>
+                    {qtype === 'fill_blank' ? (
+                      <div style={{ fontSize: 13, color: '#64748b' }}>Fill in the blank{q.correct_answer ? <> — answer: <strong style={{ color: '#27ae60' }}>{q.correct_answer}</strong></> : ''}</div>
+                    ) : (
+                      <div className="quiz-options">
+                        {letters.map(opt => (
+                          <div key={opt} className={`quiz-option${q.correct_answer === opt ? ' correct' : ''}`}>
+                            <span className="quiz-option-letter">{opt.toUpperCase()}.</span>
+                            <span>{q[`option_${opt}`]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
