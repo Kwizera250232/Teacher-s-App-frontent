@@ -851,7 +851,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
           <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', padding: 18 }}>
             <h3 style={{ margin: '0 0 4px', fontSize: 16, color: '#0f4c3a', textAlign: 'center' }}>📋 Quiz is open{session.quiz_title ? `: ${session.quiz_title}` : ''}</h3>
             <p style={{ margin: '0 0 12px', fontSize: 13, color: '#64748b', textAlign: 'center' }}>Students take it in the normal quiz view — marking and reports are the same as class quizzes.</p>
-            {/* Read-only preview for the teacher — same quiz-option styling as TakeQuiz */}
+            {/* Read-only preview for the teacher — questions only, answers are never shown */}
             <div className="quiz-question" style={{ maxHeight: 420, overflowY: 'auto' }}>
               {questions.map((q, i) => {
                 const qtype = q.question_type || 'multiple_choice';
@@ -865,11 +865,11 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
                     )}
                     <h4 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 8px' }}>Q{i + 1}: {q.question}</h4>
                     {qtype === 'fill_blank' ? (
-                      <div style={{ fontSize: 13, color: '#64748b' }}>Fill in the blank{q.correct_answer ? <> — answer: <strong style={{ color: '#27ae60' }}>{q.correct_answer}</strong></> : ''}</div>
+                      <div style={{ fontSize: 13, color: '#64748b' }}>Fill in the blank</div>
                     ) : (
                       <div className="quiz-options">
                         {letters.map(opt => (
-                          <div key={opt} className={`quiz-option${q.correct_answer === opt ? ' correct' : ''}`}>
+                          <div key={opt} className="quiz-option">
                             <span className="quiz-option-letter">{opt.toUpperCase()}.</span>
                             <span>{q[`option_${opt}`]}</span>
                           </div>
