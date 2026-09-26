@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 
 import { useCoachingAudio } from '../hooks/useCoachingAudio';
@@ -94,206 +95,6 @@ function SoundWave({ level, color = '#10b981', label, size = 'normal' }) {
   );
 }
 
-// ── Answer Timer ─────────────────────────────────────────────────────────────
-function AnswerTimer({ seconds, startedAt }) {
-  const [remaining, setRemaining] = useState(0);
-  useEffect(() => {
-    if (!seconds || !startedAt) { setRemaining(0); return; }
-    const calc = () => {
-      const elapsed = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
-      setRemaining(Math.max(0, seconds - elapsed));
-    };
-    calc();
-    const interval = setInterval(calc, 1000);
-    return () => clearInterval(interval);
-  }, [seconds, startedAt]);
-
-  if (!seconds || !startedAt) return null;
-  const pct = (remaining / seconds) * 100;
-  const color = remaining <= 5 ? '#ef4444' : remaining <= 15 ? '#f59e0b' : '#10b981';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: '#fff', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-      <span style={{ fontSize: 16, fontWeight: 700, color }}>⏱ {remaining}s</span>
-      <div style={{ width: 80, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ width: `${pct}%`, height: '100%', background: color, transition: 'width 1s linear' }} />
-      </div>
-    </div>
-  );
-}
-
-// ── Participant Avatar (used in grid and sidebar) ────────────────────────────
-// ── Exercise displayed as original quiz UI (same as TakeQuiz) ─────────────────
-function ExerciseOnBoard({ question, index, total, showAnswer, selectedAnswer, onSelectAnswer, onNext, isTeacher, answers = [] }) {
-  if (!question) return null;
-  const qtype = question.question_type || 'multiple_choice';
-  const letters = ['a', 'b', 'c', 'd'].filter(l => question[`option_${l}`]);
-
-  return (
-    <div style={{
-      position: 'absolute',
-      top: 0, left: 0, right: 0, bottom: 0,
-      zIndex: 10,
-      overflowY: 'auto',
-      padding: '16px 20px',
-      boxSizing: 'border-box',
-      background: 'rgba(255,255,255,0.98)',
-    }}>
-      <div className="quiz-question" style={{ marginBottom: 0 }}>
-        {/* Reading passage */}
-        {question.passage && qtype !== 'matching' && (
-          <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: '12px 16px', marginBottom: 14, fontSize: 14, color: '#1e293b', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-            <strong style={{ fontSize: 12, color: '#0369a1', display: 'block', marginBottom: 6 }}>Reading Passage</strong>
-            {question.passage}
-          </div>
-        )}
-
-        {/* Question header — same as quiz */}
-        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>
-          Q{index + 1}{total ? ` of ${total}` : ''}: {question.question}
-        </h3>
-
-        {/* Multiple choice — same as quiz system */}
-        {qtype === 'multiple_choice' && (
-          <div className="quiz-options">
-            {letters.map(opt => {
-              const isSelected = selectedAnswer === opt;
-              const isCorrect = showAnswer && question.correct_answer === opt;
-              const isWrong = showAnswer && isSelected && !isCorrect;
-              let cls = 'quiz-option';
-              if (isSelected) cls += ' selected';
-              if (isCorrect) cls += ' correct';
-              if (isWrong) cls += ' wrong';
-              return (
-                <label key={opt} className={cls} onClick={() => !isTeacher && onSelectAnswer?.(opt)} style={isTeacher ? { cursor: 'default' } : {}}>
-                  <span className="quiz-option-text">
-                    <strong>{opt.toUpperCase()}.</strong> {question[`option_${opt}`]}
-                  </span>
-                  {isSelected && !showAnswer && (
-                    <span className="quiz-option-check" aria-label="Selected">V</span>
-                  )}
-                  {isCorrect && <span style={{ color: '#27ae60', fontWeight: 700 }}>✅</span>}
-                  {isWrong && <span style={{ color: '#e74c3c', fontWeight: 700 }}>❌</span>}
-                </label>
-              );
-            })}
-          </div>
-        )}
-
-        {/* True / False — same as quiz */}
-        {qtype === 'true_false' && (
-          <div className="quiz-options">
-            {[{ val: 'a', label: 'True' }, { val: 'b', label: 'False' }].map(({ val, label }) => {
-              const isSelected = selectedAnswer === val;
-              const isCorrect = showAnswer && question.correct_answer === val;
-              const isWrong = showAnswer && isSelected && !isCorrect;
-              let cls = 'quiz-option';
-              if (isSelected) cls += ' selected';
-              if (isCorrect) cls += ' correct';
-              if (isWrong) cls += ' wrong';
-              return (
-                <label key={val} className={cls} onClick={() => !isTeacher && onSelectAnswer?.(val)} style={{ fontSize: 15, fontWeight: 600, ...(isTeacher ? { cursor: 'default' } : {}) }}>
-                  <span className="quiz-option-text">{label}</span>
-                  {isSelected && !showAnswer && <span className="quiz-option-check" aria-label="Selected">V</span>}
-                  {isCorrect && <span style={{ color: '#27ae60', fontWeight: 700 }}>✅</span>}
-                  {isWrong && <span style={{ color: '#e74c3c', fontWeight: 700 }}>❌</span>}
-                </label>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Fill in blank — same as quiz */}
-        {qtype === 'fill_blank' && !isTeacher && (
-          <div style={{ marginTop: 12 }}>
-            <input
-              type="text"
-              value={selectedAnswer || ''}
-              onChange={e => onSelectAnswer?.(e.target.value)}
-              placeholder="Type your answer here..."
-              style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', border: `2px solid ${selectedAnswer && selectedAnswer.trim() ? '#128c7e' : '#e2e8f0'}`, borderRadius: 9, fontSize: 15, outline: 'none', fontFamily: 'inherit' }}
-            />
-          </div>
-        )}
-
-        {/* Fill in blank — teacher view (read-only) */}
-        {qtype === 'fill_blank' && isTeacher && (
-          <div style={{ marginTop: 12, padding: '10px 14px', background: '#f8fafc', borderRadius: 9, border: '2px solid #e2e8f0', fontSize: 14, color: '#64748b' }}>
-            Students type their answer here...
-          </div>
-        )}
-
-        {/* Answer reveal for fill_blank */}
-        {showAnswer && question.correct_answer && qtype === 'fill_blank' && (
-          <div style={{ marginTop: 8, padding: '8px 12px', background: '#f0fff4', borderRadius: 6, border: '1px solid #27ae60', fontSize: 14 }}>
-            Correct Answer: <strong>{question.correct_answer}</strong> ✅
-          </div>
-        )}
-
-        {/* Submit + Next row — same as quiz flow */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 16, flexWrap: 'wrap' }}>
-          {!isTeacher && (
-            <button
-              onClick={onNext}
-              style={{
-                padding: '10px 24px', borderRadius: 9, border: 'none',
-                background: '#128c7e', color: '#fff', fontSize: 15, fontWeight: 700,
-                cursor: 'pointer', boxShadow: '0 2px 8px rgba(18,140,126,0.3)',
-              }}
-            >
-              Next →
-            </button>
-          )}
-          {isTeacher && (
-            <span style={{ fontSize: 13, color: '#64748b' }}>
-              Question {index + 1}{total ? ` of ${total}` : ''} — students answer and press Next
-            </span>
-          )}
-          {showAnswer && (
-            <span style={{ fontSize: 13, color: '#27ae60', fontWeight: 700 }}>✓ Answer revealed</span>
-          )}
-        </div>
-
-        {/* Student answers + marks/feedback - visible to everyone on the board */}
-        {answers.length > 0 && (
-          <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #e2e8f0' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f4c3a', marginBottom: 8 }}>
-              Student Answers & Marks
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {answers.map((a, i) => {
-                const fb = a.requires_review ? 'review' : (a.is_correct ? 'correct' : 'incorrect');
-                const fbColor = fb === 'correct' ? '#27ae60' : fb === 'incorrect' ? '#e74c3c' : '#f59e0b';
-                const fbIcon = fb === 'correct' ? '✅' : fb === 'incorrect' ? '❌' : '⏳';
-                return (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '8px 12px', borderRadius: 8,
-                    background: fb === 'correct' ? '#f0fff4' : fb === 'incorrect' ? '#fff0f0' : '#fffbeb',
-                    border: '1px solid ' + fbColor + '33',
-                    fontSize: 14,
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontWeight: 600, color: '#1e293b' }}>{a.name}</span>
-                      <span style={{ color: '#64748b', fontSize: 13 }}>
-                        Answer: <strong>{a.answer}</strong>
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 16 }}>{fbIcon}</span>
-                      <span style={{ fontWeight: 700, color: fbColor, fontSize: 14 }}>
-                        {a.awarded_marks}/1 mark
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function ParticipantAvatar({ p, size = 56, speakPermission, handRaised, isSelf, onGiveSpeak, onRevokeSpeak, isTeacher, compact }) {
   const canSpeak = speakPermission === p.student_id;
@@ -494,7 +295,7 @@ function SessionCard({ session, classId, token, onJoin, onError }) {
         <div style={{ flex: 1, minWidth: 200 }}>
           <h3 style={{ margin: '0 0 4px', fontSize: 17, color: '#1e293b' }}>{session.title}</h3>
           {session.topic && <p style={{ margin: '0 0 4px', fontSize: 13, color: '#64748b' }}>Topic: {session.topic}</p>}
-          {session.quiz_title && <p style={{ margin: '0 0 4px', fontSize: 13, color: '#6b21a8' }}>Exercise: {session.quiz_title}</p>}
+          {session.quiz_title && <p style={{ margin: '0 0 4px', fontSize: 13, color: '#6b21a8' }}>Quiz: {session.quiz_title}</p>}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
             <span style={{
               background: statusBg[session.status] || '#f1f5f9',
@@ -767,7 +568,7 @@ function CreateSessionModal({ classId, token, quizzes, students, teacherClasses 
         )}
 
         <div style={{ marginBottom: 12 }}>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Exercise / Quiz (optional)</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Quiz (optional)</label>
           <select
             value={quizId}
             onChange={e => setQuizId(e.target.value)}
@@ -897,7 +698,6 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showExercises, setShowExercises] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(0);
 
   // Load session detail
   useEffect(() => {
@@ -974,15 +774,6 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   // Hand raise management
   const handRaised = state?.hand_raised ? (typeof state.hand_raised === 'string' ? JSON.parse(state.hand_raised) : state.hand_raised) : [];
 
-  const startTimer = (secs) => {
-    setTimerSeconds(secs);
-    updateState({ answer_timer_seconds: secs, answer_timer_started_at: new Date().toISOString() });
-  };
-  const stopTimer = () => {
-    setTimerSeconds(0);
-    updateState({ answer_timer_seconds: null, answer_timer_started_at: null });
-  };
-
   const toggleExercises = () => {
     const next = !showExercises;
     setShowExercises(next);
@@ -1003,14 +794,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}>Loading session…</div>;
 
   const questions = session?.questions || [];
-  const currentQ = state?.current_question;
   const isPaused = state?.is_paused;
-  const groupSize = state?.question_group_size || 5;
-  const currentIdx = state?.current_question_index || 0;
-  const currentGroup = Math.floor(currentIdx / groupSize);
-  const groupStart = currentGroup * groupSize;
-  const groupEnd = Math.min(groupStart + groupSize, questions.length);
-  const groupQuestions = questions.slice(groupStart, groupEnd);
   const speakPermission = state?.speak_permission_id;
 
   return (
@@ -1049,46 +833,24 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
         <span />
         {questions.length > 0 && (
           <button style={{ ...btnSm, padding: '4px 10px', fontSize: 12, border: 'none', borderRadius: 6, cursor: 'pointer', background: showExercises ? '#667eea' : '#e2e8f0', color: showExercises ? '#fff' : '#64748b', fontWeight: 700 }} onClick={toggleExercises}>
-            {showExercises ? '📋 Hide Exercises' : '📋 Show Exercises'}
+            {showExercises ? '📋 Close Quiz' : '📋 Open Quiz'}
           </button>
         )}
         <button style={{ ...btnOutline, ...btnSm }} onClick={() => updateState({ is_paused: !isPaused })}>
           {isPaused ? '▶ Resume' : '⏸ Pause'}
         </button>
-        {/* Timer controls */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          {[30, 60, 120, 300].map(s => (
-            <button key={s} onClick={() => startTimer(s)} style={{ ...btnSm, padding: '3px 8px', fontSize: 11, border: '1px solid #e2e8f0', borderRadius: 4, background: timerSeconds === s ? '#dbeafe' : '#fff', cursor: 'pointer' }}>
-              {s < 60 ? `${s}s` : `${s / 60}m`}
-            </button>
-          ))}
-          {state?.answer_timer_seconds && <button onClick={stopTimer} style={{ ...btnSm, padding: '3px 8px', fontSize: 11, border: '1px solid #ef4444', borderRadius: 4, background: '#fef2f2', color: '#ef4444', cursor: 'pointer' }}>Stop</button>}
-        </div>
         <div style={{ width: 1, height: 24, background: '#e2e8f0' }} />
         <button style={btnDanger} onClick={finishSession}>Finish</button>
         <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Exit</button>
         <button style={{ ...btnSm, padding: '4px 10px', fontSize: 11, border: '1px solid #ef4444', borderRadius: 6, background: '#fff', color: '#ef4444', cursor: 'pointer' }} onClick={deleteSession}>🗑 Delete</button>
       </div>
 
-      {/* Timer display */}
-      {state?.answer_timer_seconds && state?.answer_timer_started_at && (
-        <div style={{ marginBottom: 12 }}>
-          <AnswerTimer seconds={state.answer_timer_seconds} startedAt={state.answer_timer_started_at} />
-        </div>
-      )}
-
-      {/* Main area: exercises + participants */}
+      {/* Main area: quiz status + participants */}
       <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
-        {showExercises && currentQ && (
-          <div style={{ flex: 1, minWidth: 0, minHeight: 420, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', position: 'relative' }}>
-            <ExerciseOnBoard
-              question={currentQ}
-              index={currentIdx}
-              total={questions.length}
-              showAnswer={state?.show_answer}
-              isTeacher={true}
-              answers={state?.answers || []}
-            />
+        {showExercises && session?.quiz_id && (
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', padding: 18, textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 16, color: '#0f4c3a' }}>📋 Quiz is open{session.quiz_title ? `: ${session.quiz_title}` : ''}</h3>
+            <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>Students take it in the normal quiz view — marking and reports are the same as class quizzes.</p>
           </div>
         )}
 
@@ -1239,9 +1001,8 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stateLoading, setStateLoading] = useState(true);
-  const [myAnswer, setMyAnswer] = useState('');
-  const [feedback, setFeedback] = useState(null);
   const [handRaised, setHandRaised] = useState(false);
+  const navigate = useNavigate();
 
   // Join session
   useEffect(() => {
@@ -1269,13 +1030,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
       try {
         const s = await api.get(`/classes/${classId}/coaching-sessions/${sessionId}/state`, token);
         if (active) {
-          setState(prev => {
-            if (s.current_question?.id !== prev?.current_question?.id) {
-              setMyAnswer('');
-              setFeedback(null);
-            }
-            return s;
-          });
+          setState(s);
           setStateLoading(false);
         }
       } catch (e) { /* silent */ }
@@ -1294,19 +1049,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     classId, sessionId, token, user, canSpeak: hasSpeakPermission, participants, isTeacher: false,
   });
 
-  const submitAnswer = async () => {
-    if (!myAnswer.trim() || !state?.current_question) return;
-    try {
-      const result = await api.post(`/classes/${classId}/coaching-sessions/${sessionId}/answer`, {
-        question_id: state.current_question.id,
-        answer: myAnswer.trim(),
-      }, token);
-      setFeedback(result);
-    } catch (e) {
-      onError?.(e.message);
-    }
-  };
-
   // Hand raise
   const toggleHandRaise = () => {
     const next = !handRaised;
@@ -1314,15 +1056,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
     const currentList = handRaisedList.filter(id => id !== user.id);
     if (next) currentList.push(user.id);
     api.put(`/classes/${classId}/coaching-sessions/${sessionId}/state`, { hand_raised: currentList }, token).catch(() => {});
-  };
-
-  // Student Next button — advance to next question via dedicated endpoint
-  const studentNext = async () => {
-    try {
-      await api.post(`/classes/${classId}/coaching-sessions/${sessionId}/next-question`, {}, token);
-    } catch (e) {
-      onError?.(e.message);
-    }
   };
 
   // Results state - must be before any early returns (React hooks rule)
@@ -1339,7 +1072,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Joining session…</div>;
   if (stateLoading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 16 }}>Loading live session…</div>;
 
-  const currentQ = state?.current_question;
   const isLive = state?.status === 'live';
   const isPaused = state?.is_paused;
   const showExercises = state?.show_exercises;
@@ -1449,9 +1181,6 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         {!hasSpeakPermission && <span style={{ fontSize: 11, color: '#94a3b8' }}>✋ Raise hand to ask for mic</span>}
         {hasSpeakPermission && !audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700, animation: 'pulse 1.5s infinite' }}>🎙️ Teacher gave you mic — tap "Speak" to talk!</span>}
         {hasSpeakPermission && audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700 }}>🎙️ You are speaking — everyone can hear you</span>}
-        {state?.answer_timer_seconds && state?.answer_timer_started_at && (
-          <AnswerTimer seconds={state.answer_timer_seconds} startedAt={state.answer_timer_started_at} />
-        )}
       </div>
 
       {/* Paused indicator */}
@@ -1461,24 +1190,18 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         </div>
       )}
 
-      {/* Live exercises */}
-      {!isPaused && showExercises && currentQ && (
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden', marginBottom: 16, position: 'relative', minHeight: 420 }}>
-          <div style={{ padding: 8, borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>📋 Live exercise</span>
-            {hasSpeakPermission && <span style={{ color: '#10b981', fontWeight: 600 }}>🎙️ Speaking</span>}
-          </div>
-          <ExerciseOnBoard
-            question={currentQ}
-            index={state?.current_question_index || 0}
-            total={state?.total_questions}
-            showAnswer={state?.show_answer}
-            selectedAnswer={myAnswer}
-            onSelectAnswer={setMyAnswer}
-            onNext={studentNext}
-            isTeacher={false}
-            answers={state?.answers || []}
-          />
+      {/* Live quiz — opens the normal quiz so marking/results match the rest of the app */}
+      {!isPaused && showExercises && session?.quiz_id && (
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 16, padding: 18, textAlign: 'center' }}>
+          <h3 style={{ margin: '0 0 6px', fontSize: 16, color: '#0f4c3a' }}>📋 Quiz is open{session.quiz_title ? `: ${session.quiz_title}` : ''}</h3>
+          <p style={{ margin: '0 0 12px', fontSize: 13, color: '#64748b' }}>Take it now — your marks are saved like a normal quiz.</p>
+          <button
+            onClick={() => navigate(`/student/classes/${classId}/quizzes/${session.quiz_id}`)}
+            className="btn btn-primary"
+            style={{ padding: '10px 28px', fontSize: 15, fontWeight: 700 }}
+          >
+            ▶ Take Quiz
+          </button>
         </div>
       )}
 
@@ -1509,9 +1232,9 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         </div>
       )}
 
-      {!currentQ && (
+      {!showExercises && session?.quiz_id && !isPaused && (
         <div style={{ textAlign: 'center', padding: 20, color: '#64748b' }}>
-          Waiting for teacher to show a question…
+          Waiting for the teacher to open the quiz…
         </div>
       )}
     </div>
