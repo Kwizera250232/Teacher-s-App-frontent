@@ -19,6 +19,10 @@
   padding: 8px;
 }
 
+.teacher-menu-toggle__logout {
+  display: none;
+}
+
 .teacher-menu-toggle__bar {
   width: 20px;
   height: 2.5px;
@@ -235,6 +239,20 @@
     background: linear-gradient(135deg, #667eea, #764ba2);
     z-index: 1000;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  .teacher-menu-toggle__logout {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
   }
   .premium-main {
     padding-top: 60px !important;

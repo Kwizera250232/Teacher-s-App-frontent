@@ -42,6 +42,13 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
           <span className="teacher-menu-toggle__bar" />
         </button>
         <span style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>UClass</span>
+        <button
+          type="button"
+          className="teacher-menu-toggle__logout"
+          onClick={onLogout}
+        >
+          🚪 Logout
+        </button>
       </div>
 
       {open && <div className="teacher-menu-overlay" onClick={() => setOpen(false)} />}
