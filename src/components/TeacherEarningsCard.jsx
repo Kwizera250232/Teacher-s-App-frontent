@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Teacher earnings card for the dashboard.
@@ -7,6 +8,8 @@ import { api } from '../api';
  * (min 7,000 RWF) via MTN MoMo disbursement, and payment history.
  */
 export default function TeacherEarningsCard({ token }) {
+  const { user } = useAuth();
+  const canViewEarnings = user?.role === 'teacher' || user?.role === 'head_teacher';
   const [data, setData] = useState(null);
   const [open, setOpen] = useState(false);
   const [phone, setPhone] = useState('');
@@ -20,7 +23,9 @@ export default function TeacherEarningsCard({ token }) {
     } catch { /* silent */ }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (canViewEarnings) load();
+  }, [canViewEarnings]);
 
   const withdraw = async () => {
     setMsg('');
@@ -38,7 +43,7 @@ export default function TeacherEarningsCard({ token }) {
     }
   };
 
-  if (!data) return null;
+  if (!canViewEarnings || !data) return null;
   const canWithdraw = data.available >= data.withdraw_min;
 
   return (
