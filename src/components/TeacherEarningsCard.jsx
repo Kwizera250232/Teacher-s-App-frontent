@@ -13,6 +13,7 @@ export default function TeacherEarningsCard({ token }) {
   const [data, setData] = useState(null);
   const [open, setOpen] = useState(false);
   const [phone, setPhone] = useState('');
+  const [amount, setAmount] = useState('');
   const [withdrawing, setWithdrawing] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -30,11 +31,20 @@ export default function TeacherEarningsCard({ token }) {
   const withdraw = async () => {
     setMsg('');
     if (!phone.trim()) { setMsg('Enter your MTN number'); return; }
+    const amt = amount.trim() ? Number(amount) : data.available;
+    if (!Number.isFinite(amt) || amt < data.withdraw_min) {
+      setMsg(`Amount must be at least ${data.withdraw_min.toLocaleString()} RWF`);
+      return;
+    }
+    if (amt > data.available) {
+      setMsg(`You can withdraw up to ${data.available.toLocaleString()} RWF`);
+      return;
+    }
     setWithdrawing(true);
     try {
-      const r = await api.post('/teacher/withdraw', { phone: phone.trim() }, token);
+      const r = await api.post('/teacher/withdraw', { phone: phone.trim(), amount: amt }, token);
       setMsg(`✓ ${r.message} (${r.amount?.toLocaleString()} RWF)`);
-      setPhone('');
+      setAmount('');
       load();
     } catch (e) {
       setMsg(e.message);
@@ -84,13 +94,19 @@ export default function TeacherEarningsCard({ token }) {
           {canWithdraw ? (
             <>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, opacity: 0.9 }}>
-                MTN MoMo number to receive {data.available.toLocaleString()} RWF
+                Withdraw all {data.available.toLocaleString()} RWF, or enter an amount (min {data.withdraw_min.toLocaleString()} RWF)
               </label>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <input
-                  type="tel" placeholder="0781234567" value={phone}
+                  type="number" min={data.withdraw_min} max={data.available} step="100"
+                  placeholder={`${data.available} (all)`} value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  style={{ flex: '1 1 120px', padding: '10px 12px', borderRadius: 8, border: 'none', fontSize: 14, color: '#111' }}
+                />
+                <input
+                  type="tel" placeholder="MTN number 0781234567" value={phone}
                   onChange={e => setPhone(e.target.value)}
-                  style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: 'none', fontSize: 14, color: '#111' }}
+                  style={{ flex: '2 1 160px', padding: '10px 12px', borderRadius: 8, border: 'none', fontSize: 14, color: '#111' }}
                 />
                 <button onClick={withdraw} disabled={withdrawing}
                   style={{ padding: '10px 18px', borderRadius: 8, border: 'none', background: '#ffcc00', fontWeight: 800, cursor: withdrawing ? 'not-allowed' : 'pointer', color: '#1e1e1e' }}>
