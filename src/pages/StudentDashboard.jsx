@@ -9,6 +9,7 @@ import CompositionStatusPanel from '../components/CompositionStatusPanel';
 import ClassMomentsFold from '../components/classMoments/ClassMomentsFold';
 import QuizTeacherCommentPopup from '../components/quizReflection/QuizTeacherCommentPopup';
 import { LiveCoachingStudentPanel } from '../components/LiveCoachingPanel';
+import RecordedLessons from '../components/RecordedLessons';
 import AlumniWelcome from '../pages/alumni/AlumniWelcome';
 import { useClassMomentAlerts } from '../hooks/useClassMomentAlerts';
 import { classMomentDetailPath } from '../utils/classMomentPaths';
@@ -47,6 +48,8 @@ export default function StudentDashboard() {
   const [classesView, setClassesView] = useState('menu');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [coachingClassId, setCoachingClassId] = useState(null);
+  const [coachingLessons, setCoachingLessons] = useState([]); // recorded lessons across all my classes
+  const [coachingLessonsLoaded, setCoachingLessonsLoaded] = useState(false);
 
   const openStatus = () => {
     setStatusPickerOpen(false);
@@ -76,6 +79,12 @@ export default function StudentDashboard() {
 
   useEffect(() => { loadClasses(); }, []);
   useEffect(() => { setClassesView('menu'); }, [activeTab]);
+  useEffect(() => {
+    if (activeTab !== 'coaching') return;
+    api.get('/classes/lessons/mine', token)
+      .then(rows => { setCoachingLessons(Array.isArray(rows) ? rows : []); setCoachingLessonsLoaded(true); })
+      .catch(() => setCoachingLessonsLoaded(true));
+  }, [activeTab, token]);
 
   useEffect(() => {
     api.get('/admin/user-announcements', token).then(setAnnouncements).catch(() => {});
@@ -282,7 +291,23 @@ export default function StudentDashboard() {
 
           {activeTab === 'coaching' && (
             <section className="student-tools-section">
-              <h2 className="student-classes-heading">🎓 Live Coaching</h2>
+              <h2 className="student-classes-heading">🎓 Coaching</h2>
+
+              {/* Recorded lessons posted by teachers in any of the student's classes */}
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#1e293b', marginBottom: 10 }}>🎙 Recorded lessons</div>
+                {!coachingLessonsLoaded ? (
+                  <p style={{ color: '#888', padding: '8px 0' }}>Loading recorded lessons…</p>
+                ) : (
+                  <RecordedLessons
+                    lessons={coachingClassId ? coachingLessons.filter(l => l.class_id === coachingClassId) : coachingLessons}
+                    showClassName
+                    emptyText="No recorded lessons yet — when a teacher adds a recording in a class's Coaching tab, it appears here."
+                  />
+                )}
+              </div>
+
+              <div style={{ fontWeight: 700, fontSize: 15, color: '#1e293b', marginBottom: 10 }}>📡 Live coaching</div>
               {classes.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">🎓</div>
@@ -294,10 +319,10 @@ export default function StudentDashboard() {
                   <div style={{ marginBottom: 16 }}>
                     <select
                       value={coachingClassId || ''}
-                      onChange={e => setCoachingClassId(parseInt(e.target.value, 10))}
+                      onChange={e => setCoachingClassId(e.target.value ? parseInt(e.target.value, 10) : null)}
                       style={{ padding: '8px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, fontSize: 14, minWidth: 240 }}
                     >
-                      <option value="">— Select a class —</option>
+                      <option value="">— All my classes —</option>
                       {classes.map(c => (
                         <option key={c.id} value={c.id}>{c.name}{c.subject ? ` (${c.subject})` : ''}</option>
                       ))}
