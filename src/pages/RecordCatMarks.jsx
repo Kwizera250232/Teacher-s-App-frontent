@@ -34,6 +34,10 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const [showRecord, setShowRecord] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [editingCatTotal, setEditingCatTotal] = useState(null); // { num, value }
+  const [showSendParents, setShowSendParents] = useState(false);
+  const [alsoEmail, setAlsoEmail] = useState(false);
+  const [sendingMarks, setSendingMarks] = useState(false);
+  const [sendResult, setSendResult] = useState('');
   const location = useLocation();
   const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
   const isEmbedded = Boolean(embeddedClassId);
@@ -228,8 +232,57 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
             <button type="button" className="btn btn-secondary btn-sm" onClick={exportCSV} disabled={roster.length === 0}>
               ⬇️ Export CSV
             </button>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => { setShowSendParents(v => !v); setSendResult(''); }}
+              disabled={roster.length === 0}
+            >
+              📧 Send to Parents
+            </button>
           </div>
         </section>
+
+        {/* Send Marks Sheet to parents */}
+        {showSendParents && (
+          <section className="cat-panel" style={{ borderLeft: '4px solid #7c3aed' }}>
+            <h2 style={{ margin: '0 0 6px' }}>📧 Send Marks Sheet to parents{selectedSubject ? ` — ${selectedSubject}` : ' (all subjects)'}</h2>
+            <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 10px' }}>
+              Each parent receives <b>only their own child's</b> marks — the full CAT table + UClass quiz marks as a downloadable
+              Word document (<b>REBA AMANOTA AMAZE KUGIRA MU MYITOZO YO MU ISHURI</b>), delivered in-app{alsoEmail ? ' and by email' : ''}.
+            </p>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
+              <input type="checkbox" checked={alsoEmail} onChange={(e) => setAlsoEmail(e.target.checked)} />
+              Also send via Email (Word document attached)
+            </label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={sendingMarks}
+                onClick={async () => {
+                  setSendingMarks(true);
+                  setSendResult('');
+                  try {
+                    const res = await api.post(`/catmarks/${classId}/notify-parents`, {
+                      also_email: alsoEmail,
+                      subject: selectedSubject || '',
+                    }, token);
+                    setSendResult(res.message || 'Sent.');
+                  } catch (err) {
+                    setSendResult(err.message || 'Failed to send.');
+                  } finally {
+                    setSendingMarks(false);
+                  }
+                }}
+              >
+                {sendingMarks ? 'Sending…' : '📤 Send Marks Sheet to ALL Parents'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowSendParents(false)}>Cancel</button>
+            </div>
+            {sendResult && <p style={{ marginTop: 10, fontSize: 13, color: '#166534' }}>{sendResult}</p>}
+          </section>
+        )}
 
         {/* Subject banner — shows which subject is active */}
         {selectedSubject && (
