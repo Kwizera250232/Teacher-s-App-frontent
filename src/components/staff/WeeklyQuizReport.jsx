@@ -815,6 +815,7 @@ export default function WeeklyQuizReport({ token, classId }) {
                 {selectedParents.size > 0
                   ? `${selectedParents.size} parent(s) selected — send to selected only`
                   : `Send to all ${stats.length} parents in this class`}
+                {' '}— each parent gets <b>REBA AMANOTA AMAZE KUGIRA MU MYITOZO YO MU ISHURI</b> with the full marks table (teacher CATs + UClass quizzes) and can download it.
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
