@@ -12,6 +12,7 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import StaffQuickActions from '../components/StaffQuickActions';
 import SchoolHubPanel from '../components/staff/SchoolHubPanel';
 import AddTeacherModal from '../components/staff/AddTeacherModal';
+import LessonPlanGenerator from '../components/LessonPlanGenerator';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import ParentInvitesPickerModal from '../components/ParentInvitesPickerModal';
 import StaffChatsPanel from '../components/staff/StaffChatsPanel';
@@ -114,6 +115,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
     { id: 'classnow', label: '📸 Class Now' },
     { id: 'inyandiko', label: '✍️ Inyandiko' },
     { id: 'alumni', label: '🎓 Alumni' },
+    { id: 'lessonplan', label: '📝 Lesson Plan' },
     { id: 'tools', label: '⚡ Tools' },
   ];
 
@@ -252,6 +254,10 @@ export default function StaffDashboard({ roleLabel, basePath }) {
               </div>
             </div>
           </div>
+        )}
+
+        {hubTab === 'lessonplan' && (
+          <LessonPlanGenerator user={user} />
         )}
 
         {hubTab === 'tools' && (
