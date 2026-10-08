@@ -10,6 +10,7 @@ export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout,
     { id: 'inyandiko', icon: '✍️', label: 'Inyandiko' },
     { id: 'coaching', icon: '🎓', label: 'Coaching' },
     { id: 'alumni', icon: '🎓', label: 'Alumni' },
+    { id: 'lessonplan', icon: '📝', label: 'Lesson Plan' },
     { id: 'tools', icon: '⚡', label: 'Tools' },
   ];
 

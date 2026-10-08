@@ -28,6 +28,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import TeacherMobileMenu from '../components/TeacherMobileMenu';
 import TeacherEarningsCard from '../components/TeacherEarningsCard';
 import { LiveCoachingTeacherPanel } from '../components/LiveCoachingPanel';
+import LessonPlanGenerator from '../components/LessonPlanGenerator';
 import '../components/classMoments/ClassMoments.css';
 import '../components/StudentNotifications.css';
 import './PremiumDashboard.css';
@@ -283,6 +284,10 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
               <Link to="/alumni/admin" className="premium-action-button">⚙️ Manage Alumni Content</Link>
             </div>
           </div>
+        )}
+
+        {activeTab === 'lessonplan' && (
+          <LessonPlanGenerator user={user} />
         )}
 
         {activeTab === 'tools' && (
