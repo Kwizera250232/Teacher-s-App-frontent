@@ -40,7 +40,7 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
 
   const pay = async () => {
     setError('');
-    if (!phone.trim()) { setError('Enter your MTN number (e.g. 0781234567)'); return; }
+    if (!phone.trim()) { setError('Andika numero yawe hano.'); return; }
     setPaying(true);
     try {
       const r = await api.post(`/classes/${classId}/pay`, { phone: phone.trim() }, token);
@@ -181,7 +181,7 @@ export default function ClassPaywall({ classId, className, teacherName, access, 
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 type="tel"
-                placeholder="0781234567"
+                placeholder="Andika numero yawe hano."
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 style={{ flex: 1, padding: '12px 14px', borderRadius: 10, border: '2px solid #e2e8f0', fontSize: 15, outline: 'none' }}
