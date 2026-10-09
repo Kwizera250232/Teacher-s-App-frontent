@@ -287,7 +287,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
         )}
 
         {activeTab === 'lessonplan' && (
-          <LessonPlanGenerator user={user} />
+          <LessonPlanGenerator user={user} token={token} />
         )}
 
         {activeTab === 'tools' && (

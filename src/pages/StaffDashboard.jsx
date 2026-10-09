@@ -257,7 +257,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         )}
 
         {hubTab === 'lessonplan' && (
-          <LessonPlanGenerator user={user} />
+          <LessonPlanGenerator user={user} token={token} />
         )}
 
         {hubTab === 'tools' && (
