@@ -17,6 +17,7 @@ import AdminAIRevision from '../components/admin/AdminAIRevision';
 import AdminPastPapers from '../components/admin/AdminPastPapers';
 import AdminEducationHub from '../components/admin/AdminEducationHub';
 import AdminStudentArticles from '../components/admin/AdminStudentArticles';
+import AdminLessonPlans from '../components/admin/AdminLessonPlans';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import VerifiedBadge from '../components/VerifiedBadge';
 import { useInstallPrompt } from '../components/InstallPrompt';
@@ -39,6 +40,7 @@ const NAV = [
   { key: 'ai-revision', label: 'AI Revision', icon: '🤖' },
   { key: 'past-papers', label: 'Past Papers', icon: '📄' },
   { key: 'education-hub', label: 'Education Hub', icon: '🎓' },
+  { key: 'lesson-plans', label: 'Lesson Plans', icon: '📝' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -236,6 +238,7 @@ export default function AdminDashboard() {
           {page === 'ai-revision' && <AdminAIRevision token={token} />}
           {page === 'past-papers' && <AdminPastPapers token={token} />}
           {page === 'education-hub' && <AdminEducationHub token={token} />}
+          {page === 'lesson-plans' && <AdminLessonPlans token={token} />}
           {page === 'settings' && <AdminSettings token={token} />}
         </div>
       </div>
