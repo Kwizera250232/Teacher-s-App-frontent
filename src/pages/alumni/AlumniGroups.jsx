@@ -16,7 +16,7 @@ export default function AlumniGroups() {
   const loadGroups = async () => {
     try {
       const data = await api.get('/alumni/groups', token);
-      setGroups(data.groups || []);
+      setGroups(Array.isArray(data) ? data : (data.groups || []));
     } catch (e) {
       console.error(e);
     } finally {

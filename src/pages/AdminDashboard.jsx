@@ -28,6 +28,7 @@ const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: '📊' },
   { key: 'schools', label: 'Schools', icon: '🏫' },
   { key: 'teachers', label: 'Teachers', icon: '👨‍🏫' },
+  { key: 'lesson-plans', label: 'Lesson Plans', icon: '📝' },
   { key: 'students', label: 'Students', icon: '👩‍🎓' },
   { key: 'guests', label: 'Guests', icon: '👤' },
   { key: 'classes', label: 'Classes', icon: '📚' },
@@ -40,7 +41,6 @@ const NAV = [
   { key: 'ai-revision', label: 'AI Revision', icon: '🤖' },
   { key: 'past-papers', label: 'Past Papers', icon: '📄' },
   { key: 'education-hub', label: 'Education Hub', icon: '🎓' },
-  { key: 'lesson-plans', label: 'Lesson Plans', icon: '📝' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
