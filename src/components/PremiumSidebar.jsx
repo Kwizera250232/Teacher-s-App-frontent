@@ -11,6 +11,7 @@ export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout,
     { id: 'coaching', icon: '🎓', label: 'Coaching' },
     { id: 'alumni', icon: '🎓', label: 'Alumni' },
     { id: 'lessonplan', icon: '📝', label: 'Lesson Plan' },
+    { id: 'notes', icon: '📓', label: 'Teaching Notes' },
     { id: 'tools', icon: '⚡', label: 'Tools' },
   ];
 

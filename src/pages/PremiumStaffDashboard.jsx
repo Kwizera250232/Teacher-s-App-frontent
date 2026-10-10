@@ -29,6 +29,7 @@ import TeacherMobileMenu from '../components/TeacherMobileMenu';
 import TeacherEarningsCard from '../components/TeacherEarningsCard';
 import { LiveCoachingTeacherPanel } from '../components/LiveCoachingPanel';
 import LessonPlanGenerator from '../components/LessonPlanGenerator';
+import NoteGenerator from '../components/NoteGenerator';
 import '../components/classMoments/ClassMoments.css';
 import '../components/StudentNotifications.css';
 import './PremiumDashboard.css';
@@ -288,6 +289,10 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
 
         {activeTab === 'lessonplan' && (
           <LessonPlanGenerator user={user} token={token} />
+        )}
+
+        {activeTab === 'notes' && (
+          <NoteGenerator user={user} token={token} />
         )}
 
         {activeTab === 'tools' && (
