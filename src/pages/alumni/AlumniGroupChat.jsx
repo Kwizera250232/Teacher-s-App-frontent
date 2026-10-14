@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api, uploadFile, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
+import VerifiedBadge from '../../components/VerifiedBadge';
 
 export default function AlumniGroupChat() {
   const { id } = useParams();
@@ -259,17 +260,23 @@ export default function AlumniGroupChat() {
                 MEMBERS ({group?.members?.length || 0})
               </div>
               {(group?.members || []).map((m) => (
-                <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderTop: '1px solid #f5f5f5' }}>
-                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#075e54', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0 }}>
-                    {m.name?.[0] || '?'}
+                <div key={m.user_id} onClick={() => navigate(`/alumni/profile/${m.user_id}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 4px', borderTop: '1px solid #f5f5f5', cursor: 'pointer' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#075e54', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0, overflow: 'hidden' }}>
+                    {m.avatar_url
+                      ? <img src={m.avatar_url.startsWith('http') ? m.avatar_url : `${UPLOADS_BASE}${m.avatar_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : (m.name?.[0] || '?')}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{m.name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                      {m.name}
+                      {m.is_verified && <VerifiedBadge size={13} userId={m.user_id} onViewProfile={() => navigate(`/alumni/profile/${m.user_id}`)} />}
+                    </div>
                     <div style={{ fontSize: 11, color: '#888' }}>{m.email}</div>
                   </div>
                   {m.role === 'admin' && <span style={{ fontSize: 10, background: '#dcf8c6', color: '#075e54', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>ADMIN</span>}
                   {isAdmin && m.user_id !== user?.id && m.role !== 'admin' && (
-                    <button onClick={() => removeMember(m.user_id)}
+                    <button onClick={(e) => { e.stopPropagation(); removeMember(m.user_id); }}
                       style={{ border: 'none', background: 'none', color: '#c0392b', cursor: 'pointer', fontSize: 14 }} title="Remove">✕</button>
                   )}
                 </div>
@@ -291,8 +298,16 @@ export default function AlumniGroupChat() {
               <div style={{ maxHeight: 180, overflowY: 'auto', marginTop: 6 }}>
                 {memberResults.map((m) => (
                   <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 4px' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#075e54', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0, overflow: 'hidden' }}>
+                      {m.avatar_url
+                        ? <img src={m.avatar_url.startsWith('http') ? m.avatar_url : `${UPLOADS_BASE}${m.avatar_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : (m.name?.[0] || '?')}
+                    </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{m.name}</div>
+                      <div style={{ fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center' }}>
+                        {m.name}
+                        {m.is_verified && <VerifiedBadge size={13} userId={m.id} onViewProfile={() => navigate(`/alumni/profile/${m.id}`)} />}
+                      </div>
                       <div style={{ fontSize: 11, color: '#888' }}>{m.email}</div>
                     </div>
                     {m.already_member ? (
@@ -331,7 +346,14 @@ export default function AlumniGroupChat() {
                   padding: '8px 12px',
                   boxShadow: '0 1px 1px rgba(0,0,0,0.08)',
                 }}>
-                  {!isMe && <div style={{ fontSize: 12, fontWeight: 600, color: '#128c7e', marginBottom: 2 }}>{msg.author_name || msg.sender_name || 'User'}</div>}
+                  {!isMe && (
+                    <div
+                      onClick={() => navigate(`/alumni/profile/${msg.user_id || msg.sender_id}`)}
+                      style={{ fontSize: 12, fontWeight: 600, color: '#128c7e', marginBottom: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      {msg.author_name || msg.sender_name || 'User'}
+                      {msg.sender_verified && <VerifiedBadge size={12} userId={msg.user_id || msg.sender_id} onViewProfile={() => navigate(`/alumni/profile/${msg.user_id || msg.sender_id}`)} />}
+                    </div>
+                  )}
                   {msg.image_path && (
                     <img src={msg.image_path.startsWith('http') ? msg.image_path : `${UPLOADS_BASE}${msg.image_path}`}
                       alt="shared" style={{ maxWidth: '100%', borderRadius: 8, cursor: 'pointer' }} />
