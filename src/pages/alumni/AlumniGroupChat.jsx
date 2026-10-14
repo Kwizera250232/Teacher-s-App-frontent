@@ -19,14 +19,25 @@ export default function AlumniGroupChat() {
   const [memberQ, setMemberQ] = useState('');
   const [memberResults, setMemberResults] = useState([]);
   const [memberBusy, setMemberBusy] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [descEdit, setDescEdit] = useState('');
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [showStickers, setShowStickers] = useState(false);
+  const photoInputRef = useRef(null);
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const STICKERS = ['😂','😍','😭','👍','🙏','🎉','❤️','🔥','😎','🤔','👏','🥳','🤗','😇','💯','🎓','⚽','📚','✍️','🇷🇼','🙌','😊','😡','😴'];
 
   const loadGroup = async () => {
     try {
       const data = await api.get(`/alumni/groups/${id}`, token);
       setGroup(data);
       setIsMember(data.is_member);
+      setIsAdmin(data.is_admin);
+      setDescEdit(data.description || '');
     } catch (e) {
       console.error(e);
     }
@@ -81,6 +92,57 @@ export default function AlumniGroupChat() {
     }
   };
 
+  const uploadGroupPhoto = async (file) => {
+    setPhotoBusy(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const up = await uploadFile('/alumni/upload', formData, token);
+      const url = up.url || up.path;
+      await api.put(`/alumni/groups/${id}`, { image_path: url }, token);
+      setGroup((g) => ({ ...g, image_path: url }));
+    } catch (e) {
+      alert(e.message || 'Photo upload failed.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const saveGroupInfo = async () => {
+    setSavingInfo(true);
+    try {
+      await api.put(`/alumni/groups/${id}`, { description: descEdit }, token);
+      setGroup((g) => ({ ...g, description: descEdit }));
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
+  const removeMember = async (userId) => {
+    if (!confirm('Remove this member from the group?')) return;
+    try {
+      await api.delete(`/alumni/groups/${id}/members/${userId}`, token);
+      loadGroup();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const sendSticker = async (emoji) => {
+    setShowStickers(false);
+    try {
+      const msg = await api.post(`/alumni/groups/${id}/messages`, {
+        content: emoji,
+        message_type: 'sticker',
+      }, token);
+      setMessages((m) => [...m, msg]);
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
   const handleSend = async () => {
     if (!newMessage.trim()) return;
     setSending(true);
@@ -126,12 +188,17 @@ export default function AlumniGroupChat() {
           background: '#075e54', color: '#fff', borderRadius: '16px 16px 0 0',
         }}>
           <button onClick={() => navigate('/alumni/groups')} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer' }}>←</button>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#128c7e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-            {group?.name?.[0] || 'G'}
+          <div
+            onClick={() => setInfoOpen((v) => !v)}
+            title="Group info"
+            style={{ width: 40, height: 40, borderRadius: '50%', background: '#128c7e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, overflow: 'hidden', cursor: 'pointer', flexShrink: 0 }}>
+            {group?.image_path
+              ? <img src={group.image_path.startsWith('http') ? group.image_path : `${UPLOADS_BASE}${group.image_path}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : (group?.name?.[0] || 'G')}
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setInfoOpen((v) => !v)}>
             <div style={{ fontWeight: 600, fontSize: 16 }}>{group?.name || 'Group'}</div>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>{group?.member_count || 0} members</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{group?.member_count || 0} members · tap for info</div>
           </div>
           {isMember && (
             <button onClick={() => setAddOpen((v) => !v)} title="Add member"
@@ -145,6 +212,71 @@ export default function AlumniGroupChat() {
             </button>
           )}
         </div>
+
+        {/* Group info panel */}
+        {infoOpen && (
+          <div style={{ background: '#fff', borderBottom: '1px solid #ddd', padding: '14px 16px', maxHeight: 320, overflowY: 'auto' }}>
+            <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#128c7e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, overflow: 'hidden', flexShrink: 0 }}>
+                {group?.image_path
+                  ? <img src={group.image_path.startsWith('http') ? group.image_path : `${UPLOADS_BASE}${group.image_path}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : (group?.name?.[0] || 'G')}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{group?.name}</div>
+                {isAdmin && (
+                  <>
+                    <input type="file" accept="image/*" ref={photoInputRef} style={{ display: 'none' }}
+                      onChange={(e) => e.target.files?.[0] && uploadGroupPhoto(e.target.files[0])} />
+                    <button onClick={() => photoInputRef.current?.click()} disabled={photoBusy}
+                      style={{ marginTop: 6, padding: '4px 12px', borderRadius: 14, border: '1px solid #128c7e', background: '#fff', color: '#128c7e', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      {photoBusy ? '⏳ Uploading…' : '📷 Change group photo'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#075e54', marginBottom: 4 }}>DESCRIPTION</div>
+              {isAdmin ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <textarea value={descEdit} onChange={(e) => setDescEdit(e.target.value)} rows={2}
+                    placeholder="What is this group for?"
+                    style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid #ccc', fontSize: 13, resize: 'vertical' }} />
+                  <button onClick={saveGroupInfo} disabled={savingInfo}
+                    style={{ alignSelf: 'flex-end', padding: '6px 12px', borderRadius: 14, border: 'none', background: '#128c7e', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    {savingInfo ? '…' : 'Save'}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: '#555' }}>{group?.description || 'No description yet.'}</div>
+              )}
+            </div>
+
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#075e54', marginBottom: 4 }}>
+                MEMBERS ({group?.members?.length || 0})
+              </div>
+              {(group?.members || []).map((m) => (
+                <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderTop: '1px solid #f5f5f5' }}>
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#075e54', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0 }}>
+                    {m.name?.[0] || '?'}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{m.name}</div>
+                    <div style={{ fontSize: 11, color: '#888' }}>{m.email}</div>
+                  </div>
+                  {m.role === 'admin' && <span style={{ fontSize: 10, background: '#dcf8c6', color: '#075e54', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>ADMIN</span>}
+                  {isAdmin && m.user_id !== user?.id && m.role !== 'admin' && (
+                    <button onClick={() => removeMember(m.user_id)}
+                      style={{ border: 'none', background: 'none', color: '#c0392b', cursor: 'pointer', fontSize: 14 }} title="Remove">✕</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Add member panel */}
         {addOpen && (
@@ -204,7 +336,11 @@ export default function AlumniGroupChat() {
                     <img src={msg.image_path.startsWith('http') ? msg.image_path : `${UPLOADS_BASE}${msg.image_path}`}
                       alt="shared" style={{ maxWidth: '100%', borderRadius: 8, cursor: 'pointer' }} />
                   )}
-                  {msg.content && <div style={{ fontSize: 14, lineHeight: 1.4 }}>{msg.content}</div>}
+                  {msg.content && (
+                    <div style={msg.message_type === 'sticker' ? { fontSize: 44, lineHeight: 1.2 } : { fontSize: 14, lineHeight: 1.4 }}>
+                      {msg.content}
+                    </div>
+                  )}
                   <div style={{ fontSize: 10, color: '#999', textAlign: 'right', marginTop: 2 }}>
                     {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     {isMe && ' ✓'}
@@ -216,6 +352,18 @@ export default function AlumniGroupChat() {
           <div ref={bottomRef} />
         </div>
 
+        {/* Sticker picker */}
+        {showStickers && (
+          <div style={{ background: '#fff', borderTop: '1px solid #ddd', padding: '10px 14px', display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4 }}>
+            {STICKERS.map((e) => (
+              <button key={e} onClick={() => sendSticker(e)}
+                style={{ border: 'none', background: 'none', fontSize: 28, cursor: 'pointer', padding: 4, borderRadius: 8 }}>
+                {e}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Input */}
         {isMember ? (
           <div style={{
@@ -225,6 +373,7 @@ export default function AlumniGroupChat() {
             <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }}
               onChange={(e) => e.target.files?.[0] && handleImageSend(e.target.files[0])} />
             <button onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer' }}>📎</button>
+            <button onClick={() => setShowStickers((v) => !v)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }} title="Stickers">😊</button>
             <input
               type="text"
               placeholder="Type a message..."
