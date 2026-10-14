@@ -15,6 +15,10 @@ export default function AlumniGroupChat() {
   const [sending, setSending] = useState(false);
   const [isMember, setIsMember] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [memberQ, setMemberQ] = useState('');
+  const [memberResults, setMemberResults] = useState([]);
+  const [memberBusy, setMemberBusy] = useState(false);
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -52,6 +56,28 @@ export default function AlumniGroupChat() {
       alert(e.message);
     } finally {
       setJoining(false);
+    }
+  };
+
+  const searchMembers = async (q) => {
+    setMemberQ(q);
+    if (!q.trim()) { setMemberResults([]); return; }
+    try {
+      const rows = await api.get(`/alumni/groups/${id}/search-members?q=${encodeURIComponent(q)}`, token);
+      setMemberResults(rows || []);
+    } catch { setMemberResults([]); }
+  };
+
+  const addMember = async (userId) => {
+    setMemberBusy(true);
+    try {
+      await api.post(`/alumni/groups/${id}/members`, { user_id: userId }, token);
+      setMemberResults((rs) => rs.map((r) => r.id === userId ? { ...r, already_member: true } : r));
+      loadGroup();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setMemberBusy(false);
     }
   };
 
@@ -107,12 +133,50 @@ export default function AlumniGroupChat() {
             <div style={{ fontWeight: 600, fontSize: 16 }}>{group?.name || 'Group'}</div>
             <div style={{ fontSize: 12, opacity: 0.8 }}>{group?.member_count || 0} members</div>
           </div>
+          {isMember && (
+            <button onClick={() => setAddOpen((v) => !v)} title="Add member"
+              style={{ padding: '6px 12px', borderRadius: 16, border: 'none', background: '#fff', color: '#075e54', fontWeight: 700, cursor: 'pointer' }}>
+              ＋ Add
+            </button>
+          )}
           {!isMember && (
             <button onClick={handleJoin} disabled={joining} style={{ padding: '6px 16px', borderRadius: 16, border: 'none', background: '#25d366', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
               {joining ? '...' : 'Join'}
             </button>
           )}
         </div>
+
+        {/* Add member panel */}
+        {addOpen && (
+          <div style={{ background: '#fff', borderBottom: '1px solid #ddd', padding: '10px 14px' }}>
+            <input
+              type="text" autoFocus value={memberQ}
+              onChange={(e) => searchMembers(e.target.value)}
+              placeholder="Type a name or email to add…"
+              style={{ width: '100%', padding: '8px 12px', borderRadius: 20, border: '1px solid #ccc', fontSize: 14, boxSizing: 'border-box' }}
+            />
+            {memberResults.length > 0 && (
+              <div style={{ maxHeight: 180, overflowY: 'auto', marginTop: 6 }}>
+                {memberResults.map((m) => (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 4px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{m.name}</div>
+                      <div style={{ fontSize: 11, color: '#888' }}>{m.email}</div>
+                    </div>
+                    {m.already_member ? (
+                      <span style={{ fontSize: 12, color: '#999' }}>✓ In group</span>
+                    ) : (
+                      <button onClick={() => addMember(m.id)} disabled={memberBusy}
+                        style={{ padding: '4px 12px', borderRadius: 14, border: 'none', background: '#25d366', color: '#fff', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
+                        Add
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Messages */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
