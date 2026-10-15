@@ -59,7 +59,7 @@ export default function ClassPaymentSettings({ classId, token }) {
         <h3 style={{ margin: '0 0 4px', fontSize: 17 }}>💰 Class Subscription</h3>
         <p style={{ color: '#6b7280', fontSize: 13, margin: '0 0 16px' }}>
           Charge students a monthly fee to access this class. You receive <strong>70%</strong> of each payment
-          (30% covers platform costs). Withdraw earnings when your balance reaches 7,000 RWF.
+          (30% covers platform costs). Withdraw earnings when your balance reaches 4,000 RWF.
         </p>
 
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: enabled ? '#f0fdf4' : '#f8fafc', borderRadius: 10, border: `2px solid ${enabled ? '#86efac' : '#e2e8f0'}`, cursor: 'pointer', marginBottom: 14 }}>

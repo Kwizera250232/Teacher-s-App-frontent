@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 /**
  * Teacher earnings card for the dashboard.
  * Shows 70% share of class subscription payments, withdraw button
- * (min 7,000 RWF) via MTN MoMo disbursement, and payment history.
+ * (min 4,000 RWF) via MTN MoMo disbursement, and payment history.
  */
 export default function TeacherEarningsCard({ token }) {
   const { user } = useAuth();
