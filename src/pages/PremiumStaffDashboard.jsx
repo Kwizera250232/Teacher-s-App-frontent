@@ -30,6 +30,7 @@ import TeacherEarningsCard from '../components/TeacherEarningsCard';
 import { LiveCoachingTeacherPanel } from '../components/LiveCoachingPanel';
 import LessonPlanGenerator from '../components/LessonPlanGenerator';
 import NoteGenerator from '../components/NoteGenerator';
+import CoTeacherInviteBanner from '../components/CoTeacherInviteBanner';
 import '../components/classMoments/ClassMoments.css';
 import '../components/StudentNotifications.css';
 import './PremiumDashboard.css';
@@ -141,6 +142,8 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
             {error}
           </div>
         )}
+
+        <CoTeacherInviteBanner token={token} onChanged={loadClasses} />
 
         {activeTab === 'classes' && (
           <>
