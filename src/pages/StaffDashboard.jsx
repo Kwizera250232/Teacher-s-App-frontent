@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import CreateClassModal from '../components/CreateClassModal';
 import AddStudentsModal from '../components/AddStudentsModal';
 import SchoolRequestBanner from '../components/SchoolRequestBanner';
+import CoTeacherInviteBanner from '../components/CoTeacherInviteBanner';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import QuizTeacherShareInbox from '../components/QuizTeacherShareInbox';
 import NoteTeacherShareInbox from '../components/NoteTeacherShareInbox';
@@ -194,6 +195,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
           subtitle="Signup, Dean AI, classes, notes, homework & feed"
         />
         {hubTab !== 'chats' && <SchoolRequestBanner token={token} user={user} />}
+        {hubTab !== 'chats' && <CoTeacherInviteBanner token={token} onChanged={loadClasses} />}
         {hasSchool && hubTab !== 'chats' && (
           <div className="school-badge-wrapper">
             <TeacherSchoolBadge user={user} className="school-badge-professional" />
