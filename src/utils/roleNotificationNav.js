@@ -45,6 +45,9 @@ export function roleNotificationPath(n, role, basePath) {
   if (role === 'teacher' || role === 'head_teacher') {
     const bp = staffBasePath(role, basePath);
     const classId = payload.class_id;
+    if (n.type === 'co_teacher_invite') {
+      return `${bp}/dashboard`;
+    }
     if (n.type === 'quiz_team_report' && classId) {
       const q = payload.report_id ? `&report=${payload.report_id}` : '';
       return `${bp}/classes/${classId}?tab=${encodeURIComponent('Quiz reports')}${q}`;
