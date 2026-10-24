@@ -14,6 +14,7 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
     { id: 'classes', icon: '📚', label: 'Classes' },
     { id: 'chats', icon: '💬', label: 'Chats' },
     { id: 'class-now', icon: '📸', label: 'Class Now' },
+    { id: 'textbooks', icon: '📖', label: 'AI Textbooks', path: `${basePath || '/teacher'}/textbooks` },
     { id: 'quiz-reports', icon: '📊', label: 'Quiz Reports' },
     { id: 'ai-quiz', icon: '🤖', label: 'AI Quiz Gen' },
     { id: 'inyandiko', icon: '✍️', label: 'Inyandiko' },
@@ -78,6 +79,17 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
 
         <nav className="teacher-menu-nav">
           {tabItems.map((item) => (
+            item.path ? (
+              <Link
+                key={item.id}
+                to={item.path}
+                className={`teacher-menu-item${hubTab === item.id ? ' teacher-menu-item--active' : ''}`}
+                onClick={() => setOpen(false)}
+              >
+                <span className="teacher-menu-item__icon">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            ) : (
             <button
               key={item.id}
               type="button"
@@ -87,6 +99,7 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
               <span className="teacher-menu-item__icon">{item.icon}</span>
               <span>{item.label}</span>
             </button>
+            )
           ))}
         </nav>
 

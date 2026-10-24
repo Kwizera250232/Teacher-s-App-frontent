@@ -114,6 +114,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
     ...(isHeadTeacher ? [{ id: 'school', label: '🏫 School' }] : []),
     ...(hasSchool ? [{ id: 'chats', label: '💬 Chats' }] : []),
     { id: 'classnow', label: '📸 Class Now' },
+    { id: 'textbooks', label: '📖 AI Textbooks', path: `${basePath}/textbooks` },
     { id: 'inyandiko', label: '✍️ Inyandiko' },
     { id: 'alumni', label: '🎓 Alumni' },
     { id: 'lessonplan', label: '📝 Lesson Plan' },
@@ -176,14 +177,20 @@ export default function StaffDashboard({ roleLabel, basePath }) {
 
       <nav className="nav-tabs-professional nav-tabs-desktop">
         {navTabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`nav-tab-professional ${hubTab === t.id ? 'active' : ''}`}
-            onClick={() => setHubTab(t.id)}
-          >
-            {t.label}
-          </button>
+          t.path ? (
+            <Link key={t.id} to={t.path} className={`nav-tab-professional ${hubTab === t.id ? 'active' : ''}`}>
+              {t.label}
+            </Link>
+          ) : (
+            <button
+              key={t.id}
+              type="button"
+              className={`nav-tab-professional ${hubTab === t.id ? 'active' : ''}`}
+              onClick={() => setHubTab(t.id)}
+            >
+              {t.label}
+            </button>
+          )
         ))}
       </nav>
 

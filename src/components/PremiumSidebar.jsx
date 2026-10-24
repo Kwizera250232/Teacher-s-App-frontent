@@ -5,6 +5,7 @@ export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout,
     { id: 'classes', icon: '📚', label: 'Classes' },
     { id: 'chats', icon: '💬', label: 'Chats' },
     { id: 'class-now', icon: '📸', label: 'Class Now' },
+    { id: 'textbooks', icon: '📖', label: 'AI Textbooks', path: `${basePath}/textbooks` },
     { id: 'quiz-reports', icon: '📊', label: 'Quiz Reports' },
     { id: 'ai-quiz', icon: '🤖', label: 'AI Quiz Gen' },
     { id: 'inyandiko', icon: '✍️', label: 'Inyandiko' },
@@ -29,15 +30,26 @@ export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout,
 
       <nav className="sidebar-nav">
         {sidebarItems.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
-            onClick={() => onTabChange(item.id)}
-          >
-            <span className="sidebar-icon">{item.icon}</span>
-            <span className="sidebar-label">{item.label}</span>
-          </button>
+          item.path ? (
+            <Link
+              key={item.id}
+              to={item.path}
+              className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
+            >
+              <span className="sidebar-icon">{item.icon}</span>
+              <span className="sidebar-label">{item.label}</span>
+            </Link>
+          ) : (
+            <button
+              key={item.id}
+              type="button"
+              className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
+              onClick={() => onTabChange(item.id)}
+            >
+              <span className="sidebar-icon">{item.icon}</span>
+              <span className="sidebar-label">{item.label}</span>
+            </button>
+          )
         ))}
       </nav>
 

@@ -148,6 +148,14 @@ export default function StudentDashboard() {
           <button
             type="button"
             className="admin-nav-item"
+            onClick={() => navigate('/student/textbooks')}
+          >
+            <span className="admin-nav-icon">📖</span>
+            {sidebarOpen && <span className="admin-nav-label">AI Textbooks</span>}
+          </button>
+          <button
+            type="button"
+            className="admin-nav-item"
             onClick={() => setShowParentInvite(true)}
           >
             <span className="admin-nav-icon">👪</span>
