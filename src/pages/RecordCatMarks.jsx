@@ -71,7 +71,13 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   };
 
   const saveCellMark = async (studentId, testNumber, marksRaw) => {
-    if (marksRaw === '' || marksRaw === '—') { setEditing(null); return; }
+    if (marksRaw === '' || marksRaw === '—') {
+      // Clearing a recorded mark deletes it
+      const had = filteredRoster.find((r) => r.student_id === studentId)?.cat?.[testNumber] != null;
+      setEditing(null);
+      if (had) deleteMark(studentId, testNumber);
+      return;
+    }
     const marks = parseInt(marksRaw, 10);
     const catTotal = stats?.cat_totals?.[testNumber] || 100;
     if (Number.isNaN(marks) || marks < 0 || marks > catTotal) {
@@ -98,10 +104,11 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   };
 
   const deleteMark = async (studentId, testNumber) => {
-    if (!window.confirm('Delete this mark?')) return;
+    if (!window.confirm(`Delete CAT ${testNumber} mark?`)) return;
     try {
       const subjParam = selectedSubject ? `?subject=${encodeURIComponent(selectedSubject)}` : '';
       await api.delete(`/catmarks/${classId}/entry/${studentId}/${testNumber}${subjParam}`, token);
+      setError('');
       loadData();
     } catch (err) { setError(err.message); }
   };
@@ -459,7 +466,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                           key={num}
                           className={!isEdit ? 'cat-cell-clickable' : ''}
                           style={{ position: 'relative' }}
-                          title="Click to edit, right-click to delete"
+                          title="Click to edit · 🗑 to delete"
                           onClick={() => !isEdit && setEditing({ studentId: s.student_id, num, value: val != null ? String(val) : '' })}
                           onContextMenu={(e) => { e.preventDefault(); if (val != null) deleteMark(s.student_id, num); }}
                         >
@@ -481,9 +488,20 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                             />
                           ) : (
                             val != null ? (
-                              <span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                 <strong>{val}</strong>
                                 <span style={{ fontSize: 10, color: '#94a3b8' }}>/{stats?.cat_totals?.[num] || 100}</span>
+                                <button
+                                  type="button"
+                                  title="Delete this mark"
+                                  aria-label={`Delete CAT ${num} mark for ${s.name}`}
+                                  onClick={(e) => { e.stopPropagation(); deleteMark(s.student_id, num); }}
+                                  style={{
+                                    border: 'none', background: '#fee2e2', color: '#dc2626', borderRadius: 6,
+                                    width: 22, height: 22, padding: 0, fontSize: 12, lineHeight: '22px',
+                                    cursor: 'pointer', flexShrink: 0,
+                                  }}
+                                >🗑</button>
                               </span>
                             ) : '—'
                           )}
