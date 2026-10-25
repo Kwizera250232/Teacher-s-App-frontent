@@ -43,6 +43,9 @@ self.addEventListener('push', (event) => {
       tag: data.tag || 'uclass',
       icon: '/icon.svg',
       badge: '/icon.svg',
+      requireInteraction: !!data.call,
+      renotify: !!data.call,
+      vibrate: data.call ? [400, 200, 400, 200, 400, 400, 400, 200, 400] : undefined,
       data: { url: data.url || '/' },
     })
   );
