@@ -20,6 +20,7 @@ import TakeGroupQuiz from './pages/TakeGroupQuiz';
 import StudentQuizReportsPage from './pages/StudentQuizReportsPage';
 import StudentTextbooks from './pages/StudentTextbooks';
 import TeacherConnect from './pages/TeacherConnect';
+import IncomingCallWatcher from './components/IncomingCallWatcher';
 import TextbookReader from './pages/TextbookReader';
 import QuizResults from './pages/QuizResults';
 import AdminDashboard from './pages/AdminDashboard';
@@ -114,6 +115,7 @@ function AppShell() {
     <div className={`app-wa-shell${chatFullscreen ? ' app-wa-shell--chat-fullscreen' : ''}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <OfflineBanner />
       <EmailConfirmBanner />
+      <IncomingCallWatcher />
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <Routes>
                 <Route path="/" element={<HomeRedirect />} />
