@@ -236,7 +236,7 @@ export default function AlumniProfile() {
                 )}
               </div>
               <p style={{ margin: '6px 0 0', color: '#9ca3af', fontSize: 15, fontFamily: "'Inter', sans-serif" }}>
-                @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role || 'Alumni'}
+                @{profile.email?.split('@')[0]} · {profile.role === 'alumni' ? 'UClass Alumni' : profile.role === 'teacher' ? '👩‍🏫 Teacher' : profile.role === 'head_teacher' ? '🏫 Head Teacher' : profile.role || 'Alumni'}
               </p>
               {(profile.school_name_text || profile.school_name) && (
                 <p style={{ margin: '4px 0 0', color: '#9ca3af', fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
