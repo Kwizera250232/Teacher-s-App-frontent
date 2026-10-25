@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../api';
+import { api, UPLOADS_BASE } from '../api';
 import VerifiedBadge from './VerifiedBadge';
 import AIRevisionBadge from './AIRevisionBadge';
 import AppNotificationsBell from './AppNotificationsBell';
@@ -30,10 +30,21 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
   const currentPath = location.pathname;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
+  const isStaff = ['teacher', 'head_teacher', 'admin'].includes(user?.role);
+
   const getProfilePath = () => {
-    if (user?.id) return `/alumni/profile/${user.id}`;
+    if (user?.id) return isStaff ? `/teacher-profile/${user.id}` : `/alumni/profile/${user.id}`;
     return '/alumni/directory';
   };
+
+  const avatarUrl = user?.avatar_url || user?.avatar_path;
+  const avatarSrc = avatarUrl ? (avatarUrl.startsWith('http') ? avatarUrl : `${UPLOADS_BASE}${avatarUrl}`) : null;
+
+  const AvatarCircle = ({ size = 36, style = {} }) => (
+    <div style={{ width: size, height: size, borderRadius: '50%', background: `hsl(${(user?.id || 1) * 137 % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: size * 0.4, flexShrink: 0, overflow: 'hidden', ...style }}>
+      {avatarSrc ? <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (user?.name || 'U')[0]}
+    </div>
+  );
 
   const sidebarContent = (
     <>
@@ -67,19 +78,17 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
         })}
       </nav>
 
-      {/* User Mini Profile */}
+      {/* User Mini Profile — photo + tap opens the user's own profile */}
       {user && (
-        <div style={{ marginTop: 'auto', padding: '12px 8px', borderTop: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', background: `hsl(${(user.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
-            {(user.name || '?')[0]}
-          </div>
+        <div onClick={() => navigate(getProfilePath())} style={{ marginTop: 'auto', padding: '12px 8px', borderTop: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+          <AvatarCircle />
           <div style={{ overflow: 'hidden', minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 4 }}>
               {user.name}
               <VerifiedBadge size={12} userId={user.id} onViewProfile={() => navigate(getProfilePath())} />
               <AIRevisionBadge size={12} userId={user.id} />
             </div>
-            <div style={{ fontSize: 11, color: '#94a3b8' }}>@{user.email?.split('@')[0]}</div>
+            <div style={{ fontSize: 11, color: '#94a3b8' }}>@{user.email?.split('@')[0]}{isStaff ? ' · staff' : ''}</div>
           </div>
         </div>
       )}
@@ -115,8 +124,8 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
           <div className="alumni-mobile-actions">
             <button onClick={() => navigate('/alumni/search')}>🔍</button>
             <AppNotificationsBell basePath="/alumni" />
-            <div className="alumni-mobile-profile" onClick={() => navigate(getProfilePath())}>
-              {(user?.name || 'U')[0]}
+            <div className="alumni-mobile-profile" onClick={() => navigate(getProfilePath())} style={{ overflow: 'hidden' }}>
+              {avatarSrc ? <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (user?.name || 'U')[0]}
             </div>
           </div>
         </div>
