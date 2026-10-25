@@ -23,21 +23,30 @@ const NAV_ITEMS = [
 ];
 
 export default function AlumniLayout({ children, showTopWriters = true, fullWidth = false }) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [liveAvatar, setLiveAvatar] = useState(null);
   const currentPath = location.pathname;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const isStaff = ['teacher', 'head_teacher', 'admin'].includes(user?.role);
+
+  // Stored sessions from before avatar was in the auth payload lack it — fetch it fresh
+  useEffect(() => {
+    if (!token || liveAvatar) return;
+    api.get('/alumni/profile/me', token)
+      .then((p) => { const a = p?.avatar_url || p?.avatar_path; if (a) setLiveAvatar(a); })
+      .catch(() => {});
+  }, [token]); // eslint-disable-line
 
   const getProfilePath = () => {
     if (user?.id) return isStaff ? `/teacher-profile/${user.id}` : `/alumni/profile/${user.id}`;
     return '/alumni/directory';
   };
 
-  const avatarUrl = user?.avatar_url || user?.avatar_path;
+  const avatarUrl = user?.avatar_url || user?.avatar_path || liveAvatar;
   const avatarSrc = avatarUrl ? (avatarUrl.startsWith('http') ? avatarUrl : `${UPLOADS_BASE}${avatarUrl}`) : null;
 
   const AvatarCircle = ({ size = 36, style = {} }) => (
