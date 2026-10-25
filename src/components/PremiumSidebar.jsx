@@ -4,6 +4,7 @@ export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout,
   const sidebarItems = [
     { id: 'classes', icon: '📚', label: 'Classes' },
     { id: 'chats', icon: '💬', label: 'Chats' },
+    { id: 'connect', icon: '📞', label: 'Teacher Connect', path: `${basePath}/connect` },
     { id: 'class-now', icon: '📸', label: 'Class Now' },
     { id: 'textbooks', icon: '📖', label: 'AI Textbooks', path: `${basePath}/textbooks` },
     { id: 'quiz-reports', icon: '📊', label: 'Quiz Reports' },
