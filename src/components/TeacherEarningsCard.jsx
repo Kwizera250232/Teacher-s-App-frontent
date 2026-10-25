@@ -16,6 +16,14 @@ export default function TeacherEarningsCard({ token }) {
   const [amount, setAmount] = useState('');
   const [withdrawing, setWithdrawing] = useState(false);
   const [msg, setMsg] = useState('');
+  const [hidden, setHidden] = useState(() => localStorage.getItem('teacherEarningsHidden') === '1');
+
+  const toggleHidden = () => {
+    setHidden((h) => {
+      localStorage.setItem('teacherEarningsHidden', h ? '0' : '1');
+      return !h;
+    });
+  };
 
   const load = async () => {
     try {
@@ -56,6 +64,37 @@ export default function TeacherEarningsCard({ token }) {
   if (!canViewEarnings || !data) return null;
   const canWithdraw = data.available >= data.withdraw_min;
 
+  const eyeBtn = (
+    <button
+      type="button"
+      onClick={toggleHidden}
+      title={hidden ? 'Show earnings' : 'Hide earnings'}
+      aria-label={hidden ? 'Show earnings card' : 'Hide earnings card'}
+      style={{
+        border: 'none', borderRadius: 8, cursor: 'pointer', padding: '6px 9px',
+        background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 15, lineHeight: 1,
+      }}
+    >
+      {hidden ? '👁' : '🙈'}
+    </button>
+  );
+
+  if (hidden) {
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg,#064e3b,#047857)', borderRadius: 12,
+        padding: '8px 14px', color: '#fff', marginBottom: 16,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+      }}>
+        <span style={{ fontSize: 13, opacity: 0.85 }}>💰 My Earnings hidden</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, opacity: 0.8 }}>•••••• RWF</span>
+          {eyeBtn}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       background: 'linear-gradient(135deg,#064e3b,#047857)', borderRadius: 16,
@@ -63,7 +102,9 @@ export default function TeacherEarningsCard({ token }) {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 2 }}>💰 My Earnings (70% share)</div>
+          <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+            💰 My Earnings (70% share) {eyeBtn}
+          </div>
           <div style={{ fontSize: 28, fontWeight: 800 }}>{data.available.toLocaleString()} <span style={{ fontSize: 15, fontWeight: 600 }}>RWF</span></div>
           <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
             Collected: {data.total_collected.toLocaleString()} RWF · Withdrawn: {data.withdrawn.toLocaleString()} RWF
