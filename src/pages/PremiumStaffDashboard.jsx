@@ -156,7 +156,6 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
                 type="button"
                 className="premium-action-button premium-action-button--add"
                 onClick={() => setShowAddStudents(true)}
-                disabled={user?.role === 'teacher' && !hasSchool}
               >
                 👤 Add Students
               </button>
