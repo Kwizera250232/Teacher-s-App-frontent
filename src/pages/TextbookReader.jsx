@@ -309,12 +309,16 @@ export default function TextbookReader() {
           const buf = await cached.arrayBuffer();
           doc = await pdfjsLib.getDocument({ data: buf }).promise;
         } else {
-          // First open: stream the PDF — pdf.js fetches only the pages being
-          // viewed via range requests, so page 1 shows immediately.
-          doc = await pdfjsLib.getDocument({
-            url,
-            httpHeaders: { Authorization: `Bearer ${token}` },
-          }).promise;
+          // Resolve the file URL once (API auth-checks then redirects to the
+          // fast edge URL). pdf.js then streams ONLY the pages being viewed
+          // straight from the edge — no per-request round trip to the server.
+          let streamUrl = url, headers = { Authorization: `Bearer ${token}` };
+          try {
+            const probe = await fetch(`${url}?resolve=1`, { headers: { Authorization: `Bearer ${token}` } });
+            const j = probe.ok ? await probe.json() : null;
+            if (j?.url) { streamUrl = j.url; headers = {}; }
+          } catch { /* keep API url + auth */ }
+          doc = await pdfjsLib.getDocument({ url: streamUrl, httpHeaders: headers }).promise;
           // Save a full copy in the background so the next open is instant.
           fetch(url, { headers: { Authorization: `Bearer ${token}` } })
             .then(r => (r.ok && cache) ? cache.put(url, r).catch(() => {}) : null)
