@@ -20,6 +20,7 @@ const TakeGroupQuiz = lazy(() => import('./pages/TakeGroupQuiz'));
 const StudentQuizReportsPage = lazy(() => import('./pages/StudentQuizReportsPage'));
 const StudentTextbooks = lazy(() => import('./pages/StudentTextbooks'));
 const TeacherConnect = lazy(() => import('./pages/TeacherConnect'));
+const TeacherLibrary = lazy(() => import('./pages/TeacherLibrary'));
 const TeacherPublicProfile = lazy(() => import('./pages/TeacherPublicProfile'));
 import IncomingCallWatcher from './components/IncomingCallWatcher';
 const TextbookReader = lazy(() => import('./pages/TextbookReader'));
@@ -228,6 +229,12 @@ function AppShell() {
                 } />
                 <Route path="/head-teacher/connect" element={
                   <ProtectedRoute role={['teacher', 'head_teacher']}><TeacherConnect /></ProtectedRoute>
+                } />
+                <Route path="/teacher/library" element={
+                  <ProtectedRoute role={['teacher', 'head_teacher']}><TeacherLibrary /></ProtectedRoute>
+                } />
+                <Route path="/head-teacher/library" element={
+                  <ProtectedRoute role={['teacher', 'head_teacher']}><TeacherLibrary /></ProtectedRoute>
                 } />
                 <Route path="/teacher/textbooks" element={
                   <ProtectedRoute role={['teacher', 'head_teacher']}><StudentTextbooks /></ProtectedRoute>

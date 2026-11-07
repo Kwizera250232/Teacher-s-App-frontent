@@ -6,6 +6,7 @@ import AdminSchools from '../components/admin/AdminSchools';
 import AdminTeachers from '../components/admin/AdminTeachers';
 import AdminStudents from '../components/admin/AdminStudents';
 import AdminGuests from '../components/admin/AdminGuests';
+import { AdminHeadTeachers, AdminParents } from '../components/admin/AdminPeople';
 import AdminClasses from '../components/admin/AdminClasses';
 import AdminContent from '../components/admin/AdminContent';
 import AdminAnnouncements from '../components/admin/AdminAnnouncements';
@@ -28,6 +29,8 @@ const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: '📊' },
   { key: 'schools', label: 'Schools', icon: '🏫' },
   { key: 'teachers', label: 'Teachers', icon: '👨‍🏫' },
+  { key: 'head-teachers', label: 'Head Teachers', icon: '🏫' },
+  { key: 'parents', label: 'Parents', icon: '👨‍👩‍👧' },
   { key: 'lesson-plans', label: 'Lesson Plans', icon: '📝' },
   { key: 'students', label: 'Students', icon: '👩‍🎓' },
   { key: 'guests', label: 'Guests', icon: '👤' },
@@ -166,6 +169,8 @@ export default function AdminDashboard() {
                 {[
                   { label: 'Schools', value: stats?.schools, icon: '🏫', color: '#6366f1' },
                   { label: 'Teachers', value: stats?.teachers, icon: '👨‍🏫', color: '#0ea5e9' },
+                  { label: 'Head Teachers', value: stats?.head_teachers, icon: '🏫', color: '#7c3aed' },
+                  { label: 'Parents', value: stats?.parents, icon: '👨‍👩‍👧', color: '#f97316' },
                   { label: 'Students', value: stats?.students, icon: '👩‍🎓', color: '#10b981' },
                   { label: 'Guests', value: stats?.guests, icon: '👤', color: '#0d9488' },
                   { label: 'Classes', value: stats?.classes, icon: '📚', color: '#f59e0b' },
@@ -226,6 +231,8 @@ export default function AdminDashboard() {
 
           {page === 'schools' && <AdminSchools token={token} />}
           {page === 'teachers' && <AdminTeachers token={token} />}
+          {page === 'head-teachers' && <AdminHeadTeachers token={token} />}
+          {page === 'parents' && <AdminParents token={token} />}
           {page === 'students' && <AdminStudents token={token} />}
           {page === 'guests' && <AdminGuests token={token} />}
           {page === 'classes' && <AdminClasses token={token} />}
