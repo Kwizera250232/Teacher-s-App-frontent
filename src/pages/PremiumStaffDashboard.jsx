@@ -54,6 +54,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
   const { online } = usePresence(token);
   const isHeadTeacher = roleLabel === 'Head Teacher';
   const hasSchool = Boolean(user?.school_id);
+  const teachersOnline = online.filter((u) => u.role === 'teacher' || u.role === 'head_teacher');
   usePushNotifications(token);
 
   const loadClasses = async () => {
@@ -150,6 +151,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
         {activeTab === 'classes' && (
           <>
             <TeacherEarningsCard token={token} />
+            <OnlineNowStrip online={teachersOnline} />
             <div className="premium-actions-row">
               {!hasSchool && (
                 <button type="button" className="premium-action-button premium-action-button--create" onClick={() => setShowAddSchool(true)}>

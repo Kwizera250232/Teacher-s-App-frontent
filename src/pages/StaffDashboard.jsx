@@ -62,6 +62,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   const { online } = usePresence(token);
   const isHeadTeacher = roleLabel === 'Head Teacher';
   const hasSchool = Boolean(user?.school_id);
+  const teachersOnline = online.filter((u) => u.role === 'teacher' || u.role === 'head_teacher');
   const momentsFeedPath = `${basePath}/class-moments`;
   usePushNotifications(token);
 
@@ -343,6 +344,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => setStaffClassesView('menu')} style={{ marginBottom: 16 }}>← Back</button>
 
                 <TeacherEarningsCard token={token} />
+                <OnlineNowStrip online={teachersOnline} />
                 <div className="classes-actions-professional">
                   {!hasSchool && user?.role === 'teacher' && (
                     <button className="btn-professional btn-professional-primary" onClick={() => setShowAddSchool(true)}>
