@@ -4,6 +4,8 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import CreateClassModal from '../components/CreateClassModal';
 import AddStudentsModal from '../components/AddStudentsModal';
+import AddSchoolModal from '../components/AddSchoolModal';
+import TeacherEarningsCard from '../components/TeacherEarningsCard';
 import SchoolRequestBanner from '../components/SchoolRequestBanner';
 import CoTeacherInviteBanner from '../components/CoTeacherInviteBanner';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
@@ -45,6 +47,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
   const [classes, setClasses] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddStudents, setShowAddStudents] = useState(false);
+  const [showAddSchool, setShowAddSchool] = useState(false);
   const [error, setError] = useState('');
   const [announcements, setAnnouncements] = useState([]);
   const [dismissed, setDismissed] = useState(() => JSON.parse(localStorage.getItem('dismissed_announcements') || '[]'));
@@ -113,6 +116,8 @@ export default function StaffDashboard({ roleLabel, basePath }) {
     { id: 'classes', label: '📚 Classes' },
     ...(isHeadTeacher ? [{ id: 'school', label: '🏫 School' }] : []),
     ...(hasSchool ? [{ id: 'chats', label: '💬 Chats' }] : []),
+    { id: 'connect', label: '📞 Teacher Connect', path: `${basePath}/connect` },
+    { id: 'library', label: "📚 Colleagues' Library", path: `${basePath}/library` },
     { id: 'classnow', label: '📸 Class Now' },
     { id: 'textbooks', label: '📖 AI Textbooks', path: `${basePath}/textbooks` },
     { id: 'inyandiko', label: '✍️ Inyandiko' },
@@ -337,7 +342,13 @@ export default function StaffDashboard({ roleLabel, basePath }) {
               <>
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => setStaffClassesView('menu')} style={{ marginBottom: 16 }}>← Back</button>
 
+                <TeacherEarningsCard token={token} />
                 <div className="classes-actions-professional">
+                  {!hasSchool && user?.role === 'teacher' && (
+                    <button className="btn-professional btn-professional-primary" onClick={() => setShowAddSchool(true)}>
+                      🏫 Add School
+                    </button>
+                  )}
                   <button className="btn-professional btn-professional-primary" onClick={() => setShowCreate(true)}>
                     + Fungura Ishuri
                   </button>
@@ -428,16 +439,21 @@ export default function StaffDashboard({ roleLabel, basePath }) {
         />
       )}
 
+      {showAddSchool && (
+        <AddSchoolModal
+          token={token}
+          onClose={() => setShowAddSchool(false)}
+          onDone={() => setShowAddSchool(false)}
+        />
+      )}
+
       {showAddStudents && (
         <AddStudentsModal
           token={token}
           onClose={() => setShowAddStudents(false)}
           onNeedJoinSchool={() => {
             setShowAddStudents(false);
-            setHubTab('classes');
-            setTimeout(() => {
-              document.getElementById('school-join-banner')?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+            setShowAddSchool(true);
           }}
         />
       )}

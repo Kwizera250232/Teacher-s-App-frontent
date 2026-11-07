@@ -10,16 +10,12 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
   );
   const [schoolProfileLoaded, setSchoolProfileLoaded] = useState(false);
   const teacherNoSchool = user?.role === 'teacher' && schoolProfileLoaded && !linkedSchoolId;
-  const teacherNeedsSchool = false; // teachers without a school can pick an existing one or write a new one below
-  const canPickSchool = !linkedSchoolId || user?.role === 'admin';
+  const teacherNeedsSchool = teacherNoSchool;
   const [mode, setMode] = useState('single');
-  const [schools, setSchools] = useState([]);
   const [schoolId, setSchoolId] = useState(
     user?.school_id != null ? String(user.school_id) : ''
   );
   const [linkedSchoolName, setLinkedSchoolName] = useState('');
-  const [newSchoolName, setNewSchoolName] = useState('');
-  const [showNewSchool, setShowNewSchool] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [name, setName] = useState('');
@@ -36,8 +32,7 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
   const [teacherClasses, setTeacherClasses] = useState([]);
   const [addClassTo, setAddClassTo] = useState(''); // '' = none, 'select' = pick from list
 
-  const selectedSchool = schools.find((s) => String(s.id) === String(schoolId));
-  const studentEmailDomain = signupEmailDomain(selectedSchool || (linkedSchoolName ? { name: linkedSchoolName } : null));
+  const studentEmailDomain = signupEmailDomain(linkedSchoolName ? { name: linkedSchoolName } : null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,13 +57,12 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
       try {
         const data = await api.get('/auth/schools', token);
         if (cancelled) return;
-        setSchools(Array.isArray(data) ? data : []);
         if (activeSchoolId) {
-          const mySchool = data.find((s) => String(s.id) === activeSchoolId);
+          const mySchool = (Array.isArray(data) ? data : []).find((s) => String(s.id) === activeSchoolId);
           if (mySchool) setLinkedSchoolName(mySchool.name);
         }
       } catch {
-        if (!cancelled) setSchools([]);
+        /* school name is cosmetic */
       }
       // Fetch teacher's classes for immediate-add option
       try {
@@ -82,25 +76,6 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
     })();
     return () => { cancelled = true; };
   }, [token]);
-
-  const handleCreateSchool = async () => {
-    if (!newSchoolName.trim()) return;
-    setLoading(true);
-    setError('');
-    try {
-      const created = await api.post('/auth/schools', { name: newSchoolName.trim() }, token);
-      setSchools(prev => [...prev, created]);
-      const newId = String(created.id);
-      setSchoolId(newId);
-      if (!linkedSchoolId) setLinkedSchoolName(created.name || newSchoolName.trim());
-      setShowNewSchool(false);
-      setNewSchoolName('');
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddSingle = async () => {
     if (!name.trim()) return setError('Student name is required.');
@@ -218,80 +193,19 @@ export default function AddStudentsModal({ token, onClose, onNeedJoinSchool }) {
 
         {teacherNoSchool && (
           <div style={{ marginBottom: 16, padding: '12px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, color: '#1e3a8a', fontSize: 14 }}>
-            You have no school linked yet. <strong>Pick your school below</strong> (or tap <strong>+ New</strong> to write it) and add your students now.
-            {onNeedJoinSchool && (
-              <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 10, display: 'block' }} onClick={() => { onClose(); onNeedJoinSchool(); }}>
-                🏫 Also add my school to my profile
-              </button>
-            )}
+            You need a school first. Close this and tap <strong>🏫 Add School</strong> on your dashboard — pick your school or write a new one.
           </div>
         )}
 
-        {/* School selection */}
-        {!teacherNeedsSchool && (
-        <div className="form-group">
-          <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>
-            School *
-            {linkedSchoolId && linkedSchoolName && (
-              <span style={{ fontWeight: 400, color: '#16a34a', marginLeft: 8, fontSize: 12 }}>
-                (Your school: {linkedSchoolName})
-              </span>
-            )}
-          </label>
-          {linkedSchoolId && !canPickSchool ? (
+        {linkedSchoolName && (
+          <div className="form-group">
+            <label style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>School</label>
             <input
               readOnly
-              value={linkedSchoolName || 'Your school'}
+              value={linkedSchoolName}
               style={{ width: '100%', padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: '#f8fafc', color: '#1e293b' }}
             />
-          ) : !showNewSchool ? (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <select
-                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, background: 'white', color: '#1e293b' }}
-                value={schoolId}
-                onChange={e => setSchoolId(e.target.value)}
-              >
-                <option value="">Select School</option>
-                {schools.map(s => (
-                  <option key={s.id} value={String(s.id)}>{s.name}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => setShowNewSchool(true)}
-                title="Add new school"
-              >
-                + New
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                style={{ flex: 1, padding: '10px 14px', border: '2px solid #e8e8e8', borderRadius: 8, fontSize: 14, color: '#1e293b' }}
-                placeholder="Enter new school name"
-                value={newSchoolName}
-                onChange={e => setNewSchoolName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleCreateSchool()}
-              />
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={handleCreateSchool}
-                disabled={loading}
-              >
-                Add
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => { setShowNewSchool(false); setNewSchoolName(''); }}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
         )}
 
         {error && <div className="alert alert-error">{error}</div>}

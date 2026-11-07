@@ -6,6 +6,7 @@ import PremiumSidebar from '../components/PremiumSidebar';
 import PremiumClassCard from '../components/PremiumClassCard';
 import CreateClassModal from '../components/CreateClassModal';
 import AddStudentsModal from '../components/AddStudentsModal';
+import AddSchoolModal from '../components/AddSchoolModal';
 import ParentInvitesPickerModal from '../components/ParentInvitesPickerModal';
 import QuizTeacherShareInbox from '../components/QuizTeacherShareInbox';
 import NoteTeacherShareInbox from '../components/NoteTeacherShareInbox';
@@ -44,6 +45,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
   const [momentPreview, setMomentPreview] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddStudents, setShowAddStudents] = useState(false);
+  const [showAddSchool, setShowAddSchool] = useState(false);
   const [showParentInvites, setShowParentInvites] = useState(false);
   const [showAddTeacher, setShowAddTeacher] = useState(false);
   const [showNotifyParents, setShowNotifyParents] = useState(false);
@@ -149,6 +151,11 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
           <>
             <TeacherEarningsCard token={token} />
             <div className="premium-actions-row">
+              {!hasSchool && (
+                <button type="button" className="premium-action-button premium-action-button--create" onClick={() => setShowAddSchool(true)}>
+                  🏫 Add School
+                </button>
+              )}
               <button type="button" className="premium-action-button premium-action-button--create" onClick={() => setShowCreate(true)}>
                 + Fungura Ishuri
               </button>
@@ -369,11 +376,18 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
           onCreated={() => { setShowCreate(false); loadClasses(); }}
         />
       )}
+      {showAddSchool && (
+        <AddSchoolModal
+          token={token}
+          onClose={() => setShowAddSchool(false)}
+          onDone={() => setShowAddSchool(false)}
+        />
+      )}
       {showAddStudents && (
         <AddStudentsModal
           token={token}
           onClose={() => { setShowAddStudents(false); loadClasses(); }}
-          onNeedJoinSchool={() => { setShowAddStudents(false); setActiveTab('classes'); }}
+          onNeedJoinSchool={() => { setShowAddStudents(false); setShowAddSchool(true); }}
         />
       )}
       {showParentInvites && (

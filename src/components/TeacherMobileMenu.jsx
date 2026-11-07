@@ -14,6 +14,7 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
     { id: 'classes', icon: '📚', label: 'Classes' },
     { id: 'chats', icon: '💬', label: 'Chats' },
     { id: 'connect', icon: '📞', label: 'Teacher Connect', path: `${basePath || '/teacher'}/connect` },
+    { id: 'library', icon: '📚', label: "Colleagues' Library", path: `${basePath || '/teacher'}/library` },
     { id: 'class-now', icon: '📸', label: 'Class Now' },
     { id: 'textbooks', icon: '📖', label: 'AI Textbooks', path: `${basePath || '/teacher'}/textbooks` },
     { id: 'quiz-reports', icon: '📊', label: 'Quiz Reports' },
