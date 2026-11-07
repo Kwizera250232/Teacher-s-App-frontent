@@ -50,6 +50,7 @@ export default function StudentDashboard() {
   const [coachingClassId, setCoachingClassId] = useState(null);
   const [coachingLessons, setCoachingLessons] = useState([]); // recorded lessons across all my classes
   const [coachingLessonsLoaded, setCoachingLessonsLoaded] = useState(false);
+  const [unreadMsgs, setUnreadMsgs] = useState(0);
 
   const openStatus = () => {
     setStatusPickerOpen(false);
@@ -80,6 +81,13 @@ export default function StudentDashboard() {
   useClassMomentAlerts(token, user?.role);
 
   useEffect(() => { loadClasses(); }, []);
+  useEffect(() => {
+    if (!token) return undefined;
+    const load = () => api.get('/messages/unread-count', token).then(r => setUnreadMsgs(r?.count || 0)).catch(() => {});
+    load();
+    const t = setInterval(load, 30000);
+    return () => clearInterval(t);
+  }, [token]);
   useEffect(() => { setClassesView('menu'); }, [activeTab]);
   useEffect(() => {
     if (activeTab !== 'coaching') return;
@@ -371,6 +379,9 @@ export default function StudentDashboard() {
                 <Link to="/messages" className="student-tool-card">
                   <span className="student-tool-icon">💬</span>
                   <span className="student-tool-label">Messages</span>
+                  {unreadMsgs > 0 && (
+                    <span style={{ position: 'absolute', top: 8, right: 10, background: '#ef4444', color: '#fff', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{unreadMsgs > 99 ? '99+' : unreadMsgs}</span>
+                  )}
                 </Link>
               </div>
             </section>

@@ -55,11 +55,19 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
   const isHeadTeacher = roleLabel === 'Head Teacher';
   const hasSchool = Boolean(user?.school_id);
   const [teachersOnline, setTeachersOnline] = useState([]);
+  const [unreadMsgs, setUnreadMsgs] = useState(0);
   useEffect(() => {
     if (!token) return undefined;
     const load = () => api.get('/presence/online?scope=all', token).then((d) => setTeachersOnline(d?.online || [])).catch(() => {});
     load();
     const t = setInterval(load, 60000);
+    return () => clearInterval(t);
+  }, [token]);
+  useEffect(() => {
+    if (!token) return undefined;
+    const load = () => api.get('/messages/unread-count', token).then((r) => setUnreadMsgs(r?.count || 0)).catch(() => {});
+    load();
+    const t = setInterval(load, 30000);
     return () => clearInterval(t);
   }, [token]);
   usePushNotifications(token);
@@ -121,6 +129,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
         onTabChange={setActiveTab}
         onLogout={logout}
         basePath={basePath}
+        unreadMsgs={unreadMsgs}
       />
       <PremiumSidebar
         user={user}
@@ -128,6 +137,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
         onTabChange={handleTabChange}
         onLogout={logout}
         basePath={basePath}
+        unreadMsgs={unreadMsgs}
       />
 
       <main className="premium-main">

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './TeacherMobileMenu.css';
 
-export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange, onLogout, basePath }) {
+export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange, onLogout, basePath, unreadMsgs = 0 }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -90,6 +90,9 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
               >
                 <span className="teacher-menu-item__icon">{item.icon}</span>
                 <span>{item.label}</span>
+                {item.id === 'chats' && unreadMsgs > 0 && (
+                  <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{unreadMsgs > 99 ? '99+' : unreadMsgs}</span>
+                )}
               </Link>
             ) : (
             <button
@@ -100,6 +103,9 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
             >
               <span className="teacher-menu-item__icon">{item.icon}</span>
               <span>{item.label}</span>
+              {item.id === 'chats' && unreadMsgs > 0 && (
+                <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{unreadMsgs > 99 ? '99+' : unreadMsgs}</span>
+              )}
             </button>
             )
           ))}
@@ -111,6 +117,9 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
           <Link to="/messages" className="teacher-menu-link" onClick={() => setOpen(false)}>
             <span className="teacher-menu-item__icon">💬</span>
             <span>Messages</span>
+            {unreadMsgs > 0 && (
+              <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{unreadMsgs > 99 ? '99+' : unreadMsgs}</span>
+            )}
           </Link>
           <Link to="/profile" className="teacher-menu-link" onClick={() => setOpen(false)}>
             <span className="teacher-menu-item__icon">👤</span>

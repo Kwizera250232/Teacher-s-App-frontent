@@ -630,6 +630,7 @@
 }
 
 .student-tool-card {
+  position: relative;
   background: var(--pro-card) !important;
   border: 1.5px solid var(--pro-border) !important;
   border-radius: 14px !important;

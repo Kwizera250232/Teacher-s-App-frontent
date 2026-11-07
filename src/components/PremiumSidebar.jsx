@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout, basePath = '/teacher' }) {
+export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout, basePath = '/teacher', unreadMsgs = 0 }) {
   const sidebarItems = [
     { id: 'classes', icon: '📚', label: 'Classes' },
     { id: 'chats', icon: '💬', label: 'Chats' },
@@ -40,6 +40,9 @@ export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout,
             >
               <span className="sidebar-icon">{item.icon}</span>
               <span className="sidebar-label">{item.label}</span>
+              {item.id === 'chats' && unreadMsgs > 0 && (
+                <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{unreadMsgs > 99 ? '99+' : unreadMsgs}</span>
+              )}
             </Link>
           ) : (
             <button
@@ -50,6 +53,9 @@ export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout,
             >
               <span className="sidebar-icon">{item.icon}</span>
               <span className="sidebar-label">{item.label}</span>
+              {item.id === 'chats' && unreadMsgs > 0 && (
+                <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{unreadMsgs > 99 ? '99+' : unreadMsgs}</span>
+              )}
             </button>
           )
         ))}
