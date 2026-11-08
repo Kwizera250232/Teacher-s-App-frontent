@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
 import VoiceCall from '../components/VoiceCall';
+import AlumniFeed from './alumni/AlumniFeed';
 
 const AV = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext y='.9em' font-size='50' x='25' fill='white'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
 
@@ -75,10 +76,12 @@ export default function TeacherConnect() {
                   {t.name} {t.is_online && <span style={{ fontSize: 10, color: '#16a34a', fontWeight: 700, marginLeft: 2 }}>● online</span>} {t.same_school && <span style={{ fontSize: 10, background: '#dcfce7', color: '#15803d', borderRadius: 6, padding: '1px 6px', marginLeft: 4, verticalAlign: 'middle' }}>SAME SCHOOL</span>}
                 </div>
                 <div style={{ fontSize: 12, color: '#64748b' }}>{t.role === 'head_teacher' ? '🏫 Head Teacher' : '👩‍🏫 Teacher'}{t.school_name ? ` · ${t.school_name}` : ''}</div>
-                <div style={{ fontSize: 12.5, color: '#334155', marginTop: 3 }}>
-                  <a href={`mailto:${t.email}`} style={{ color: '#0369a1', textDecoration: 'none' }}>✉️ {t.email}</a>
-                  {t.phone && <span style={{ marginLeft: 10 }}>📱 <a href={`tel:${t.phone}`} style={{ color: '#0369a1', textDecoration: 'none' }}>{t.phone}</a></span>}
-                </div>
+                {user?.role === 'admin' && (
+                  <div style={{ fontSize: 12.5, color: '#334155', marginTop: 3 }}>
+                    <a href={`mailto:${t.email}`} style={{ color: '#0369a1', textDecoration: 'none' }}>✉️ {t.email}</a>
+                    {t.phone && <span style={{ marginLeft: 10 }}>📱 <a href={`tel:${t.phone}`} style={{ color: '#0369a1', textDecoration: 'none' }}>{t.phone}</a></span>}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button
@@ -96,6 +99,12 @@ export default function TeacherConnect() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div style={{ marginTop: 26, borderTop: '2px solid #e2e8f0', paddingTop: 14 }}>
+          <h2 style={{ margin: '0 0 2px', fontSize: 17, color: '#0f172a' }}>🎓 UClass Alumni Feed</h2>
+          <p style={{ margin: '0 0 12px', fontSize: 12.5, color: '#64748b' }}>Post, chat and explore with every teacher on UClass.</p>
+          <AlumniFeed />
         </div>
       </div>
 
