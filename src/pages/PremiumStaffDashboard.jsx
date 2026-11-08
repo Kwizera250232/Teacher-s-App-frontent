@@ -54,15 +54,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
   const { online } = usePresence(token);
   const isHeadTeacher = roleLabel === 'Head Teacher';
   const hasSchool = Boolean(user?.school_id);
-  const [teachersOnline, setTeachersOnline] = useState([]);
   const [unreadMsgs, setUnreadMsgs] = useState(0);
-  useEffect(() => {
-    if (!token) return undefined;
-    const load = () => api.get('/presence/online?scope=all', token).then((d) => setTeachersOnline(d?.online || [])).catch(() => {});
-    load();
-    const t = setInterval(load, 60000);
-    return () => clearInterval(t);
-  }, [token]);
   useEffect(() => {
     if (!token) return undefined;
     const load = () => api.get('/messages/unread-count', token).then((r) => setUnreadMsgs(r?.count || 0)).catch(() => {});
@@ -168,7 +160,6 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
         {activeTab === 'classes' && (
           <>
             <TeacherEarningsCard token={token} />
-            <OnlineNowStrip online={teachersOnline} />
             <div className="premium-actions-row">
               {!hasSchool && (
                 <button type="button" className="premium-action-button premium-action-button--create" onClick={() => setShowAddSchool(true)}>
