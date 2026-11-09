@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
 const TABS = [
-  { key: 'articles', label: '📰 Articles', icon: '📰' },
   { key: 'books', label: '📚 Books', icon: '📚' },
   { key: 'library', label: '📖 Digital Library', icon: '📖' },
   { key: 'opportunities', label: '🌟 Opportunities', icon: '🌟' },
@@ -26,14 +25,11 @@ const LIBRARY_CATEGORIES = [
 
 export default function AlumniAdmin() {
   const { user, token } = useAuth();
-  const [activeTab, setActiveTab] = useState('articles');
+  const [activeTab, setActiveTab] = useState('books');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({});
   const [editing, setEditing] = useState(null);
-  const [reading, setReading] = useState(null);
-  const [rewardAmt, setRewardAmt] = useState({});
-  const [busy, setBusy] = useState(0);
 
   // Allow admin, head_teacher, and teacher
   const isAdmin = user?.role === 'admin' || user?.role === 'head_teacher' || user?.role === 'teacher';
@@ -53,15 +49,13 @@ export default function AlumniAdmin() {
     setLoading(true);
     try {
       let endpoint = '';
-      if (activeTab === 'articles') endpoint = '/alumni/admin/feed-posts';
-      else if (activeTab === 'books') endpoint = '/alumni/library';
+      if (activeTab === 'books') endpoint = '/alumni/library';
       else if (activeTab === 'library') endpoint = '/alumni/admin/library-items';
       else if (activeTab === 'opportunities') endpoint = '/alumni/opportunities';
       else if (activeTab === 'pastpapers') endpoint = '/alumni/past-papers';
       else if (activeTab === 'quizzes') endpoint = '/alumni/dean-quizzes';
       const data = await api.get(endpoint, token);
-      if (activeTab === 'articles') setItems(data.posts || []);
-      else if (activeTab === 'books') setItems(data.books || []);
+      if (activeTab === 'books') setItems(data.books || []);
       else if (activeTab === 'library') setItems(data.items || []);
       else if (activeTab === 'opportunities') setItems(data.opportunities || []);
       else if (activeTab === 'pastpapers') setItems(data.papers || []);
@@ -228,73 +222,13 @@ export default function AlumniAdmin() {
         ))}
       </div>
 
-      {activeTab === 'articles' ? (() => {
-        const review = async (id, status) => {
-          setBusy(id);
-          try { await api.put(`/alumni/admin/feed-posts/${id}/review`, { status }, token); loadItems(); }
-          catch (e) { alert(e.message || 'Failed'); }
-          finally { setBusy(0); }
-        };
-        const reward = async (id) => {
-          const amount = Math.floor(Number(rewardAmt[id] || 0));
-          if (!amount) return alert('Enter a reward amount in RWF first.');
-          setBusy(id);
-          try { await api.post(`/alumni/admin/feed-posts/${id}/reward`, { amount }, token); alert(`🎁 ${amount.toLocaleString()} RWF rewarded!`); setRewardAmt({ ...rewardAmt, [id]: '' }); loadItems(); }
-          catch (e) { alert(e.message || 'Failed'); }
-          finally { setBusy(0); }
-        };
-        const badge = (s) => s === 'approved' ? { t: '✅ Approved', c: '#16a34a', bg: '#dcfce7' } : s === 'flagged' ? { t: '🚩 Flagged', c: '#dc2626', bg: '#fee2e2' } : { t: '⏳ Pending review', c: '#b45309', bg: '#fef3c7' };
-        return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {items.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, background: '#fff', borderRadius: 12 }}>No articles yet.</div>
-          ) : items.map((p) => {
-            const b = badge(p.review_status);
-            return (
-              <div key={p.id} style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>{p.author_name} <span style={{ fontWeight: 400, fontSize: 12, color: '#64748b' }}>· {p.author_role}{p.school_name ? ` · ${p.school_name}` : ''}</span></div>
-                    <div style={{ fontSize: 13, color: '#334155', marginTop: 6, whiteSpace: 'pre-wrap', maxHeight: 60, overflow: 'hidden' }}>{p.content || '📷 image post'}</div>
-                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
-                      {new Date(p.created_at).toLocaleString()} · 👁 {p.views_count || 0} · ❤️ {p.likes_count || 0} · 💬 {p.comments_count || 0}{p.rewarded > 0 ? ` · 🎁 ${p.rewarded.toLocaleString()} RWF rewarded` : ''}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: b.bg, color: b.c, whiteSpace: 'nowrap' }}>{b.t}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <button onClick={() => setReading(p)} style={{ padding: '7px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>📖 Read</button>
-                  <button disabled={busy === p.id} onClick={() => review(p.id, 'approved')} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#dcfce7', color: '#16a34a', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>✅ Approve</button>
-                  <button disabled={busy === p.id} onClick={() => review(p.id, 'flagged')} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#fee2e2', color: '#dc2626', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>🚩 Flag</button>
-                  <input type="number" min="1" placeholder="RWF" value={rewardAmt[p.id] || ''} onChange={(e) => setRewardAmt({ ...rewardAmt, [p.id]: e.target.value })} style={{ width: 100, padding: '7px 10px', borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 13 }} />
-                  <button disabled={busy === p.id} onClick={() => reward(p.id)} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#f59e0b', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>🎁 Reward</button>
-                </div>
-              </div>
-            );
-          })}
-          {reading && (
-            <div onClick={() => setReading(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-              <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, maxWidth: 640, width: '100%', maxHeight: '80vh', overflow: 'auto', padding: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <strong>{reading.author_name} <span style={{ fontWeight: 400, fontSize: 12, color: '#64748b' }}>{reading.school_name || ''}</span></strong>
-                  <button onClick={() => setReading(null)} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
-                </div>
-                {Array.isArray(reading.image_paths) && reading.image_paths.length > 0 && reading.image_paths.map((img, i) => (
-                  <img key={i} src={img.startsWith('http') ? img : `${api.API_BASE?.replace('/api', '') || ''}${img}`} alt="" style={{ width: '100%', borderRadius: 10, marginBottom: 12 }} />
-                ))}
-                <div style={{ whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.6, color: '#1e293b' }}>{reading.content}</div>
-              </div>
-            </div>
-          )}
-        </div>
-        );
-      })() : renderForm()}
+      {renderForm()}
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}>Loading...</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {activeTab === 'articles' ? null : items.length === 0 ? (
+          {items.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, background: '#fff', borderRadius: 12 }}>No items yet. Add one above!</div>
           ) : (
             items.map((item) => (
