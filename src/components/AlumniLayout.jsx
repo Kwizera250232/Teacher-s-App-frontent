@@ -159,8 +159,8 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
 
       {/* MAIN CONTENT */}
       <main className={`alumni-main ${isMobile ? 'alumni-main-mobile' : ''} ${fullWidth ? 'alumni-main-fullwidth' : ''}`}>
-        {isMobile && showTopWriters && !fullWidth && <TopWriters token={token} compact />}
         {children}
+        {isMobile && showTopWriters && !fullWidth && <FindTeachers token={token} />}
       </main>
 
       {/* RIGHT SIDEBAR - Desktop */}
@@ -225,6 +225,38 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
             );
           })}
         </nav>
+      )}
+    </div>
+  );
+}
+
+function FindTeachers({ token }) {
+  const [open, setOpen] = useState(false);
+  const [teachers, setTeachers] = useState([]);
+  const navigate = useNavigate();
+
+  const load = () => {
+    if (open) { setOpen(false); return; }
+    api.get('/alumni/top-writers', token)
+      .then((d) => { setTeachers(d.teachers || []); setOpen(true); })
+      .catch(() => {});
+  };
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 14, padding: '10px 14px', margin: '12px 0', border: '1px solid #eef2f6' }}>
+      <button type="button" onClick={load} style={{ width: '100%', border: 'none', background: 'none', fontWeight: 800, fontSize: 14, color: '#667eea', cursor: 'pointer', padding: 6 }}>
+        {open ? 'Hide teachers ▲' : '👨‍🏫 Find more teachers ▼'}
+      </button>
+      {open && (
+        <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingTop: 8 }}>
+          {teachers.map((t) => (
+            <div key={t.id} onClick={() => navigate(`/alumni/profile/${t.id}`)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 58, cursor: 'pointer' }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: `hsl(${(t.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 15 }}>{t.name?.[0] || '?'}</div>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#334155', maxWidth: 58, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name?.split(' ')[0]}</span>
+            </div>
+          ))}
+          {teachers.length === 0 && <span style={{ fontSize: 12, color: '#94a3b8' }}>No other teachers yet.</span>}
+        </div>
       )}
     </div>
   );
