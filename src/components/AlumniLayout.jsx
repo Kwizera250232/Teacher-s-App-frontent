@@ -159,6 +159,7 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
 
       {/* MAIN CONTENT */}
       <main className={`alumni-main ${isMobile ? 'alumni-main-mobile' : ''} ${fullWidth ? 'alumni-main-fullwidth' : ''}`}>
+        {isMobile && showTopWriters && !fullWidth && <TopWriters token={token} compact />}
         {children}
       </main>
 
@@ -229,42 +230,65 @@ export default function AlumniLayout({ children, showTopWriters = true, fullWidt
   );
 }
 
-function TopWriters({ token }) {
+function TopWriters({ token, compact = false }) {
   const [writers, setWriters] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!token) return;
     api.get('/alumni/top-writers', token)
-      .then((data) => setWriters(data.writers || []))
-      .catch(() => setWriters([]));
+      .then((data) => { setWriters(data.writers || []); setTeachers(data.teachers || []); })
+      .catch(() => {});
   }, [token]);
 
-  const displayWriters = writers.length > 0 ? writers : [
-    { id: 1, name: 'Kwizera Tr', school: 'Bright School', articles: 5, avatar: 'K' },
-    { id: 2, name: 'Ishimwe Div', school: 'Bright School', articles: 3, avatar: 'I' },
-    { id: 3, name: 'Keza Marie', school: 'Green Hills', articles: 2, avatar: 'M' },
-    { id: 4, name: 'Niyonzima J', school: 'Bright School', articles: 2, avatar: 'N' },
-    { id: 5, name: 'Mugabo Eric', school: 'Kigali Sec', articles: 1, avatar: 'E' },
-  ];
+  const row = (w, i, list) => (
+    <div key={w.id || i} onClick={() => navigate(`/alumni/profile/${w.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < list.length - 1 ? '1px solid #f1f5f9' : 'none', cursor: 'pointer' }}>
+      <div style={{ width: 34, height: 34, borderRadius: '50%', background: `hsl(${(w.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>{w.name?.[0] || '?'}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{w.name}</span>
+          <VerifiedBadge size={14} userId={w.id} onViewProfile={() => navigate(`/alumni/profile/${w.id}`)} />
+          <AIRevisionBadge size={14} userId={w.id} />
+        </div>
+        <div style={{ fontSize: 11, color: '#94a3b8' }}>{w.school || 'UClass'} · {w.articles} articles</div>
+      </div>
+      <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700 }}>#{i + 1}</span>
+    </div>
+  );
+
+  // compact = mobile strip — teachers as a horizontal scroll row
+  if (compact) {
+    const people = [...writers.map(w => ({ ...w, badge: '✍️' })), ...teachers.map(t => ({ ...t, badge: '👨‍🏫' }))];
+    if (!people.length) return null;
+    return (
+      <div style={{ background: '#fff', borderRadius: 14, padding: '12px 14px', margin: '0 0 12px', border: '1px solid #eef2f6' }}>
+        <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 8 }}>🏆 Top Writers & Teachers</div>
+        <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+          {people.map((p, i) => (
+            <div key={p.id + '-' + i} onClick={() => navigate(`/alumni/profile/${p.id}`)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 58, cursor: 'pointer' }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: `hsl(${(p.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 15, position: 'relative' }}>
+                {p.name?.[0] || '?'}
+                <span style={{ position: 'absolute', bottom: -3, right: -3, fontSize: 11 }}>{p.badge}</span>
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#334155', maxWidth: 58, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name?.split(' ')[0]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: '#ffffff', borderRadius: 16, padding: 18, marginBottom: 16, border: '1px solid #eef2f6' }}>
       <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 700, color: '#0f172a', fontFamily: "'Newsreader', Georgia, serif" }}>🏆 Top Writers</h3>
-      {displayWriters.map((w, i) => (
-        <div key={w.id || i} onClick={() => navigate(`/alumni/profile/${w.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < displayWriters.length - 1 ? '1px solid #f1f5f9' : 'none', cursor: 'pointer' }}>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: `hsl(${(w.id * 137) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>{w.avatar || w.name?.[0] || '?'}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{w.name}</span>
-              <VerifiedBadge size={14} userId={w.id} onViewProfile={() => navigate(`/alumni/profile/${w.id}`)} />
-              <AIRevisionBadge size={14} userId={w.id} />
-            </div>
-            <div style={{ fontSize: 11, color: '#94a3b8' }}>{w.school || 'UClass'} · {w.articles} articles</div>
-          </div>
-          <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700 }}>#{i + 1}</span>
-        </div>
-      ))}
+      {writers.map((w, i) => row(w, i, writers))}
+      {teachers.length > 0 && (
+        <>
+          <h3 style={{ margin: '14px 0 8px', fontSize: 14, fontWeight: 700, color: '#0f172a' }}>👨‍🏫 Teachers</h3>
+          {teachers.map((t, i) => row(t, i, teachers))}
+        </>
+      )}
     </div>
   );
 }
