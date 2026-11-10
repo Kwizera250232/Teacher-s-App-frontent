@@ -842,11 +842,10 @@ export default function AlumniFeed() {
         {renderStoryCircles()}
 
         {/* Share what will help others card */}
-        <div className="af-share-help-card" onClick={() => setShowComposer(true)}>
+        <div className="af-share-help-card" onClick={() => setShowComposer(true)} style={{ border: '1.5px solid #c7d2fe', background: '#fff', cursor: 'text' }}>
           <div className="af-share-help-icon">💡</div>
-          <div className="af-share-help-body">
-            <strong>Share what will help others</strong>
-            <p>Post an article, tip, or story that benefits your fellow alumni</p>
+          <div className="af-share-help-body" style={{ flex: 1, border: '1px solid #e2e8f0', borderRadius: 999, padding: '10px 16px', background: '#f8fafc', color: '#64748b', fontSize: 14 }}>
+            ✍️ Share what will help others — post an article, tip, or story that benefits your fellow alumni…
           </div>
           <span className="af-share-help-arrow">→</span>
         </div>

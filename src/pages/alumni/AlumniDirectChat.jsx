@@ -15,6 +15,7 @@ export default function AlumniDirectChat() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [peerOnline, setPeerOnline] = useState(null);
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -25,7 +26,10 @@ export default function AlumniDirectChat() {
     }).catch(console.error);
     loadMessages();
     const interval = setInterval(loadMessages, 5000);
-    return () => clearInterval(interval);
+    const presence = () => api.get(`/presence/status/${userId}`, token).then((r) => setPeerOnline(!!r?.is_online)).catch(() => {});
+    presence();
+    const pInt = setInterval(presence, 20000);
+    return () => { clearInterval(interval); clearInterval(pInt); };
   }, [userId, token]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
@@ -123,6 +127,7 @@ export default function AlumniDirectChat() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 16, display: 'flex', alignItems: 'center', gap: 4 }}>{colleague?.name || 'Chat'}<VerifiedBadge size={14} userId={Number(userId)} /></div>
+            <div style={{ fontSize: 12, color: peerOnline ? '#16a34a' : '#94a3b8' }}>{peerOnline ? '● online now' : '○ offline'}</div>
             <div style={{ fontSize: 12, opacity: 0.8 }}>{colleague?.current_occupation || 'UClass Alumni'}</div>
           </div>
         </div>
