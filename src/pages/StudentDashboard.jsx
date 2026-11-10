@@ -376,6 +376,10 @@ export default function StudentDashboard() {
                   <span className="student-tool-icon">📋</span>
                   <span className="student-tool-label">Quiz Reports</span>
                 </Link>
+                <Link to="/mbaza" className="student-tool-card">
+                  <span className="student-tool-icon">🎓</span>
+                  <span className="student-tool-label">MBAZA</span>
+                </Link>
                 <Link to="/messages" className="student-tool-card">
                   <span className="student-tool-icon">💬</span>
                   <span className="student-tool-label">Messages</span>

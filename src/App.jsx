@@ -32,6 +32,7 @@ const ClassMomentsPage = lazy(() => import('./pages/ClassMomentsPage'));
 const ShareMomentPage = lazy(() => import('./pages/ShareMomentPage'));
 const QuizShareLanding = lazy(() => import('./pages/QuizShareLanding'));
 const GuestDashboard = lazy(() => import('./pages/GuestDashboard'));
+const Mbaza = lazy(() => import('./pages/Mbaza'));
 const GuestClassPage = lazy(() => import('./pages/GuestClassPage'));
 const GuestProfile = lazy(() => import('./pages/GuestProfile'));
 import InviteSignup from './pages/InviteSignup';
@@ -253,6 +254,9 @@ function AppShell() {
                 } />
                 <Route path="/student/textbooks/:id" element={
                   <ProtectedRoute role="student"><TextbookReader /></ProtectedRoute>
+                } />
+                <Route path="/mbaza" element={
+                  <ProtectedRoute role="student"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><Mbaza /></Suspense></ProtectedRoute>
                 } />
                 <Route path="/teacher-profile/:id" element={
                   <ProtectedRoute><TeacherPublicProfile /></ProtectedRoute>
