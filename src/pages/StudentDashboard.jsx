@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Mbaza from './Mbaza';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, UPLOADS_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -33,7 +34,8 @@ export default function StudentDashboard() {
   const { user, token, logout, isImpersonating, stopImpersonation } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [momentPreview, setMomentPreview] = useState(null);
+  
+  const [showMbaza, setShowMbaza] = useState(false);
   const [classes, setClasses] = useState([]);
   const [showJoin, setShowJoin] = useState(false);
   const [error, setError] = useState('');
@@ -376,10 +378,8 @@ export default function StudentDashboard() {
                   <span className="student-tool-icon">📋</span>
                   <span className="student-tool-label">Quiz Reports</span>
                 </Link>
-                <Link to="/mbaza" className="student-tool-card">
-                  <span className="student-tool-icon">🎓</span>
-                  <span className="student-tool-label">MBAZA</span>
-                </Link>
+                
+                <button type="button" onClick={()=>setShowMbaza(true)} className="student-tool-card" style={{background:"linear-gradient(135deg,#00A1DE,#20603D)",color:"#fff",border:"none",cursor:"pointer"}}><span className="student-tool-icon">🎓</span><span className="student-tool-label">MBAZA · talk to me</span></button>
                 <Link to="/messages" className="student-tool-card">
                   <span className="student-tool-icon">💬</span>
                   <span className="student-tool-label">Messages</span>
@@ -452,6 +452,15 @@ export default function StudentDashboard() {
                 {quickNote.saving ? 'Saving…' : 'Save'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      <button type="button" onClick={() => setShowMbaza(true)} title="MBAZA" style={{ position:"fixed", right:18, bottom:18, zIndex:999, border:"none", borderRadius:999, padding:"12px 18px", fontWeight:900, fontSize:15, color:"#fff", background:"linear-gradient(135deg,#00A1DE,#20603D)", boxShadow:"0 6px 18px rgba(0,0,0,.35)", cursor:"pointer" }}>🎓 MBAZA</button>
+      {showMbaza && (
+        <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(2,6,23,.65)",display:"flex",justifyContent:"center",alignItems:"center",padding:10}} onClick={e => { if (e.target === e.currentTarget) setShowMbaza(false); }}>
+          <div style={{background:"#fff",borderRadius:18,width:"min(700px,96vw)",maxHeight:"92vh",overflow:"auto",position:"relative"}}>
+            <button onClick={() => setShowMbaza(false)} style={{position:"sticky",top:8,float:"right",marginRight:10,zIndex:9,border:"none",background:"#0b2447",color:"#fff",borderRadius:999,width:30,height:30,cursor:"pointer"}}>✕</button>
+            <Mbaza />
           </div>
         </div>
       )}
