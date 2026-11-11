@@ -89,6 +89,12 @@ class AppErrorBoundary extends Component {
     const last = Number(sessionStorage.getItem('app_reload_ts') || 0);
     if (Date.now() - last > 30000) {
       sessionStorage.setItem('app_reload_ts', String(Date.now()));
+      try {
+        if ('caches' in window) {
+          caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))).finally(() => window.location.reload());
+          return;
+        }
+      } catch (e) {}
       window.location.reload();
     }
   }
