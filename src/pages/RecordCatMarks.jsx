@@ -38,6 +38,10 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const [alsoEmail, setAlsoEmail] = useState(false);
   const [sendingMarks, setSendingMarks] = useState(false);
   const [sendResult, setSendResult] = useState('');
+  const [sheets, setSheets] = useState([]);
+  const [activeSheetId, setActiveSheetId] = useState(null);
+  const [viewSheetId, setViewSheetId] = useState(null);
+  const isArchived = activeSheetId != null && viewSheetId != null && viewSheetId !== activeSheetId;
   const location = useLocation();
   const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
   const isEmbedded = Boolean(embeddedClassId);
@@ -50,19 +54,49 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
     }).catch((e) => setError(e.message));
   }, [token, isEmbedded]);
 
+  const loadSheets = async () => {
+    if (!classId) return;
+    try {
+      const r = await api.get(`/catmarks/${classId}/sheets`, token);
+      setSheets(r.sheets || []);
+      setActiveSheetId(r.active_id || null);
+      setViewSheetId((v) => (v ?? r.active_id ?? null));
+    } catch { /* older API without sheets */ }
+  };
+
   const loadData = () => {
     if (!classId) return;
     setLoading(true);
-    const overviewUrl = selectedSubject
-      ? `/catmarks/${classId}/overview?subject=${encodeURIComponent(selectedSubject)}`
-      : `/catmarks/${classId}/overview`;
+    const params = new URLSearchParams();
+    if (selectedSubject) params.set('subject', selectedSubject);
+    if (viewSheetId) params.set('sheet_id', String(viewSheetId));
+    const qs = params.toString();
+    const overviewUrl = `/catmarks/${classId}/overview${qs ? `?${qs}` : ''}`;
     Promise.all([
       api.get(overviewUrl, token).then(setStats),
       api.get(`/classes/${classId}/quizzes`, token).then(setQuizzes),
     ]).catch((e) => setError(e.message)).finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadData(); }, [classId, token, selectedSubject]);
+  useEffect(() => { setViewSheetId(null); loadSheets(); }, [classId, token]);
+  useEffect(() => { loadData(); }, [classId, token, selectedSubject, viewSheetId]);
+
+  const addSheet = async () => {
+    const n = sheets.length;
+    const def = `Term ${['I', 'II', 'III', 'IV', 'V', 'VI'][n] || n + 1}`;
+    const name = window.prompt(
+      'Name the new marks sheet (e.g. "Term II").\n\nThe current sheet is archived immediately — its marks stay saved and viewable under Archived, but sending marks to parents and generating reports will only use the NEW active sheet.',
+      def
+    );
+    if (name === null) return;
+    try {
+      const res = await api.post(`/catmarks/${classId}/sheets`, { name: name.trim() || def }, token);
+      await loadSheets();
+      setViewSheetId(res.sheet?.id ?? null);
+      setStats(null);
+      setError('');
+    } catch (err) { setError(err.message); }
+  };
 
   const handleClassChange = (nextId) => {
     setClassId(nextId);
@@ -208,6 +242,43 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
       <main className={isEmbedded ? '' : 'class-main'}>
         {error && <p className="alert alert-error">{error}</p>}
 
+        {/* Sheets bar — active sheet receives new marks; archived sheets are view-only */}
+        {classId && sheets.length > 0 && (
+          <section className="cat-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', letterSpacing: 0.8 }}>SHEETS</span>
+              {sheets.map((sh) => (
+                <button
+                  key={sh.id}
+                  type="button"
+                  onClick={() => setViewSheetId(sh.id)}
+                  title={sh.active ? 'Active — new marks are written here and used for reports/parent sends' : 'Archived — view only'}
+                  style={{
+                    padding: '5px 12px', borderRadius: 999, cursor: 'pointer', fontWeight: 700, fontSize: 12,
+                    border: sh.id === viewSheetId ? '2px solid #7c3aed' : '1.5px solid #e2e8f0',
+                    background: sh.id === viewSheetId ? '#f3e8ff' : '#fff',
+                    color: sh.id === viewSheetId ? '#5b21b6' : '#334155',
+                  }}
+                >
+                  {sh.active ? '📗' : '🗄'} {sh.name}{sh.active ? ' • Active' : ''}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="btn btn-primary btn-sm" onClick={addSheet} title="Start a fresh marks sheet — the current one is archived">
+              ＋ Add new sheet
+            </button>
+          </section>
+        )}
+
+        {isArchived && (
+          <div style={{
+            background: '#fff7ed', border: '1.5px solid #fdba74', borderRadius: 10,
+            padding: '8px 14px', fontSize: 13, color: '#9a3412', fontWeight: 600, marginBottom: 12,
+          }}>
+            🗄 Archived sheet — view only. Reports and "Send to Parents" always use the active sheet.
+          </div>
+        )}
+
         {/* Action bar */}
         <section className="cat-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -242,23 +313,29 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
             />
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowRecord(v => !v)}>
-              ✏️ Record Mark
-            </button>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowMigrate(v => !v)}>
-              📋 From Quiz
-            </button>
+            {!isArchived && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowRecord(v => !v)}>
+                ✏️ Record Mark
+              </button>
+            )}
+            {!isArchived && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowMigrate(v => !v)}>
+                📋 From Quiz
+              </button>
+            )}
             <button type="button" className="btn btn-secondary btn-sm" onClick={exportCSV} disabled={roster.length === 0}>
               ⬇️ Export CSV
             </button>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => { setShowSendParents(v => !v); setSendResult(''); }}
-              disabled={roster.length === 0}
-            >
-              📧 Send to Parents
-            </button>
+            {!isArchived && (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => { setShowSendParents(v => !v); setSendResult(''); }}
+                disabled={roster.length === 0}
+              >
+                📧 Send to Parents
+              </button>
+            )}
           </div>
         </section>
 
@@ -452,10 +529,10 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                           </span>
                         ) : (
                           <span
-                            style={{ fontSize: 10, color: '#7c3aed', display: 'block', fontWeight: 600, textDecoration: 'underline dotted' }}
-                            onClick={(e) => { e.stopPropagation(); setEditingCatTotal({ num, value: catTotal ? String(catTotal) : '' }); }}
+                            style={{ fontSize: 10, color: '#7c3aed', display: 'block', fontWeight: 600, textDecoration: isArchived ? 'none' : 'underline dotted' }}
+                            onClick={(e) => { e.stopPropagation(); if (!isArchived) setEditingCatTotal({ num, value: catTotal ? String(catTotal) : '' }); }}
                           >
-                            {catTotal ? `/ ${catTotal}` : 'set total'}
+                            {catTotal ? `/ ${catTotal}` : (isArchived ? '' : 'set total')}
                           </span>
                         )}
                       </th>
@@ -476,11 +553,11 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                       return (
                         <td
                           key={num}
-                          className={!isEdit ? 'cat-cell-clickable' : ''}
+                          className={!isEdit && !isArchived ? 'cat-cell-clickable' : ''}
                           style={{ position: 'relative' }}
-                          title="Click to edit · 🗑 to delete"
-                          onClick={() => !isEdit && setEditing({ studentId: s.student_id, num, value: val != null ? String(val) : '' })}
-                          onContextMenu={(e) => { e.preventDefault(); if (val != null) deleteMark(s.student_id, num); }}
+                          title={isArchived ? 'Archived — view only' : 'Click to edit · 🗑 to delete'}
+                          onClick={() => !isArchived && !isEdit && setEditing({ studentId: s.student_id, num, value: val != null ? String(val) : '' })}
+                          onContextMenu={(e) => { e.preventDefault(); if (!isArchived && val != null) deleteMark(s.student_id, num); }}
                         >
                           {isEdit ? (
                             <input
@@ -503,7 +580,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                 <strong>{val}</strong>
                                 <span style={{ fontSize: 10, color: '#94a3b8' }}>/{stats?.cat_totals?.[num] || 100}</span>
-                                <button
+                                {!isArchived && <button
                                   type="button"
                                   title="Delete this mark"
                                   aria-label={`Delete CAT ${num} mark for ${s.name}`}
@@ -513,7 +590,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                                     width: 22, height: 22, padding: 0, fontSize: 12, lineHeight: '22px',
                                     cursor: 'pointer', flexShrink: 0,
                                   }}
-                                >🗑</button>
+                                >🗑</button>}
                               </span>
                             ) : '—'
                           )}
