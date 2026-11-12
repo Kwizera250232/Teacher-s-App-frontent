@@ -56,7 +56,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
     if (k === 'ssr' || k === 'sst' || k === 'srs' || k.startsWith('socialandreligious')) return 'srs';
     if (k === 'set' || k.startsWith('scienceandelementary')) return 'set';
     if (k.startsWith('physicaleducation') || k === 'pheducation' || k === 'pes') return 'physicaleducation';
-    return k;
+    return k.replace(/s$/, '');
   };
   const displaySubj = (s) => ({ srs: 'SRS', set: 'SET', physicaleducation: 'Physical Education' }[canon(s)] || s);
   const scoreFor = (name) => scores.find((s) => canon(s.name) === canon(name))?.score;
