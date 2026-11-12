@@ -93,6 +93,12 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
         total_marks: catTotal,
         subject: selectedSubject || 'General',
       }, token);
+      setStats(prev => prev ? {
+        ...prev,
+        students: prev.students.map(st => st.student_id === studentId
+          ? { ...st, cat: { ...(st.cat || {}), [testNumber]: marks } }
+          : st),
+      } : prev);
       setEditing(null);
       setError('');
       loadData();
@@ -108,6 +114,12 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
     try {
       const subjParam = selectedSubject ? `?subject=${encodeURIComponent(selectedSubject)}` : '';
       await api.delete(`/catmarks/${classId}/entry/${studentId}/${testNumber}${subjParam}`, token);
+      setStats(prev => prev ? {
+        ...prev,
+        students: prev.students.map(st => st.student_id === studentId
+          ? { ...st, cat: { ...(st.cat || {}), [testNumber]: null } }
+          : st),
+      } : prev);
       setError('');
       loadData();
     } catch (err) { setError(err.message); }
@@ -404,7 +416,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
               </span>
             )}
           </div>
-          {loading ? (
+          {loading && !stats ? (
             <p>Loading...</p>
           ) : roster.length === 0 ? (
             <p>No students in this class.</p>
