@@ -17,6 +17,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
   const [previewHtml, setPreviewHtml] = useState(null);
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailDone, setEmailDone] = useState('');
+  const [folderUrl, setFolderUrl] = useState('');
   const [roster, setRoster] = useState([]);
   const [selectedIds, setSelectedIds] = useState(null); // null = all
   const [showStudents, setShowStudents] = useState(false);
@@ -144,7 +145,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
 
   const emailAll = async () => {
     if (!emails.length) { onError?.('Add at least one email — type it and press Enter.'); return; }
-    setEmailBusy(true); setEmailDone('');
+    setEmailBusy(true); setEmailDone(''); setFolderUrl('');
     try {
       const res = await fetch(`${API_BASE}/catmarks/${classId}/midterm-report/send-all`, {
         method: 'POST',
@@ -158,7 +159,8 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || `Failed (${res.status})`);
-      setEmailDone(`✅ Sent ${d.sent} report card${d.sent > 1 ? 's' : ''} to ${d.to}`);
+      setFolderUrl(d.folder_url || '');
+      setEmailDone(`✅ Sent — each recipient got ONE 📁 folder holding all ${d.sent} report card${d.sent > 1 ? 's' : ''} + the class proclamation → ${d.to}`);
     } catch (e) {
       onError?.(e.message || 'Could not email the reports.');
     } finally {
@@ -198,6 +200,12 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
               </div>
             </div>
             {emailDone && <p style={{ margin: '10px 0 0', fontSize: 13, color: '#166534', fontWeight: 600 }}>{emailDone}</p>}
+            {folderUrl && (
+              <p style={{ margin: '6px 0 0', fontSize: 12 }}>
+                <a href={folderUrl} target="_blank" rel="noreferrer" style={{ color: '#0b5cad', fontWeight: 700 }}>📁 Open the reports folder</a>
+                <span style={{ color: '#94a3b8' }}> — same folder the recipients get; press a file inside to download it as .doc</span>
+              </p>
+            )}
           </>
         ) : (
           <>
@@ -222,7 +230,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
                   {form.logo && <button type="button" className="btn btn-outline btn-sm" onClick={() => set('logo', null)}>✕</button>}
                 </div>
               </div>
-              <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Send reports to — each email gets the Word reports attached directly, no ZIP (type email → press Enter / , / space to add more)</label>
+              <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Send reports to — each email gets ONE 📁 folder holding all Word reports + the class proclamation (type email → press Enter / , / space to add more)</label>
                 <div style={{ ...inp, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', cursor: 'text' }} onClick={(e) => e.currentTarget.querySelector('input')?.focus()}>
                   {emails.map((em) => (
                     <span key={em} style={{
@@ -252,7 +260,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
                   />
                 </div>
                 {emails.length > 0 && (
-                  <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b' }}>{emails.length} recipient{emails.length > 1 ? 's' : ''} — each gets the same Word documents.</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b' }}>{emails.length} recipient{emails.length > 1 ? 's' : ''} — each gets the same reports folder.</p>
                 )}
               </div>
               {roster.length > 0 && (
@@ -360,7 +368,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
                 type="button"
                 className="btn btn-outline"
                 disabled={emailBusy || !form.subjects.length}
-                title="Email the selected students' report cards as Word documents to the listed addresses"
+                title="Email ONE folder holding the selected students' report cards + class proclamation to the listed addresses"
                 onClick={emailAll}
               >
                 {emailBusy ? '⏳ Emailing…' : `📧 Email ${selectedIds ? selectedIds.length : roster.length || 'All'} Report${(selectedIds ? selectedIds.length : roster.length) === 1 ? '' : 's'} (.doc)`}
@@ -370,6 +378,12 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
               </button>
             </div>
             {emailDone && <p style={{ margin: '10px 0 0', fontSize: 13, color: '#166534', fontWeight: 600 }}>{emailDone}</p>}
+            {folderUrl && (
+              <p style={{ margin: '6px 0 0', fontSize: 12 }}>
+                <a href={folderUrl} target="_blank" rel="noreferrer" style={{ color: '#0b5cad', fontWeight: 700 }}>📁 Open the reports folder</a>
+                <span style={{ color: '#94a3b8' }}> — same folder the recipients get; press a file inside to download it as .doc</span>
+              </p>
+            )}
           </>
         )}
       </div>
