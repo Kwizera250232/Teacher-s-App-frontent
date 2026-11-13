@@ -20,6 +20,17 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
   const [roster, setRoster] = useState([]);
   const [selectedIds, setSelectedIds] = useState(null); // null = all
   const [showStudents, setShowStudents] = useState(false);
+  const [emails, setEmails] = useState([]); // multiple report recipients
+  const [emailDraft, setEmailDraft] = useState('');
+
+  const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const addEmail = () => {
+    const v = emailDraft.trim().toLowerCase();
+    if (!v) return;
+    if (!EMAIL_RX.test(v)) { onError?.('Type a valid email, then press Enter to add it.'); return; }
+    setEmails((l) => (l.includes(v) ? l : [...l, v]));
+    setEmailDraft('');
+  };
 
   useEffect(() => {
     let alive = true;
@@ -39,6 +50,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
           academic_year: d.academic_year || '', term: d.term || 'I', subjects: d.subjects || [], logo: d.logo || null,
           authority_email: d.authority_email || '',
         });
+        setEmails(String(d.authority_email || '').split(/[,;\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => EMAIL_RX.test(e)));
       } catch (e) {
         onError?.(e.message);
       } finally {
@@ -131,13 +143,18 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
   };
 
   const emailAll = async () => {
-    if (!form.authority_email.trim()) { onError?.('Add the school authority email first.'); return; }
+    if (!emails.length) { onError?.('Add at least one email — type it and press Enter.'); return; }
     setEmailBusy(true); setEmailDone('');
     try {
       const res = await fetch(`${API_BASE}/catmarks/${classId}/midterm-report/send-all`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ teacher_comment: comment, ...form, student_ids: selectedIds }),
+        body: JSON.stringify({
+          teacher_comment: comment, ...form,
+          authority_email: emails.join(', '),
+          authority_emails: emails,
+          student_ids: selectedIds,
+        }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || `Failed (${res.status})`);
@@ -205,8 +222,38 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
                   {form.logo && <button type="button" className="btn btn-outline btn-sm" onClick={() => set('logo', null)}>✕</button>}
                 </div>
               </div>
-              <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>School authority email — reports arrive as ONE zipped folder</label>
-                <input style={inp} type="email" value={form.authority_email} onChange={(e) => set('authority_email', e.target.value)} placeholder="headteacher@school.rw" />
+              <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Send reports to — ONE zipped folder goes to every email (type email → press Enter / , / space to add more)</label>
+                <div style={{ ...inp, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', cursor: 'text' }} onClick={(e) => e.currentTarget.querySelector('input')?.focus()}>
+                  {emails.map((em) => (
+                    <span key={em} style={{
+                      background: '#f3e8ff', color: '#5b21b6', borderRadius: 999, padding: '3px 6px 3px 10px',
+                      fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4,
+                    }}>
+                      {em}
+                      <button
+                        type="button"
+                        title="Remove"
+                        onClick={() => setEmails((l) => l.filter((x) => x !== em))}
+                        style={{ border: 'none', background: 'transparent', color: '#7c3aed', cursor: 'pointer', fontSize: 13, padding: '0 2px', lineHeight: 1 }}
+                      >✕</button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    value={emailDraft}
+                    onChange={(e) => setEmailDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',' || e.key === ' ') { e.preventDefault(); addEmail(); }
+                      else if (e.key === 'Backspace' && !emailDraft) setEmails((l) => l.slice(0, -1));
+                    }}
+                    onBlur={addEmail}
+                    placeholder={emails.length ? 'add another email…' : 'headteacher@school.rw'}
+                    style={{ flex: 1, minWidth: 170, border: 'none', outline: 'none', fontSize: 14, padding: '4px 2px', background: 'transparent' }}
+                  />
+                </div>
+                {emails.length > 0 && (
+                  <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b' }}>{emails.length} recipient{emails.length > 1 ? 's' : ''} — each gets the same ZIP.</p>
+                )}
               </div>
               {roster.length > 0 && (
                 <div style={{ gridColumn: '1 / -1' }}>
