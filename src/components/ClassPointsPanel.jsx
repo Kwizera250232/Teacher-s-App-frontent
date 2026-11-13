@@ -3,6 +3,7 @@ import { api } from '../api';
 import VerifiedBadge from './VerifiedBadge';
 import TeacherGroupsPanel from './TeacherGroupsPanel';
 import TransferStudentsModal from './TransferStudentsModal';
+import ProclamationModal from './ProclamationModal';
 
 const AVATAR_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
@@ -58,6 +59,7 @@ export default function ClassPointsPanel({
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [showTransfer, setShowTransfer] = useState(false);
+  const [showProclamation, setShowProclamation] = useState(false);
   const tableWrapperRef = useRef(null);
 
   const load = useCallback(async () => {
@@ -486,6 +488,15 @@ export default function ClassPointsPanel({
               >
                 Download
               </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                style={{ fontSize: 12, padding: '6px 12px' }}
+                title="View/download the class proclamation — ranked marks board from the active sheet"
+                onClick={() => setShowProclamation(true)}
+              >
+                📋 Proclamation
+              </button>
             </div>
             <div className="class-roster-table-wrapper" ref={tableWrapperRef} style={{ overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y', display: 'block', width: '100%', maxWidth: '100%' }}>
               <table className="class-roster-table">
@@ -859,6 +870,15 @@ export default function ClassPointsPanel({
           load();
         }}
       />
+
+      {showProclamation && (
+        <ProclamationModal
+          classId={classId}
+          token={token}
+          onClose={() => setShowProclamation(false)}
+          onError={onError}
+        />
+      )}
     </div>
   );
 }
