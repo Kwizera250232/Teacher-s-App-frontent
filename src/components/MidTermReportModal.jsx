@@ -190,7 +190,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
               <button type="button" className="btn btn-secondary" onClick={() => setPreviewHtml(null)}>← Edit details</button>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="button" className="btn btn-outline" disabled={emailBusy} onClick={emailAll}>
-                  {emailBusy ? '⏳ Emailing…' : `📧 Email ${selectedIds ? selectedIds.length : roster.length || 'All'} Reports (ZIP)`}
+                  {emailBusy ? '⏳ Emailing…' : `📧 Email ${selectedIds ? selectedIds.length : roster.length || 'All'} Reports (.doc)`}
                 </button>
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={downloadDoc}>
                   {busy ? '⏳ …' : '⬇️ Download Word'}
@@ -222,7 +222,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
                   {form.logo && <button type="button" className="btn btn-outline btn-sm" onClick={() => set('logo', null)}>✕</button>}
                 </div>
               </div>
-              <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Send reports to — ONE zipped folder goes to every email (type email → press Enter / , / space to add more)</label>
+              <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Send reports to — each email gets the Word reports attached directly, no ZIP (type email → press Enter / , / space to add more)</label>
                 <div style={{ ...inp, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', cursor: 'text' }} onClick={(e) => e.currentTarget.querySelector('input')?.focus()}>
                   {emails.map((em) => (
                     <span key={em} style={{
@@ -252,7 +252,7 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
                   />
                 </div>
                 {emails.length > 0 && (
-                  <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b' }}>{emails.length} recipient{emails.length > 1 ? 's' : ''} — each gets the same ZIP.</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b' }}>{emails.length} recipient{emails.length > 1 ? 's' : ''} — each gets the same Word documents.</p>
                 )}
               </div>
               {roster.length > 0 && (
@@ -360,10 +360,10 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
                 type="button"
                 className="btn btn-outline"
                 disabled={emailBusy || !form.subjects.length}
-                title="Email the selected students' report cards as ONE zipped folder to the school authority"
+                title="Email the selected students' report cards as Word documents to the listed addresses"
                 onClick={emailAll}
               >
-                {emailBusy ? '⏳ Emailing…' : `📧 Email ${selectedIds ? selectedIds.length : roster.length || 'All'} Report${(selectedIds ? selectedIds.length : roster.length) === 1 ? '' : 's'} (ZIP)`}
+                {emailBusy ? '⏳ Emailing…' : `📧 Email ${selectedIds ? selectedIds.length : roster.length || 'All'} Report${(selectedIds ? selectedIds.length : roster.length) === 1 ? '' : 's'} (.doc)`}
               </button>
               <button type="button" className="btn btn-primary" disabled={busy || !form.subjects.length} onClick={showPreview}>
                 {busy ? '⏳ Generating…' : '👁 Generate Report'}
