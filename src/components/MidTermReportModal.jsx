@@ -168,6 +168,25 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
     }
   };
 
+  const openFolder = async () => {
+    setEmailBusy(true); setFolderUrl('');
+    try {
+      const res = await fetch(`${API_BASE}/catmarks/${classId}/midterm-report/folder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ teacher_comment: comment, ...form, student_ids: selectedIds }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || `Failed (${res.status})`);
+      setFolderUrl(d.folder_url || '');
+      if (d.folder_url) window.open(d.folder_url, '_blank');
+    } catch (e) {
+      onError?.(e.message || 'Could not build the reports folder.');
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}
@@ -372,6 +391,15 @@ export default function MidTermReportModal({ classId, token, student, onClose, o
                 onClick={emailAll}
               >
                 {emailBusy ? '⏳ Emailing…' : `📧 Email ${selectedIds ? selectedIds.length : roster.length || 'All'} Report${(selectedIds ? selectedIds.length : roster.length) === 1 ? '' : 's'} (.doc)`}
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline"
+                disabled={emailBusy || !form.subjects.length}
+                title="Build the reports folder and open it — press Download all inside to save every Word report to this device"
+                onClick={openFolder}
+              >
+                📁 Reports folder
               </button>
               <button type="button" className="btn btn-primary" disabled={busy || !form.subjects.length} onClick={showPreview}>
                 {busy ? '⏳ Generating…' : '👁 Generate Report'}
