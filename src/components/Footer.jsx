@@ -17,9 +17,9 @@ export default function Footer() {
               <img src={umunsiLogo} alt="Umunsi.com" className="footer-brand-logo" />
               <span>Umunsi.com</span>
             </a>
-            <a href="https://umunsimedia.com" target="_blank" rel="noreferrer" className="footer-brand-item">
-              <img src={umunsimediaLogo} alt="Umunsimedia.com" className="footer-brand-logo" />
-              <span>Umunsimedia.com</span>
+            <a href="https://writer.umunsi.com" target="_blank" rel="noreferrer" className="footer-brand-item">
+              <img src={umunsimediaLogo} alt="writer.umunsi.com" className="footer-brand-logo" />
+              <span>writer.umunsi.com</span>
             </a>
             <div className="footer-brand-item footer-brand-uclass">
               <div className="footer-uclass-icon">🎓</div>
