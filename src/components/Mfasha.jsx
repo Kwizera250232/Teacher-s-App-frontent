@@ -68,6 +68,11 @@ export default function Mfasha({ user, token, onClose }) {
   const [deck, setDeck] = useState(null);
   const [slide, setSlide] = useState(0);
   const [researching, setResearching] = useState(false);
+  // class inspiration (illustration + guide)
+  const [inspireOpen, setInspireOpen] = useState(false);
+  const [inspireTopic, setInspireTopic] = useState('');
+  const [inspiration, setInspiration] = useState(null);
+  const [inspiring, setInspiring] = useState(false);
   // parents (one-tap WhatsApp)
   const [parentPanel, setParentPanel] = useState(null); // {loading, cls, students, reason}
   // drafts (from alerts or parents tool)
@@ -238,6 +243,59 @@ export default function Mfasha({ user, token, onClose }) {
     }
   };
 
+  // ── class inspiration: illustration + guide ──
+  const inspire = async () => {
+    if (!inspireTopic.trim() || inspiring) return;
+    setInspiring(true); setError(''); setInspiration(null);
+    try {
+      const cls = classes[0] || {};
+      const { inspiration } = await api('/mfasha/inspire', {
+        method: 'POST', token,
+        body: { topic: inspireTopic.trim(), subject: cls.subject, grade: cls.grade, lang },
+      });
+      setInspiration(inspiration); setInspireOpen(false);
+    } catch (e) { setError(e.message); }
+    finally { setInspiring(false); }
+  };
+
+  const inspText = () => {
+    if (!inspiration) return '';
+    const L = [`${inspiration.title}`, '', inspiration.intro || '', ''];
+    if (inspiration.aids?.length) { L.push('Teaching aids:'); inspiration.aids.forEach((a) => L.push(`  • ${a}`)); L.push(''); }
+    if (inspiration.preparation?.length) { L.push('Before the lesson:'); inspiration.preparation.forEach((a) => L.push(`  • ${a}`)); L.push(''); }
+    if (inspiration.flow?.length) { L.push('Lesson flow:'); inspiration.flow.forEach((a, i) => L.push(`  ${i + 1}. ${a}`)); L.push(''); }
+    if (inspiration.encouragement) L.push(`💪 ${inspiration.encouragement}`);
+    return L.join('\n');
+  };
+
+  const downloadInspirationDoc = async () => {
+    if (!inspiration) return;
+    let imgTag = `<p><i>Illustration: ${inspiration.imageUrl}</i></p>`;
+    try {
+      const b = await (await fetch(inspiration.imageUrl)).blob();
+      const dataUrl = await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b); });
+      imgTag = `<p><img src="${dataUrl}" style="max-width:640px;width:100%"/></p>`;
+    } catch { /* keep URL fallback */ }
+    const li = (arr) => (arr || []).map((x) => `<li>${String(x).replace(/</g, '&lt;')}</li>`).join('');
+    const html = `<html><head><meta charset="utf-8"></head><body>
+      <h1>${inspiration.title}</h1>
+      <p><i>Class Inspiration · Mfasha · UClass — ${user?.name || 'Teacher'}</i></p>
+      ${imgTag}
+      <h2>About this lesson</h2><p>${inspiration.intro || ''}</p>
+      ${inspiration.aids?.length ? `<h2>Teaching aids</h2><ul>${li(inspiration.aids)}</ul>` : ''}
+      ${inspiration.preparation?.length ? `<h2>Before the lesson</h2><ul>${li(inspiration.preparation)}</ul>` : ''}
+      ${inspiration.flow?.length ? `<h2>Lesson flow</h2><ol>${li(inspiration.flow)}</ol>` : ''}
+      ${inspiration.encouragement ? `<h2>Word for you</h2><p><b>${inspiration.encouragement}</b></p>` : ''}
+      </body></html>`;
+    const blob = new Blob(['﻿' + html], { type: 'application/msword' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${(inspiration.title || 'inspiration').replace(/[^\w\s-]/g, '').slice(0, 50)}.doc`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    say('Guide downloaded as a .doc — open it in Word.');
+  };
+
   // ── revision quiz from an alert ──
   const makeQuiz = async (alert) => {
     setQuizRunning(alert.id); setError('');
@@ -380,6 +438,7 @@ export default function Mfasha({ user, token, onClose }) {
         ))}
         {busy && <div className="mf-msg mf-assistant"><div className="mf-mini-avatar">MF</div><div className="mf-bubble mf-typing"><span /><span /><span /></div></div>}
         {researching && <div className="mf-msg mf-assistant"><div className="mf-mini-avatar">MF</div><div className="mf-bubble">🔍 Researching and building your slides…</div></div>}
+        {inspiring && <div className="mf-msg mf-assistant"><div className="mf-mini-avatar">MF</div><div className="mf-bubble">🎨 Drawing your class inspiration… (the picture takes ~20 seconds)</div></div>}
       </section>
 
       {error && <div className="mf-error" onClick={() => setError('')}>⚠ {error} <b>✕</b></div>}
@@ -387,6 +446,7 @@ export default function Mfasha({ user, token, onClose }) {
       {/* ── tools row (like ChatGPT's + tools) ── */}
       <div className="mf-tools">
         <button onClick={() => setResearchOpen((v) => !v)}>🔍 Research + Slides</button>
+        <button className="mf-tool-inspire" onClick={() => setInspireOpen(true)}>✨ Class Inspiration</button>
         <button onClick={openStats}>📊 Stats</button>
         <button className="mf-tool-parents" onClick={() => setParentPanel({ pick: true })}>💬 WhatsApp Parents</button>
       </div>
@@ -430,6 +490,61 @@ export default function Mfasha({ user, token, onClose }) {
         )}
         <button className="mf-send" onClick={() => send()} disabled={busy || !input.trim()}>➤</button>
       </footer>
+
+      {/* ── class inspiration: input ── */}
+      {inspireOpen && (
+        <div className="mf-modal" onClick={() => setInspireOpen(false)}>
+          <div className="mf-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mf-modal-head"><strong>✨ Class Inspiration</strong><button onClick={() => setInspireOpen(false)}>✕</button></div>
+            <div className="mf-drafts">
+              <p className="mf-dim">Type your unit topic, subtopic, or anything you’re about to teach — I’ll draw an inspiring picture of a teacher ready for that lesson, with a full guide.</p>
+              <input
+                className="mf-inp"
+                value={inspireTopic}
+                onChange={(e) => setInspireTopic(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && inspire()}
+                placeholder="e.g. Photosynthesis · Fractions · Ubusabo bw’abaturage…"
+                autoFocus
+              />
+              <button className="mf-genbtn" onClick={inspire} disabled={inspiring || !inspireTopic.trim()}>
+                {inspiring ? '🎨 Drawing…' : '✨ Inspire me'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── class inspiration: result ── */}
+      {inspiration && (
+        <div className="mf-modal" onClick={() => setInspiration(null)}>
+          <div className="mf-modal-card mf-inspire-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mf-modal-head">
+              <strong>✨ {inspiration.title}</strong>
+              <span className="mf-deck-actions">
+                <button onClick={downloadInspirationDoc}>⬇ Guide (.doc)</button>
+                <button onClick={() => shareText(inspText(), inspiration.title)}>📤 Share</button>
+                <button onClick={() => setInspiration(null)}>✕</button>
+              </span>
+            </div>
+            <div className="mf-inspire-body">
+              <div className="mf-inspire-img-wrap">
+                <img src={inspiration.imageUrl} alt={inspiration.title} className="mf-inspire-img" />
+              </div>
+              {inspiration.intro && <p className="mf-inspire-intro">{inspiration.intro}</p>}
+              {inspiration.aids?.length > 0 && (
+                <div className="mf-inspire-sec"><h4>🧰 Teaching aids</h4><ul>{inspiration.aids.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
+              )}
+              {inspiration.preparation?.length > 0 && (
+                <div className="mf-inspire-sec"><h4>📋 Before the lesson</h4><ul>{inspiration.preparation.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
+              )}
+              {inspiration.flow?.length > 0 && (
+                <div className="mf-inspire-sec"><h4>🪜 Lesson flow</h4><ol>{inspiration.flow.map((a, i) => <li key={i}>{a}</li>)}</ol></div>
+              )}
+              {inspiration.encouragement && <p className="mf-inspire-cheer">💪 {inspiration.encouragement}</p>}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── slide deck viewer (full modal, presentation style) ── */}
       {deck && (

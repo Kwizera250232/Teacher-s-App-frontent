@@ -50,6 +50,17 @@
 .mf-tools button { border: 1px solid #d7e3f5; background: #fff; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; color: #1a4d8f; font-weight: 600; }
 .mf-tools button:hover { background: #f2f7ff; border-color: #1565d8; }
 .mf-tool-parents { background: #eafff2 !important; border-color: #25d366 !important; color: #0a7a3d !important; }
+.mf-tool-inspire { background: linear-gradient(120deg, #f3e8ff, #e8f0ff) !important; border-color: #a259ff !important; color: #6b2fd8 !important; }
+.mf-inp { width: 100%; border: 1px solid #d7e3f5; border-radius: 12px; padding: 12px 14px; font-size: 14px; outline: none; box-sizing: border-box; }
+.mf-inp:focus { border-color: #1565d8; }
+.mf-inspire-card { width: min(720px, 100%); }
+.mf-inspire-body { padding: 0 18px 18px; overflow-y: auto; }
+.mf-inspire-img-wrap { border-radius: 14px; overflow: hidden; background: linear-gradient(120deg, #dfe9f8, #f3e9ff); display: grid; place-items: center; min-height: 220px; }
+.mf-inspire-img { width: 100%; display: block; border-radius: 14px; }
+.mf-inspire-intro { font-size: 14.5px; line-height: 1.6; color: #333; }
+.mf-inspire-sec h4 { margin: 14px 0 6px; font-size: 15px; color: #1a4d8f; }
+.mf-inspire-sec ul, .mf-inspire-sec ol { margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.6; }
+.mf-inspire-cheer { margin-top: 14px; padding: 12px 14px; background: linear-gradient(120deg, #f3e8ff, #e8f0ff); border-radius: 12px; font-weight: 600; color: #4c2fa0; font-size: 14px; }
 .mf-research { display: flex; gap: 8px; padding: 8px 16px; }
 .mf-research input { flex: 1; border: 1px solid #d7e3f5; border-radius: 24px; padding: 10px 16px; font-size: 13px; outline: none; }
 .mf-research input:focus { border-color: #1565d8; }
