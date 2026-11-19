@@ -44,6 +44,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
   const [classes, setClasses] = useState([]);
   const [error, setError] = useState('');
   const [momentPreview, setMomentPreview] = useState(null);
+  const [mfOpen, setMfOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddStudents, setShowAddStudents] = useState(false);
   const [showAddSchool, setShowAddSchool] = useState(false);
@@ -429,6 +430,21 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
           onClose={() => setShowWeeklyDigest(false)}
           onSent={() => setShowWeeklyDigest(false)}
         />
+      )}
+
+      {!mfOpen && activeTab !== 'mfasha' && (
+        <button className="mfasha-fab" onClick={() => setMfOpen(true)} title="Ask Mfasha — your AI teaching assistant">
+          <span className="mfasha-fab-ring"><span className="mfasha-fab-dot" /></span>
+          <span className="mfasha-fab-label">Mfasha</span>
+        </button>
+      )}
+      {mfOpen && activeTab !== 'mfasha' && (
+        <div className="mfasha-fab-overlay" onClick={() => setMfOpen(false)}>
+          <div className="mfasha-fab-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="mfasha-fab-close" onClick={() => setMfOpen(false)}>✕</button>
+            <Mfasha user={user} token={token} />
+          </div>
+        </div>
       )}
     </div>
   );

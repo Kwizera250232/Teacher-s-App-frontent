@@ -105,6 +105,28 @@
 .mf-parent-btns button { background: #1565d8; color: #fff; }
 .mf-wa { background: #25d366; color: #fff; }
 .mf-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a2b45; color: #fff; padding: 10px 20px; border-radius: 24px; font-size: 13px; z-index: 1300; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+
+/* Floating Meta-AI-style button — visible on every teacher tab */
+.mfasha-fab { position: fixed; right: 26px; bottom: 26px; z-index: 1150; display: flex; flex-direction: column; align-items: center; gap: 4px; border: none; background: transparent; cursor: pointer; padding: 0; }
+.mfasha-fab-ring { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(from 0deg, #0084ff, #a259ff, #ff6bd6, #ff8a5c, #0084ff); animation: mfspin 6s linear infinite; box-shadow: 0 6px 22px rgba(80,60,220,.45); }
+.mfasha-fab-dot { width: 48px; height: 48px; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #ffffff 0%, #e8f1ff 45%, #bcd6ff 100%); display: block; animation: mfspin 6s linear infinite reverse; position: relative; }
+.mfasha-fab-dot::after { content: '✨'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; }
+@keyframes mfspin { to { transform: rotate(360deg); } }
+.mfasha-fab:hover .mfasha-fab-ring { box-shadow: 0 8px 28px rgba(80,60,220,.6); }
+.mfasha-fab-label { font-size: 11px; font-weight: 700; color: #4c3fd8; background: #fff; border-radius: 10px; padding: 1px 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.mfasha-fab-overlay { position: fixed; inset: 0; background: rgba(10,20,45,.55); backdrop-filter: blur(3px); z-index: 1160; display: flex; justify-content: flex-end; align-items: stretch; }
+.mfasha-fab-panel { position: relative; width: min(560px, 100%); height: 100%; background: #fff; box-shadow: -10px 0 40px rgba(0,0,0,.3); animation: mfslide .25s ease-out; display: flex; }
+.mfasha-fab-panel .mfasha { height: 100%; border-radius: 0; }
+@keyframes mfslide { from { transform: translateX(60px); opacity: .4; } to { transform: none; opacity: 1; } }
+.mfasha-fab-close { position: absolute; top: 10px; right: 12px; z-index: 5; width: 32px; height: 32px; border: none; border-radius: 50%; background: rgba(255,255,255,.25); color: #fff; font-size: 15px; cursor: pointer; }
+.mfasha-fab-close:hover { background: rgba(255,255,255,.45); }
+@media (max-width: 640px) {
+  .mfasha-fab { right: 16px; bottom: 90px; }
+  .mfasha-fab-ring { width: 52px; height: 52px; }
+  .mfasha-fab-dot { width: 43px; height: 43px; }
+  .mfasha-fab-overlay { align-items: flex-end; }
+  .mfasha-fab-panel { width: 100%; height: 92%; border-radius: 18px 18px 0 0; }
+}
 @media (max-width: 640px) {
   .mf-alert { flex-direction: column; align-items: stretch; }
   .mf-msg { max-width: 92%; }
