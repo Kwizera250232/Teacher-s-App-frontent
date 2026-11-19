@@ -31,9 +31,12 @@ async function api(path, { method = 'GET', body, token, form } = {}) {
 function md(text) {
   return String(text || '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/^\s*#{1,6}\s*(.+?)\s*#*\s*$/gm, '<strong class="mf-h">$1</strong>')
+    .replace(/^\s*[-*_]{3,}\s*$/gm, '')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^- /gm, '• ')
+    .replace(/(^|\s)\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/^[\-*]\s+/gm, '• ')
+    .replace(/\n{3,}/g, '\n\n')
     .replace(/\n/g, '<br/>');
 }
 
@@ -56,12 +59,15 @@ export default function Mfasha({ user, token }) {
   const [researching, setResearching] = useState(false);
   // parent drafts
   const [draftPanel, setDraftPanel] = useState(null); // {alert, drafts, sending}
+  const [statsPanel, setStatsPanel] = useState(null); // {loading, classes}
+  const [openQuiz, setOpenQuiz] = useState(null);
   const [quizRunning, setQuizRunning] = useState('');
   const [toast, setToast] = useState('');
 
   const scrollRef = useRef(null);
   const recRef = useRef(null);
   const chunksRef = useRef([]);
+  const sendRef = useRef(null);
 
   useEffect(() => {
     api('/mfasha/overview', { token })
@@ -101,6 +107,7 @@ export default function Mfasha({ user, token }) {
       setBusy(false);
     }
   }, [input, busy, messages, lang, token]);
+  sendRef.current = send;
 
   const startRec = async () => {
     try {
@@ -116,7 +123,7 @@ export default function Mfasha({ user, token }) {
           const fd = new FormData();
           fd.append('audio', blob, 'voice.webm');
           const { text } = await api('/mfasha/transcribe', { method: 'POST', token, form: fd });
-          if (text) setInput((v) => (v ? `${v} ${text}` : text));
+          if (text) { setInput(''); sendRef.current?.(text); }
         } catch (e) {
           setError(e.message);
         } finally {
@@ -257,6 +264,17 @@ export default function Mfasha({ user, token }) {
     } catch (e) { setError(e.message); }
   };
 
+  const openStats = async () => {
+    setStatsPanel({ loading: true, classes: [] });
+    setOpenQuiz(null);
+    try {
+      const { classes } = await api('/mfasha/stats', { token });
+      setStatsPanel({ loading: false, classes });
+    } catch (e) {
+      setStatsPanel(null); setError(e.message);
+    }
+  };
+
   const waLink = (phone, message) => {
     const num = String(phone || '').replace(/\D/g, '').replace(/^0/, '250');
     return `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
@@ -272,6 +290,7 @@ export default function Mfasha({ user, token }) {
           <h2>Mfasha</h2>
           <p>{aiReady ? 'Your teaching assistant — knows your classes, writes with you, watches your students.' : 'AI is not configured on the server yet.'}</p>
         </div>
+        <button className="mf-stats-btn" onClick={openStats} title="Marks & quiz statistics">📊 Stats</button>
         <select className="mf-lang" value={lang} onChange={(e) => setLang(e.target.value)} title="Reply language">
           {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
         </select>
@@ -372,14 +391,60 @@ export default function Mfasha({ user, token }) {
           onTouchStart={(e) => { e.preventDefault(); startRec(); }} onTouchEnd={stopRec}
           title="Hold to record a voice note"
         >{transcribing ? '…' : '🎤'}</button>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && send()}
-          placeholder={recording ? 'Listening… release to send' : transcribing ? 'Writing your words…' : 'Ask Mfasha — your classes, lessons, marks, parents…'}
-        />
+        {recording ? (
+          <div className="mf-wave" aria-label="Recording">
+            {Array.from({ length: 22 }).map((_, i) => <span key={i} style={{ animationDelay: `${(i % 7) * 0.09}s` }} />)}
+            <em>Listening… release 🎤 to send</em>
+          </div>
+        ) : (
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && send()}
+            placeholder={transcribing ? 'Writing your words…' : 'Ask Mfasha — your classes, lessons, marks, parents…'}
+          />
+        )}
         <button className="mf-send" onClick={() => send()} disabled={busy || !input.trim()}>➤</button>
       </footer>
+
+      {statsPanel && (
+        <div className="mf-modal" onClick={() => setStatsPanel(null)}>
+          <div className="mf-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mf-modal-head">
+              <strong>📊 Marks &amp; quiz statistics</strong>
+              <button onClick={() => setStatsPanel(null)}>✕</button>
+            </div>
+            {statsPanel.loading ? <p className="mf-pad">Reading your marks…</p> : (
+              <div className="mf-drafts">
+                {statsPanel.classes.map((c) => (
+                  <div key={c.id} className="mf-statclass">
+                    <strong>{c.name}{c.subject ? ` — ${c.subject}` : ''} <span>{c.students} students</span></strong>
+                    {c.cat ? (
+                      <div className="mf-statrow">
+                        <span>📝 Marks sheet “{c.sheet}” — {c.tests} test{c.tests === 1 ? '' : 's'}, {c.students} marked</span>
+                        <b>Avg {c.avg}% · Top {c.high}% · Low {c.low}%</b>
+                      </div>
+                    ) : <p className="mf-noparent">No marks recorded on the active sheet yet.</p>}
+                    {c.quizzes.length > 0 ? c.quizzes.map((q) => (
+                      <div key={q.id} className="mf-statrow mf-quizrow" onClick={() => setOpenQuiz(openQuiz === q.id ? null : q.id)}>
+                        <span>🧠 {q.title} <small>{q.students}/{q.members} took it</small></span>
+                        <b>Avg {q.avg}% · Pass {q.pass}% <i>{openQuiz === q.id ? '▲' : '▼'}</i></b>
+                        {openQuiz === q.id && (
+                          <div className="mf-quizdetail">
+                            <span>🏆 Top: {q.top.map((x) => `${x.name} ${x.pct}%`).join(', ') || '—'}</span>
+                            <span>🌱 Needs help: {q.bottom.map((x) => `${x.name} ${x.pct}%`).join(', ') || '—'}</span>
+                          </div>
+                        )}
+                      </div>
+                    )) : <p className="mf-noparent">No quiz attempts yet.</p>}
+                  </div>
+                ))}
+                {statsPanel.classes.length === 0 && <p className="mf-pad">No classes yet.</p>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {draftPanel && (
         <div className="mf-modal" onClick={() => setDraftPanel(null)}>
