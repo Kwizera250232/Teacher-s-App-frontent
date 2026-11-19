@@ -17,6 +17,12 @@ const QUICK = [
   'How do I record CAT marks in UClass?',
 ];
 
+async function apiBlob(path, token) {
+  const res = await fetch(`${API_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`Image fetch failed (${res.status})`);
+  return res.blob();
+}
+
 async function api(path, { method = 'GET', body, token, form } = {}, attempt = 0) {
   let res;
   try {
@@ -73,6 +79,14 @@ export default function Mfasha({ user, token, onClose }) {
   const [inspireTopic, setInspireTopic] = useState('');
   const [inspiration, setInspiration] = useState(null);
   const [inspiring, setInspiring] = useState(false);
+  // "use my photo" — camera capture + draggable face sticker
+  const [myPhoto, setMyPhoto] = useState(null); // dataURL
+  const [camOpen, setCamOpen] = useState(false);
+  const [facePos, setFacePos] = useState({ x: 0.5, y: 0.28, r: 0.14 });
+  const videoRef = useRef(null);
+  const camStream = useRef(null);
+  const imgWrapRef = useRef(null);
+  const dragRef = useRef(null);
   // parents (one-tap WhatsApp)
   const [parentPanel, setParentPanel] = useState(null); // {loading, cls, students, reason}
   // drafts (from alerts or parents tool)
@@ -98,7 +112,10 @@ export default function Mfasha({ user, token, onClose }) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, busy]);
 
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+  useEffect(() => () => {
+    window.speechSynthesis?.cancel();
+    camStream.current?.getTracks().forEach((t) => t.stop());
+  }, []);
 
   const say = useCallback((msg) => {
     setToast(msg);
@@ -243,6 +260,110 @@ export default function Mfasha({ user, token, onClose }) {
     }
   };
 
+  // ── camera: capture teacher photo ──
+  const openCam = async () => {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      camStream.current = s;
+      setCamOpen(true);
+      setTimeout(() => { if (videoRef.current) videoRef.current.srcObject = s; }, 60);
+    } catch {
+      setError('Camera is not available — you can pick a photo from your files instead.');
+    }
+  };
+  const closeCam = () => { camStream.current?.getTracks().forEach((t) => t.stop()); camStream.current = null; setCamOpen(false); };
+  const capture = () => {
+    const v = videoRef.current;
+    if (!v || !v.videoWidth) return;
+    const c = document.createElement('canvas');
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    setMyPhoto(c.toDataURL('image/jpeg', 0.85));
+    closeCam();
+  };
+  const pickPhoto = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const fr = new FileReader();
+    fr.onload = () => setMyPhoto(fr.result);
+    fr.readAsDataURL(f);
+  };
+
+  // drag the face sticker over the illustration
+  const startDrag = (e) => {
+    e.preventDefault();
+    dragRef.current = e.pointerId;
+  };
+  const onDrag = (e) => {
+    if (dragRef.current !== e.pointerId || !imgWrapRef.current) return;
+    const rect = imgWrapRef.current.getBoundingClientRect();
+    setFacePos((p) => ({
+      ...p,
+      x: Math.min(0.92, Math.max(0.08, (e.clientX - rect.left) / rect.width)),
+      y: Math.min(0.92, Math.max(0.08, (e.clientY - rect.top) / rect.height)),
+    }));
+  };
+  const endDrag = (e) => { if (dragRef.current === e.pointerId) dragRef.current = null; };
+
+  // composite: illustration + optional face + UClass copyright bar
+  const buildCardBlob = async () => {
+    const W = 1080, H = 780;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#dfe9f8'; ctx.fillRect(0, 0, W, H);
+    const ill = await createImageBitmap(await apiBlob(`/mfasha/image?url=${encodeURIComponent(inspiration.imageUrl)}`, token));
+    const s = Math.max(W / ill.width, H / ill.height);
+    ctx.drawImage(ill, (W - ill.width * s) / 2, (H - ill.height * s) / 2, ill.width * s, ill.height * s);
+    if (myPhoto) {
+      const fb = await (await fetch(myPhoto)).blob();
+      const f = await createImageBitmap(fb);
+      const r = facePos.r * W, cx = facePos.x * W, cy = facePos.y * H;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
+      const fs = Math.min(f.width, f.height);
+      ctx.drawImage(f, (f.width - fs) / 2, (f.height - fs) / 2, fs, fs, cx - r, cy - r, r * 2, r * 2);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7);
+      ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
+    }
+    const g = ctx.createLinearGradient(0, H - 110, 0, H);
+    g.addColorStop(0, 'rgba(10,22,50,0)');
+    g.addColorStop(1, 'rgba(10,22,50,.88)');
+    ctx.fillStyle = g; ctx.fillRect(0, H - 110, W, 110);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 30px system-ui, sans-serif';
+    ctx.fillText(`✨ Made with Mfasha${user?.name ? ` · ${user.name}` : ''}`, 26, H - 26);
+    ctx.textAlign = 'right';
+    ctx.font = '600 24px system-ui, sans-serif';
+    ctx.fillText('© UClass · student.umunsi.com', W - 26, H - 26);
+    return new Promise((res) => cv.toBlob(res, 'image/png'));
+  };
+
+  const downloadCard = async () => {
+    try {
+      const blob = await buildCardBlob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(inspiration.title || 'inspiration').replace(/[^\w\s-]/g, '').slice(0, 50)}-UClass.png`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      say('Image downloaded with © UClass branding — ready to share!');
+    } catch (e) { setError(e.message); }
+  };
+
+  const shareCard = async () => {
+    try {
+      const blob = await buildCardBlob();
+      const file = new File([blob], 'mfasha.png', { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: inspiration.title });
+        return;
+      }
+    } catch { /* fall through to copy/download */ }
+    downloadCard();
+  };
+
   // ── class inspiration: illustration + guide ──
   const inspire = async () => {
     if (!inspireTopic.trim() || inspiring) return;
@@ -272,7 +393,7 @@ export default function Mfasha({ user, token, onClose }) {
     if (!inspiration) return;
     let imgTag = `<p><i>Illustration: ${inspiration.imageUrl}</i></p>`;
     try {
-      const b = await (await fetch(inspiration.imageUrl)).blob();
+      const b = await buildCardBlob();
       const dataUrl = await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b); });
       imgTag = `<p><img src="${dataUrl}" style="max-width:640px;width:100%"/></p>`;
     } catch { /* keep URL fallback */ }
@@ -506,6 +627,21 @@ export default function Mfasha({ user, token, onClose }) {
                 placeholder="e.g. Photosynthesis · Fractions · Ubusabo bw’abaturage…"
                 autoFocus
               />
+              <div className="mf-photo-row">
+                {myPhoto ? (
+                  <>
+                    <img src={myPhoto} alt="you" className="mf-photo-thumb" />
+                    <span className="mf-dim">Your photo will be added to the picture ✓</span>
+                    <button className="mf-linkbtn" onClick={() => setMyPhoto(null)}>remove</button>
+                    <button className="mf-linkbtn" onClick={openCam}>retake</button>
+                  </>
+                ) : (
+                  <>
+                    <button className="mf-photobtn" onClick={openCam}>📷 Use my photo</button>
+                    <label className="mf-linkbtn">or choose from files<input type="file" accept="image/*" hidden onChange={pickPhoto} /></label>
+                  </>
+                )}
+              </div>
               <button className="mf-genbtn" onClick={inspire} disabled={inspiring || !inspireTopic.trim()}>
                 {inspiring ? '🎨 Drawing…' : '✨ Inspire me'}
               </button>
@@ -521,15 +657,42 @@ export default function Mfasha({ user, token, onClose }) {
             <div className="mf-modal-head">
               <strong>✨ {inspiration.title}</strong>
               <span className="mf-deck-actions">
+                <button onClick={downloadCard}>⬇ Image</button>
+                <button onClick={shareCard}>📤 Share image</button>
                 <button onClick={downloadInspirationDoc}>⬇ Guide (.doc)</button>
-                <button onClick={() => shareText(inspText(), inspiration.title)}>📤 Share</button>
+                <button onClick={() => shareText(inspText(), inspiration.title)}>📄 Share text</button>
                 <button onClick={() => setInspiration(null)}>✕</button>
               </span>
             </div>
             <div className="mf-inspire-body">
-              <div className="mf-inspire-img-wrap">
-                <img src={inspiration.imageUrl} alt={inspiration.title} className="mf-inspire-img" />
+              <div className="mf-inspire-img-wrap" ref={imgWrapRef} onPointerMove={onDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
+                <img src={inspiration.imageUrl} alt={inspiration.title} className="mf-inspire-img" draggable={false} />
+                {myPhoto && (
+                  <img
+                    src={myPhoto}
+                    alt="you"
+                    className="mf-face"
+                    draggable={false}
+                    onPointerDown={startDrag}
+                    style={{
+                      left: `${facePos.x * 100}%`, top: `${facePos.y * 100}%`,
+                      width: `${facePos.r * 2 * 100}%`,
+                    }}
+                  />
+                )}
+                <span className="mf-copybar">✨ Made with Mfasha{user?.name ? ` · ${user.name}` : ''} &nbsp;·&nbsp; © UClass · student.umunsi.com</span>
               </div>
+              {myPhoto && (
+                <div className="mf-face-tools">
+                  <span className="mf-dim">↕ drag your face onto the teacher —</span>
+                  <input type="range" min="0.07" max="0.3" step="0.01" value={facePos.r} onChange={(e) => setFacePos((p) => ({ ...p, r: Number(e.target.value) }))} />
+                  <button className="mf-linkbtn" onClick={() => setMyPhoto(null)}>remove face</button>
+                  <button className="mf-linkbtn" onClick={openCam}>📷 retake</button>
+                </div>
+              )}
+              {!myPhoto && (
+                <div className="mf-face-tools"><button className="mf-photobtn" onClick={openCam}>📷 Add my face to this picture</button><label className="mf-linkbtn">or upload<input type="file" accept="image/*" hidden onChange={pickPhoto} /></label></div>
+              )}
               {inspiration.intro && <p className="mf-inspire-intro">{inspiration.intro}</p>}
               {inspiration.aids?.length > 0 && (
                 <div className="mf-inspire-sec"><h4>🧰 Teaching aids</h4><ul>{inspiration.aids.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
@@ -541,6 +704,19 @@ export default function Mfasha({ user, token, onClose }) {
                 <div className="mf-inspire-sec"><h4>🪜 Lesson flow</h4><ol>{inspiration.flow.map((a, i) => <li key={i}>{a}</li>)}</ol></div>
               )}
               {inspiration.encouragement && <p className="mf-inspire-cheer">💪 {inspiration.encouragement}</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── camera capture ── */}
+      {camOpen && (
+        <div className="mf-modal" onClick={closeCam}>
+          <div className="mf-modal-card mf-cam-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mf-modal-head"><strong>📷 Smile — then capture</strong><button onClick={closeCam}>✕</button></div>
+            <video ref={videoRef} autoPlay playsInline muted className="mf-cam-video" />
+            <div className="mf-cam-btns">
+              <button className="mf-genbtn" onClick={capture}>📸 Capture</button>
             </div>
           </div>
         </div>
