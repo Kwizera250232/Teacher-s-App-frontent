@@ -28,8 +28,8 @@ export default function StudentNotes() {
   const [editNote, setEditNote] = useState(null);
   const [form, setForm] = useState({ title: '', content: '', color: NOTE_COLORS[0] });
   const [saving, setSaving] = useState(false);
-  const [offlineNotes, setOfflineNotes] = useState([]);
-  const [showOffline, setShowOffline] = useState(false);
+  const [offlineNotes, setOfflineNotes] = useState(() => getOfflineNotes());
+  const [showOffline, setShowOffline] = useState(() => !navigator.onLine);
   const [savedIds, setSavedIds] = useState(() => new Set(getOfflineNotes().map(n => n.id)));
   const [searchQ, setSearchQ] = useState('');
   const titleRef = useRef();
