@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_BASE } from '../api';
 import './Mfasha.css';
 
@@ -52,14 +52,17 @@ export default function Mfasha({ user, token }) {
   const [transcribing, setTranscribing] = useState(false);
   const [speaking, setSpeaking] = useState(-1);
   const [error, setError] = useState('');
-  // research
+  // research + slides
+  const [researchOpen, setResearchOpen] = useState(false);
   const [topic, setTopic] = useState('');
   const [deck, setDeck] = useState(null);
   const [slide, setSlide] = useState(0);
   const [researching, setResearching] = useState(false);
-  // parent drafts
-  const [draftPanel, setDraftPanel] = useState(null); // {alert, drafts, sending}
-  const [statsPanel, setStatsPanel] = useState(null); // {loading, classes}
+  // parents (one-tap WhatsApp)
+  const [parentPanel, setParentPanel] = useState(null); // {loading, cls, students, reason}
+  // drafts (from alerts or parents tool)
+  const [draftPanel, setDraftPanel] = useState(null); // {loading, drafts}
+  const [statsPanel, setStatsPanel] = useState(null);
   const [openQuiz, setOpenQuiz] = useState(null);
   const [quizRunning, setQuizRunning] = useState('');
   const [toast, setToast] = useState('');
@@ -109,6 +112,7 @@ export default function Mfasha({ user, token }) {
   }, [input, busy, messages, lang, token]);
   sendRef.current = send;
 
+  // ── voice note ──
   const startRec = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -137,7 +141,6 @@ export default function Mfasha({ user, token }) {
       setError('Microphone is not available — type your question instead.');
     }
   };
-
   const stopRec = () => { recRef.current?.stop(); setRecording(false); };
 
   const readAloud = (text, idx) => {
@@ -145,11 +148,8 @@ export default function Mfasha({ user, token }) {
     if (!s) return;
     if (speaking === idx) { s.cancel(); setSpeaking(-1); return; }
     s.cancel();
-    const u = new SpeechSynthesisUtterance(
-      String(text).replace(/\*\*|__|[`#*>-]/g, ' ').slice(0, 4000)
-    );
-    const langMap = { rw: 'rw-RW', en: 'en-US', fr: 'fr-FR', sw: 'sw-TZ' };
-    u.lang = langMap[lang] || 'en-US';
+    const u = new SpeechSynthesisUtterance(String(text).replace(/\*\*|__|[`#*>-]/g, ' ').slice(0, 4000));
+    u.lang = { rw: 'rw-RW', en: 'en-US', fr: 'fr-FR', sw: 'sw-TZ' }[lang] || 'en-US';
     u.onend = () => setSpeaking(-1);
     s.speak(u);
     setSpeaking(idx);
@@ -157,13 +157,12 @@ export default function Mfasha({ user, token }) {
 
   const shareText = async (text, title = 'Mfasha') => {
     const clean = String(text).replace(/\*\*/g, '');
-    try {
-      if (navigator.share) { await navigator.share({ title, text: clean }); return; }
-    } catch { /* user cancelled */ }
+    try { if (navigator.share) { await navigator.share({ title, text: clean }); return; } } catch { /* cancelled */ }
     try { await navigator.clipboard.writeText(clean); say('Copied — paste it anywhere (WhatsApp, SMS, notes).'); }
     catch { say('Could not copy.'); }
   };
 
+  // ── research + slides ──
   const research = async () => {
     if (!topic.trim() || researching) return;
     setResearching(true); setError(''); setDeck(null);
@@ -173,7 +172,8 @@ export default function Mfasha({ user, token }) {
         method: 'POST', token,
         body: { topic: topic.trim(), subject: cls.subject, grade: cls.grade, lang },
       });
-      setDeck(deck); setSlide(0);
+      setDeck(deck); setSlide(0); setResearchOpen(false);
+      setMessages((m) => [...m, { role: 'assistant', content: `📚 Slide deck ready: **${deck.title}** — ${deck.slides?.length || 0} slides. Tap **Open slides** below to view or download.` }]);
     } catch (e) { setError(e.message); }
     finally { setResearching(false); }
   };
@@ -225,6 +225,7 @@ export default function Mfasha({ user, token }) {
     }
   };
 
+  // ── revision quiz from an alert ──
   const makeQuiz = async (alert) => {
     setQuizRunning(alert.id); setError('');
     try {
@@ -232,22 +233,44 @@ export default function Mfasha({ user, token }) {
         method: 'POST', token,
         body: { class_id: alert.class_id, topic: alert.topic || alert.subject || alert.title, lang },
       });
-      say(`"${quiz.title}" added to ${alert.class_name} with ${questions.length} questions — find it in the class Quizzes tab.`);
+      say(`"${quiz.title}" added to ${alert.class_name} — find it in the class Quizzes tab.`);
     } catch (e) { setError(e.message); }
     finally { setQuizRunning(''); }
   };
 
+  // ── parent drafts ──
   const openDrafts = async (alert) => {
-    setDraftPanel({ alert, loading: true, drafts: [] });
+    setDraftPanel({ loading: true, drafts: [] });
     try {
       const { drafts } = await api('/mfasha/parent-drafts', {
         method: 'POST', token,
         body: { student_ids: (alert.students || []).map((s) => s.id), reason: alert.title, lang: lang || 'rw' },
       });
-      setDraftPanel({ alert, loading: false, drafts: drafts.map((d) => ({ ...d, sent: [] })) });
-    } catch (e) {
-      setDraftPanel(null); setError(e.message);
-    }
+      setDraftPanel({ loading: false, drafts: drafts.map((d) => ({ ...d, sent: [] })) });
+    } catch (e) { setDraftPanel(null); setError(e.message); }
+  };
+
+  const openParents = async (classId) => {
+    setParentPanel({ loading: true, cls: classId, students: [], reason: '' });
+    try {
+      const { class: cls, students } = await api(`/mfasha/class/${classId}/parents`, { token });
+      setParentPanel({ loading: false, cls, students, reason: 'I want to update you about your child’s progress.' });
+    } catch (e) { setParentPanel(null); setError(e.message); }
+  };
+
+  const draftForClass = async () => {
+    if (!parentPanel) return;
+    const students = parentPanel.students;
+    setParentPanel(null);
+    setDraftPanel({ loading: true, drafts: [] });
+    try {
+      const contacts = students.flatMap((s) => (s.parents || []).filter((p) => p.phone && !p.id).map((p) => ({ student_id: s.id, name: p.name, phone: p.phone })));
+      const { drafts } = await api('/mfasha/parent-drafts', {
+        method: 'POST', token,
+        body: { student_ids: students.map((s) => s.id).slice(0, 30), reason: parentPanel.reason, contacts, lang: lang || 'rw' },
+      });
+      setDraftPanel({ loading: false, drafts: drafts.map((d) => ({ ...d, sent: [] })) });
+    } catch (e) { setDraftPanel(null); setError(e.message); }
   };
 
   const approveSend = async (d, parent) => {
@@ -256,12 +279,14 @@ export default function Mfasha({ user, token }) {
         method: 'POST', token,
         body: { student_id: d.student.id, parent_id: parent.id, message: d.message },
       });
-      setDraftPanel((p) => p && ({
-        ...p,
-        drafts: p.drafts.map((x) => x === d ? { ...x, sent: [...x.sent, parent.id] } : x),
-      }));
+      setDraftPanel((p) => p && ({ ...p, drafts: p.drafts.map((x) => x === d ? { ...x, sent: [...x.sent, parent.id] } : x) }));
       say(`Sent to ${parent.name} in the parent app.`);
     } catch (e) { setError(e.message); }
+  };
+
+  const waLink = (phone, message) => {
+    const num = String(phone || '').replace(/\D/g, '').replace(/^0/, '250');
+    return `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
   };
 
   const openStats = async () => {
@@ -270,99 +295,49 @@ export default function Mfasha({ user, token }) {
     try {
       const { classes } = await api('/mfasha/stats', { token });
       setStatsPanel({ loading: false, classes });
-    } catch (e) {
-      setStatsPanel(null); setError(e.message);
-    }
+    } catch (e) { setStatsPanel(null); setError(e.message); }
   };
-
-  const waLink = (phone, message) => {
-    const num = String(phone || '').replace(/\D/g, '').replace(/^0/, '250');
-    return `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
-  };
-
-  const highAlerts = useMemo(() => alerts.filter((a) => a.severity !== 'low'), [alerts]);
 
   return (
     <div className="mfasha">
+      {/* ── slim top bar ── */}
       <header className="mf-head">
         <div className="mf-avatar">MF</div>
-        <div>
+        <div className="mf-head-txt">
           <h2>Mfasha</h2>
-          <p>{aiReady ? 'Your teaching assistant — knows your classes, writes with you, watches your students.' : 'AI is not configured on the server yet.'}</p>
+          <p>{aiReady ? 'Your teaching assistant' : 'AI is not configured on the server yet.'}</p>
         </div>
-        <button className="mf-stats-btn" onClick={openStats} title="Marks & quiz statistics">📊 Stats</button>
-        <select className="mf-lang" value={lang} onChange={(e) => setLang(e.target.value)} title="Reply language">
-          {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
-        </select>
+        <div className="mf-head-right">
+          <button className="mf-stats-btn" onClick={openStats}>📊 Stats</button>
+          <select className="mf-lang" value={lang} onChange={(e) => setLang(e.target.value)}>
+            {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+          </select>
+        </div>
       </header>
 
-      {highAlerts.length > 0 && (
-        <section className="mf-alerts">
-          <h3>⚠ Needs your attention</h3>
-          {highAlerts.map((a) => (
-            <div key={a.id} className={`mf-alert mf-${a.severity}`}>
-              <div className="mf-alert-main">
+      {/* ── smart alerts strip (compact, scrolls sideways) ── */}
+      {alerts.length > 0 && (
+        <div className="mf-strip">
+          {alerts.map((a) => (
+            <div key={a.id} className={`mf-chip mf-${a.severity}`}>
+              <div className="mf-chip-txt">
                 <strong>{a.title}</strong>
-                <span>{a.detail}</span>
-                <span className="mf-names">{a.students.slice(0, 8).map((s) => s.pct != null ? `${s.name} (${s.pct}%)` : s.name).join(' · ')}{a.students.length > 8 ? ` +${a.students.length - 8}` : ''}</span>
+                <span>{a.students.slice(0, 6).map((s) => s.pct != null ? `${s.name} ${s.pct}%` : s.name).join(' · ')}{a.students.length > 6 ? ` +${a.students.length - 6}` : ''}</span>
               </div>
-              <div className="mf-alert-actions">
-                <button disabled={quizRunning === a.id} onClick={() => makeQuiz(a)}>
-                  {quizRunning === a.id ? 'Creating…' : '📝 Revision quiz'}
-                </button>
-                <button onClick={() => openDrafts(a)}>💬 Update parents</button>
+              <div className="mf-chip-btns">
+                <button disabled={quizRunning === a.id} onClick={() => makeQuiz(a)}>{quizRunning === a.id ? '…' : '📝 Quiz'}</button>
+                <button className="mf-wa-chip" onClick={() => openDrafts(a)}>💬 Parents</button>
               </div>
             </div>
           ))}
-        </section>
+        </div>
       )}
 
-      <section className="mf-research">
-        <input
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && research()}
-          placeholder="Research a topic for tomorrow — e.g. “Photosynthesis” or “Uburyo bwo kubika amafaranga”…"
-        />
-        <button onClick={research} disabled={researching || !topic.trim()}>
-          {researching ? 'Researching…' : '🔍 Research + Slides'}
-        </button>
-      </section>
-
-      {deck && (
-        <section className="mf-deck">
-          <div className="mf-deck-head">
-            <div><strong>{deck.title}</strong>{deck.subtitle ? <span> · {deck.subtitle}</span> : null}</div>
-            <div className="mf-deck-actions">
-              <button onClick={downloadPptx}>⬇ Slides (.pptx)</button>
-              <button onClick={() => shareText(deckText(), deck.title)}>📤 Share</button>
-              <button onClick={() => setDeck(null)}>✕</button>
-            </div>
-          </div>
-          <div className="mf-slide">
-            <div className="mf-slide-num">{slide + 1} / {deck.slides.length}</div>
-            <h4>{deck.slides[slide]?.title}</h4>
-            <ul>{(deck.slides[slide]?.bullets || []).map((b, i) => <li key={i}>{b}</li>)}</ul>
-            {deck.slides[slide]?.example && <p className="mf-example">🇷🇼 {deck.slides[slide].example}</p>}
-            {deck.slides[slide]?.diagram && <p className="mf-diagram">✏️ Board: {deck.slides[slide].diagram}</p>}
-            <div className="mf-slide-nav">
-              <button disabled={slide === 0} onClick={() => setSlide(slide - 1)}>← Prev</button>
-              <button disabled={slide >= deck.slides.length - 1} onClick={() => setSlide(slide + 1)}>Next →</button>
-            </div>
-          </div>
-          {deck.activity && <p className="mf-activity">🏃 Activity: {deck.activity}</p>}
-          {deck.sources?.length > 0 && (
-            <p className="mf-sources">Sources: {deck.sources.map((s, i) => (
-              <a key={i} href={s.url} target="_blank" rel="noreferrer">{s.title || s.url}</a>
-            )).reduce((a, b) => [a, ' · ', b])}</p>
-          )}
-        </section>
-      )}
-
+      {/* ── the conversation: full width ── */}
       <section className="mf-chat" ref={scrollRef}>
         {messages.length === 0 && (
           <div className="mf-welcome">
-            <p>Muraho{user?.name ? ` ${String(user.name).split(' ')[0]}` : ''}! I can see your <strong>{classes.length} class{classes.length === 1 ? '' : 'es'}</strong> and their real results. Ask me anything about your work or UClass — or hold 🎤 to talk.</p>
+            <p>Muraho{user?.name ? ` ${String(user.name).split(' ')[0]}` : ''}! I can see your <strong>{classes.length} class{classes.length === 1 ? '' : 'es'}</strong> and their real results.<br />Ask me anything about your work or UClass — or hold 🎤 and just talk.</p>
             <div className="mf-quick">
               {QUICK.map((q) => <button key={q} onClick={() => send(q)}>{q}</button>)}
             </div>
@@ -370,20 +345,49 @@ export default function Mfasha({ user, token }) {
         )}
         {messages.map((m, i) => (
           <div key={i} className={`mf-msg mf-${m.role}`}>
-            <div className="mf-bubble" dangerouslySetInnerHTML={{ __html: md(m.content) }} />
-            {m.role === 'assistant' && (
-              <div className="mf-msg-tools">
-                <button title="Read aloud" onClick={() => readAloud(m.content, i)}>{speaking === i ? '⏹' : '🔊'}</button>
-                <button title="Share / copy" onClick={() => shareText(m.content)}>📤</button>
-              </div>
-            )}
+            {m.role === 'assistant' && <div className="mf-mini-avatar">MF</div>}
+            <div className="mf-bubble-wrap">
+              <div className="mf-bubble" dangerouslySetInnerHTML={{ __html: md(m.content) }} />
+              {m.role === 'assistant' && (
+                <div className="mf-msg-tools">
+                  {m.content.includes('Slide deck ready') && deck && <button onClick={() => setDeck(deck)}>📽 Open slides</button>}
+                  <button title="Read aloud" onClick={() => readAloud(m.content, i)}>{speaking === i ? '⏹ Stop' : '🔊 Listen'}</button>
+                  <button title="Share / copy" onClick={() => shareText(m.content)}>📤 Share</button>
+                </div>
+              )}
+            </div>
           </div>
         ))}
-        {busy && <div className="mf-msg mf-assistant"><div className="mf-bubble mf-typing"><span/><span/><span/></div></div>}
+        {busy && <div className="mf-msg mf-assistant"><div className="mf-mini-avatar">MF</div><div className="mf-bubble mf-typing"><span /><span /><span /></div></div>}
+        {researching && <div className="mf-msg mf-assistant"><div className="mf-mini-avatar">MF</div><div className="mf-bubble">🔍 Researching and building your slides…</div></div>}
       </section>
 
       {error && <div className="mf-error">⚠ {error}</div>}
 
+      {/* ── tools row (like ChatGPT's + tools) ── */}
+      <div className="mf-tools">
+        <button onClick={() => setResearchOpen((v) => !v)}>🔍 Research + Slides</button>
+        <button onClick={openStats}>📊 Stats</button>
+        <button className="mf-tool-parents" onClick={() => setParentPanel({ pick: true })}>💬 WhatsApp Parents</button>
+      </div>
+
+      {/* ── research input panel ── */}
+      {researchOpen && (
+        <div className="mf-research">
+          <input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && research()}
+            placeholder="Topic for tomorrow — e.g. “Photosynthesis” or “Kubika amafaranga”…"
+            autoFocus
+          />
+          <button onClick={research} disabled={researching || !topic.trim()}>
+            {researching ? 'Researching…' : '➤'}
+          </button>
+        </div>
+      )}
+
+      {/* ── composer ── */}
       <footer className="mf-input">
         <button
           className={`mf-mic ${recording ? 'on' : ''}`}
@@ -393,7 +397,7 @@ export default function Mfasha({ user, token }) {
         >{transcribing ? '…' : '🎤'}</button>
         {recording ? (
           <div className="mf-wave" aria-label="Recording">
-            {Array.from({ length: 22 }).map((_, i) => <span key={i} style={{ animationDelay: `${(i % 7) * 0.09}s` }} />)}
+            {Array.from({ length: 24 }).map((_, i) => <span key={i} style={{ animationDelay: `${(i % 8) * 0.09}s` }} />)}
             <em>Listening… release 🎤 to send</em>
           </div>
         ) : (
@@ -407,13 +411,96 @@ export default function Mfasha({ user, token }) {
         <button className="mf-send" onClick={() => send()} disabled={busy || !input.trim()}>➤</button>
       </footer>
 
+      {/* ── slide deck viewer (full modal, presentation style) ── */}
+      {deck && (
+        <div className="mf-modal" onClick={() => setDeck(null)}>
+          <div className="mf-modal-card mf-deck-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mf-modal-head">
+              <strong>{deck.title}{deck.subtitle ? <span className="mf-dim"> · {deck.subtitle}</span> : null}</strong>
+              <span className="mf-deck-actions">
+                <button onClick={downloadPptx}>⬇ Slides (.pptx)</button>
+                <button onClick={() => shareText(deckText(), deck.title)}>📤 Share</button>
+                <button onClick={() => setDeck(null)}>✕</button>
+              </span>
+            </div>
+            <div className="mf-slide">
+              <div className="mf-slide-num">{slide + 1} / {deck.slides.length}</div>
+              <h4>{deck.slides[slide]?.title}</h4>
+              <ul>{(deck.slides[slide]?.bullets || []).map((b, i) => <li key={i}>{b}</li>)}</ul>
+              {deck.slides[slide]?.example && <p className="mf-example">🇷🇼 {deck.slides[slide].example}</p>}
+              {deck.slides[slide]?.diagram && <p className="mf-diagram">✏️ Board: {deck.slides[slide].diagram}</p>}
+            </div>
+            <div className="mf-slide-nav mf-slide-bar">
+              <button disabled={slide === 0} onClick={() => setSlide(slide - 1)}>← Prev</button>
+              <div className="mf-dots">{deck.slides.map((_, i) => <span key={i} className={i === slide ? 'on' : ''} onClick={() => setSlide(i)} />)}</div>
+              <button disabled={slide >= deck.slides.length - 1} onClick={() => setSlide(slide + 1)}>Next →</button>
+            </div>
+            {deck.activity && <p className="mf-activity">🏃 Activity: {deck.activity}</p>}
+            {deck.sources?.length > 0 && (
+              <p className="mf-sources">Sources: {deck.sources.map((s, i) => (
+                <a key={i} href={s.url} target="_blank" rel="noreferrer">{s.title || s.url}</a>
+              )).reduce((a, b) => [a, ' · ', b])}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── pick a class for parent messaging ── */}
+      {parentPanel?.pick && (
+        <div className="mf-modal" onClick={() => setParentPanel(null)}>
+          <div className="mf-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mf-modal-head"><strong>💬 Message parents — pick a class</strong><button onClick={() => setParentPanel(null)}>✕</button></div>
+            <div className="mf-drafts">
+              {classes.map((c) => (
+                <button key={c.id} className="mf-classpick" onClick={() => openParents(c.id)}>
+                  {c.name}{c.subject ? ` — ${c.subject}` : ''} <span>{c.students} students</span>
+                </button>
+              ))}
+              {classes.length === 0 && <p className="mf-pad">No classes yet.</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── parent picker: students + reason ── */}
+      {parentPanel && !parentPanel.pick && (
+        <div className="mf-modal" onClick={() => setParentPanel(null)}>
+          <div className="mf-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mf-modal-head"><strong>💬 Parents of {parentPanel.cls?.name || '…'}</strong><button onClick={() => setParentPanel(null)}>✕</button></div>
+            {parentPanel.loading ? <p className="mf-pad">Loading students & parents…</p> : (
+              <div className="mf-drafts">
+                <textarea
+                  className="mf-reason"
+                  rows={2}
+                  value={parentPanel.reason}
+                  onChange={(e) => setParentPanel((p) => ({ ...p, reason: e.target.value }))}
+                  placeholder="What is this update about? e.g. exam results, attendance, encouragement…"
+                />
+                <button className="mf-genbtn" onClick={draftForClass}>✨ Draft personal messages for all parents</button>
+                <p className="mf-dim mf-center">— or message one parent directly —</p>
+                {parentPanel.students.map((s) => (
+                  <div key={s.id} className="mf-studentline">
+                    <strong>{s.name}</strong>
+                    {(s.parents || []).length === 0 && <em className="mf-dim">no parent linked</em>}
+                    {(s.parents || []).map((p) => (
+                      <span key={p.id || p.phone} className="mf-parentline">
+                        <span>{p.name}</span>
+                        {p.phone && <a className="mf-wa" href={waLink(p.phone, `Muraho ${p.name}, I am ${user?.name || 'the teacher'} of ${s.name} (${parentPanel.cls?.name}). `)} target="_blank" rel="noreferrer">WhatsApp</a>}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── stats modal ── */}
       {statsPanel && (
         <div className="mf-modal" onClick={() => setStatsPanel(null)}>
           <div className="mf-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="mf-modal-head">
-              <strong>📊 Marks &amp; quiz statistics</strong>
-              <button onClick={() => setStatsPanel(null)}>✕</button>
-            </div>
+            <div className="mf-modal-head"><strong>📊 Marks &amp; quiz statistics</strong><button onClick={() => setStatsPanel(null)}>✕</button></div>
             {statsPanel.loading ? <p className="mf-pad">Reading your marks…</p> : (
               <div className="mf-drafts">
                 {statsPanel.classes.map((c) => (
@@ -446,6 +533,7 @@ export default function Mfasha({ user, token }) {
         </div>
       )}
 
+      {/* ── approve & send parent drafts ── */}
       {draftPanel && (
         <div className="mf-modal" onClick={() => setDraftPanel(null)}>
           <div className="mf-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -465,11 +553,11 @@ export default function Mfasha({ user, token }) {
                     />
                     {d.parents.length === 0 && <p className="mf-noparent">No parent linked yet — invite them from the class Students tab.</p>}
                     {d.parents.map((p) => (
-                      <div key={p.id} className="mf-parent-row">
+                      <div key={p.id || p.phone} className="mf-parent-row">
                         <span>{p.name}{p.phone ? ` · ${p.phone}` : ''}</span>
-                        {d.sent.includes(p.id) ? <em>✓ Sent in app</em> : (
+                        {p.id && d.sent.includes(p.id) ? <em>✓ Sent in app</em> : (
                           <span className="mf-parent-btns">
-                            <button onClick={() => approveSend(d, p)}>✅ Approve &amp; Send (in app)</button>
+                            {p.id && <button onClick={() => approveSend(d, p)}>✅ Approve &amp; Send (in app)</button>}
                             {p.phone && <a className="mf-wa" href={waLink(p.phone, d.message)} target="_blank" rel="noreferrer">WhatsApp</a>}
                           </span>
                         )}
