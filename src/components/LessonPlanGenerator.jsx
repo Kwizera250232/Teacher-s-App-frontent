@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api, API_BASE } from '../api';
 import './LessonPlanGenerator.css';
 
@@ -890,7 +891,7 @@ export default function LessonPlanGenerator({ user, token }) {
         </div>
       )}
 
-      {showPay && (
+      {showPay && createPortal(
         <div className="lp-pay-overlay">
           <div className="lp-pay-card">
             <button className="lp-pay-close" onClick={() => setShowPay(false)}>✕</button>
@@ -978,7 +979,7 @@ export default function LessonPlanGenerator({ user, token }) {
             )}
           </div>
         </div>
-      )}
+      ), document.body)}
     </div>
   );
 }
