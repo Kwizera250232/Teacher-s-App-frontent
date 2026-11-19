@@ -110,7 +110,8 @@
 .mf-typing span:nth-child(2) { animation-delay: .2s; }
 .mf-typing span:nth-child(3) { animation-delay: .4s; }
 @keyframes mfb { 0%,60%,100% { transform: translateY(0); opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
-.mf-error { margin: 0 16px; padding: 8px 12px; background: #fff1f0; border: 1px solid #f5c4c0; border-radius: 10px; color: #a33; font-size: 12px; }
+.mf-error { margin: 0 16px; padding: 8px 12px; background: #fff1f0; border: 1px solid #f5c4c0; border-radius: 10px; color: #a33; font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mf-error b { flex-shrink: 0; }
 .mf-input { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #e6eef8; background: #fbfdff; }
 .mf-input input { flex: 1; border: 1px solid #d7e3f5; border-radius: 26px; padding: 12px 18px; font-size: 14px; outline: none; }
 .mf-input input:focus { border-color: #1565d8; }

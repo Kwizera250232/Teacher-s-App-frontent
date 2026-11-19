@@ -17,12 +17,22 @@ const QUICK = [
   'How do I record CAT marks in UClass?',
 ];
 
-async function api(path, { method = 'GET', body, token, form } = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: form ? { Authorization: `Bearer ${token}` } : { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: form || (body ? JSON.stringify(body) : undefined),
-  });
+async function api(path, { method = 'GET', body, token, form } = {}, attempt = 0) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: form ? { Authorization: `Bearer ${token}` } : { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: form || (body ? JSON.stringify(body) : undefined),
+    });
+  } catch (e) {
+    // dropped connection / flaky network — retry once quietly
+    if (attempt < 1) {
+      await new Promise((r) => setTimeout(r, 1500));
+      return api(path, { method, body, token, form }, attempt + 1);
+    }
+    throw new Error('Connection lost — check your internet and try again.');
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;
@@ -372,7 +382,7 @@ export default function Mfasha({ user, token, onClose }) {
         {researching && <div className="mf-msg mf-assistant"><div className="mf-mini-avatar">MF</div><div className="mf-bubble">🔍 Researching and building your slides…</div></div>}
       </section>
 
-      {error && <div className="mf-error">⚠ {error}</div>}
+      {error && <div className="mf-error" onClick={() => setError('')}>⚠ {error} <b>✕</b></div>}
 
       {/* ── tools row (like ChatGPT's + tools) ── */}
       <div className="mf-tools">
