@@ -4,7 +4,7 @@
 
 ### Deploy (production)
 
-- **student.umunsi.com** — Vercel from this repo’s `main` (auto on push).
+- **student.umunsi.com** — Cloudflare Pages project `uclass-student` (Direct Upload, NOT Git-connected). Deployed by VPS cron `/usr/local/bin/student-pages-deploy.sh` (every 2 min): pulls `main` in `/home/umunsi/htdocs/Teacher-s-App-frontent`, builds, `wrangler pages deploy dist --project-name=uclass-student`. Token in `/root/.cf-pages-token`; log `/var/log/student-pages-deploy.log`; last deployed SHA in `/var/lib/student-pages-deployed`. Verify live: compare `assets/index-*.js` in `https://student.umunsi.com/` with the Action run.
 - **studentapi.umunsi.com** — VPS pull + `restart-production-api.sh` (see backend `DEPLOY.md`). UI also at `https://studentapi.umunsi.com/app/` from backend `student-web` build.
 - **Inyandiko (commitment / school reports / quiz marks):** Teacher dashboard tab **✍️ Inyandiko** + class **Leaderboard → Inyandiko**. Requires backend routes on VPS (`GET /api/classes/inyandiko/dashboard`). If production shows “not on the server yet”, deploy the API — use Hostinger **Browser SSH** (fingerprint `SHA256:jYsWizDft9Sm+…`) and run the backend `hostinger-terminal-deploy.sh` one-liner.
 - **Class Moments UI** — `src/components/classMoments/*` + `ClassMoments.css` (`cm-soc-*` Facebook/WhatsApp hybrid feed).
