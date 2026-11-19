@@ -313,7 +313,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
         )}
 
         {activeTab === 'mfasha' && (
-          <Mfasha user={user} token={token} />
+          <Mfasha user={user} token={token} onClose={() => setActiveTab('classes')} />
         )}
 
         {activeTab === 'notes' && (
@@ -439,12 +439,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
         </button>
       )}
       {mfOpen && activeTab !== 'mfasha' && (
-        <div className="mfasha-fab-overlay" onClick={() => setMfOpen(false)}>
-          <div className="mfasha-fab-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="mfasha-fab-close" onClick={() => setMfOpen(false)}>✕</button>
-            <Mfasha user={user} token={token} />
-          </div>
-        </div>
+        <Mfasha user={user} token={token} onClose={() => setMfOpen(false)} />
       )}
     </div>
   );

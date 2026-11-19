@@ -1,8 +1,13 @@
-.mfasha { display: flex; flex-direction: column; width: 100%; height: calc(100vh - 150px); min-height: 60vh; background: linear-gradient(180deg, #f0f6ff 0%, #ffffff 40%); border-radius: 18px; overflow: hidden; font-family: inherit; }
-/* full-width Mfasha page inside the dashboard */
-.premium-main:has(.mfasha) { max-width: none; }
-@media (min-width: 1201px) { .premium-main:has(.mfasha) { padding-right: 40px; } }
-@media (max-width: 640px) { .premium-main:has(.mfasha) { padding: 10px 8px 76px; } .mfasha { border-radius: 12px; height: calc(100vh - 120px); } }
+.mfasha { position: fixed; inset: 0; z-index: 1180; display: flex; flex-direction: column; width: 100%; height: 100%; background: linear-gradient(180deg, #f0f6ff 0%, #ffffff 40%); overflow: hidden; font-family: inherit; }
+.mf-back { border: none; background: rgba(255,255,255,.15); color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; flex-shrink: 0; }
+.mf-back:hover { background: rgba(255,255,255,.3); }
+.mf-bell { position: relative; border: none; background: rgba(255,255,255,.15); color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 15px; cursor: pointer; flex-shrink: 0; }
+.mf-bell b { position: absolute; top: -4px; right: -4px; background: #f4b400; color: #4a3000; font-size: 10px; min-width: 16px; height: 16px; border-radius: 8px; display: grid; place-items: center; padding: 0 3px; }
+.mf-bell.hot b { background: #d93025; color: #fff; }
+.mf-alerts-pop { position: absolute; top: 62px; left: 14px; z-index: 20; width: min(380px, calc(100% - 28px)); max-height: 70vh; overflow-y: auto; display: grid; gap: 8px; padding: 10px; background: #fff; border: 1px solid #e3ecf7; border-radius: 14px; box-shadow: 0 14px 44px rgba(10,30,70,.25); }
+.mf-alerts-pop-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 2px 4px 6px; }
+.mf-alerts-pop-head button { border: none; background: #f2f2f2; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; }
+.mf-alerts-pop .mf-chip { min-width: 0; max-width: none; }
 .mf-head { display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: linear-gradient(120deg, #1a4d8f, #1565d8); color: #fff; }
 .mf-avatar { width: 42px; height: 42px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #7db4ff, #0b3d91); border: 2px solid rgba(255,255,255,.7); display: grid; place-items: center; font-weight: 800; font-size: 14px; letter-spacing: .5px; box-shadow: 0 0 0 4px rgba(125,180,255,.25); }
 .mf-head-txt { min-width: 0; }

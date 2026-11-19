@@ -40,7 +40,7 @@ function md(text) {
     .replace(/\n/g, '<br/>');
 }
 
-export default function Mfasha({ user, token }) {
+export default function Mfasha({ user, token, onClose }) {
   const [classes, setClasses] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [aiReady, setAiReady] = useState(true);
@@ -63,6 +63,7 @@ export default function Mfasha({ user, token }) {
   // drafts (from alerts or parents tool)
   const [draftPanel, setDraftPanel] = useState(null); // {loading, drafts}
   const [statsPanel, setStatsPanel] = useState(null);
+  const [alertsOpen, setAlertsOpen] = useState(false);
   const [openQuiz, setOpenQuiz] = useState(null);
   const [quizRunning, setQuizRunning] = useState('');
   const [toast, setToast] = useState('');
@@ -125,11 +126,13 @@ export default function Mfasha({ user, token }) {
         setTranscribing(true);
         try {
           const fd = new FormData();
-          fd.append('audio', blob, 'voice.webm');
+          const ext = (rec.mimeType || 'audio/webm').includes('mp4') ? 'm4a' : 'webm';
+          fd.append('audio', blob, `voice.${ext}`);
           const { text } = await api('/mfasha/transcribe', { method: 'POST', token, form: fd });
           if (text) { setInput(''); sendRef.current?.(text); }
+          else setError('I could not hear anything — try again and speak closer to the mic.');
         } catch (e) {
-          setError(e.message);
+          setError(`Voice note failed to send (${e.message}). Check your internet and try again.`);
         } finally {
           setTranscribing(false);
         }
@@ -302,6 +305,12 @@ export default function Mfasha({ user, token }) {
     <div className="mfasha">
       {/* ── slim top bar ── */}
       <header className="mf-head">
+        {onClose && <button className="mf-back" onClick={onClose} title="Back to dashboard">←</button>}
+        {alerts.length > 0 && (
+          <button className={`mf-bell ${alerts.some((a) => a.severity === 'high') ? 'hot' : ''}`} onClick={() => setAlertsOpen((v) => !v)} title="Things needing your attention">
+            ⚠<b>{alerts.length}</b>
+          </button>
+        )}
         <div className="mf-avatar">MF</div>
         <div className="mf-head-txt">
           <h2>Mfasha</h2>
@@ -315,9 +324,10 @@ export default function Mfasha({ user, token }) {
         </div>
       </header>
 
-      {/* ── smart alerts strip (compact, scrolls sideways) ── */}
-      {alerts.length > 0 && (
-        <div className="mf-strip">
+      {/* ── alerts popover (hidden until ⚠ is tapped) ── */}
+      {alertsOpen && alerts.length > 0 && (
+        <div className="mf-alerts-pop">
+          <div className="mf-alerts-pop-head"><strong>Needs your attention</strong><button onClick={() => setAlertsOpen(false)}>✕</button></div>
           {alerts.map((a) => (
             <div key={a.id} className={`mf-chip mf-${a.severity}`}>
               <div className="mf-chip-txt">
@@ -326,7 +336,7 @@ export default function Mfasha({ user, token }) {
               </div>
               <div className="mf-chip-btns">
                 <button disabled={quizRunning === a.id} onClick={() => makeQuiz(a)}>{quizRunning === a.id ? '…' : '📝 Quiz'}</button>
-                <button className="mf-wa-chip" onClick={() => openDrafts(a)}>💬 Parents</button>
+                <button className="mf-wa-chip" onClick={() => { setAlertsOpen(false); openDrafts(a); }}>💬 Parents</button>
               </div>
             </div>
           ))}
