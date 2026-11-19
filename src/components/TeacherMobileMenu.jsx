@@ -22,6 +22,7 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
     { id: 'inyandiko', icon: '✍️', label: 'Inyandiko' },
     { id: 'coaching', icon: '🎓', label: 'Coaching' },
     { id: 'alumni', icon: '🎓', label: 'Alumni' },
+    { id: 'mfasha', icon: '✨', label: 'Mfasha' },
     { id: 'lessonplan', icon: '📝', label: 'Lesson Plan' },
     { id: 'notes', icon: '📓', label: 'Teaching Notes' },
     { id: 'tools', icon: '⚡', label: 'Tools' },
