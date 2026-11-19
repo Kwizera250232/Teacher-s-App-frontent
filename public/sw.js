@@ -1,27 +1,65 @@
-// Temporary SW — unregister all service workers and clear all caches
-// This fixes the blank screen caused by stale cached JS from old SW versions
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
-      .then(() => self.skipWaiting())
-  );
+// UClass offline service worker
+// - App shell + static assets cached so the app opens without internet
+// - API calls are NEVER cached (auth/data must be fresh)
+// - Quiz answers queue in the page (localStorage) and sync on reconnect
+const CACHE = 'ucl-shell-v1';
+const INDEX_KEY = '/index.html';
+
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
-      .then(() => {
-        // Unregister this SW so it doesn't interfere anymore
-        return self.registration.unregister();
-      })
   );
 });
 
-// Pass all requests through to network — no caching at all
 self.addEventListener('fetch', (e) => {
-  // Don't intercept any requests — let the browser handle everything normally
-  return;
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // Never intercept API or cross-origin requests (studentapi, R2, etc.)
+  if (url.pathname.startsWith('/api')) return;
+  if (url.hostname !== self.location.host) return;
+
+  // SPA navigations: network-first, cached shell when offline
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(INDEX_KEY, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(INDEX_KEY).then((m) => m || Response.error()))
+    );
+    return;
+  }
+
+  // Static assets (hashed bundles, icons, images): cache-first
+  if (
+    url.pathname.startsWith('/assets/') ||
+    /\.(js|css|png|jpe?g|svg|ico|woff2?|webp|gif|json)$/i.test(url.pathname)
+  ) {
+    e.respondWith(
+      caches.match(req).then((cached) => {
+        if (cached) return cached;
+        return fetch(req).then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return res;
+        });
+      })
+    );
+  }
 });
 
 self.addEventListener('push', (event) => {

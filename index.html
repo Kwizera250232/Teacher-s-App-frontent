@@ -89,14 +89,8 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // Unregister ALL existing service workers and clear caches
-          navigator.serviceWorker.getRegistrations().then(regs => {
-            regs.forEach(r => r.unregister());
-          });
-          caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-          // Register fresh SW (which will also self-unregister)
           navigator.serviceWorker.register('/sw.js').then(() => {
-            console.log('[SW] Fresh SW registered');
+            console.log('[SW] Registered');
           }).catch(err => console.warn('[SW] Registration failed:', err));
         });
       }

@@ -1,3 +1,5 @@
+import { flushPending } from './offlineStore';
+
 let listeners = [];
 
 export function onOfflineEvent(callback) {
@@ -9,15 +11,20 @@ function notifyListeners(event) {
   listeners.forEach((l) => l(event));
 }
 
+if (typeof window !== 'undefined') {
+  // Bridge events emitted by offlineStore (notes/quizzes/sync queue)
+  window.addEventListener('ucl-offline-event', (e) => {
+    if (e.detail?.type) notifyListeners(e.detail);
+  });
+}
+
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', (e) => {
     if (e.data?.type) notifyListeners(e.data);
   });
 
   window.addEventListener('online', () => {
-    navigator.serviceWorker.ready.then((reg) => {
-      reg.active?.postMessage('SYNC_PENDING_QUIZZES');
-    });
+    flushPending();
     notifyListeners({ type: 'ONLINE' });
   });
 
@@ -31,6 +38,7 @@ export function isOnline() {
 }
 
 export function triggerSync() {
+  flushPending();
   if ('serviceWorker' in navigator && navigator.onLine) {
     navigator.serviceWorker.ready.then((reg) => {
       reg.active?.postMessage('SYNC_PENDING_QUIZZES');

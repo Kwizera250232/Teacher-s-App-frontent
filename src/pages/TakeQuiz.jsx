@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { downloadWord } from '../utils/downloadResult';
+import { saveQuizForOffline, getQuizForOffline, queueQuizSubmission, isQuizDownloaded } from '../utils/offlineStore';
+import { isOnline } from '../utils/offlineSync';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
 import SoloQuizReflectionWizard from '../components/quizReflection/SoloQuizReflectionWizard';
 import '../pages/Dashboard.css';
@@ -28,6 +30,9 @@ export default function TakeQuiz() {
   const [quizMeta, setQuizMeta] = useState(null);
   const [reflectionOpen, setReflectionOpen] = useState(false);
   const [submitAchievements, setSubmitAchievements] = useState([]);
+  const [offlineMode, setOfflineMode] = useState(false);
+  const [quizSavedOffline, setQuizSavedOffline] = useState(false);
+  const [savingOffline, setSavingOffline] = useState(false);
   const scrollingRef = useRef(false);
 
   // Ignore option taps that land right after a scroll gesture (mobile: finger
@@ -44,6 +49,18 @@ export default function TakeQuiz() {
   }, []);
 
   useEffect(() => {
+    if (!isOnline()) {
+      const cached = getQuizForOffline(classId, quizId);
+      if (cached) {
+        setQuestions(cached.questions || []);
+        setQuizMeta(cached.meta || { title: cached.title, subject: cached.subject });
+        setOfflineMode(true);
+        setQuizSavedOffline(true);
+      } else {
+        setError('No internet connection and this quiz was not saved for offline. Connect once and tap "Save for offline" on the quiz.');
+      }
+      return;
+    }
     Promise.all([
       api.get(`/classes/${classId}/quizzes/${quizId}/questions`, token),
       api.get(`/classes/${classId}/quizzes/${quizId}/my-result`, token).catch(() => null),
@@ -51,6 +68,7 @@ export default function TakeQuiz() {
     ]).then(([qs, existing, meta]) => {
       setQuestions(qs);
       if (meta) setQuizMeta(meta);
+      setQuizSavedOffline(isQuizDownloaded(classId, quizId));
       if (existing && existing.score !== undefined) {
         setAlreadyDone(true);
         setPrevResult(existing);
@@ -74,6 +92,13 @@ export default function TakeQuiz() {
       setError('Please answer all questions before submitting.');
       return;
     }
+    if (!isOnline()) {
+      queueQuizSubmission({ classId, quizId, answers, token });
+      setError('');
+      setResult({ score: '?', total: questions.length, results: {}, offline: true });
+      setSubmitted(true);
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post(`/classes/${classId}/quizzes/${quizId}/submit`, { answers }, token);
@@ -89,10 +114,29 @@ export default function TakeQuiz() {
         setReflectionOpen(true);
       }
     } catch (e) {
-      setError(e.message);
+      if (/failed to fetch|networkerror|load failed|network request/i.test(e.message || '')) {
+        queueQuizSubmission({ classId, quizId, answers, token });
+        setError('');
+        setResult({ score: '?', total: questions.length, results: {}, offline: true });
+        setSubmitted(true);
+      } else {
+        setError(e.message);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveOffline = () => {
+    saveQuizForOffline({
+      classId, quizId,
+      title: quizMeta?.title || 'Quiz',
+      subject: quizMeta?.subject || quizMeta?.class_subject || '',
+      questions,
+      meta: quizMeta,
+    });
+    setQuizSavedOffline(true);
+    setSavingOffline(false);
   };
 
   const handleDownload = async () => {
@@ -415,6 +459,12 @@ export default function TakeQuiz() {
             <SharedQuizAttribution quiz={quizMeta} />
             <p style={{ color: '#888', fontSize: 14, marginBottom: 24 }}>{questions.length} questions · Answer all before submitting</p>
 
+            {!alreadyDone && offlineMode && (
+              <div className="alert" style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', marginBottom: 16 }}>
+                📡 Offline mode — this quiz was saved on your device. Your answers will sync automatically when you reconnect.
+              </div>
+            )}
+
             {error && <div className="alert alert-error">{error}</div>}
 
             {questions.map((q, i) => {
@@ -529,14 +579,32 @@ export default function TakeQuiz() {
             })}
 
             {questions.length > 0 && (
-              <button
-                className="btn btn-primary btn-full"
-                onClick={handleSubmit}
-                disabled={loading || Object.keys(answers).length < questions.length}
-                style={{ marginTop: 8 }}
-              >
-                {loading ? 'Submitting...' : `Submit Quiz (${Object.keys(answers).length}/${questions.length} answered)`}
-              </button>
+              <>
+                <button
+                  className="btn btn-primary btn-full"
+                  onClick={handleSubmit}
+                  disabled={loading || Object.keys(answers).length < questions.length}
+                  style={{ marginTop: 8 }}
+                >
+                  {loading ? 'Submitting...' : offlineMode ? `Save Answers Offline (${Object.keys(answers).length}/${questions.length})` : `Submit Quiz (${Object.keys(answers).length}/${questions.length} answered)`}
+                </button>
+                {!offlineMode && (
+                  <button
+                    type="button"
+                    onClick={handleSaveOffline}
+                    disabled={savingOffline || quizSavedOffline}
+                    style={{
+                      marginTop: 10, width: '100%', padding: '10px', borderRadius: 10,
+                      border: quizSavedOffline ? '1px solid #bbf7d0' : '1px dashed #cbd5e1',
+                      background: quizSavedOffline ? '#f0fdf4' : '#f8fafc',
+                      color: quizSavedOffline ? '#15803d' : '#475569',
+                      fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    {quizSavedOffline ? '✅ Saved for offline — open this quiz anytime without internet' : '⬇ Save this quiz for offline (answer later without internet)'}
+                  </button>
+                )}
+              </>
             )}
           </>
         )}

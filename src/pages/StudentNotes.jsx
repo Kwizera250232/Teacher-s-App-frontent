@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import '../pages/Dashboard.css';
 import './StudentNotes.css';
+import { saveNoteForOffline, getOfflineNotes, removeOfflineNote } from '../utils/offlineStore';
 
 const NOTE_COLORS = [
   '#fff9c4', '#f8bbd0', '#c8e6c9', '#bbdefb', '#ffe0b2',
@@ -27,6 +28,9 @@ export default function StudentNotes() {
   const [editNote, setEditNote] = useState(null);
   const [form, setForm] = useState({ title: '', content: '', color: NOTE_COLORS[0] });
   const [saving, setSaving] = useState(false);
+  const [offlineNotes, setOfflineNotes] = useState([]);
+  const [showOffline, setShowOffline] = useState(false);
+  const [savedIds, setSavedIds] = useState(() => new Set(getOfflineNotes().map(n => n.id)));
   const [searchQ, setSearchQ] = useState('');
   const titleRef = useRef();
 
@@ -39,6 +43,7 @@ export default function StudentNotes() {
       ]);
       setNotes(Array.isArray(n) ? n : []);
       setBadges(Array.isArray(b) ? b : []);
+      setOfflineNotes(getOfflineNotes());
     } catch (_) {}
     setLoading(false);
   }
@@ -90,6 +95,18 @@ export default function StudentNotes() {
     } catch (_) {}
   }
 
+  function handleDownload(note) {
+    saveNoteForOffline(note);
+    setSavedIds(prev => new Set(prev).add(note.id));
+    setOfflineNotes(getOfflineNotes());
+  }
+
+  function handleRemoveOffline(id) {
+    removeOfflineNote(id);
+    setSavedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+    setOfflineNotes(getOfflineNotes());
+  }
+
   const filtered = notes.filter(n =>
     n.title.toLowerCase().includes(searchQ.toLowerCase()) ||
     (n.content || '').toLowerCase().includes(searchQ.toLowerCase())
@@ -134,6 +151,38 @@ export default function StudentNotes() {
         </div>
       )}
 
+      {/* Offline notes */}
+      {offlineNotes.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <button
+            onClick={() => setShowOffline(o => !o)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '10px 16px', borderRadius: 12, border: '1px solid #c7d2fe',
+              background: '#eef2ff', color: '#3730a3', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+            }}
+          >
+            📴 Offline — {offlineNotes.length} {offlineNotes.length === 1 ? 'note' : 'notes'} saved {showOffline ? '▲' : '▼'}
+          </button>
+          {showOffline && (
+            <div className="sn-grid" style={{ marginTop: 12 }}>
+              {offlineNotes.map(n => (
+                <div key={n.id} className="sn-note" style={{ background: n.color || '#fff9c4' }}>
+                  <h4 className="sn-note-title">{n.title}</h4>
+                  {n.content && <p className="sn-note-body">{n.content}</p>}
+                  <div className="sn-note-footer">
+                    <span className="sn-note-date">📥 Saved for offline</span>
+                    <div className="sn-note-actions">
+                      <button title="Funga offline" onClick={() => handleRemoveOffline(n.id)}>✕</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <div className="sn-loading">Gutegereza...</div>
       ) : (
@@ -149,7 +198,7 @@ export default function StudentNotes() {
             <>
               <p className="sn-section-label">📌 Ibyatinze</p>
               <div className="sn-grid">
-                {pinned.map(note => <NoteCard key={note.id} note={note} onEdit={openEdit} onDelete={handleDelete} onPin={togglePin} />)}
+                {pinned.map(note => <NoteCard key={note.id} note={note} onEdit={openEdit} onDelete={handleDelete} onPin={togglePin} onDownload={handleDownload} downloadSaved={savedIds.has(note.id)} />)}
               </div>
             </>
           )}
@@ -157,7 +206,7 @@ export default function StudentNotes() {
             <>
               {pinned.length > 0 && <p className="sn-section-label">Izindi</p>}
               <div className="sn-grid">
-                {unpinned.map(note => <NoteCard key={note.id} note={note} onEdit={openEdit} onDelete={handleDelete} onPin={togglePin} />)}
+                {unpinned.map(note => <NoteCard key={note.id} note={note} onEdit={openEdit} onDelete={handleDelete} onPin={togglePin} onDownload={handleDownload} downloadSaved={savedIds.has(note.id)} />)}
               </div>
             </>
           )}
@@ -214,7 +263,7 @@ export default function StudentNotes() {
   );
 }
 
-function NoteCard({ note, onEdit, onDelete, onPin }) {
+function NoteCard({ note, onEdit, onDelete, onPin, onDownload, downloadSaved }) {
   const date = new Date(note.updated_at).toLocaleDateString('rw-RW', { day: 'numeric', month: 'short', year: 'numeric' });
   return (
     <div className="sn-note" style={{ background: note.color || '#fff9c4' }}>
@@ -225,6 +274,9 @@ function NoteCard({ note, onEdit, onDelete, onPin }) {
         <span className="sn-note-date">{date}</span>
         <div className="sn-note-actions">
           <button title={note.pinned ? 'Tangura' : 'Tanya'} onClick={() => onPin(note)}>{note.pinned ? '📌' : '📍'}</button>
+          {onDownload && (
+            <button title={downloadSaved ? 'Saved for offline' : 'Save for offline'} onClick={() => onDownload(note)} style={downloadSaved ? { opacity: 0.6 } : {}}>{downloadSaved ? '📥' : '⬇'}</button>
+          )}
           <button title="Hindura" onClick={() => onEdit(note)}>✏️</button>
           <button title="Siba" onClick={() => onDelete(note.id)}>🗑️</button>
         </div>

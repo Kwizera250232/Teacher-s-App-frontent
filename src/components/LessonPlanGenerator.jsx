@@ -978,8 +978,7 @@ export default function LessonPlanGenerator({ user, token }) {
               </div>
             )}
           </div>
-        </div>
-      ), document.body)}
+        </div>, document.body)}
     </div>
   );
 }
