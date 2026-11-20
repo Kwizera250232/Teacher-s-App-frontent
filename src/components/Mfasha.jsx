@@ -209,6 +209,35 @@ function md(text) {
     .replace(/\n/g, '<br/>');
 }
 
+function dataText(d) {
+  if (d.type === 'roster') {
+    return `${d.title}\n\n` + d.classes.map((c) => `${c.name} — ${c.students.length} student${c.students.length === 1 ? '' : 's'}\n` + c.students.map((n, i) => `${i + 1}. ${n}`).join('\n')).join('\n\n');
+  }
+  if (d.type === 'marks') {
+    return `${d.title}\n\n` + d.classes.map((c) => `🏆 ${c.name}${c.sheet ? ` (${c.sheet})` : ''}\n` + c.rows.map((r) => `${r.rank}. ${r.name} — ${r.pct ?? '—'}% (${r.obt}/${r.tot})`).join('\n')).join('\n\n');
+  }
+  return '';
+}
+
+function DataCard({ d, onShare }) {
+  return (
+    <div className="mf-datacard">
+      <div className="mf-dc-head"><strong>{d.type === 'roster' ? '👩‍🎓' : '🏆'} {d.title}</strong></div>
+      {d.classes.map((c) => (
+        <div className="mf-dc-class" key={c.name}>
+          <b>{c.name}{c.sheet ? <span className="mf-dim"> · {c.sheet}</span> : ''} <em>{c.students ? `${c.students.length} students` : `${c.rows.length} ranked`}</em></b>
+          <ol>
+            {c.students
+              ? c.students.map((n, i) => <li key={i}>{n}</li>)
+              : c.rows.map((r) => <li key={r.rank}>{r.name} <span className="mf-dim">— {r.pct ?? '—'}%</span></li>)}
+          </ol>
+        </div>
+      ))}
+      <button className="mf-dc-share" onClick={() => onShare(dataText(d), d.title)}>📤 Share this list</button>
+    </div>
+  );
+}
+
 export default function Mfasha({ user, token, onClose }) {
   const [classes, setClasses] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -282,11 +311,11 @@ export default function Mfasha({ user, token, onClose }) {
     setMessages(next);
     setBusy(true);
     try {
-      const { answer } = await api('/mfasha/ask', {
+      const { answer, data } = await api('/mfasha/ask', {
         method: 'POST', token,
         body: { question: q, lang, history: next.slice(-10).map((m) => ({ role: m.role, content: m.content })) },
       });
-      setMessages([...next, { role: 'assistant', content: answer }]);
+      setMessages([...next, { role: 'assistant', content: answer, data: data?.length ? data : null }]);
     } catch (e) {
       setError(e.message);
       setMessages(next);
@@ -672,6 +701,7 @@ export default function Mfasha({ user, token, onClose }) {
             {m.role === 'assistant' && <div className="mf-mini-avatar">MF</div>}
             <div className="mf-bubble-wrap">
               <div className="mf-bubble" dangerouslySetInnerHTML={{ __html: md(m.content) }} />
+              {m.data?.map((d, di) => <DataCard key={di} d={d} onShare={shareText} />)}
               {m.role === 'assistant' && (
                 <div className="mf-msg-tools">
                   {m.content.includes('Slide deck ready') && deck && <button onClick={() => setDeck(deck)}>📽 Open slides</button>}
