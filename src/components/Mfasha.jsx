@@ -219,13 +219,15 @@ function dataText(d) {
   return '';
 }
 
-function DataCard({ d, onShare }) {
+function DataCard({ d, onShare, onDoc }) {
   return (
     <div className="mf-datacard">
       <div className="mf-dc-head"><strong>{d.type === 'roster' ? '👩‍🎓' : '🏆'} {d.title}</strong></div>
       {d.classes.map((c) => (
         <div className="mf-dc-class" key={c.name}>
-          <b>{c.name}{c.sheet ? <span className="mf-dim"> · {c.sheet}</span> : ''} <em>{c.students ? `${c.students.length} students` : `${c.rows.length} ranked`}</em></b>
+          <b>{c.name}{c.sheet ? <span className="mf-dim"> · {c.sheet}</span> : ''} <em>{c.students ? `${c.students.length} students` : `${c.rows.length} ranked`}</em>
+            {d.type === 'marks' && c.id && <button className="mf-dc-doc" onClick={() => onDoc(c)}>📄 Proclamation .doc</button>}
+          </b>
           <ol>
             {c.students
               ? c.students.map((n, i) => <li key={i}>{n}</li>)
@@ -628,6 +630,20 @@ export default function Mfasha({ user, token, onClose }) {
     } catch (e) { setError(e.message); }
   };
 
+  // fetch the official proclamation .doc for a class and share/download it
+  const shareProcDoc = async (cls) => {
+    try {
+      const res = await fetch(`${API_BASE}/catmarks/${cls.id}/proclamation.doc`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.error || `Failed (${res.status})`); }
+      const file = new File([await res.blob()], `Proclamation-${String(cls.name).replace(/[^\w]+/g, '-')}.doc`, { type: 'application/msword' });
+      if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: `Proclamation — ${cls.name}` }); return; }
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a'); a.href = url; a.download = file.name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      say('Proclamation .doc downloaded — share it from Downloads.');
+    } catch (e) { setError(e.message); }
+  };
+
   const waLink = (phone, message) => {
     const num = String(phone || '').replace(/\D/g, '').replace(/^0/, '250');
     return `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
@@ -701,7 +717,7 @@ export default function Mfasha({ user, token, onClose }) {
             {m.role === 'assistant' && <div className="mf-mini-avatar">MF</div>}
             <div className="mf-bubble-wrap">
               <div className="mf-bubble" dangerouslySetInnerHTML={{ __html: md(m.content) }} />
-              {m.data?.map((d, di) => <DataCard key={di} d={d} onShare={shareText} />)}
+              {m.data?.map((d, di) => <DataCard key={di} d={d} onShare={shareText} onDoc={shareProcDoc} />)}
               {m.role === 'assistant' && (
                 <div className="mf-msg-tools">
                   {m.content.includes('Slide deck ready') && deck && <button onClick={() => setDeck(deck)}>📽 Open slides</button>}

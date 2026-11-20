@@ -164,6 +164,8 @@
 .mf-dc-class ol li span.mf-dim { margin-left: 4px; }
 .mf-dc-share { margin-top: 10px; border: 1px solid #1565d8; background: #f0f6ff; color: #1565d8; border-radius: 18px; padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .mf-dc-share:hover { background: #1565d8; color: #fff; }
+.mf-dc-doc { border: 1px solid #1d7a3d; background: #eafaf0; color: #1d7a3d; border-radius: 14px; padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.mf-dc-doc:hover { background: #1d7a3d; color: #fff; }
 .mf-nostu { margin-top: 10px; font-size: 13.5px; color: #555; }
 .mf-parent-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; }
 .mf-parent-row em { color: #0a7a3d; font-style: normal; font-size: 12px; }
