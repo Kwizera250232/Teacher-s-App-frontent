@@ -382,7 +382,9 @@ export default function Mfasha({ user, token, onClose }) {
   const inspText = () => {
     if (!inspiration) return '';
     const L = [`${inspiration.title}`, '', inspiration.intro || '', ''];
-    if (inspiration.aids?.length) { L.push('Teaching aids:'); inspiration.aids.forEach((a) => L.push(`  • ${a}`)); L.push(''); }
+    if (inspiration.aids?.length) { L.push('Teaching aids (CBC):'); inspiration.aids.forEach((a) => L.push(`  • ${a}`)); L.push(''); }
+    if (inspiration.conduct?.length) { L.push('How to carry yourself:'); inspiration.conduct.forEach((a) => L.push(`  • ${a}`)); L.push(''); }
+    if (inspiration.struggling?.length) { L.push('Students needing care:'); inspiration.struggling.forEach((a) => L.push(`  • ${a}`)); L.push(''); }
     if (inspiration.preparation?.length) { L.push('Before the lesson:'); inspiration.preparation.forEach((a) => L.push(`  • ${a}`)); L.push(''); }
     if (inspiration.flow?.length) { L.push('Lesson flow:'); inspiration.flow.forEach((a, i) => L.push(`  ${i + 1}. ${a}`)); L.push(''); }
     if (inspiration.encouragement) L.push(`💪 ${inspiration.encouragement}`);
@@ -403,7 +405,9 @@ export default function Mfasha({ user, token, onClose }) {
       <p><i>Class Inspiration · Mfasha · UClass — ${user?.name || 'Teacher'}</i></p>
       ${imgTag}
       <h2>About this lesson</h2><p>${inspiration.intro || ''}</p>
-      ${inspiration.aids?.length ? `<h2>Teaching aids</h2><ul>${li(inspiration.aids)}</ul>` : ''}
+      ${inspiration.aids?.length ? `<h2>Teaching aids for this lesson (CBC)</h2><ul>${li(inspiration.aids)}</ul>` : ''}
+      ${inspiration.conduct?.length ? `<h2>How to carry yourself in this lesson</h2><ul>${li(inspiration.conduct)}</ul>` : ''}
+      ${inspiration.struggling?.length ? `<h2>Students needing care</h2><ul>${li(inspiration.struggling)}</ul>` : ''}
       ${inspiration.preparation?.length ? `<h2>Before the lesson</h2><ul>${li(inspiration.preparation)}</ul>` : ''}
       ${inspiration.flow?.length ? `<h2>Lesson flow</h2><ol>${li(inspiration.flow)}</ol>` : ''}
       ${inspiration.encouragement ? `<h2>Word for you</h2><p><b>${inspiration.encouragement}</b></p>` : ''}
@@ -500,7 +504,6 @@ export default function Mfasha({ user, token, onClose }) {
             ⚠<b>{alerts.length}</b>
           </button>
         )}
-        <div className="mf-avatar">MF</div>
         <div className="mf-head-txt">
           <h2>Mfasha</h2>
           <p>{aiReady ? 'Your teaching assistant' : 'AI is not configured on the server yet.'}</p>
@@ -695,7 +698,13 @@ export default function Mfasha({ user, token, onClose }) {
               )}
               {inspiration.intro && <p className="mf-inspire-intro">{inspiration.intro}</p>}
               {inspiration.aids?.length > 0 && (
-                <div className="mf-inspire-sec"><h4>🧰 Teaching aids</h4><ul>{inspiration.aids.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
+                <div className="mf-inspire-sec"><h4>🧰 Teaching aids for this lesson (CBC)</h4><ul>{inspiration.aids.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
+              )}
+              {inspiration.conduct?.length > 0 && (
+                <div className="mf-inspire-sec"><h4>🧑‍🏫 How to carry yourself in this lesson</h4><ul>{inspiration.conduct.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
+              )}
+              {inspiration.struggling?.length > 0 && (
+                <div className="mf-inspire-sec"><h4>🌱 Students needing care (from your marks)</h4><ul>{inspiration.struggling.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
               )}
               {inspiration.preparation?.length > 0 && (
                 <div className="mf-inspire-sec"><h4>📋 Before the lesson</h4><ul>{inspiration.preparation.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
