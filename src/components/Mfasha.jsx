@@ -17,10 +17,162 @@ const QUICK = [
   'How do I record CAT marks in UClass?',
 ];
 
-async function apiBlob(path, token) {
-  const res = await fetch(`${API_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) throw new Error(`Image fetch failed (${res.status})`);
-  return res.blob();
+// ── Mfasha poster illustrator (drawn by our own code — no external AI image service) ──
+const AID_ICONS = [
+  [/fraction|gabunganya|kibice|divide/i, '🍕'], [/plant|photosynth|igiti|leaf|grow|ubuto/i, '🌱'],
+  [/money|amafaranga|frw|rwf|market|isoko|bank/i, '💰'], [/map|geograph|ikarita|rwanda|district/i, '🗺️'],
+  [/water|amazi|cycle|rain|imvura/i, '💧'], [/animal|inyamaswa|cow|inka/i, '🐄'],
+  [/count|number|ibarura|math|add|multiply|umubare/i, '🔢'], [/shape|triangle|angle|geometry|uruziga/i, '📐'],
+  [/time|clock|hour|isaha/i, '⏰'], [/book|read|story|andika|composition|inyandiko/i, '📖'],
+  [/body|health|umubiri|blood/i, '🫀'], [/electric|umuriro|energy|power/i, '⚡'],
+  [/seed|imbuto|soil|ivu|farm|ubuhinzi/i, '🌾'], [/test|exam|quiz|ibizamini/i, '📝'],
+  [/music|song|indirimbo/i, '🎵'], [/sport|umukino|football/i, '⚽'], [/speak|talk|language|ururimi/i, '🗣️'],
+  [/computer|mudasobwa|code|technology/i, '💻'], [/art|draw|picture|shushanya/i, '🎨'],
+];
+const iconFor = (t) => (AID_ICONS.find(([re]) => re.test(t)) || [null, '✏️'])[1];
+
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawTeacher(ctx, cx, feetY, s, faceBmp) {
+  // legs + shoes
+  ctx.fillStyle = '#1f2a44';
+  ctx.fillRect(cx - 17 * s, feetY - 118 * s, 15 * s, 116 * s);
+  ctx.fillRect(cx + 3 * s, feetY - 118 * s, 15 * s, 116 * s);
+  ctx.fillStyle = '#0e1526';
+  rr(ctx, cx - 23 * s, feetY - 8 * s, 27 * s, 10 * s, 4 * s); ctx.fill();
+  rr(ctx, cx - 1 * s, feetY - 8 * s, 27 * s, 10 * s, 4 * s); ctx.fill();
+  // body — smart shirt
+  ctx.fillStyle = '#1565d8';
+  rr(ctx, cx - 36 * s, feetY - 212 * s, 72 * s, 102 * s, 18 * s); ctx.fill();
+  // collar + tie
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.moveTo(cx - 14 * s, feetY - 210 * s); ctx.lineTo(cx, feetY - 192 * s); ctx.lineTo(cx + 14 * s, feetY - 210 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#d93025';
+  ctx.beginPath(); ctx.moveTo(cx, feetY - 192 * s); ctx.lineTo(cx - 7 * s, feetY - 196 * s); ctx.lineTo(cx, feetY - 158 * s); ctx.lineTo(cx + 7 * s, feetY - 196 * s); ctx.closePath(); ctx.fill();
+  // left arm pointing to the board
+  ctx.strokeStyle = '#1565d8'; ctx.lineWidth = 15 * s; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx - 30 * s, feetY - 196 * s); ctx.lineTo(cx - 92 * s, feetY - 244 * s); ctx.stroke();
+  // hand + pointer stick
+  ctx.fillStyle = '#8d5524';
+  ctx.beginPath(); ctx.arc(cx - 96 * s, feetY - 248 * s, 9 * s, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 4 * s;
+  ctx.beginPath(); ctx.moveTo(cx - 96 * s, feetY - 248 * s); ctx.lineTo(cx - 150 * s, feetY - 286 * s); ctx.stroke();
+  // right arm down + book
+  ctx.strokeStyle = '#1565d8'; ctx.lineWidth = 15 * s;
+  ctx.beginPath(); ctx.moveTo(cx + 30 * s, feetY - 196 * s); ctx.lineTo(cx + 46 * s, feetY - 138 * s); ctx.stroke();
+  ctx.fillStyle = '#8d5524'; ctx.beginPath(); ctx.arc(cx + 48 * s, feetY - 134 * s, 9 * s, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1565d8'; ctx.lineWidth = 3 * s;
+  rr(ctx, cx + 40 * s, feetY - 150 * s, 34 * s, 24 * s, 3 * s); ctx.fill(); ctx.stroke();
+  // head
+  const hy = feetY - 240 * s;
+  if (faceBmp) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, hy, 34 * s, 0, 7); ctx.clip();
+    const fs = Math.min(faceBmp.width, faceBmp.height);
+    ctx.drawImage(faceBmp, (faceBmp.width - fs) / 2, (faceBmp.height - fs) / 2, fs, fs, cx - 34 * s, hy - 34 * s, 68 * s, 68 * s);
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(cx, hy, 34 * s, 0, 7);
+    ctx.lineWidth = 4 * s; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
+  } else {
+    // drawn face — warm smile
+    ctx.fillStyle = '#8d5524';
+    ctx.beginPath(); ctx.arc(cx, hy, 34 * s, 0, 7); ctx.fill();
+    ctx.fillStyle = '#241a10';
+    ctx.beginPath(); ctx.arc(cx, hy - 16 * s, 33 * s, Math.PI, 0); ctx.fill(); // hair
+    ctx.fillStyle = '#241a10';
+    ctx.beginPath(); ctx.arc(cx - 11 * s, hy - 2 * s, 3.4 * s, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 11 * s, hy - 2 * s, 3.4 * s, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#241a10'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(cx, hy + 8 * s, 13 * s, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+  }
+}
+
+async function drawPoster({ inspiration, user, faceBmp }) {
+  const W = 1080, H = 780;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  // warm classroom gradient + soft circles
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#f7ecd9'); bg.addColorStop(0.62, '#f2e2c4'); bg.addColorStop(1, '#e8d3ae');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,.35)';
+  for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.arc(60 + i * 160, 40 + (i % 3) * 30, 22 + (i % 4) * 10, 0, 7); ctx.fill(); }
+  // floor
+  ctx.fillStyle = '#d9bd8f'; ctx.fillRect(0, H - 150, W, 150);
+  ctx.fillStyle = 'rgba(0,0,0,.06)'; ctx.fillRect(0, H - 150, W, 6);
+  // chalkboard with wooden frame
+  const bx = 70, by = 80, bw = 640, bh = 400;
+  ctx.fillStyle = '#8a5a2b'; rr(ctx, bx - 14, by - 14, bw + 28, bh + 28, 16); ctx.fill();
+  ctx.fillStyle = '#20523f'; rr(ctx, bx, by, bw, bh, 8); ctx.fill();
+  // chalk tray + chalk
+  ctx.fillStyle = '#6e4520'; ctx.fillRect(bx, by + bh + 4, bw, 10);
+  ctx.fillStyle = '#fff'; ctx.fillRect(bx + 20, by + bh + 2, 40, 4);
+  // board text
+  ctx.fillStyle = '#9fd6ba'; ctx.font = '26px "Comic Sans MS","Chalkboard SE",cursive';
+  ctx.fillText("Today's lesson", bx + 34, by + 52);
+  ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(bx + 34, by + 66); ctx.lineTo(bx + 250, by + 66); ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  let fs = 52;
+  const title = inspiration.title || 'Lesson';
+  ctx.font = `bold ${fs}px "Comic Sans MS","Chalkboard SE",cursive`;
+  while (ctx.measureText(title).width > bw - 80 && fs > 24) { fs -= 3; ctx.font = `bold ${fs}px "Comic Sans MS","Chalkboard SE",cursive`; }
+  const words = title.split(' ');
+  let line = '', ty = by + 140;
+  for (const w of words) {
+    if (ctx.measureText(line + w).width > bw - 90) { ctx.fillText(line.trim(), bx + 40, ty); ty += fs + 14; line = ''; }
+    line += w + ' ';
+  }
+  ctx.fillText(line.trim(), bx + 40, ty);
+  // squiggle under title
+  ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 5; ctx.beginPath();
+  for (let x = 0; x < 220; x += 10) ctx.lineTo(bx + 40 + x, ty + 18 + Math.sin(x / 18) * 5);
+  ctx.stroke();
+  // a couple of chalk doodles
+  ctx.font = '40px "Comic Sans MS",cursive'; ctx.fillStyle = 'rgba(255,255,255,.8)';
+  ctx.fillText('✓', bx + bw - 90, by + 60);
+  ctx.fillText('?', bx + bw - 60, by + 130);
+  // teacher figure on the right
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.12)';
+  ctx.beginPath(); ctx.ellipse(850, H - 150, 120, 22, 0, 0, 7); ctx.fill();
+  drawTeacher(ctx, 850, H - 150, 1.05, faceBmp);
+  ctx.restore();
+  // teaching-aid cards along the bottom
+  const aids = (inspiration.aids || []).slice(0, 4);
+  aids.forEach((a, i) => {
+    const ax = 60 + i * 175, ay = H - 132;
+    ctx.fillStyle = 'rgba(0,0,0,.14)'; rr(ctx, ax + 4, ay + 5, 150, 116, 14); ctx.fill();
+    ctx.fillStyle = '#ffffff'; rr(ctx, ax, ay, 150, 116, 14); ctx.fill();
+    ctx.strokeStyle = '#e3d5bd'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.font = '52px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(iconFor(a), ax + 75, ay + 62);
+    ctx.fillStyle = '#7a6234'; ctx.font = 'bold 15px system-ui';
+    const label = String(a).split(/[—:,(]/)[0].trim().split(' ').slice(0, 4).join(' ');
+    ctx.fillText(label.length > 20 ? label.slice(0, 19) + '…' : label, ax + 75, ay + 96);
+    ctx.textAlign = 'left';
+  });
+  // branding band
+  const g = ctx.createLinearGradient(0, H - 60, 0, H);
+  g.addColorStop(0, 'rgba(20,30,60,0)'); g.addColorStop(0.5, 'rgba(20,30,60,.55)'); g.addColorStop(1, 'rgba(15,25,55,.92)');
+  ctx.fillStyle = g; ctx.fillRect(0, H - 60, W, 60);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 28px system-ui, sans-serif';
+  ctx.fillText(`✨ Made with Mfasha${user?.name ? ` · ${user.name}` : ''}`, 26, H - 20);
+  ctx.textAlign = 'right';
+  ctx.font = '600 23px system-ui, sans-serif';
+  ctx.fillText('© UClass · student.umunsi.com', W - 26, H - 20);
+  ctx.textAlign = 'left';
+  return cv;
 }
 
 async function api(path, { method = 'GET', body, token, form } = {}, attempt = 0) {
@@ -79,14 +231,12 @@ export default function Mfasha({ user, token, onClose }) {
   const [inspireTopic, setInspireTopic] = useState('');
   const [inspiration, setInspiration] = useState(null);
   const [inspiring, setInspiring] = useState(false);
-  // "use my photo" — camera capture + draggable face sticker
+  // "use my photo" — camera capture, face lands on the teacher figure
   const [myPhoto, setMyPhoto] = useState(null); // dataURL
   const [camOpen, setCamOpen] = useState(false);
-  const [facePos, setFacePos] = useState({ x: 0.5, y: 0.28, r: 0.14 });
+  const [cardImg, setCardImg] = useState(null); // rendered poster dataURL
   const videoRef = useRef(null);
   const camStream = useRef(null);
-  const imgWrapRef = useRef(null);
-  const dragRef = useRef(null);
   // parents (one-tap WhatsApp)
   const [parentPanel, setParentPanel] = useState(null); // {loading, cls, students, reason}
   // drafts (from alerts or parents tool)
@@ -289,56 +439,24 @@ export default function Mfasha({ user, token, onClose }) {
     fr.readAsDataURL(f);
   };
 
-  // drag the face sticker over the illustration
-  const startDrag = (e) => {
-    e.preventDefault();
-    dragRef.current = e.pointerId;
-  };
-  const onDrag = (e) => {
-    if (dragRef.current !== e.pointerId || !imgWrapRef.current) return;
-    const rect = imgWrapRef.current.getBoundingClientRect();
-    setFacePos((p) => ({
-      ...p,
-      x: Math.min(0.92, Math.max(0.08, (e.clientX - rect.left) / rect.width)),
-      y: Math.min(0.92, Math.max(0.08, (e.clientY - rect.top) / rect.height)),
-    }));
-  };
-  const endDrag = (e) => { if (dragRef.current === e.pointerId) dragRef.current = null; };
-
-  // composite: illustration + optional face + UClass copyright bar
+  // draw the poster ourselves — illustration + optional face on the teacher + UClass ©
   const buildCardBlob = async () => {
-    const W = 1080, H = 780;
-    const cv = document.createElement('canvas');
-    cv.width = W; cv.height = H;
-    const ctx = cv.getContext('2d');
-    ctx.fillStyle = '#dfe9f8'; ctx.fillRect(0, 0, W, H);
-    const ill = await createImageBitmap(await apiBlob(`/mfasha/image?url=${encodeURIComponent(inspiration.imageUrl)}`, token));
-    const s = Math.max(W / ill.width, H / ill.height);
-    ctx.drawImage(ill, (W - ill.width * s) / 2, (H - ill.height * s) / 2, ill.width * s, ill.height * s);
+    let faceBmp = null;
     if (myPhoto) {
-      const fb = await (await fetch(myPhoto)).blob();
-      const f = await createImageBitmap(fb);
-      const r = facePos.r * W, cx = facePos.x * W, cy = facePos.y * H;
-      ctx.save();
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
-      const fs = Math.min(f.width, f.height);
-      ctx.drawImage(f, (f.width - fs) / 2, (f.height - fs) / 2, fs, fs, cx - r, cy - r, r * 2, r * 2);
-      ctx.restore();
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7);
-      ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
+      try { faceBmp = await createImageBitmap(await (await fetch(myPhoto)).blob()); } catch { faceBmp = null; }
     }
-    const g = ctx.createLinearGradient(0, H - 110, 0, H);
-    g.addColorStop(0, 'rgba(10,22,50,0)');
-    g.addColorStop(1, 'rgba(10,22,50,.88)');
-    ctx.fillStyle = g; ctx.fillRect(0, H - 110, W, 110);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 30px system-ui, sans-serif';
-    ctx.fillText(`✨ Made with Mfasha${user?.name ? ` · ${user.name}` : ''}`, 26, H - 26);
-    ctx.textAlign = 'right';
-    ctx.font = '600 24px system-ui, sans-serif';
-    ctx.fillText('© UClass · student.umunsi.com', W - 26, H - 26);
+    const cv = await drawPoster({ inspiration, user, faceBmp });
     return new Promise((res) => cv.toBlob(res, 'image/png'));
   };
+
+  // (re)render the poster whenever the guide or the photo changes
+  useEffect(() => {
+    if (!inspiration) { setCardImg(null); return; }
+    let live = true;
+    buildCardBlob().then((b) => live && setCardImg(URL.createObjectURL(b))).catch(() => {});
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inspiration, myPhoto]);
 
   const downloadCard = async () => {
     try {
@@ -393,7 +511,7 @@ export default function Mfasha({ user, token, onClose }) {
 
   const downloadInspirationDoc = async () => {
     if (!inspiration) return;
-    let imgTag = `<p><i>Illustration: ${inspiration.imageUrl}</i></p>`;
+    let imgTag = '';
     try {
       const b = await buildCardBlob();
       const dataUrl = await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b); });
@@ -668,34 +786,25 @@ export default function Mfasha({ user, token, onClose }) {
               </span>
             </div>
             <div className="mf-inspire-body">
-              <div className="mf-inspire-img-wrap" ref={imgWrapRef} onPointerMove={onDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
-                <img src={inspiration.imageUrl} alt={inspiration.title} className="mf-inspire-img" draggable={false} />
-                {myPhoto && (
-                  <img
-                    src={myPhoto}
-                    alt="you"
-                    className="mf-face"
-                    draggable={false}
-                    onPointerDown={startDrag}
-                    style={{
-                      left: `${facePos.x * 100}%`, top: `${facePos.y * 100}%`,
-                      width: `${facePos.r * 2 * 100}%`,
-                    }}
-                  />
-                )}
-                <span className="mf-copybar">✨ Made with Mfasha{user?.name ? ` · ${user.name}` : ''} &nbsp;·&nbsp; © UClass · student.umunsi.com</span>
+              <div className="mf-inspire-img-wrap">
+                {cardImg
+                  ? <img src={cardImg} alt={inspiration.title} className="mf-inspire-img" draggable={false} />
+                  : <div className="mf-inspire-loading">🎨 Drawing your picture…</div>}
               </div>
-              {myPhoto && (
-                <div className="mf-face-tools">
-                  <span className="mf-dim">↕ drag your face onto the teacher —</span>
-                  <input type="range" min="0.07" max="0.3" step="0.01" value={facePos.r} onChange={(e) => setFacePos((p) => ({ ...p, r: Number(e.target.value) }))} />
-                  <button className="mf-linkbtn" onClick={() => setMyPhoto(null)}>remove face</button>
-                  <button className="mf-linkbtn" onClick={openCam}>📷 retake</button>
-                </div>
-              )}
-              {!myPhoto && (
-                <div className="mf-face-tools"><button className="mf-photobtn" onClick={openCam}>📷 Add my face to this picture</button><label className="mf-linkbtn">or upload<input type="file" accept="image/*" hidden onChange={pickPhoto} /></label></div>
-              )}
+              <div className="mf-face-tools">
+                {myPhoto ? (
+                  <>
+                    <span className="mf-dim">Your face is on the teacher ✓</span>
+                    <button className="mf-linkbtn" onClick={() => setMyPhoto(null)}>remove face</button>
+                    <button className="mf-linkbtn" onClick={openCam}>📷 retake</button>
+                  </>
+                ) : (
+                  <>
+                    <button className="mf-photobtn" onClick={openCam}>📷 Add my face to this picture</button>
+                    <label className="mf-linkbtn">or upload<input type="file" accept="image/*" hidden onChange={pickPhoto} /></label>
+                  </>
+                )}
+              </div>
               {inspiration.intro && <p className="mf-inspire-intro">{inspiration.intro}</p>}
               {inspiration.aids?.length > 0 && (
                 <div className="mf-inspire-sec"><h4>🧰 Teaching aids for this lesson (CBC)</h4><ul>{inspiration.aids.map((a, i) => <li key={i}>{a}</li>)}</ul></div>

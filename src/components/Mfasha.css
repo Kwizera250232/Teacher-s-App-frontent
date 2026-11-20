@@ -67,11 +67,8 @@
 .mf-linkbtn { border: none; background: none; color: #1565d8; font-size: 12.5px; cursor: pointer; text-decoration: underline; padding: 4px; }
 .mf-photo-thumb { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #a259ff; }
 .mf-inspire-img-wrap { position: relative; }
-.mf-face { position: absolute; transform: translate(-50%, -50%); aspect-ratio: 1; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,.95); box-shadow: 0 4px 18px rgba(0,0,0,.35); cursor: grab; touch-action: none; }
-.mf-face:active { cursor: grabbing; }
-.mf-copybar { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 14px 10px; background: linear-gradient(180deg, transparent, rgba(10,22,50,.85)); color: #fff; font-size: 12.5px; font-weight: 600; display: flex; justify-content: center; gap: 4px; pointer-events: none; }
+.mf-inspire-loading { min-height: 260px; display: grid; place-items: center; color: #7a6234; font-size: 15px; }
 .mf-face-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-.mf-face-tools input[type=range] { flex: 1; min-width: 120px; max-width: 220px; }
 .mf-cam-card { width: min(520px, 100%); }
 .mf-cam-video { width: 100%; display: block; background: #0a162e; border-radius: 0 0 0 0; aspect-ratio: 4/3; object-fit: cover; }
 .mf-cam-btns { padding: 14px 18px 18px; }
