@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { API_BASE } from '../api';
 import './Mfasha.css';
 
@@ -658,6 +659,9 @@ export default function Mfasha({ user, token, onClose }) {
         {messages.length === 0 && (
           <div className="mf-welcome">
             <p>Muraho{user?.name ? ` ${String(user.name).split(' ')[0]}` : ''}! I can see your <strong>{classes.length} class{classes.length === 1 ? '' : 'es'}</strong> and their real results.<br />Ask me anything about your work or UClass — or hold 🎤 and just talk.</p>
+            {classes.length > 0 && classes.every((c) => !c.students) && (
+              <p className="mf-nostu">Your classes have no students yet — <Link to="/teacher/classes" className="mf-addstu">➕ Add students (UClass)</Link> and I’ll start watching their marks.</p>
+            )}
             <div className="mf-quick">
               {QUICK.map((q) => <button key={q} onClick={() => send(q)}>{q}</button>)}
             </div>
@@ -907,6 +911,9 @@ export default function Mfasha({ user, token, onClose }) {
                 />
                 <button className="mf-genbtn" onClick={draftForClass}>✨ Draft personal messages for all parents</button>
                 <p className="mf-dim mf-center">— or message one parent directly —</p>
+                {parentPanel.students.length === 0 && (
+                  <p className="mf-pad">No students in this class yet.<br /><Link to="/teacher/classes" className="mf-addstu" onClick={() => setParentPanel(null)}>➕ Add students (UClass)</Link></p>
+                )}
                 {parentPanel.students.map((s) => (
                   <div key={s.id} className="mf-studentline">
                     <strong>{s.name}</strong>
@@ -953,6 +960,9 @@ export default function Mfasha({ user, token, onClose }) {
                         )}
                       </div>
                     )) : <p className="mf-noparent">No quiz attempts yet.</p>}
+                    {c.students === 0 && (
+                      <Link to="/teacher/classes" className="mf-addstu">➕ Add students — weak students will appear here</Link>
+                    )}
                   </div>
                 ))}
                 {statsPanel.classes.length === 0 && <p className="mf-pad">No classes yet.</p>}
