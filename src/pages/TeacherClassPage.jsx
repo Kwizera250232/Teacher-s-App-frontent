@@ -343,12 +343,15 @@ export default function TeacherClassPage() {
     } catch (e) { setError(e.message); }
   };
 
-  const saveAnnotation = async (blob) => {
+  const saveAnnotation = async (blobs) => {
     if (!annotateSub) return;
     setAnnotateBusy(true);
     try {
       const fd = new FormData();
-      fd.append('annotated', blob, 'corrected.png');
+      blobs.forEach((b, i) => {
+        const name = `page-${String(i + 1).padStart(3, '0')}.png`;
+        fd.append(blobs.length > 1 ? 'pages' : 'annotated', b, name);
+      });
       await uploadFile(`/classes/${id}/homework/${annotateSub.hwId}/submissions/${annotateSub.sub.id}/annotate`, fd, token);
       const subs = await api.get(`/classes/${id}/homework/${annotateSub.hwId}/submissions`, token);
       const gradeForm = {};
@@ -725,7 +728,7 @@ export default function TeacherClassPage() {
                                     onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.file_path}?inline=1`, fileName: sub.file_name })}
                                   >👁 Preview</button>
                                   <a href={`${UPLOADS_BASE}/download/homework/${sub.file_path}`} download={sub.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
-                                  {/\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(sub.file_name || sub.file_path || '') && (
+                                  {/\.(jpe?g|png|webp|gif|bmp|heic|heif|pdf)$/i.test(sub.file_name || sub.file_path || '') && (
                                     <button
                                       className="btn btn-sm"
                                       style={{ background: '#1565d8', color: '#fff', border: 'none' }}
@@ -738,7 +741,7 @@ export default function TeacherClassPage() {
                             {sub.annotated_path && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13, color: '#166534', fontWeight: 600 }}>
                                 ✅ Corrected copy saved
-                                <button className="btn btn-secondary btn-sm" onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.annotated_path}?inline=1`, fileName: 'corrected.png' })}>👁 View your marks</button>
+                                <button className="btn btn-secondary btn-sm" onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.annotated_path}?inline=1`, fileName: `corrected.${sub.annotated_path.split('.').pop()}` })}>👁 View your marks</button>
                               </div>
                             )}
                             {/* Grade form */}
@@ -1319,15 +1322,21 @@ export default function TeacherClassPage() {
         />
       )}
 
-      {annotateSub && (
-        <HomeworkAnnotator
-          imageUrl={`${UPLOADS_BASE}/download/homework/${annotateSub.sub.annotated_path || annotateSub.sub.file_path}?inline=1`}
-          title={`${annotateSub.sub.student_name} — ${annotateSub.hwTitle}`}
-          busy={annotateBusy}
-          onSave={saveAnnotation}
-          onClose={() => setAnnotateSub(null)}
-        />
-      )}
+      {annotateSub && (() => {
+        const f = annotateSub.sub.annotated_path || annotateSub.sub.file_path;
+        const isPdf = /\.pdf$/i.test(f || '');
+        const url = `${UPLOADS_BASE}/download/homework/${f}?inline=1`;
+        return (
+          <HomeworkAnnotator
+            imageUrl={isPdf ? undefined : url}
+            pdfUrl={isPdf ? url : undefined}
+            title={`${annotateSub.sub.student_name} — ${annotateSub.hwTitle}`}
+            busy={annotateBusy}
+            onSave={saveAnnotation}
+            onClose={() => setAnnotateSub(null)}
+          />
+        );
+      })()}
 
       {shareItem && (
         <ShareModal
