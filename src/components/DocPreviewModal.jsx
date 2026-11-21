@@ -21,21 +21,50 @@ function PdfCanvasViewer({ fileUrl, onReady, onError, badgeColor }) {
         if (!container) return;
         container.innerHTML = '';
 
+        // Create a placeholder per page — pages render only when scrolled near view,
+        // so big textbooks open instantly instead of rendering hundreds of pages.
+        const scale = window.devicePixelRatio > 1 ? 1.5 : 1.2;
+        const estimatedH = Math.round((container.clientWidth || 800) * 1.41);
+        const holders = [];
         for (let i = 1; i <= pdf.numPages; i++) {
-          if (cancelled) break;
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: window.devicePixelRatio > 1 ? 1.5 : 1.2 });
-          const canvas = document.createElement('canvas');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          canvas.style.width = '100%';
-          canvas.style.display = 'block';
-          canvas.style.marginBottom = '8px';
-          canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-          canvas.style.background = '#fff';
-          container.appendChild(canvas);
-          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+          const holder = document.createElement('div');
+          holder.dataset.page = String(i);
+          holder.style.minHeight = `${estimatedH}px`;
+          holder.style.marginBottom = '8px';
+          holder.style.background = '#fff';
+          holder.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+          container.appendChild(holder);
+          holders.push(holder);
         }
+
+        const done = new Set();
+        const renderPage = async (i) => {
+          if (done.has(i) || cancelled) return;
+          done.add(i);
+          const holder = holders[i - 1];
+          try {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.width = '100%';
+            canvas.style.display = 'block';
+            holder.style.minHeight = '0';
+            holder.appendChild(canvas);
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+          } catch (e) { /* single page failure — leave placeholder */ }
+        };
+
+        // First pages right away, the rest on scroll
+        for (let i = 1; i <= Math.min(2, pdf.numPages); i++) await renderPage(i);
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) { io.unobserve(e.target); renderPage(+e.target.dataset.page); }
+          }
+        }, { root: container, rootMargin: '1200px 0px' });
+        holders.forEach((h) => io.observe(h));
+        if (cancelled) io.disconnect();
       } catch (e) {
         if (!cancelled) { setError('Could not load PDF.'); onError && onError(); }
         onReady && onReady();
