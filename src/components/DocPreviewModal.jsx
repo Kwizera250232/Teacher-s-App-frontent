@@ -10,8 +10,7 @@ function PdfCanvasViewer({ fileUrl, onReady, onError, badgeColor }) {
     (async () => {
       try {
         const pdfjsLib = await import('pdfjs-dist');
-        const version = pdfjsLib.version || '5.6.205';
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
 
         const pdf = await pdfjsLib.getDocument(fileUrl).promise;
         if (cancelled) return;

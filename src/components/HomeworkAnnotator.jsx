@@ -33,16 +33,16 @@ export default function HomeworkAnnotator({ imageUrl, pdfUrl, title, onSave, onC
   const current = useRef(null);
   const strokes = marks[pageIdx] || [];
 
-  // Load image or render every PDF page
+  // Load image or render every PDF page — retries once (office→PDF conversion can be cold)
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
+    const load = async () => {
         if (pdfUrl) {
-          setLoadMsg('Opening the PDF…');
+          setLoadMsg(/[?&]view=1/.test(pdfUrl)
+            ? 'Converting the document — first open can take up to a minute…'
+            : 'Opening the PDF…');
           const pdfjsLib = await import('pdfjs-dist');
-          const version = pdfjsLib.version || '5.6.205';
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
           const pdf = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
           const out = [];
           for (let i = 1; i <= pdf.numPages; i++) {
@@ -68,10 +68,21 @@ export default function HomeworkAnnotator({ imageUrl, pdfUrl, title, onSave, onC
           const s = Math.min(1, 1600 / img.naturalWidth);
           if (!cancelled) setPages([{ img, w: Math.round(img.naturalWidth * s), h: Math.round(img.naturalHeight * s) }]);
         }
-        if (!cancelled) setReady(true);
+      if (!cancelled) setReady(true);
+    };
+    (async () => {
+      try {
+        await load();
       } catch (e) {
-        console.error('[annotator load]', e);
-        if (!cancelled) setLoadMsg('Could not open this file for correction.');
+        console.warn('[annotator load] retrying after failure:', e.message);
+        await new Promise((r) => setTimeout(r, 1200));
+        if (cancelled) return;
+        try {
+          await load();
+        } catch (e2) {
+          console.error('[annotator load]', e2);
+          if (!cancelled) setLoadMsg('Could not open this file for correction. Close and try again.');
+        }
       }
     })();
     return () => { cancelled = true; };
