@@ -514,7 +514,7 @@ export default function StudentClassPage() {
                         <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                           <button
                             className="btn btn-primary btn-sm"
-                            onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.annotated_path}?inline=1`, fileName: `corrected.${sub.annotated_path.split('.').pop()}` })}
+                            onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.annotated_path}?inline=1&cv=2`, fileName: `corrected.${sub.annotated_path.split('.').pop()}` })}
                           >🖊 See teacher's correction</button>
                           <a href={`${UPLOADS_BASE}/download/homework/${sub.annotated_path}`} download={`corrected.${sub.annotated_path.split('.').pop()}`} className="btn btn-secondary btn-sm">⬇ Download</a>
                         </div>

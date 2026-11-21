@@ -741,7 +741,7 @@ export default function TeacherClassPage() {
                             {sub.annotated_path && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13, color: '#166534', fontWeight: 600 }}>
                                 ✅ Corrected copy saved
-                                <button className="btn btn-secondary btn-sm" onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.annotated_path}?inline=1`, fileName: `corrected.${sub.annotated_path.split('.').pop()}` })}>👁 View your marks</button>
+                                <button className="btn btn-secondary btn-sm" onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.annotated_path}?inline=1&cv=2`, fileName: `corrected.${sub.annotated_path.split('.').pop()}` })}>👁 View your marks</button>
                               </div>
                             )}
                             {/* Grade form */}
@@ -1327,11 +1327,11 @@ export default function TeacherClassPage() {
         const isPdf = /\.pdf$/i.test(f || '');
         const isOffice = /\.(docx?|pptx?|xlsx?)$/i.test(f || '');
         const isImage = !isPdf && !isOffice;
-        const url = `${UPLOADS_BASE}/download/homework/${f}?inline=1`;
+        const url = `${UPLOADS_BASE}/download/homework/${f}?inline=1&cv=2`;
         return (
           <HomeworkAnnotator
             imageUrl={isImage ? url : undefined}
-            pdfUrl={isPdf ? url : isOffice ? `${UPLOADS_BASE}/download/homework/${f}?view=1` : undefined}
+            pdfUrl={isPdf ? url : isOffice ? `${UPLOADS_BASE}/download/homework/${f}?view=1&cv=2` : undefined}
             title={`${annotateSub.sub.student_name} — ${annotateSub.hwTitle}`}
             busy={annotateBusy}
             onSave={saveAnnotation}
