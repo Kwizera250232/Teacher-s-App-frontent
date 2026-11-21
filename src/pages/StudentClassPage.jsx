@@ -510,6 +510,15 @@ export default function StudentClassPage() {
                     <div style={{ margin: '12px 0 0', padding: '12px 16px', background: '#f0fdf4', borderRadius: 8, borderLeft: '4px solid #22c55e' }}>
                       <div style={{ fontWeight: 700, color: '#166534', marginBottom: 4 }}>Grade: {sub.grade}/100</div>
                       {sub.feedback && <div style={{ color: '#374151', fontSize: 14 }}>💬 Feedback: {sub.feedback}</div>}
+                      {sub.annotated_path && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.annotated_path}?inline=1`, fileName: 'corrected.png' })}
+                          >🖊 See teacher's correction</button>
+                          <a href={`${UPLOADS_BASE}/download/homework/${sub.annotated_path}`} download="corrected.png" className="btn btn-secondary btn-sm">⬇ Download</a>
+                        </div>
+                      )}
                     </div>
                   )}
 

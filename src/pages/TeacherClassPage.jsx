@@ -29,6 +29,7 @@ import AssignWorkToGroupModal from '../components/AssignWorkToGroupModal';
 import AssignQuizToGroupModal from '../components/AssignQuizToGroupModal';
 import TeacherQuizReportsPanel from '../components/quizReflection/TeacherQuizReportsPanel';
 import AppNotificationsBell from '../components/AppNotificationsBell';
+import HomeworkAnnotator from '../components/HomeworkAnnotator';
 import DiscussionPanel from '../components/DiscussionPanel';
 import ClassPaymentSettings from '../components/ClassPaymentSettings';
 import '../components/StudentNotifications.css';
@@ -97,6 +98,8 @@ export default function TeacherClassPage() {
   const [discussionText, setDiscussionText] = useState('');
   // Submissions viewer: { [hwId]: { open, submissions, gradeForm: { [subId]: { grade, feedback } } } }
   const [submissionsState, setSubmissionsState] = useState({});
+  const [annotateSub, setAnnotateSub] = useState(null); // { hwId, hwTitle, sub }
+  const [annotateBusy, setAnnotateBusy] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null); // { viewerUrl, fileName }
   const [shareItem, setShareItem] = useState(null);   // { title, text, url }
   const [quizShareModal, setQuizShareModal] = useState(null); // { quizTitle, className, shareUrl }
@@ -338,6 +341,23 @@ export default function TeacherClassPage() {
       subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '' }; });
       setSubmissionsState(prev => ({ ...prev, [hwId]: { open: true, submissions: subs, gradeForm } }));
     } catch (e) { setError(e.message); }
+  };
+
+  const saveAnnotation = async (blob) => {
+    if (!annotateSub) return;
+    setAnnotateBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('annotated', blob, 'corrected.png');
+      await uploadFile(`/classes/${id}/homework/${annotateSub.hwId}/submissions/${annotateSub.sub.id}/annotate`, fd, token);
+      const subs = await api.get(`/classes/${id}/homework/${annotateSub.hwId}/submissions`, token);
+      const gradeForm = {};
+      subs.forEach(s => { gradeForm[s.id] = { grade: s.grade ?? '', feedback: s.feedback ?? '' }; });
+      setSubmissionsState(prev => ({ ...prev, [annotateSub.hwId]: { open: true, submissions: subs, gradeForm } }));
+      setAnnotateSub(null);
+      showSuccess('Correction saved — student will see your pen marks.');
+    } catch (e) { setError(e.message || 'Could not save the correction.'); }
+    finally { setAnnotateBusy(false); }
   };
 
   if (pageLoading) {
@@ -705,8 +725,21 @@ export default function TeacherClassPage() {
                                     onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.file_path}?inline=1`, fileName: sub.file_name })}
                                   >👁 Preview</button>
                                   <a href={`${UPLOADS_BASE}/download/homework/${sub.file_path}`} download={sub.file_name} className="btn btn-primary btn-sm">⬇ Download</a>
+                                  {/\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(sub.file_name || sub.file_path || '') && (
+                                    <button
+                                      className="btn btn-sm"
+                                      style={{ background: '#1565d8', color: '#fff', border: 'none' }}
+                                      onClick={() => setAnnotateSub({ hwId: hw.id, hwTitle: hw.title, sub })}
+                                    >✏️ Correct in-app</button>
+                                  )}
                                 </div>
                               </>
+                            )}
+                            {sub.annotated_path && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13, color: '#166534', fontWeight: 600 }}>
+                                ✅ Corrected copy saved
+                                <button className="btn btn-secondary btn-sm" onClick={() => setPreviewDoc({ fileUrl: `${UPLOADS_BASE}/download/homework/${sub.annotated_path}?inline=1`, fileName: 'corrected.png' })}>👁 View your marks</button>
+                              </div>
                             )}
                             {/* Grade form */}
                             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid #e2e8f0', paddingTop: 10 }}>
@@ -1283,6 +1316,16 @@ export default function TeacherClassPage() {
           fileUrl={previewDoc.fileUrl}
           fileName={previewDoc.fileName}
           onClose={() => setPreviewDoc(null)}
+        />
+      )}
+
+      {annotateSub && (
+        <HomeworkAnnotator
+          imageUrl={`${UPLOADS_BASE}/download/homework/${annotateSub.sub.annotated_path || annotateSub.sub.file_path}?inline=1`}
+          title={`${annotateSub.sub.student_name} — ${annotateSub.hwTitle}`}
+          busy={annotateBusy}
+          onSave={saveAnnotation}
+          onClose={() => setAnnotateSub(null)}
         />
       )}
 
