@@ -338,6 +338,7 @@ export default function LessonPlanGenerator({ user, token }) {
   const [aiSections, setAiSections] = useState(null);
   const [genCount, setGenCount] = useState(0);
   const [savedPlans, setSavedPlans] = useState([]);
+  const [savedOpen, setSavedOpen] = useState(false);
   const [savedHtml, setSavedHtml] = useState(null);
   const [savedLoading, setSavedLoading] = useState(0);
   const pollRef = useRef(null);
@@ -702,16 +703,30 @@ export default function LessonPlanGenerator({ user, token }) {
 
       {savedPlans.length > 0 && (
         <div className="lp-saved">
-          <h3>📁 My saved lesson plans ({savedPlans.length})</h3>
-          {savedPlans.map(p => (
-            <div key={p.id} className="lp-saved-row">
-              <span className="lp-saved-meta">
-                <strong>{p.title || 'Untitled'}</strong> — {p.subject} ({p.class_name})
-                <br/><small>{new Date(p.created_at).toLocaleString()}</small>
-              </span>
-              <button type="button" className="lp-btn lp-btn-primary" disabled={savedLoading === p.id} onClick={() => viewSaved(p.id)}>
-                {savedLoading === p.id ? '…' : '👁 View'}
-              </button>
+          <button type="button" className="lp-folder" onClick={() => setSavedOpen(o => !o)}>
+            <span className="lp-folder-icon">📁</span>
+            <span className="lp-folder-label">
+              <strong>Generated Lesson Plans</strong>
+              <small>{savedPlans.length} plan{savedPlans.length === 1 ? '' : 's'} saved — tap to open</small>
+            </span>
+            <span className="lp-folder-arrow">{savedOpen ? '▲' : '▼'}</span>
+          </button>
+          {savedOpen && Object.entries(
+            savedPlans.reduce((g, p) => { (g[p.subject || 'Other'] ||= []).push(p); return g; }, {})
+          ).map(([subject, plans]) => (
+            <div key={subject} className="lp-subject-group">
+              <h4 className="lp-subject-title">📂 {subject} <em>({plans.length})</em></h4>
+              {plans.map(p => (
+                <div key={p.id} className="lp-saved-row">
+                  <span className="lp-saved-meta">
+                    <strong>{p.title || 'Untitled'}</strong> — {p.class_name}
+                    <br/><small>{new Date(p.created_at).toLocaleString()}</small>
+                  </span>
+                  <button type="button" className="lp-btn lp-btn-primary" disabled={savedLoading === p.id} onClick={() => viewSaved(p.id)}>
+                    {savedLoading === p.id ? '…' : '👁 View'}
+                  </button>
+                </div>
+              ))}
             </div>
           ))}
         </div>
