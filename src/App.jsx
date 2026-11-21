@@ -24,6 +24,7 @@ const TeacherLibrary = lazy(() => import('./pages/TeacherLibrary'));
 const TeacherPublicProfile = lazy(() => import('./pages/TeacherPublicProfile'));
 import IncomingCallWatcher from './components/IncomingCallWatcher';
 const TextbookReader = lazy(() => import('./pages/TextbookReader'));
+const SpeakingPractice = lazy(() => import('./pages/SpeakingPractice'));
 const QuizResults = lazy(() => import('./pages/QuizResults'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 import JoinClass from './pages/JoinClass';
@@ -260,6 +261,9 @@ function AppShell() {
                 } />
                 <Route path="/student/textbooks/:id" element={
                   <ProtectedRoute role="student"><TextbookReader /></ProtectedRoute>
+                } />
+                <Route path="/student/speaking" element={
+                  <ProtectedRoute role="student"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><SpeakingPractice /></Suspense></ProtectedRoute>
                 } />
                 <Route path="/mbaza" element={
                   <ProtectedRoute role="student"><Suspense fallback={<div style={{padding:40,textAlign:'center'}}>Loading...</div>}><Mbaza /></Suspense></ProtectedRoute>

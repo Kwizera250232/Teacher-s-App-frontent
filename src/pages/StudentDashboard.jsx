@@ -169,6 +169,14 @@ export default function StudentDashboard() {
           <button
             type="button"
             className="admin-nav-item"
+            onClick={() => navigate('/student/speaking')}
+          >
+            <span className="admin-nav-icon">🗣️</span>
+            {sidebarOpen && <span className="admin-nav-label">Speaking Practice</span>}
+          </button>
+          <button
+            type="button"
+            className="admin-nav-item"
             onClick={() => setShowParentInvite(true)}
           >
             <span className="admin-nav-icon">👪</span>
@@ -374,6 +382,10 @@ export default function StudentDashboard() {
                 <Link to="/student/textbooks" className="student-tool-card">
                   <span className="student-tool-icon">📖</span>
                   <span className="student-tool-label">AI Textbooks</span>
+                </Link>
+                <Link to="/student/speaking" className="student-tool-card">
+                  <span className="student-tool-icon">🗣️</span>
+                  <span className="student-tool-label">Speaking Practice</span>
                 </Link>
                 <Link to="/student/quiz-reports" className="student-tool-card">
                   <span className="student-tool-icon">📋</span>
