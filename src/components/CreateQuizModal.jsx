@@ -15,7 +15,7 @@ const EMPTY_QUESTION = {
   option_a: '', option_b: '', option_c: '', option_d: '',
   correct_answer: 'a',
   passage: '',
-  min_words: '', max_words: '', marks: 5,
+  min_words: '', max_words: '', marks: 1,
   matching_pairs: [{ left: '', right: '' }, { left: '', right: '' }],
 };
 
@@ -49,7 +49,6 @@ function prepareForSave(q) {
       open_meta: {
         min_words: q.min_words || null,
         max_words: q.max_words || null,
-        marks: q.marks || 5,
       },
     };
   }
@@ -95,7 +94,7 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
             : [{ left: '', right: '' }, { left: '', right: '' }],
           min_words: q.open_meta?.min_words || '',
           max_words: q.open_meta?.max_words || '',
-          marks: q.open_meta?.marks || 5,
+          marks: q.marks || q.open_meta?.marks || 1,
         })));
       })
       .catch(e => setError(e.message))
@@ -160,6 +159,7 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
     setError('');
     for (const q of questions) {
       if (!q.question.trim()) { setError('Every question needs question text.'); return; }
+      if (!(parseInt(q.marks, 10) >= 1)) { setError('Every question needs at least 1 mark.'); return; }
       if (q.question_type === 'matching') {
         const valid = (q.matching_pairs || []).filter(p => p.left.trim() && p.right.trim());
         if (valid.length < 2) { setError('Matching questions need at least 2 pairs.'); return; }
@@ -252,7 +252,7 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
                 {/* Question Type Selector */}
                 <div className="form-group">
                   <label style={{ fontSize: 12, color: '#64748b', marginBottom: 6, display: 'block' }}>Question Type</label>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                     {QTYPES.map(t => (
                       <button key={t.key} type="button"
                         style={{
@@ -266,6 +266,17 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
                         {t.emoji} {t.label}
                       </button>
                     ))}
+                    <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <label style={{ fontSize: 12, color: '#64748b', fontWeight: 700, margin: 0 }}>Marks</label>
+                      <input
+                        type="number" min="1" max="100" value={q.marks}
+                        onChange={e => updateQuestion(i, 'marks', e.target.value)}
+                        style={{
+                          width: 58, padding: '4px 8px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+                          border: '2px solid #e2e8f0', textAlign: 'center',
+                        }}
+                      />
+                    </span>
                   </div>
                 </div>
 
@@ -375,11 +386,6 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
                           onChange={e => updateQuestion(i, 'max_words', e.target.value)}
                           placeholder="e.g. 100" />
                       </div>
-                      <div className="form-group" style={{ flex: '0 0 90px' }}>
-                        <label style={{ fontSize: 12 }}>Marks</label>
-                        <input type="number" min="1" max="30" value={q.marks}
-                          onChange={e => updateQuestion(i, 'marks', e.target.value)} />
-                      </div>
                     </div>
                     <small style={{ color: '#94a3b8', fontSize: 12, display: 'block', marginTop: -6 }}>
                       Students write a free answer — the AI marks it on grammar, punctuation, staying on topic, and length.
@@ -426,7 +432,10 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
               + Add Question
             </button>
 
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ alignItems: 'center' }}>
+              <span style={{ marginRight: 'auto', fontSize: 13, fontWeight: 700, color: '#475569' }}>
+                🏅 Total: {questions.reduce((s, q) => s + (parseInt(q.marks, 10) || 1), 0)} marks
+              </span>
               <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
               <button type="submit" className="btn btn-primary" disabled={loading}>
                 {loading

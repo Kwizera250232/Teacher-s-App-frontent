@@ -192,7 +192,7 @@ export default function TakeGroupQuiz() {
 
         {canWork && questions.map((q, i) => (
           <div key={q.id} className="quiz-question">
-            <h3>Q{i + 1}. {q.question}</h3>
+            <h3>Q{i + 1}. {q.question} <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>({q.marks || 1} mark{(q.marks || 1) > 1 ? 's' : ''})</span></h3>
             {q.question_type === 'fill_blank' ? (
               <input
                 className="form-group"

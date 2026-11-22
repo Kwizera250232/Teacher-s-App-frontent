@@ -521,7 +521,7 @@ export default function TakeQuiz() {
                     {q.passage}
                   </div>
                 )}
-                <h3>Q{i + 1}: {q.question}</h3>
+                <h3>Q{i + 1}: {q.question} <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>({q.marks || 1} mark{(q.marks || 1) > 1 ? 's' : ''})</span></h3>
 
                 {/* Multiple choice */}
                 {qtype === 'multiple_choice' && (
