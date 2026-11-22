@@ -402,6 +402,25 @@
   }
 }
 
+/* Student dashboard on phones: the sidebar menu takes the whole screen —
+   the feature content only appears after the student taps a menu item. */
+@media (max-width: 980px) {
+  .student-mobile-menu .admin-sidebar.open {
+    min-height: 100vh;
+    max-height: none;
+  }
+  .student-mobile-menu .admin-sidebar.open .admin-nav {
+    max-height: none;
+    overflow-y: auto;
+  }
+  .student-mobile-menu .admin-sidebar.closed {
+    display: none;
+  }
+  .student-mobile-menu:has(> .admin-sidebar.open) > .admin-main {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .admin-nav-item {
     padding: 0.68rem 0.85rem;

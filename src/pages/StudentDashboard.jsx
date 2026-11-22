@@ -139,7 +139,7 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="admin-layout">
+    <div className="admin-layout student-mobile-menu">
       <QuizTeacherCommentPopup token={token} />
       <aside className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="admin-sidebar-brand">
@@ -152,7 +152,10 @@ export default function StudentDashboard() {
               key={t.id}
               type="button"
               className={`admin-nav-item ${activeTab === t.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => {
+                setActiveTab(t.id);
+                if (window.matchMedia('(max-width: 980px)').matches) setSidebarOpen(false);
+              }}
             >
               <span className="admin-nav-icon">{t.icon}</span>
               {sidebarOpen && <span className="admin-nav-label">{t.label}</span>}
