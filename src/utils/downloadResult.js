@@ -20,6 +20,20 @@ export function downloadWord(filename, data) {
   });
 
   const questionsHtml = data.questions.map(q => {
+    if (q.question_type === 'open_ended') {
+      const markColor = q.is_correct ? '#16a34a' : '#d97706';
+      return `
+      <div style="margin-bottom:18px;padding:12px 14px;border:1px solid #e2e8f0;border-left:4px solid ${markColor};page-break-inside:avoid;">
+        <p style="font-weight:bold;margin:0 0 8px 0;font-size:14px;">Q${q.number}. ${esc(q.question)}</p>
+        <div style="margin-top:8px;padding:8px 12px;background:#f8fafc;border-radius:4px;font-size:13px;white-space:pre-wrap;">
+          <b>Your answer:</b> ${esc(q.student_answer_text || 'No answer')}
+        </div>
+        <div style="margin-top:8px;padding:8px 12px;background:#eff6ff;border-radius:4px;font-size:13px;">
+          <b style="color:#1d4ed8">&#129302; AI mark: ${esc(q.ai_score ?? 0)}/${esc(q.max_score ?? '—')}</b>
+          ${q.ai_feedback ? `<br><span style="color:#475569">${esc(q.ai_feedback)}</span>` : ''}
+        </div>
+      </div>`;
+    }
     const options = [
       { key: 'a', text: q.option_a },
       { key: 'b', text: q.option_b },

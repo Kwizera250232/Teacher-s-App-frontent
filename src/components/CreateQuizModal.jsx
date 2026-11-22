@@ -6,6 +6,7 @@ const QTYPES = [
   { key: 'true_false',      label: 'True / False',    emoji: '✅' },
   { key: 'fill_blank',      label: 'Fill in Blank',   emoji: '✏️' },
   { key: 'matching',        label: 'Matching',         emoji: '🔗' },
+  { key: 'open_ended',      label: 'Open Question',    emoji: '💬' },
 ];
 
 const EMPTY_QUESTION = {
@@ -14,6 +15,7 @@ const EMPTY_QUESTION = {
   option_a: '', option_b: '', option_c: '', option_d: '',
   correct_answer: 'a',
   passage: '',
+  min_words: '', max_words: '', marks: 5,
   matching_pairs: [{ left: '', right: '' }, { left: '', right: '' }],
 };
 
@@ -39,6 +41,17 @@ function prepareForSave(q) {
   if (q.question_type === 'matching') {
     const pairs = (q.matching_pairs || []).filter(p => p.left.trim() && p.right.trim());
     return { ...q, passage: JSON.stringify(pairs), option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'match' };
+  }
+  if (q.question_type === 'open_ended') {
+    return {
+      ...q,
+      option_a: '', option_b: '', option_c: '', option_d: '',
+      open_meta: {
+        min_words: q.min_words || null,
+        max_words: q.max_words || null,
+        marks: q.marks || 5,
+      },
+    };
   }
   return q;
 }
@@ -80,6 +93,9 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
           matching_pairs: q.question_type === 'matching'
             ? (() => { try { return JSON.parse(q.passage || '[]'); } catch { return [{ left: '', right: '' }, { left: '', right: '' }]; } })()
             : [{ left: '', right: '' }, { left: '', right: '' }],
+          min_words: q.open_meta?.min_words || '',
+          max_words: q.open_meta?.max_words || '',
+          marks: q.open_meta?.marks || 5,
         })));
       })
       .catch(e => setError(e.message))
@@ -104,6 +120,8 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
       } else if (value === 'matching') {
         updated[i] = { ...updated[i], option_a: '', option_b: '', option_c: '', option_d: '',
           correct_answer: 'match', matching_pairs: [{ left: '', right: '' }, { left: '', right: '' }] };
+      } else if (value === 'open_ended') {
+        updated[i] = { ...updated[i], option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: '', marks: 5 };
       } else {
         updated[i] = { ...updated[i], option_a: '', option_b: '', option_c: '', option_d: '', correct_answer: 'a' };
       }
@@ -147,6 +165,10 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
         if (valid.length < 2) { setError('Matching questions need at least 2 pairs.'); return; }
       } else if (q.question_type === 'fill_blank') {
         if (!q.correct_answer.trim()) { setError('Fill in Blank needs a correct answer.'); return; }
+      } else if (q.question_type === 'open_ended') {
+        if (q.min_words && q.max_words && Number(q.min_words) > Number(q.max_words)) {
+          setError('Open question: minimum words cannot be more than maximum words.'); return;
+        }
       } else if (q.question_type === 'multiple_choice') {
         if (!q.option_a.trim() || !q.option_b.trim()) { setError('Multiple choice needs at least Option A and B.'); return; }
       }
@@ -271,6 +293,7 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
                       q.question_type === 'fill_blank' ? 'e.g. The capital of France is _____' :
                       q.question_type === 'matching' ? 'e.g. Match each word to its definition' :
                       q.question_type === 'true_false' ? 'e.g. The Earth is the third planet from the Sun.' :
+                      q.question_type === 'open_ended' ? 'e.g. Explain why plants need sunlight' :
                       'Enter your question'
                     }
                     required
@@ -323,6 +346,45 @@ export default function CreateQuizModal({ token, classId, onClose, onCreated, ed
                     />
                     <small style={{ color: '#94a3b8', fontSize: 12 }}>Case-insensitive — "paris" = "Paris" = correct</small>
                   </div>
+                )}
+
+                {q.question_type === 'open_ended' && (
+                  <>
+                    <div className="form-group">
+                      <label>
+                        🤖 AI Marking Guide <small style={{ color: '#94a3b8', fontWeight: 400 }}>(optional — model answer or key points the AI should look for)</small>
+                      </label>
+                      <textarea
+                        value={q.correct_answer}
+                        onChange={e => updateQuestion(i, 'correct_answer', e.target.value)}
+                        placeholder="e.g. Should mention sunlight, chlorophyll, photosynthesis, energy/food production…"
+                        rows={2}
+                        style={{ fontSize: 13 }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      <div className="form-group" style={{ flex: '1 1 120px' }}>
+                        <label style={{ fontSize: 12 }}>Min words <small style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</small></label>
+                        <input type="number" min="1" value={q.min_words}
+                          onChange={e => updateQuestion(i, 'min_words', e.target.value)}
+                          placeholder="e.g. 20" />
+                      </div>
+                      <div className="form-group" style={{ flex: '1 1 120px' }}>
+                        <label style={{ fontSize: 12 }}>Max words <small style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</small></label>
+                        <input type="number" min="1" value={q.max_words}
+                          onChange={e => updateQuestion(i, 'max_words', e.target.value)}
+                          placeholder="e.g. 100" />
+                      </div>
+                      <div className="form-group" style={{ flex: '0 0 90px' }}>
+                        <label style={{ fontSize: 12 }}>Marks</label>
+                        <input type="number" min="1" max="30" value={q.marks}
+                          onChange={e => updateQuestion(i, 'marks', e.target.value)} />
+                      </div>
+                    </div>
+                    <small style={{ color: '#94a3b8', fontSize: 12, display: 'block', marginTop: -6 }}>
+                      Students write a free answer — the AI marks it on grammar, punctuation, staying on topic, and length.
+                    </small>
+                  </>
                 )}
 
                 {q.question_type === 'matching' && (

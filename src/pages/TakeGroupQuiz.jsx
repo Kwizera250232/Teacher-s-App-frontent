@@ -200,6 +200,21 @@ export default function TakeGroupQuiz() {
                 value={answers[q.id] || ''}
                 onChange={(e) => handleAnswer(q.id, e.target.value)}
               />
+            ) : q.question_type === 'open_ended' ? (
+              <div>
+                <textarea
+                  rows={4}
+                  placeholder="Write your group's answer in full sentences…"
+                  style={{ width: '100%', padding: 10, borderRadius: 8, border: '2px solid #e8e8e8', fontFamily: 'inherit', fontSize: 14, resize: 'vertical' }}
+                  value={answers[q.id] || ''}
+                  onChange={(e) => handleAnswer(q.id, e.target.value)}
+                />
+                <small style={{ color: '#94a3b8', fontSize: 12 }}>
+                  💬 Open answer — marked by AI on grammar, punctuation and staying on topic
+                  {q.open_meta?.min_words ? ` · at least ${q.open_meta.min_words} words` : ''}
+                  {q.open_meta?.max_words ? ` · max ${q.open_meta.max_words} words` : ''}
+                </small>
+              </div>
             ) : (
               <div className="quiz-options">
                 {['a', 'b', 'c', 'd'].map((opt) => {

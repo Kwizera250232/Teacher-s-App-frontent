@@ -92,6 +92,11 @@ export default function TakeQuiz() {
       setError('Please answer all questions before submitting.');
       return;
     }
+    const emptyOpen = questions.find(q => q.question_type === 'open_ended' && !(answers[q.id] || '').trim());
+    if (emptyOpen) {
+      setError('Please write an answer for every open question.');
+      return;
+    }
     if (!isOnline()) {
       queueQuizSubmission({ classId, quizId, answers, token });
       setError('');
@@ -221,12 +226,12 @@ export default function TakeQuiz() {
           {error && <div className="alert alert-error">{error}</div>}
 
           {/* Inline review */}
-          {showReview && prevResult.detailed && (
+          {showReview && (prevResult.questions || prevResult.detailed) && (
             <div>
               <h3 style={{ marginBottom: 16, fontSize: 16, fontWeight: 700 }}>
                 📋 Ibisubizo Byanjye ({prevResult.score}/{prevResult.total})
               </h3>
-              {prevResult.detailed.map((q, i) => {
+              {(prevResult.questions || prevResult.detailed || []).map((q, i) => {
                 const qtype = q.question_type || 'multiple_choice';
                 return (
                 <div key={i} style={{
@@ -264,6 +269,22 @@ export default function TakeQuiz() {
                       {!q.is_correct && (
                         <div style={{ padding: '7px 12px', borderRadius: 7, background: '#f0fff4', border: '1px solid #27ae60' }}>
                           Correct answer: <strong>{q.correct_answer}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Open ended — AI marked */}
+                  {qtype === 'open_ended' && (
+                    <div style={{ fontSize: 13, marginTop: 6 }}>
+                      <div style={{ padding: '7px 12px', borderRadius: 7, background: '#f8fafc', border: '1px solid #e2e8f0', marginBottom: 4, whiteSpace: 'pre-wrap' }}>
+                        Your answer: <strong>{q.student_answer}</strong>
+                      </div>
+                      <div style={{ padding: '7px 12px', borderRadius: 7, background: q.is_correct ? '#f0fff4' : '#fffbeb', border: `1px solid ${q.is_correct ? '#27ae60' : '#f59e0b'}`, marginBottom: 4 }}>
+                        🤖 AI mark: <strong>{q.ai_score ?? 0}/{q.max_score ?? '—'}</strong>
+                      </div>
+                      {q.ai_feedback && (
+                        <div style={{ padding: '7px 12px', borderRadius: 7, background: '#eff6ff', border: '1px solid #bfdbfe', fontSize: 12, color: '#1e40af' }}>
+                          💬 {q.ai_feedback}
                         </div>
                       )}
                     </div>
@@ -389,6 +410,22 @@ export default function TakeQuiz() {
                           Your answer: <strong>{qResult?.given || '—'}</strong> {qResult?.is_correct ? '✅' : '❌'}
                         </div>
                         {!qResult?.is_correct && <div style={{ padding: '6px 10px', borderRadius: 6, background: '#f0fff4', border: '1px solid #27ae60' }}>Correct: <strong>{qResult?.correct}</strong></div>}
+                      </>
+                    )}
+                    {/* Open ended — AI marked */}
+                    {qtype === 'open_ended' && (
+                      <>
+                        <div style={{ padding: '6px 10px', borderRadius: 6, marginBottom: 4, background: '#f8fafc', border: '1px solid #e2e8f0', whiteSpace: 'pre-wrap' }}>
+                          Your answer: <strong>{qResult?.given || '—'}</strong>
+                        </div>
+                        <div style={{ padding: '6px 10px', borderRadius: 6, marginBottom: 4, background: qResult?.is_correct ? '#f0fff4' : '#fffbeb', border: `1px solid ${qResult?.is_correct ? '#27ae60' : '#f59e0b'}` }}>
+                          🤖 AI mark: <strong>{qResult?.ai_score ?? 0}/{qResult?.max_score ?? '—'}</strong>
+                        </div>
+                        {qResult?.feedback && (
+                          <div style={{ padding: '6px 10px', borderRadius: 6, background: '#eff6ff', border: '1px solid #bfdbfe', fontSize: 12, color: '#1e40af' }}>
+                            💬 {qResult.feedback}
+                          </div>
+                        )}
                       </>
                     )}
                     {/* Matching */}
@@ -537,6 +574,45 @@ export default function TakeQuiz() {
                       </p>
                     )}
                     <small style={{ color: '#94a3b8', fontSize: 12, marginTop: 4, display: 'block' }}>Type your answer exactly (not case-sensitive)</small>
+                  </div>
+                )}
+
+                {/* Open ended — marked by AI */}
+                {qtype === 'open_ended' && (
+                  <div style={{ marginTop: 12 }}>
+                    <textarea
+                      value={currentAnswer}
+                      onChange={e => handleTextAnswer(q.id, e.target.value)}
+                      placeholder="Write your answer here in full sentences…"
+                      rows={4}
+                      style={{
+                        width: '100%', boxSizing: 'border-box', padding: '12px 14px',
+                        border: `2px solid ${currentAnswer.trim() ? '#128c7e' : '#e2e8f0'}`,
+                        borderRadius: 10, fontSize: 15, outline: 'none', fontFamily: 'inherit', resize: 'vertical',
+                      }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                      <small style={{ color: '#94a3b8', fontSize: 12 }}>
+                        💬 Open answer — marked by AI on grammar, punctuation and staying on topic
+                        {(q.open_meta?.min_words || q.open_meta?.max_words) && (
+                          <strong style={{ color: '#0369a1' }}>
+                            {' · '}
+                            {q.open_meta?.min_words ? `at least ${q.open_meta.min_words} words` : ''}
+                            {q.open_meta?.min_words && q.open_meta?.max_words ? ', ' : ''}
+                            {q.open_meta?.max_words ? `max ${q.open_meta.max_words} words` : ''}
+                          </strong>
+                        )}
+                      </small>
+                      <small style={{ color: '#64748b', fontSize: 12, fontWeight: 600 }}>
+                        {currentAnswer.trim().split(/\s+/).filter(Boolean).length} words
+                      </small>
+                    </div>
+                    {currentAnswer.trim() && (
+                      <p className="quiz-answer-saved">
+                        <span className="quiz-option-check" aria-hidden>V</span>
+                        Igisubizo cyawe cyabitswe
+                      </p>
+                    )}
                   </div>
                 )}
 
