@@ -161,6 +161,18 @@ export default function StudentDashboard() {
           <button
             type="button"
             className="admin-nav-item"
+            onClick={() => navigate('/messages')}
+            style={{ position: 'relative' }}
+          >
+            <span className="admin-nav-icon">💬</span>
+            {sidebarOpen && <span className="admin-nav-label">Messages</span>}
+            {unreadMsgs > 0 && (
+              <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{unreadMsgs > 99 ? '99+' : unreadMsgs}</span>
+            )}
+          </button>
+          <button
+            type="button"
+            className="admin-nav-item"
             onClick={() => navigate('/student/textbooks')}
           >
             <span className="admin-nav-icon">📖</span>
