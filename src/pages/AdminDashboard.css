@@ -402,6 +402,12 @@
   }
 }
 
+/* Student dashboard: nav is a flex column so the Logout item can pin to the bottom. */
+.student-mobile-menu .admin-sidebar.open .admin-nav {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Student dashboard on phones: the sidebar menu takes the whole screen —
    the feature content only appears after the student taps a menu item. */
 @media (max-width: 980px) {

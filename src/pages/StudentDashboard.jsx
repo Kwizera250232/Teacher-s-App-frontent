@@ -197,6 +197,15 @@ export default function StudentDashboard() {
             <span className="admin-nav-icon">👪</span>
             {sidebarOpen && <span className="admin-nav-label">Invite Parent</span>}
           </button>
+          <button
+            type="button"
+            className="admin-nav-item"
+            onClick={logout}
+            style={{ marginTop: 'auto', color: '#f87171' }}
+          >
+            <span className="admin-nav-icon">🚪</span>
+            {sidebarOpen && <span className="admin-nav-label">Logout</span>}
+          </button>
         </nav>
       </aside>
 
