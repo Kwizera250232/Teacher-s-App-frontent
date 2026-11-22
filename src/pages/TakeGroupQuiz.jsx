@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import ClassDeanHelp from '../components/ClassDeanHelp';
 import QuizReflectionWizard from '../components/quizReflection/QuizReflectionWizard';
 import GroupQuizResultPanel from '../components/groupQuiz/GroupQuizResultPanel';
+import ClassPaywall from '../components/ClassPaywall';
 import '../pages/Dashboard.css';
 import '../pages/PremiumClassTheme.css';
 
@@ -28,6 +29,7 @@ export default function TakeGroupQuiz() {
   const [className, setClassName] = useState('');
   const [reflectionOpen, setReflectionOpen] = useState(false);
   const [submitAchievements, setSubmitAchievements] = useState([]);
+  const [paywall, setPaywall] = useState(null);
   const questionsLoaded = useRef(false);
 
   const load = useCallback(async ({ refreshQuestions = false } = {}) => {
@@ -53,7 +55,13 @@ export default function TakeGroupQuiz() {
       setError('');
       api.get(`/classes/${classId}`, token).then((c) => setClassName(c?.name || '')).catch(() => {});
     } catch (e) {
-      setError(e.message);
+      if (/payment.?required/i.test(e.message || '')) {
+        api.get(`/classes/${classId}/my-access`, token)
+          .then((a) => setPaywall(a))
+          .catch(() => setError('This class requires a payment before you can take its quizzes. Open the class page to pay.'));
+      } else {
+        setError(e.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -116,6 +124,35 @@ export default function TakeGroupQuiz() {
 
   if (loading && !assignment) {
     return <div className="class-page"><main className="class-main"><p>Loading group quiz…</p></main></div>;
+  }
+
+  if (paywall?.requires_payment && !paywall?.paid) {
+    return (
+      <div className="class-page wa-theme">
+        <header className="dash-header wa-class-header">
+          <button
+            type="button"
+            className="wa-back-btn"
+            onClick={() => navigate(`/student/classes/${classId}`)}
+          >
+            ←
+          </button>
+          <div className="wa-class-header-title">
+            <strong>{className || 'Class'}</strong>
+            <span>Group quiz</span>
+          </div>
+        </header>
+        <main className="class-main">
+          <ClassPaywall
+            classId={classId}
+            className={className || 'Class'}
+            access={paywall}
+            token={token}
+            onUnlocked={() => window.location.reload()}
+          />
+        </main>
+      </div>
+    );
   }
 
   if (!assignment) {

@@ -6,6 +6,7 @@ import { downloadWord } from '../utils/downloadResult';
 import { saveQuizForOffline, getQuizForOffline, queueQuizSubmission, isQuizDownloaded } from '../utils/offlineStore';
 import { isOnline } from '../utils/offlineSync';
 import SharedQuizAttribution from '../components/SharedQuizAttribution';
+import ClassPaywall from '../components/ClassPaywall';
 import SoloQuizReflectionWizard from '../components/quizReflection/SoloQuizReflectionWizard';
 import '../pages/Dashboard.css';
 
@@ -33,6 +34,7 @@ export default function TakeQuiz() {
   const [offlineMode, setOfflineMode] = useState(false);
   const [quizSavedOffline, setQuizSavedOffline] = useState(false);
   const [savingOffline, setSavingOffline] = useState(false);
+  const [paywall, setPaywall] = useState(null); // access object when payment blocks this quiz
   const scrollingRef = useRef(false);
 
   // Ignore option taps that land right after a scroll gesture (mobile: finger
@@ -74,7 +76,15 @@ export default function TakeQuiz() {
         setPrevResult(existing);
         setResult({ score: existing.score, total: existing.total, results: {} });
       }
-    }).catch(e => setError(e.message));
+    }).catch(e => {
+      if (/payment.?required/i.test(e.message || '')) {
+        api.get(`/classes/${classId}/my-access`, token)
+          .then(a => setPaywall(a))
+          .catch(() => setError('This class requires a payment before you can take its quizzes. Open the class page to pay.'));
+      } else {
+        setError(e.message);
+      }
+    });
   }, []);
 
   const handleAnswer = (questionId, option) => {
@@ -124,6 +134,10 @@ export default function TakeQuiz() {
         setError('');
         setResult({ score: '?', total: questions.length, results: {}, offline: true });
         setSubmitted(true);
+      } else if (/payment.?required/i.test(e.message || '')) {
+        api.get(`/classes/${classId}/my-access`, token)
+          .then(a => setPaywall(a))
+          .catch(() => setError('This class requires a payment before you can submit this quiz.'));
       } else {
         setError(e.message);
       }
@@ -153,6 +167,28 @@ export default function TakeQuiz() {
     } catch (e) { setError(e.message); }
     finally { setDownloading(false); }
   };
+
+  // ── PAYWALL — unpaid student in a paid class ─────────────────────────────
+  if (paywall && paywall.requires_payment && !paywall.paid) {
+    return (
+      <div className="class-page">
+        <header className="dash-header">
+          <button className="btn btn-outline btn-sm" onClick={goBack}>← Back</button>
+          <div className="dash-brand">🎓 UClass</div>
+        </header>
+        <main className="class-main" style={{ maxWidth: 600 }}>
+          <ClassPaywall
+            classId={classId}
+            className={quizMeta?.class_name || quizMeta?.title || 'Class'}
+            teacherName={quizMeta?.teacher_name}
+            access={paywall}
+            token={token}
+            onUnlocked={() => window.location.reload()}
+          />
+        </main>
+      </div>
+    );
+  }
 
   // ── ALREADY SUBMITTED SCREEN ─────────────────────────────────────────────
   if (alreadyDone && prevResult) {
