@@ -564,14 +564,15 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     }
   }, [canSpeak, createOffer, user.id]);
 
-  // ── Auto-start teacher's mic ──
+  // ── Auto-start mic — teacher and students enter with an open mic.
+  // Everyone can self-mute with the mic button; hearing is never affected.
   useEffect(() => {
-    if (isTeacher && !micOnRef.current) {
+    if ((isTeacher || canSpeak) && !micOnRef.current && !localStreamRef.current) {
       startMic().then(ok => {
-        if (!ok) console.log('[audio] Teacher mic auto-start deferred');
+        if (!ok) console.log('[audio] Mic auto-start deferred');
       }).catch(() => {});
     }
-  }, [isTeacher, startMic]);
+  }, [isTeacher, canSpeak, startMic]);
 
   // ── When speak permission is revoked, stop mic ──
   useEffect(() => {

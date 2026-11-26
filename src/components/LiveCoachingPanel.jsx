@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 
@@ -1138,12 +1138,23 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
   }, [classId, sessionId, token]);
 
   const participants = state?.participants || [];
-  const hasSpeakPermission = state?.speak_permission_id === user.id;
   const handRaisedList = state?.hand_raised ? (typeof state.hand_raised === 'string' ? JSON.parse(state.hand_raised) : state.hand_raised) : [];
 
-  // WebRTC audio — only connect if we have speak permission
+  // Include the teacher in the audio mesh — they're not in the participants
+  // list (it's students-only), so without this the student can only wait for
+  // the teacher's offer instead of also initiating a connection back.
+  const audioParticipants = useMemo(() => {
+    const list = [...participants];
+    const tid = session?.teacher_id;
+    if (tid && String(tid) !== String(user.id) && !list.some((p) => String(p.student_id) === String(tid))) {
+      list.push({ student_id: tid, name: session?.teacher_name || 'Teacher' });
+    }
+    return list;
+  }, [participants, session?.teacher_id, session?.teacher_name, user.id]);
+
+  // WebRTC audio — mic is open for everyone; each person self-mutes when needed
   const audio = useCoachingAudio({
-    classId, sessionId, token, user, canSpeak: hasSpeakPermission, participants, isTeacher: false,
+    classId, sessionId, token, user, canSpeak: true, participants: audioParticipants, isTeacher: false,
   });
 
   // Hand raise
@@ -1259,7 +1270,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         <AudioControls
           micOn={audio.micOn} volume={audio.volume} audioEnabled={audio.audioEnabled}
           onToggleMic={audio.toggleMic} onVolume={audio.changeVolume} onToggleAudio={audio.toggleAudio}
-          canSpeak={hasSpeakPermission}
+          canSpeak={true}
           cameraOn={audio.cameraOn} onToggleCamera={audio.toggleCamera}
         />
         {audio.needsTap && (
@@ -1276,9 +1287,8 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
           const isTeacher = !p;
           return <SoundWave key={uid} level={lvl} color={isTeacher ? '#ef4444' : '#3b82f6'} label={isTeacher ? 'Teacher' : (p?.name?.split(' ')[0] || 'Student')} size="small" />;
         })}
-        {!hasSpeakPermission && <span style={{ fontSize: 11, color: '#94a3b8' }}>✋ Raise hand to ask for mic</span>}
-        {hasSpeakPermission && !audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700, animation: 'pulse 1.5s infinite' }}>🎙️ Teacher gave you mic — tap "Speak" to talk!</span>}
-        {hasSpeakPermission && audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700 }}>🎙️ You are speaking — everyone can hear you</span>}
+        {!audio.micOn && <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700 }}>🔇 Muted — tap 🎙 to speak</span>}
+        {audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700 }}>🎙️ You are live — everyone can hear you</span>}
       </div>
 
       {/* Live video — shown when any camera is on */}
