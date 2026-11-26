@@ -17,6 +17,8 @@ import AppNotificationsBell from '../components/AppNotificationsBell';
 import StaffChatsPanel from '../components/staff/StaffChatsPanel';
 import StaffClassNowPanel from '../components/staff/StaffClassNowPanel';
 import StaffInyandikoDashboard from '../components/staff/StaffInyandikoDashboard';
+import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
+import SchoolHubPanel from '../components/staff/SchoolHubPanel';
 import AddTeacherModal from '../components/staff/AddTeacherModal';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
@@ -214,6 +216,24 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
               <div className="footer-brand">❤️ Made for Teachers in Rwanda</div>
             </footer>
           </>
+        )}
+
+        {activeTab === 'school' && isHeadTeacher && (
+          <div style={{ padding: '8px 0' }}>
+            <h2 style={{ fontSize: 22, color: '#111827', marginBottom: 16 }}>🏫 School</h2>
+            <SchoolRequestsPanel token={token} />
+            {hasSchool ? (
+              <>
+                <SchoolHubPanel token={token} isHeadTeacher />
+                <section style={{ marginTop: 20, marginBottom: 16 }}>
+                  <h2 style={{ fontSize: 17, color: '#111827', marginBottom: 10 }}>✍️ School — C. Status</h2>
+                  <CompositionStatusList token={token} schoolWide />
+                </section>
+              </>
+            ) : (
+              <p style={{ color: '#6B7280', marginTop: 16 }}>Link a school to post announcements and manage teachers.</p>
+            )}
+          </div>
         )}
 
         {activeTab === 'chats' && (

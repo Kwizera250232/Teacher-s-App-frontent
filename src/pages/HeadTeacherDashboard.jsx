@@ -1,5 +1,5 @@
-import StaffDashboard from './StaffDashboard';
+import PremiumStaffDashboard from './PremiumStaffDashboard';
 
 export default function HeadTeacherDashboard() {
-  return <StaffDashboard roleLabel="Head Teacher" basePath="/head-teacher" />;
+  return <PremiumStaffDashboard roleLabel="Head Teacher" basePath="/head-teacher" />;
 }

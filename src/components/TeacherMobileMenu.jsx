@@ -10,8 +10,10 @@ export default function TeacherMobileMenu({ user, roleLabel, hubTab, onTabChange
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
+  const isHeadTeacher = user?.role === 'head_teacher';
   const tabItems = [
     { id: 'classes', icon: '📚', label: 'Classes' },
+    ...(isHeadTeacher ? [{ id: 'school', icon: '🏫', label: 'School' }] : []),
     { id: 'chats', icon: '💬', label: 'Chats' },
     { id: 'connect', icon: '📞', label: 'Teacher Connect', path: `${basePath || '/teacher'}/connect` },
     { id: 'library', icon: '📚', label: "Colleagues' Library", path: `${basePath || '/teacher'}/library` },
