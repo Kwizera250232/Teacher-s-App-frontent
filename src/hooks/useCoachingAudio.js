@@ -25,6 +25,10 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   const [needsTap, setNeedsTap] = useState(false);
 
   const localStreamRef = useRef(null);
+  const cameraStreamRef = useRef(null);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [localVideo, setLocalVideo] = useState(null);
+  const [remoteStreams, setRemoteStreams] = useState({}); // userId → MediaStream (for video tiles)
   const peersRef = useRef({});
   const signalLastIdRef = useRef(0);
   const micOnRef = useRef(false);
@@ -124,7 +128,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     try {
       peer.makingOffer = true;
       console.log('[audio] Creating offer to', peer.userId);
-      const offer = await peer.pc.createOffer({ offerToReceiveAudio: true });
+      const offer = await peer.pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
       await peer.pc.setLocalDescription(offer);
       await api.post(
         `/classes/${classId}/coaching-sessions/${sessionId}/signal`,
@@ -191,6 +195,14 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     pc.ontrack = (e) => {
       console.log('[audio] Got remote track from', otherUserId);
       audioEl.srcObject = e.streams[0];
+      peer.remoteStream = e.streams[0];
+      // Track video separately for the video grid
+      if (e.track.kind === 'video') {
+        setRemoteStreams(prev => ({ ...prev, [otherUserId]: e.streams[0] }));
+        e.track.onended = () => {
+          setRemoteStreams(prev => { const n = { ...prev }; delete n[otherUserId]; return n; });
+        };
+      }
       setConnected(true);
 
       // Route audio through AudioContext → GainNode → destination
@@ -241,6 +253,12 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       }
     };
 
+    pc.onremovetrack = (e) => {
+      if (e.track.kind === 'video') {
+        setRemoteStreams(prev => { const n = { ...prev }; delete n[otherUserId]; return n; });
+      }
+    };
+
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         api.post(
@@ -278,6 +296,13 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
         pc.addTrack(track, localStreamRef.current);
       });
       peer.hasLocalTracks = true;
+    }
+
+    // Attach camera track if video is already on (e.g. new peer joins later)
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getVideoTracks().forEach(track => {
+        pc.addTrack(track, cameraStreamRef.current);
+      });
     }
 
     peersRef.current[otherUserId] = peer;
@@ -422,6 +447,43 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
     if (micOnRef.current) stopMic();
     else startMic();
   }, [startMic, stopMic]);
+
+  // ── Camera: optional live video (same getUserMedia approach as Mfasha) ──
+  const toggleCamera = useCallback(async () => {
+    if (cameraStreamRef.current) {
+      // Turn off — remove track from all peers, then stop
+      const stream = cameraStreamRef.current;
+      for (const peer of Object.values(peersRef.current)) {
+        peer.pc.getSenders()
+          .filter(s => stream.getVideoTracks().includes(s.track))
+          .forEach(s => { try { peer.pc.removeTrack(s); } catch (e) {} });
+      }
+      stream.getTracks().forEach(t => t.stop());
+      cameraStreamRef.current = null;
+      setCameraOn(false);
+      setLocalVideo(null);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
+      });
+      cameraStreamRef.current = stream;
+      setCameraOn(true);
+      setLocalVideo(stream);
+      for (const peer of Object.values(peersRef.current)) {
+        stream.getVideoTracks().forEach(track => {
+          try { peer.pc.addTrack(track, stream); } catch (e) {}
+        });
+      }
+      // addTrack triggers onnegotiationneeded → offer goes out automatically
+    } catch (e) {
+      console.error('[video] camera error:', e);
+      setCameraOn(false);
+      setLocalVideo(null);
+    }
+  }, []);
 
   const changeVolume = useCallback((vol) => {
     const clamped = Math.max(0, Math.min(1, vol));
@@ -578,12 +640,17 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
       }
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(t => t.stop());
+        cameraStreamRef.current = null;
+      }
     };
   }, [stopLevelDetection]);
 
   return {
     micOn, volume, audioEnabled, connected, peerCount,
     speakingLevel, remoteSpeaking, needsTap,
+    cameraOn, localVideo, remoteStreams, toggleCamera,
     toggleMic, changeVolume, toggleAudio, startMic, stopMic, resumeAudio,
   };
 }

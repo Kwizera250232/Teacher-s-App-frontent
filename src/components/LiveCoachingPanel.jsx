@@ -23,7 +23,7 @@ const btnSm = { padding: '5px 12px', fontSize: 13 };
 const btnDanger = { ...btnPrimary, ...btnSm, background: '#ef4444' };
 
 // ── Audio Controls (mic + volume) ────────────────────────────────────────────
-function AudioControls({ micOn, volume, audioEnabled, onToggleMic, onVolume, onToggleAudio, canSpeak, label }) {
+function AudioControls({ micOn, volume, audioEnabled, onToggleMic, onVolume, onToggleAudio, canSpeak, label, cameraOn, onToggleCamera }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
       {canSpeak && (
@@ -37,6 +37,19 @@ function AudioControls({ micOn, volume, audioEnabled, onToggleMic, onVolume, onT
           title={micOn ? 'Mic is ON' : 'Mic is OFF'}
         >
           {micOn ? '🎙 ON' : '🔇 OFF'}
+        </button>
+      )}
+      {onToggleCamera && (
+        <button
+          onClick={onToggleCamera}
+          style={{
+            ...btnSm, padding: '4px 10px', fontSize: 12, cursor: 'pointer',
+            background: cameraOn ? '#8b5cf6' : '#e2e8f0', color: cameraOn ? '#fff' : '#64748b',
+            border: 'none', borderRadius: 6, fontWeight: 700,
+          }}
+          title={cameraOn ? 'Camera is ON — tap to turn off' : 'Turn camera on'}
+        >
+          {cameraOn ? '📹 ON' : '📷'}
         </button>
       )}
       <button
@@ -91,6 +104,52 @@ function SoundWave({ level, color = '#10b981', label, size = 'normal' }) {
         })}
       </div>
       {label && <span style={{ fontSize: 11, color, fontWeight: 600 }}>{label}</span>}
+    </div>
+  );
+}
+
+// ── Live video grid — local camera preview + remote participant cameras ──
+function VideoTile({ stream, label, muted = true, isSelf = false }) {
+  const ref = (el) => { if (el && el.srcObject !== stream) el.srcObject = stream; };
+  return (
+    <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', background: '#0f172a', aspectRatio: '4/3' }}>
+      <video
+        ref={ref}
+        autoPlay
+        playsInline
+        muted={muted}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', transform: isSelf ? 'scaleX(-1)' : 'none' }}
+      />
+      <span style={{
+        position: 'absolute', bottom: 4, left: 6, fontSize: 10, fontWeight: 700,
+        color: '#fff', background: 'rgba(15,23,42,0.65)', padding: '1px 6px', borderRadius: 4,
+      }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function VideoGrid({ audio, user, participants, teacherId, teacherName }) {
+  const remote = Object.entries(audio.remoteStreams || {})
+    .filter(([, s]) => s && s.getVideoTracks().some(t => t.readyState === 'live'));
+  if (!audio.localVideo && remote.length === 0) return null;
+  const nameFor = (uid) => {
+    if (String(uid) === String(teacherId)) return teacherName || 'Teacher';
+    const p = (participants || []).find(x => String(x.student_id) === String(uid));
+    return p?.name || `Student ${uid}`;
+  };
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+      gap: 8, margin: '8px 0',
+    }}>
+      {audio.localVideo && (
+        <VideoTile stream={audio.localVideo} label="You" isSelf />
+      )}
+      {remote.map(([uid, s]) => (
+        <VideoTile key={uid} stream={s} label={nameFor(uid)} />
+      ))}
     </div>
   );
 }
@@ -820,6 +879,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
           micOn={audio.micOn} volume={audio.volume} audioEnabled={audio.audioEnabled}
           onToggleMic={audio.toggleMic} onVolume={audio.changeVolume} onToggleAudio={audio.toggleAudio}
           canSpeak={true} label="Teacher"
+          cameraOn={audio.cameraOn} onToggleCamera={audio.toggleCamera}
         />
         {audio.needsTap && (
           <button
@@ -844,6 +904,9 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
         <button style={{ ...btnOutline, ...btnSm }} onClick={onExit}>Exit</button>
         <button style={{ ...btnSm, padding: '4px 10px', fontSize: 11, border: '1px solid #ef4444', borderRadius: 6, background: '#fff', color: '#ef4444', cursor: 'pointer' }} onClick={deleteSession}>🗑 Delete</button>
       </div>
+
+      {/* Live video — shown when any camera is on */}
+      <VideoGrid audio={audio} user={user} participants={participants} teacherId={session?.teacher_id} teacherName="Teacher" />
 
       {/* Main area: quiz status + participants */}
       <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
@@ -1197,6 +1260,7 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
           micOn={audio.micOn} volume={audio.volume} audioEnabled={audio.audioEnabled}
           onToggleMic={audio.toggleMic} onVolume={audio.changeVolume} onToggleAudio={audio.toggleAudio}
           canSpeak={hasSpeakPermission}
+          cameraOn={audio.cameraOn} onToggleCamera={audio.toggleCamera}
         />
         {audio.needsTap && (
           <button
@@ -1216,6 +1280,9 @@ function LiveCoachingStudentView({ classId, sessionId, token, user, onExit, onEr
         {hasSpeakPermission && !audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700, animation: 'pulse 1.5s infinite' }}>🎙️ Teacher gave you mic — tap "Speak" to talk!</span>}
         {hasSpeakPermission && audio.micOn && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700 }}>🎙️ You are speaking — everyone can hear you</span>}
       </div>
+
+      {/* Live video — shown when any camera is on */}
+      <VideoGrid audio={audio} user={user} participants={participants} teacherId={session?.teacher_id} teacherName={session?.teacher_name || 'Teacher'} />
 
       {/* Paused indicator */}
       {isPaused && (
