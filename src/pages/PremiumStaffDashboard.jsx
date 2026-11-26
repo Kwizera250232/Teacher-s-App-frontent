@@ -19,6 +19,7 @@ import StaffClassNowPanel from '../components/staff/StaffClassNowPanel';
 import StaffInyandikoDashboard from '../components/staff/StaffInyandikoDashboard';
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import SchoolHubPanel from '../components/staff/SchoolHubPanel';
+import HtReportsPanel from '../components/HtReportsPanel';
 import AddTeacherModal from '../components/staff/AddTeacherModal';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
@@ -224,6 +225,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
             <SchoolRequestsPanel token={token} />
             {hasSchool ? (
               <>
+                <HtReportsPanel token={token} onError={(msg) => setError(msg)} />
                 <SchoolHubPanel token={token} isHeadTeacher />
                 <section style={{ marginTop: 20, marginBottom: 16 }}>
                   <h2 style={{ fontSize: 17, color: '#111827', marginBottom: 10 }}>✍️ School — C. Status</h2>

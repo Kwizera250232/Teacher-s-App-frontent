@@ -36,6 +36,7 @@ import '../components/StudentNotifications.css';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import RecordCatMarks from './RecordCatMarks';
 import MidTermReportModal from '../components/MidTermReportModal';
+import EndTermReportModal from '../components/EndTermReportModal';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 import '../pages/PremiumClassTheme.css';
@@ -106,6 +107,7 @@ export default function TeacherClassPage() {
   const [quizShareBusy, setQuizShareBusy] = useState(null);
   const [quizPdfBusy, setQuizPdfBusy] = useState(null);
   const [midTermStudent, setMidTermStudent] = useState(null);
+  const [endTermStudent, setEndTermStudent] = useState(null);
   const [midTermComment, setMidTermComment] = useState('');
   const [midTermBusy, setMidTermBusy] = useState(false);
   const [colleagueShareQuiz, setColleagueShareQuiz] = useState(null); // { id, title }
@@ -1126,6 +1128,7 @@ export default function TeacherClassPage() {
               onStudentClick={setSelectedStudent}
               onParentInvite={setParentInviteFor}
               onMidTerm={setMidTermStudent}
+              onEndTerm={setEndTermStudent}
             />
           </div>
         )}
@@ -1136,6 +1139,16 @@ export default function TeacherClassPage() {
             token={token}
             student={midTermStudent}
             onClose={() => setMidTermStudent(null)}
+            onError={(msg) => setError(msg)}
+          />
+        )}
+
+        {endTermStudent && (
+          <EndTermReportModal
+            classId={id}
+            token={token}
+            student={endTermStudent}
+            onClose={() => setEndTermStudent(null)}
             onError={(msg) => setError(msg)}
           />
         )}

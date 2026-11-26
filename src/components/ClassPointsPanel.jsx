@@ -39,6 +39,7 @@ export default function ClassPointsPanel({
   onStudentClick,
   onParentInvite,
   onMidTerm,
+  onEndTerm,
   basePath = '/teacher',
 }) {
   const [loading, setLoading] = useState(true);
@@ -656,6 +657,22 @@ export default function ClassPointsPanel({
                               }}
                             >
                               📄 Mid-Term
+                            </button>
+                          </td>
+                        )}
+                        {onEndTerm && (
+                          <td>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              style={{ fontSize: 10, padding: '2px 6px' }}
+                              title="Add exam marks + generate end-term report card (Word)"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                onEndTerm({ studentId: s.id, studentName: displayName });
+                              }}
+                            >
+                              📑 End-Term
                             </button>
                           </td>
                         )}
