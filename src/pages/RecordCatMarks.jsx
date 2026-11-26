@@ -41,6 +41,9 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   const [sheets, setSheets] = useState([]);
   const [activeSheetId, setActiveSheetId] = useState(null);
   const [viewSheetId, setViewSheetId] = useState(null);
+  const [examData, setExamData] = useState({ exam: {}, exam_total: 100 });
+  const [editingExam, setEditingExam] = useState(null); // { studentId, value }
+  const [editingExamTotal, setEditingExamTotal] = useState(null);
   const isArchived = activeSheetId != null && viewSheetId != null && viewSheetId !== activeSheetId;
   const location = useLocation();
   const basePath = location.pathname.startsWith('/head-teacher') ? '/head-teacher' : '/teacher';
@@ -64,6 +67,18 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
     } catch { /* older API without sheets */ }
   };
 
+  // Canonical subject key — must match the backend's canonSubj so exam marks line up.
+  const canonSubj = (n) => {
+    const k = String(n || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    if (k === 'ssr' || k === 'sst' || k === 'srs' || k.startsWith('socialandreligious')) return 'srs';
+    if (k === 'set' || k.startsWith('scienceandelementary')) return 'set';
+    if (k.startsWith('physicaleducation') || k === 'pheducation' || k === 'pes') return 'physicaleducation';
+    return k.replace(/s$/, '');
+  };
+  const currentSubject = () => selectedSubject || 'General';
+  const viewedSheetName = () => sheets.find((s) => s.id === viewSheetId)?.name || '';
+  const examMarkFor = (studentId) => examData.exam?.[studentId]?.[canonSubj(currentSubject())];
+
   const loadData = () => {
     if (!classId) return;
     setLoading(true);
@@ -72,9 +87,17 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
     if (viewSheetId) params.set('sheet_id', String(viewSheetId));
     const qs = params.toString();
     const overviewUrl = `/catmarks/${classId}/overview${qs ? `?${qs}` : ''}`;
+    const examQ = viewedSheetName() ? `?term=${encodeURIComponent(viewedSheetName())}` : '';
     Promise.all([
       api.get(overviewUrl, token).then(setStats),
       api.get(`/classes/${classId}/quizzes`, token).then(setQuizzes),
+      api.get(`/catmarks/${classId}/exam-marks${examQ}`, token)
+        .then((r) => {
+          const exam = {};
+          for (const st of r.students || []) exam[st.id] = st.exam || {};
+          setExamData({ exam, exam_total: r.exam_total || 100 });
+        })
+        .catch(() => setExamData({ exam: {}, exam_total: 100 })),
     ]).catch((e) => setError(e.message)).finally(() => setLoading(false));
   };
 
@@ -136,6 +159,58 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
       setEditing(null);
       setError('');
       loadData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── EXAM marks — stored per subject on the viewed sheet, feeds End-Term reports ──
+  const saveExamMark = async (studentId, marksRaw) => {
+    setEditingExam(null);
+    if (marksRaw === '' || marksRaw === '—') return;
+    const total = examData.exam_total || 100;
+    const marks = parseInt(marksRaw, 10);
+    if (Number.isNaN(marks) || marks < 0 || marks > total) {
+      setError(`Exam marks must be 0–${total}.`);
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post(`/catmarks/${classId}/exam-marks`, {
+        term: viewedSheetName() || undefined,
+        total_marks: total,
+        entries: [{ student_id: studentId, subject: currentSubject(), marks }],
+      }, token);
+      setExamData((prev) => ({
+        ...prev,
+        exam: {
+          ...prev.exam,
+          [studentId]: { ...(prev.exam?.[studentId] || {}), [canonSubj(currentSubject())]: marks },
+        },
+      }));
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveExamTotal = async (totalRaw) => {
+    const total = parseInt(totalRaw, 10);
+    setEditingExamTotal(null);
+    if (Number.isNaN(total) || total < 1 || total === examData.exam_total) return;
+    setSaving(true);
+    try {
+      await api.post(`/catmarks/${classId}/exam-marks`, {
+        term: viewedSheetName() || undefined,
+        update_total_only: total,
+        subject: currentSubject(),
+      }, token);
+      setExamData((prev) => ({ ...prev, exam_total: total }));
+      setError('');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -209,10 +284,11 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
   }, [roster]);
 
   const exportCSV = () => {
-    const headers = ['Student', ...CAT_NUMS.map(n => `CAT ${n}`), 'Total', '%', 'Avg %'];
+    const headers = ['Student', ...CAT_NUMS.map(n => `CAT ${n}`), `Exam (/${examData.exam_total || 100})`, 'Total', '%', 'Avg %'];
     const rows = roster.map(s => [
       `"${s.name}"`,
       ...CAT_NUMS.map(n => s.cat?.[n] ?? ''),
+      examMarkFor(s.student_id) ?? '',
       s.total_marks,
       s.percentage,
       s.avg_percentage,
@@ -484,7 +560,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
         <section className="cat-panel cat-table-wrap">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
             <h2 style={{ margin: 0 }}>
-              Marks Sheet (CAT 1–10)
+              Marks Sheet (CAT 1–10 + EXAM)
               {selectedSubject && <span style={{ color: '#7c3aed', fontSize: 14, marginLeft: 8 }}>— {selectedSubject}</span>}
             </h2>
             {stats && (
@@ -538,6 +614,34 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                       </th>
                     );
                   })}
+                  <th style={{ background: '#fff7ed', color: '#9a3412', cursor: isArchived ? 'default' : 'pointer' }} title={isArchived ? 'Exam marks' : "Click to set 'exam out of'"}>
+                    EXAM
+                    {editingExamTotal != null ? (
+                      <span style={{ display: 'block', marginTop: 2 }}>
+                        <input
+                          type="number"
+                          min={1}
+                          autoFocus
+                          value={editingExamTotal}
+                          style={{ width: 48, fontSize: 11, padding: '2px 4px', border: '1.5px solid #ea580c', borderRadius: 4, textAlign: 'center' }}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setEditingExamTotal(e.target.value)}
+                          onBlur={() => saveExamTotal(editingExamTotal)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveExamTotal(editingExamTotal);
+                            if (e.key === 'Escape') setEditingExamTotal(null);
+                          }}
+                        />
+                      </span>
+                    ) : (
+                      <span
+                        style={{ fontSize: 10, color: '#ea580c', display: 'block', fontWeight: 600, textDecoration: isArchived ? 'none' : 'underline dotted' }}
+                        onClick={(e) => { e.stopPropagation(); if (!isArchived) setEditingExamTotal(String(examData.exam_total || 100)); }}
+                      >
+                        {`/ ${examData.exam_total || 100}`}
+                      </span>
+                    )}
+                  </th>
                   <th>Total</th>
                   <th>%</th>
                   <th>Avg %</th>
@@ -597,6 +701,42 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                         </td>
                       );
                     })}
+                    <td
+                      style={{ background: '#fff7ed', position: 'relative' }}
+                      className={!isArchived ? 'cat-cell-clickable' : ''}
+                      title={isArchived ? 'Exam mark' : 'Click to enter exam mark'}
+                      onClick={() => {
+                        if (isArchived) return;
+                        if (editingExam?.studentId === s.student_id) return;
+                        const cur = examMarkFor(s.student_id);
+                        setEditingExam({ studentId: s.student_id, value: cur != null ? String(cur) : '' });
+                      }}
+                    >
+                      {editingExam?.studentId === s.student_id ? (
+                        <input
+                          className="cat-cell-input"
+                          type="number"
+                          min={0}
+                          max={examData.exam_total || 100}
+                          autoFocus
+                          value={editingExam.value}
+                          onChange={(e) => setEditingExam({ ...editingExam, value: e.target.value })}
+                          onBlur={() => saveExamMark(s.student_id, editingExam.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveExamMark(s.student_id, editingExam.value);
+                            if (e.key === 'Escape') setEditingExam(null);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        examMarkFor(s.student_id) != null ? (
+                          <span>
+                            <strong>{examMarkFor(s.student_id)}</strong>
+                            <span style={{ fontSize: 10, color: '#9a3412' }}>/{examData.exam_total || 100}</span>
+                          </span>
+                        ) : '—'
+                      )}
+                    </td>
                     <td className="cat-total">{s.total_marks}{(() => {
                       // Calculate sum of all CAT totals for this student
                       let sumTotal = 0;
@@ -610,6 +750,12 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
                 <tr className="cat-avg-row">
                   <td>Class average</td>
                   {catAverages.map((avg, i) => <td key={i}>{avg != null ? avg : '—'}</td>)}
+                  <td style={{ background: '#fff7ed' }}>
+                    {(() => {
+                      const vals = filteredRoster.map((s) => examMarkFor(s.student_id)).filter((v) => v != null);
+                      return vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : '—';
+                    })()}
+                  </td>
                   <td>{Math.round(classTotals.totalMarks / n)}</td>
                   <td>{Math.round((classTotals.pctSum / n) * 10) / 10}%</td>
                   <td>{Math.round((classTotals.avgSum / n) * 10) / 10}%</td>
@@ -619,7 +765,7 @@ export default function RecordCatMarks({ embeddedClassId, embeddedToken }) {
           )}
           {!loading && roster.length > 0 && (
             <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 10 }}>
-              💡 Select a subject first to keep marks organized. Click a cell to edit. Right-click to delete. Use "From Quiz" to import quiz scores.
+              💡 Select a subject first to keep marks organized. Click a cell to edit. Right-click to delete. Use "From Quiz" to import quiz scores. The orange <b>EXAM</b> column feeds the End-Term report card — click it to add each student's exam mark.
             </p>
           )}
         </section>
