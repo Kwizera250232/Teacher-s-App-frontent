@@ -278,8 +278,8 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
       // Wi‑Fi ↔ mobile data or a sleeping phone) instead of staying silent.
       if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
         try { pc.restartIce(); } catch (e) {}
-        const myId = String(user.id);
-        if (pc.iceConnectionState === 'failed' && myId > String(otherUserId)) {
+        const myId = Number(user.id);
+        if (pc.iceConnectionState === 'failed' && myId > Number(otherUserId)) {
           setTimeout(() => { createOffer(peer).catch(() => {}); }, 1000);
         }
       }
@@ -339,7 +339,7 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
         // Glare resolution (both sides offered at once): the polite peer —
         // the one with the smaller user id — rolls back its own offer and
         // answers; the impolite peer ignores the incoming offer.
-        const polite = String(user.id) < String(fromId);
+        const polite = Number(user.id) < Number(fromId);
         const collision = peer.makingOffer || peer.pc.signalingState !== 'stable';
         if (collision && !polite) {
           console.warn('[audio] glare: ignoring colliding offer from', fromId);
@@ -542,13 +542,13 @@ export function useCoachingAudio({ classId, sessionId, token, user, canSpeak, pa
   // the higher id initiates, so exactly one side offers.
   useEffect(() => {
     if (!participants || participants.length === 0) return;
-    const myId = String(user.id);
+    const myId = Number(user.id);
     participants.forEach(p => {
       const pid = String(p.student_id || p.id);
-      if (pid === myId) return;
+      if (Number(pid) === myId) return;
       if (!peersRef.current[pid]) {
         const peer = createPeer(pid);
-        if (isTeacherRef.current || myId > pid) {
+        if (isTeacherRef.current || myId > Number(pid)) {
           createOffer(peer);
         }
       }
