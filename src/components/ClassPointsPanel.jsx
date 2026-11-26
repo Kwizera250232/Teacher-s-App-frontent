@@ -40,6 +40,7 @@ export default function ClassPointsPanel({
   onParentInvite,
   onMidTerm,
   onEndTerm,
+  onYearly,
   basePath = '/teacher',
 }) {
   const [loading, setLoading] = useState(true);
@@ -673,6 +674,22 @@ export default function ClassPointsPanel({
                               }}
                             >
                               📑 End-Term
+                            </button>
+                          </td>
+                        )}
+                        {onYearly && (
+                          <td>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              style={{ fontSize: 10, padding: '2px 6px' }}
+                              title="Generate the yearly report card — combines all terms, nothing to enter"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                onYearly({ studentId: s.id, studentName: displayName });
+                              }}
+                            >
+                              📅 Yearly
                             </button>
                           </td>
                         )}

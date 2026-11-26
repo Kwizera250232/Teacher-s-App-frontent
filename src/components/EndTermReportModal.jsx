@@ -29,6 +29,7 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
   const [roster, setRoster] = useState([]);
   const [selectedIds, setSelectedIds] = useState(null);
   const [showStudents, setShowStudents] = useState(false);
+  const [lockedTerms, setLockedTerms] = useState([]);
 
   useEffect(() => {
     let alive = true;
@@ -45,6 +46,7 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
         const exd = await ex.json().catch(() => ({}));
         if (!alive) return;
         setHasTemplate(Boolean(d.has_template));
+        setLockedTerms(d.locked_terms || []);
         setForm({ academic_year: d.academic_year || '', term: d.term || 'I' });
         setRoster(d.roster || []);
         if (exd.exam_total) setExamTotal(exd.exam_total);
@@ -66,6 +68,7 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
 
   const setExam = (i, v) => setSubjects((list) => list.map((s, idx) => (idx === i ? { ...s, exam: v } : s)));
   const filledCount = subjects.filter((s) => s.exam !== '' && s.exam !== null && s.exam !== undefined).length;
+  const termLocked = lockedTerms.some((l) => l.report_type === 'end_term' && String(l.term || '') === String(form.term || ''));
 
   const saveExamMarks = async () => {
     const entries = subjects
@@ -170,6 +173,11 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
             ? '🏫 Using the school report card uploaded by the Head Teacher'
             : '⚠️ No school card uploaded yet — using the standard UClass End-Term format'}
         </p>
+        {termLocked && (
+          <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 600, color: '#991b1b' }}>
+            🔒 Term {form.term} End-Term reports were approved by the Head Teacher — locked, no more edits.
+          </p>
+        )}
 
         {loading ? <p style={{ color: '#64748b' }}>Loading…</p> : previewHtml ? (
           <>
@@ -211,6 +219,7 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
                   <input
                     type="number" min="0" max={examTotal} value={s.exam}
                     onChange={(e) => setExam(i, e.target.value)}
+                    disabled={termLocked}
                     placeholder="—"
                     style={{ padding: '6px 8px', borderRadius: 7, border: '1.5px solid #cbd5e1', fontSize: 14, textAlign: 'center', width: '100%', boxSizing: 'border-box' }}
                   />
@@ -264,10 +273,10 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
               <button type="button" className="btn btn-primary" disabled={busy} onClick={showPreview}>
                 {busy ? '⏳ …' : '👁 Preview report'}
               </button>
-              <button type="button" className="btn btn-outline" disabled={busy} onClick={() => buildFolder(false)}>
+              <button type="button" className="btn btn-outline" disabled={busy || termLocked} onClick={() => buildFolder(false)}>
                 📁 Class folder (all .doc)
               </button>
-              <button type="button" className="btn btn-outline" disabled={busy} onClick={() => buildFolder(true)} style={{ borderColor: '#075e54', color: '#075e54', fontWeight: 700 }}>
+              <button type="button" className="btn btn-outline" disabled={busy || termLocked} onClick={() => buildFolder(true)} style={{ borderColor: '#075e54', color: '#075e54', fontWeight: 700 }}>
                 📤 Send reports to HT
               </button>
             </div>

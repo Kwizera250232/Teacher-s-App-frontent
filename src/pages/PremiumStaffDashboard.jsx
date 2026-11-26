@@ -20,6 +20,7 @@ import StaffInyandikoDashboard from '../components/staff/StaffInyandikoDashboard
 import SchoolRequestsPanel from '../components/SchoolRequestsPanel';
 import SchoolHubPanel from '../components/staff/SchoolHubPanel';
 import HtReportsPanel from '../components/HtReportsPanel';
+import HtOverviewPanel from '../components/HtOverviewPanel';
 import AddTeacherModal from '../components/staff/AddTeacherModal';
 import NotifyParentsModal from '../components/staff/NotifyParentsModal';
 import WeeklyDigestModal from '../components/staff/WeeklyDigestModal';
@@ -42,7 +43,8 @@ import './PremiumDashboard.css';
 
 export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath = '/teacher' }) {
   const { user, token, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('classes');
+  const isHT = roleLabel === 'Head Teacher';
+  const [activeTab, setActiveTab] = useState(isHT ? 'overview' : 'classes');
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
   const [error, setError] = useState('');
@@ -219,13 +221,38 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
           </>
         )}
 
+        {activeTab === 'overview' && isHeadTeacher && (
+          <div style={{ padding: '8px 0' }}>
+            <HtOverviewPanel
+              token={token}
+              onError={(msg) => setError(msg)}
+              onGoReports={() => setActiveTab('reports')}
+              onGoSchool={() => setActiveTab('school')}
+            />
+          </div>
+        )}
+
+        {activeTab === 'reports' && isHeadTeacher && (
+          <div style={{ padding: '8px 0' }}>
+            {hasSchool ? (
+              <HtReportsPanel token={token} onError={(msg) => setError(msg)} />
+            ) : (
+              <p style={{ color: '#6B7280', marginTop: 16 }}>Link a school to receive report cards from your teachers.</p>
+            )}
+          </div>
+        )}
+
         {activeTab === 'school' && isHeadTeacher && (
           <div style={{ padding: '8px 0' }}>
             <h2 style={{ fontSize: 22, color: '#111827', marginBottom: 16 }}>🏫 School</h2>
             <SchoolRequestsPanel token={token} />
             {hasSchool ? (
               <>
-                <HtReportsPanel token={token} onError={(msg) => setError(msg)} />
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                  <button type="button" className="premium-action-button" onClick={() => setShowAddTeacher(true)}>
+                    👨‍🏫 Add teacher
+                  </button>
+                </div>
                 <SchoolHubPanel token={token} isHeadTeacher />
                 <section style={{ marginTop: 20, marginBottom: 16 }}>
                   <h2 style={{ fontSize: 17, color: '#111827', marginBottom: 10 }}>✍️ School — C. Status</h2>
@@ -454,13 +481,13 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
         />
       )}
 
-      {!mfOpen && activeTab !== 'mfasha' && (
+      {!isHeadTeacher && !mfOpen && activeTab !== 'mfasha' && (
         <button className="mfasha-fab" onClick={() => setMfOpen(true)} title="Ask Mfasha — your AI teaching assistant">
           <span className="mfasha-fab-ring"><span className="mfasha-fab-dot" /></span>
           <span className="mfasha-fab-label">Mfasha</span>
         </button>
       )}
-      {mfOpen && activeTab !== 'mfasha' && (
+      {!isHeadTeacher && mfOpen && activeTab !== 'mfasha' && (
         <Mfasha user={user} token={token} onClose={() => setMfOpen(false)} />
       )}
     </div>

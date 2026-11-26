@@ -143,13 +143,31 @@ export default function HtReportsPanel({ token, onError }) {
     }
   };
 
+  const act = async (id, action) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`${API_BASE}/catmarks/reports-inbox/${id}/${action}`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || `Failed (${res.status})`);
+      await load();
+    } catch (e) {
+      onError?.(e.message || 'Could not update the report.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const TYPE_META = { mid_term: '📄 Mid-Term', end_term: '📑 End-Term', yearly: '📅 Yearly' };
+
   // group submissions: term → type
   const grouped = {};
   for (const s of subs) {
     const t = s.term || '—';
-    (grouped[t] ||= { mid_term: [], end_term: [] })[s.report_type]?.push(s);
+    (grouped[t] ||= { mid_term: [], end_term: [], yearly: [] })[s.report_type]?.push(s);
   }
-  const termOrder = (t) => ({ I: 0, II: 1, III: 2 }[t] ?? 3);
+  const termOrder = (t) => ({ I: 0, II: 1, III: 2, Year: 3 }[t] ?? 4);
   const terms = Object.keys(grouped).sort((a, b) => termOrder(a) - termOrder(b));
 
   const card = { border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, marginBottom: 16, background: '#fff' };
@@ -222,25 +240,41 @@ export default function HtReportsPanel({ token, onError }) {
       <div style={card}>
         <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>📁 Reports Inbox</h3>
         <p style={{ margin: '0 0 12px', fontSize: 12.5, color: '#64748b' }}>
-          Every reports folder your teachers generate lands here — Mid-Term and End-Term, grouped by term. Open a folder to view, download or print each report.
+          Every reports folder your teachers generate lands here — Mid-Term, End-Term and Yearly, grouped by term. Open a folder to check each student's card, then <strong>Approve &amp; lock</strong> — approved reports can't be edited by teachers anymore.
         </p>
         {!subs.length && <p style={{ margin: 0, fontSize: 13, color: '#94a3b8' }}>No reports submitted yet — when a teacher builds a reports folder or sends reports to you, it appears here.</p>}
         {terms.map((t) => (
           <div key={t} style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>🗓 Term {t}</div>
-            {['end_term', 'mid_term'].map((type) => grouped[t][type].length ? (
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', marginBottom: 6 }}>🗓 {t === 'Year' ? 'Yearly' : `Term ${t}`}</div>
+            {['mid_term', 'end_term', 'yearly'].map((type) => grouped[t][type].length ? (
               <div key={type} style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-                  {type === 'end_term' ? '📑 End-Term' : '📄 Mid-Term'} ({grouped[t][type].length})
+                  {TYPE_META[type]} ({grouped[t][type].length})
                 </div>
                 {grouped[t][type].map((s) => (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', border: '1px solid #f1f5f9', borderRadius: 10, padding: '8px 12px', marginBottom: 6, background: '#fafbfc' }}>
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', border: `1px solid ${s.status === 'approved' ? '#bbf7d0' : '#f1f5f9'}`, borderRadius: 10, padding: '8px 12px', marginBottom: 6, background: s.status === 'approved' ? '#f0fdf4' : '#fafbfc' }}>
                     <div style={{ flex: 1, minWidth: 180 }}>
                       <strong style={{ fontSize: 13 }}>{s.class_name || 'Class'}</strong>
                       <span style={{ fontSize: 12, color: '#64748b' }}> · {s.teacher_name || 'Teacher'} · {s.student_count || 0} reports · {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      <span style={{
+                        marginLeft: 8, fontSize: 10.5, fontWeight: 800, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase',
+                        background: s.status === 'approved' ? '#dcfce7' : '#fef3c7',
+                        color: s.status === 'approved' ? '#166534' : '#92400e',
+                      }}>
+                        {s.status === 'approved' ? '🔒 Approved' : '⏳ Pending review'}
+                      </span>
                     </div>
                     <a href={s.folder_url} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm" style={{ fontSize: 12, textDecoration: 'none' }}>📁 View folder</a>
                     <a href={`${s.folder_url}/all`} className="btn btn-outline btn-sm" style={{ fontSize: 12, textDecoration: 'none' }}>⬇ All</a>
+                    {s.status === 'approved' ? (
+                      <button type="button" className="btn btn-outline btn-sm" style={{ fontSize: 12 }} disabled={busy} onClick={() => act(s.id, 'reopen')} title="Send back to pending — teachers may regenerate">
+                        ↩ Reopen
+                      </button>
+                    ) : (
+                      <button type="button" className="btn btn-primary btn-sm" style={{ fontSize: 12 }} disabled={busy} onClick={() => act(s.id, 'approve')} title="Approve — locks these reports for teachers">
+                        ✅ Approve & lock
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

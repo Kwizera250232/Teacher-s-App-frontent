@@ -37,6 +37,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import RecordCatMarks from './RecordCatMarks';
 import MidTermReportModal from '../components/MidTermReportModal';
 import EndTermReportModal from '../components/EndTermReportModal';
+import YearlyReportModal from '../components/YearlyReportModal';
 import '../pages/Dashboard.css';
 import '../pages/MobileDashboard.css';
 import '../pages/PremiumClassTheme.css';
@@ -108,6 +109,7 @@ export default function TeacherClassPage() {
   const [quizPdfBusy, setQuizPdfBusy] = useState(null);
   const [midTermStudent, setMidTermStudent] = useState(null);
   const [endTermStudent, setEndTermStudent] = useState(null);
+  const [yearlyStudent, setYearlyStudent] = useState(null);
   const [midTermComment, setMidTermComment] = useState('');
   const [midTermBusy, setMidTermBusy] = useState(false);
   const [colleagueShareQuiz, setColleagueShareQuiz] = useState(null); // { id, title }
@@ -1129,6 +1131,7 @@ export default function TeacherClassPage() {
               onParentInvite={setParentInviteFor}
               onMidTerm={setMidTermStudent}
               onEndTerm={setEndTermStudent}
+              onYearly={setYearlyStudent}
             />
           </div>
         )}
@@ -1149,6 +1152,16 @@ export default function TeacherClassPage() {
             token={token}
             student={endTermStudent}
             onClose={() => setEndTermStudent(null)}
+            onError={(msg) => setError(msg)}
+          />
+        )}
+
+        {yearlyStudent && (
+          <YearlyReportModal
+            classId={id}
+            token={token}
+            student={yearlyStudent}
+            onClose={() => setYearlyStudent(null)}
             onError={(msg) => setError(msg)}
           />
         )}

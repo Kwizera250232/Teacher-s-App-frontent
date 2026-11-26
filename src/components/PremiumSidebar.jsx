@@ -2,23 +2,30 @@ import { Link } from 'react-router-dom';
 
 export default function PremiumSidebar({ user, activeTab, onTabChange, onLogout, basePath = '/teacher', unreadMsgs = 0 }) {
   const isHeadTeacher = user?.role === 'head_teacher';
-  const sidebarItems = [
-    { id: 'classes', icon: '📚', label: 'Classes' },
-    ...(isHeadTeacher ? [{ id: 'school', icon: '🏫', label: 'School' }] : []),
-    { id: 'chats', icon: '💬', label: 'Chats' },
-    { id: 'connect', icon: '📞', label: 'Teacher Connect', path: `${basePath}/connect` },
-    { id: 'library', icon: '📚', label: "Colleagues' Library", path: `${basePath}/library` },
-    { id: 'class-now', icon: '📸', label: 'Class Now' },
-    { id: 'textbooks', icon: '📖', label: 'AI Textbooks', path: `${basePath}/textbooks` },
-    { id: 'quiz-reports', icon: '📊', label: 'Quiz Reports' },
-    { id: 'ai-quiz', icon: '🤖', label: 'AI Quiz Gen' },
-    { id: 'inyandiko', icon: '✍️', label: 'Inyandiko' },
-    { id: 'coaching', icon: '🎓', label: 'Coaching' },
-    { id: 'alumni', icon: '🎓', label: 'Alumni' },
-    { id: 'lessonplan', icon: '📝', label: 'Lesson Plan' },
-    { id: 'notes', icon: '📓', label: 'Teaching Notes' },
-    { id: 'tools', icon: '⚡', label: 'Tools' },
-  ];
+  // HT gets a school-management menu — clean, not the teacher's classroom tools.
+  const sidebarItems = isHeadTeacher
+    ? [
+        { id: 'overview', icon: '📊', label: 'Overview' },
+        { id: 'reports', icon: '📁', label: 'Reports' },
+        { id: 'school', icon: '🏫', label: 'School' },
+        { id: 'chats', icon: '💬', label: 'Chats' },
+      ]
+    : [
+        { id: 'classes', icon: '📚', label: 'Classes' },
+        { id: 'chats', icon: '💬', label: 'Chats' },
+        { id: 'connect', icon: '📞', label: 'Teacher Connect', path: `${basePath}/connect` },
+        { id: 'library', icon: '📚', label: "Colleagues' Library", path: `${basePath}/library` },
+        { id: 'class-now', icon: '📸', label: 'Class Now' },
+        { id: 'textbooks', icon: '📖', label: 'AI Textbooks', path: `${basePath}/textbooks` },
+        { id: 'quiz-reports', icon: '📊', label: 'Quiz Reports' },
+        { id: 'ai-quiz', icon: '🤖', label: 'AI Quiz Gen' },
+        { id: 'inyandiko', icon: '✍️', label: 'Inyandiko' },
+        { id: 'coaching', icon: '🎓', label: 'Coaching' },
+        { id: 'alumni', icon: '🎓', label: 'Alumni' },
+        { id: 'lessonplan', icon: '📝', label: 'Lesson Plan' },
+        { id: 'notes', icon: '📓', label: 'Teaching Notes' },
+        { id: 'tools', icon: '⚡', label: 'Tools' },
+      ];
 
   const bottomItems = [
     { id: 'settings', icon: '⚙', label: 'Settings' },
