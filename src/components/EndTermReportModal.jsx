@@ -31,6 +31,24 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
   const [showStudents, setShowStudents] = useState(false);
   const [lockedTerms, setLockedTerms] = useState([]);
 
+  // load CAT+EXAM marks for the chosen term's sheet
+  const loadMarks = async (term, subjectNames) => {
+    try {
+      const ex = await fetch(`${API_BASE}/catmarks/${classId}/exam-marks?term=${encodeURIComponent(term)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const exd = await ex.json().catch(() => ({}));
+      if (exd.exam_total) setExamTotal(exd.exam_total);
+      const me = (exd.students || []).find((s) => s.id === student.studentId);
+      const cat = me?.cat || {}; const exam = me?.exam || {};
+      setSubjects((prev) => (subjectNames || prev.map((s) => s.name)).map((name) => ({
+        name,
+        cat: cat[canon(name)] || null,
+        exam: exam[canon(name)] ?? '',
+      })));
+    } catch { /* keep current list */ }
+  };
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -40,23 +58,13 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
         });
         const d = await res.json();
         if (!res.ok) throw new Error(d.error || 'Failed to load');
-        const ex = await fetch(`${API_BASE}/catmarks/${classId}/exam-marks`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const exd = await ex.json().catch(() => ({}));
         if (!alive) return;
         setHasTemplate(Boolean(d.has_template));
         setLockedTerms(d.locked_terms || []);
-        setForm({ academic_year: d.academic_year || '', term: d.term || 'I' });
         setRoster(d.roster || []);
-        if (exd.exam_total) setExamTotal(exd.exam_total);
-        const me = (exd.students || []).find((s) => s.id === student.studentId);
-        const cat = me?.cat || {}; const exam = me?.exam || {};
-        setSubjects((d.subjects || []).map((name) => ({
-          name,
-          cat: cat[canon(name)]?.score ?? null,
-          exam: exam[canon(name)] ?? '',
-        })));
+        const term = d.term || 'I';
+        setForm({ academic_year: d.academic_year || '', term });
+        await loadMarks(term, d.subjects || []);
       } catch (e) {
         onError?.(e.message);
       } finally {
@@ -65,6 +73,11 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
     })();
     return () => { alive = false; };
   }, [classId, student.studentId, token]); // eslint-disable-line
+
+  // switching term → reload that term's marks
+  useEffect(() => {
+    if (!loading && form.term) loadMarks(form.term); // eslint-disable-line
+  }, [form.term]); // eslint-disable-line
 
   const setExam = (i, v) => setSubjects((list) => list.map((s, idx) => (idx === i ? { ...s, exam: v } : s)));
   const filledCount = subjects.filter((s) => s.exam !== '' && s.exam !== null && s.exam !== undefined).length;
@@ -80,7 +93,7 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
       const res = await fetch(`${API_BASE}/catmarks/${classId}/exam-marks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ entries, total_marks: examTotal }),
+        body: JSON.stringify({ entries, total_marks: examTotal, term: form.term }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || `Failed (${res.status})`);
@@ -209,13 +222,20 @@ export default function EndTermReportModal({ classId, token, student, onClose, o
 
             <label style={lbl}>EXAM marks — CAT is filled automatically ({filledCount}/{subjects.length} exam marks entered)</label>
             <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 90px', gap: 8, padding: '7px 10px', background: '#f8fafc', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                <span>Subject</span><span style={{ textAlign: 'center' }}>CAT</span><span style={{ textAlign: 'center' }}>EXAM /{examTotal}</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px', gap: 8, padding: '7px 10px', background: '#f8fafc', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                <span>Subject</span><span style={{ textAlign: 'center' }}>CAT total</span><span style={{ textAlign: 'center' }}>EXAM /{examTotal}</span>
               </div>
               {subjects.map((s, i) => (
-                <div key={s.name} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 90px', gap: 8, padding: '5px 10px', borderTop: '1px solid #f1f5f9', alignItems: 'center', fontSize: 13 }}>
+                <div key={s.name} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px', gap: 8, padding: '5px 10px', borderTop: '1px solid #f1f5f9', alignItems: 'center', fontSize: 13 }}>
                   <span style={{ fontWeight: 600 }}>{displaySubj(s.name)}</span>
-                  <span style={{ textAlign: 'center', color: s.cat == null ? '#cbd5e1' : '#166534', fontWeight: 700 }}>{s.cat == null ? '—' : s.cat}</span>
+                  <span style={{ textAlign: 'center', color: s.cat == null ? '#cbd5e1' : '#166534', fontWeight: 700, fontSize: 13, lineHeight: 1.2 }}>
+                    {s.cat == null ? '—' : (
+                      <>
+                        {s.cat.raw ?? '—'}/{s.cat.out_of ?? 100}
+                        <span style={{ display: 'block', fontSize: 10, color: '#16a34a' }}>{s.cat.score}%</span>
+                      </>
+                    )}
+                  </span>
                   <input
                     type="number" min="0" max={examTotal} value={s.exam}
                     onChange={(e) => setExam(i, e.target.value)}
