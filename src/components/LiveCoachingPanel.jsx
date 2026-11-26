@@ -937,7 +937,7 @@ function LiveCoachingWorkspace({ classId, sessionId, token, user, onExit, onErro
 }
 
 // ============ Student Panel ============
-export function LiveCoachingStudentPanel({ classId, token, user, onError, onSuccess }) {
+export function LiveCoachingStudentPanel({ classId, token, user, onError, onSuccess, autoJoinSessionId }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSession, setActiveSession] = useState(null);
@@ -951,6 +951,11 @@ export function LiveCoachingStudentPanel({ classId, token, user, onError, onSucc
   }, [classId, token]);
 
   useEffect(() => { load(); }, [load]);
+
+  // "JOIN Teacher" banner pressed — go straight into the live room
+  useEffect(() => {
+    if (autoJoinSessionId && !loading && !activeSession) setActiveSession(autoJoinSessionId);
+  }, [autoJoinSessionId, loading]); // eslint-disable-line
 
   if (activeSession) {
     return (

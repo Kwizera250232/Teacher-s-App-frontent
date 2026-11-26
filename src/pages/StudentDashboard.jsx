@@ -54,6 +54,8 @@ export default function StudentDashboard() {
   const [coachingLessons, setCoachingLessons] = useState([]); // recorded lessons across all my classes
   const [coachingLessonsLoaded, setCoachingLessonsLoaded] = useState(false);
   const [unreadMsgs, setUnreadMsgs] = useState(0);
+  const [liveSessions, setLiveSessions] = useState([]);
+  const [autoJoinSession, setAutoJoinSession] = useState(null);
 
   const openStatus = () => {
     setStatusPickerOpen(false);
@@ -92,6 +94,16 @@ export default function StudentDashboard() {
     return () => clearInterval(t);
   }, [token]);
   useEffect(() => { setClassesView('menu'); }, [activeTab]);
+  // Poll for live coaching sessions — the "JOIN Teacher" banner
+  useEffect(() => {
+    if (!token || !user?.id) return undefined;
+    const load = () => api.get(`/classes/coaching-sessions/student/${user.id}`, token)
+      .then((rows) => setLiveSessions((Array.isArray(rows) ? rows : []).filter((s) => s.status === 'live')))
+      .catch(() => {});
+    load();
+    const t = setInterval(load, 15000);
+    return () => clearInterval(t);
+  }, [token, user?.id]);
   useEffect(() => {
     if (activeTab !== 'coaching') return;
     api.get('/classes/lessons/mine', token)
@@ -221,6 +233,42 @@ export default function StudentDashboard() {
         </header>
 
         <div className="admin-content student-dashboard-classic">
+          {liveSessions.length > 0 && activeTab !== 'coaching' && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+              background: 'linear-gradient(120deg, #dc2626, #ef4444)', color: '#fff',
+              borderRadius: 14, padding: '12px 16px', marginBottom: 16,
+              boxShadow: '0 8px 24px rgba(220,38,38,0.35)',
+            }}>
+              <span style={{
+                width: 10, height: 10, borderRadius: '50%', background: '#fff',
+                animation: 'pulse 1.2s infinite', flexShrink: 0,
+              }} />
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <strong style={{ fontSize: 15 }}>
+                  🔴 {liveSessions[0].teacher_name || 'Your teacher'} is LIVE
+                </strong>
+                <div style={{ fontSize: 12.5, opacity: 0.92 }}>
+                  {liveSessions[0].title} · {liveSessions[0].class_name}
+                  {liveSessions.length > 1 ? ` +${liveSessions.length - 1} more` : ''} — join to listen and learn
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCoachingClassId(liveSessions[0].class_id);
+                  setAutoJoinSession(liveSessions[0].id);
+                  setActiveTab('coaching');
+                }}
+                style={{
+                  padding: '9px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  background: '#fff', color: '#dc2626', fontWeight: 800, fontSize: 14,
+                }}
+              >
+                ▶ JOIN Teacher
+              </button>
+            </div>
+          )}
           {activeTab === 'classes' && (
             <>
               {classesView === 'menu' && (
@@ -386,6 +434,7 @@ export default function StudentDashboard() {
                       classId={coachingClassId}
                       token={token}
                       user={user}
+                      autoJoinSessionId={autoJoinSession}
                       onError={(msg) => setError(msg)}
                       onSuccess={(msg) => setError('')}
                     />
