@@ -9,10 +9,94 @@ const statCard = (accent) => ({
 const statNum = { fontSize: 26, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 };
 const statLbl = { fontSize: 12, fontWeight: 700, color: '#64748b', marginTop: 2 };
 
-const TYPE_META = { mid_term: '📄 Mid-Term', end_term: '📑 End-Term', yearly: '📅 Yearly' };
+const TYPE_META = { mid_term: 'MT', end_term: 'ET', yearly: 'YR' };
+const TYPE_NAME = { mid_term: '📄 Mid-Term', end_term: '📑 End-Term', yearly: '📅 Yearly' };
+const AV_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+const initials = (name) => String(name || '?').trim().split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+
+function ReportChip({ r }) {
+  const ok = r.status === 'approved';
+  return (
+    <span
+      title={`${TYPE_NAME[r.report_type] || r.report_type} ${r.term && r.term !== 'Year' ? `Term ${r.term}` : 'Yearly'} — ${r.student_count || 0} reports — ${ok ? 'approved & locked' : 'pending review'}`}
+      style={{
+        fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 20, whiteSpace: 'nowrap',
+        background: ok ? '#dcfce7' : '#fef3c7', color: ok ? '#166534' : '#92400e',
+        border: `1px solid ${ok ? '#86efac' : '#fcd34d'}`,
+      }}
+    >
+      {ok ? '✅' : '⏳'} {TYPE_META[r.report_type] || 'RP'}·{r.term || '—'}
+    </span>
+  );
+}
+
+function TeacherRow({ t, i }) {
+  const [open, setOpen] = useState(false);
+  const color = AV_COLORS[i % AV_COLORS.length];
+  return (
+    <div style={{ borderTop: '1px solid #f1f5f9' }}>
+      <button
+        type="button" onClick={() => setOpen((v) => !v)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 4px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+      >
+        <div style={{
+          width: 38, height: 38, borderRadius: '50%', background: color, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0,
+        }}>
+          {initials(t.name)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{t.name}</div>
+          <div style={{ fontSize: 11.5, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.email || ''}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', background: '#f1f5f9', padding: '3px 9px', borderRadius: 20 }}>
+            {t.class_count} class{t.class_count === 1 ? '' : 'es'}
+          </span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', background: '#f1f5f9', padding: '3px 9px', borderRadius: 20 }}>
+            {t.student_count} students
+          </span>
+          {t.pending > 0 && (
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#92400e', background: '#fef3c7', padding: '3px 9px', borderRadius: 20 }}>
+              ⏳ {t.pending} to review
+            </span>
+          )}
+          {t.approved > 0 && (
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#166534', background: '#dcfce7', padding: '3px 9px', borderRadius: 20 }}>
+              🔒 {t.approved}
+            </span>
+          )}
+        </div>
+        <span style={{ color: '#94a3b8', fontSize: 12, marginLeft: 4 }}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div style={{ padding: '0 4px 12px 50px' }}>
+          {!t.classes.length && <p style={{ margin: '4px 0', fontSize: 12.5, color: '#94a3b8' }}>No classes created yet.</p>}
+          {t.classes.map((c) => (
+            <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '7px 10px', marginBottom: 6, border: '1px solid #f1f5f9', borderRadius: 10, background: '#fafbfc' }}>
+              <strong style={{ fontSize: 13 }}>{c.name}</strong>
+              {c.subject && <span style={{ fontSize: 11.5, color: '#64748b' }}>· {c.subject}</span>}
+              {c.grade && <span style={{ fontSize: 11.5, color: '#64748b' }}>· {c.grade}</span>}
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', background: '#e2e8f0', padding: '2px 8px', borderRadius: 20 }}>
+                {c.students} 👥
+              </span>
+              <span style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginLeft: 'auto' }}>
+                {!c.reports.length && <span style={{ fontSize: 11, color: '#cbd5e1' }}>no reports yet</span>}
+                {c.reports.slice(0, 8).map((r, ri) => <ReportChip key={ri} r={r} />)}
+                {c.reports.length > 8 && <span style={{ fontSize: 10, color: '#94a3b8' }}>+{c.reports.length - 8}</span>}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function HtOverviewPanel({ token, onError, onGoReports, onGoSchool }) {
   const [data, setData] = useState(null);
+  const [teachers, setTeachers] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -20,6 +104,10 @@ export default function HtOverviewPanel({ token, onError, onGoReports, onGoSchoo
       .then((r) => r.json())
       .then((d) => { if (alive) setData(d); })
       .catch((e) => onError?.(e.message || 'Could not load the school overview.'));
+    fetch(`${API_BASE}/catmarks/school-teachers`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((d) => { if (alive) setTeachers(d.teachers || []); })
+      .catch(() => { if (alive) setTeachers([]); });
     return () => { alive = false; };
   }, [token]); // eslint-disable-line
 
@@ -93,6 +181,19 @@ export default function HtOverviewPanel({ token, onError, onGoReports, onGoSchoo
         </button>
       )}
 
+      {/* Teachers & classes — the MIS directory */}
+      <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: '6px 14px 10px', background: '#fff', marginBottom: 16 }}>
+        <h3 style={{ margin: '10px 0 4px', fontSize: 15 }}>👩‍🏫 Teachers & their classes</h3>
+        <p style={{ margin: '0 0 6px', fontSize: 12, color: '#94a3b8' }}>
+          Tap a teacher to see their classes and which report cards were submitted. ⏳ = waiting for you · ✅ = approved &amp; locked.
+        </p>
+        {teachers === null && <p style={{ fontSize: 13, color: '#64748b' }}>Loading staff…</p>}
+        {teachers !== null && !teachers.length && (
+          <p style={{ margin: '8px 0', fontSize: 13, color: '#94a3b8' }}>No teachers in the school yet — approve join requests or add teachers from the School tab.</p>
+        )}
+        {(teachers || []).map((t, i) => <TeacherRow key={t.id} t={t} i={i} />)}
+      </div>
+
       {/* Recent submissions */}
       <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#fff' }}>
         <h3 style={{ margin: '0 0 10px', fontSize: 15 }}>🕘 Latest report submissions</h3>
@@ -101,7 +202,7 @@ export default function HtOverviewPanel({ token, onError, onGoReports, onGoSchoo
         )}
         {(data.recent || []).map((s) => (
           <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderTop: '1px solid #f1f5f9', fontSize: 13 }}>
-            <span>{TYPE_META[s.report_type] || '📄 Report'}</span>
+            <span>{TYPE_NAME[s.report_type] || 'Report'}</span>
             <strong>{s.class_name || 'Class'}</strong>
             <span style={{ color: '#64748b' }}>{s.teacher_name}</span>
             {s.term && s.term !== 'Year' && <span style={{ color: '#64748b' }}>· Term {s.term}</span>}
