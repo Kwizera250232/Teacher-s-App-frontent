@@ -1,9 +1,114 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DonateSupportBanner from '../components/DonateSupportBanner';
 import UClassSlideShow from '../components/UClassSlideShow';
 import TutorialVideo, { TutorialVideoDownloadLink } from '../components/TutorialVideo';
 import LandingRoleSignup from '../components/LandingRoleSignup';
+import { API_BASE } from '../api';
+
+// ── Live platform stats — animated counters fed by /api/public/stats ──
+function useCountUp(target, duration = 1400) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!target) { setValue(0); return; }
+    const start = performance.now();
+    let raf;
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setValue(Math.round(target * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
+
+function StatTile({ icon, value, label, accent }) {
+  const shown = useCountUp(value);
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)',
+      border: '1px solid rgba(255,255,255,0.22)', borderRadius: 20,
+      padding: '18px 14px', textAlign: 'center', minWidth: 0,
+    }}>
+      <div style={{ fontSize: 26, lineHeight: 1 }}>{icon}</div>
+      <div style={{
+        marginTop: 8, fontSize: 30, fontWeight: 900, color: '#fff',
+        fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1,
+        textShadow: '0 2px 12px rgba(0,0,0,0.25)',
+      }}>
+        {shown.toLocaleString()}
+        {accent && <span style={{ fontSize: 16, color: accent }}>+</span>}
+      </div>
+      <div style={{ marginTop: 6, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function LandingStatsCard() {
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    let active = true;
+    const load = () => {
+      fetch(`${API_BASE}/public/stats`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (active && d) setStats(d); })
+        .catch(() => {});
+    };
+    load();
+    const t = setInterval(load, 60000);
+    return () => { active = false; clearInterval(t); };
+  }, []);
+  if (!stats) return null;
+  const tiles = [
+    { icon: '👩‍🏫', value: stats.teachers, label: 'Active Teachers', accent: '#fde68a' },
+    { icon: '🎓', value: stats.students, label: 'Students Learning', accent: '#a7f3d0' },
+    { icon: '📲', value: stats.installs, label: 'App Installs', accent: '#bfdbfe' },
+    { icon: '🏫', value: stats.schools, label: 'Schools on Board', accent: '#fecdd3' },
+  ];
+  return (
+    <section
+      className="mt-16 animate-fade-up"
+      style={{
+        animationDelay: '60ms', borderRadius: 28, overflow: 'hidden', position: 'relative',
+        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 45%, #0f766e 100%)',
+        boxShadow: '0 24px 60px -18px rgba(79,70,229,0.55)',
+      }}
+    >
+      {/* decorative glows */}
+      <div style={{ position: 'absolute', top: -60, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.14)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: -70, left: -30, width: 240, height: 240, borderRadius: '50%', background: 'rgba(16,185,129,0.35)', filter: 'blur(55px)', pointerEvents: 'none' }} />
+
+      <div style={{ position: 'relative', padding: '26px 22px 24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 800,
+            letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.92)',
+            background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.25)',
+            padding: '5px 14px', borderRadius: 999,
+          }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80', display: 'inline-block' }} />
+            Live on UClass — growing every day
+          </span>
+          <h2 className="font-heading" style={{ margin: '12px 0 4px', fontSize: 26, fontWeight: 900, color: '#fff' }}>
+            Rwanda&apos;s classroom, in one app
+          </h2>
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
+            Real numbers, updated live — join the movement
+          </p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }} className="landing-stats-grid">
+          {tiles.map((t) => <StatTile key={t.label} {...t} />)}
+        </div>
+      </div>
+      <style>{`@media (max-width: 640px) { .landing-stats-grid { grid-template-columns: repeat(2, 1fr) !important; } }`}</style>
+    </section>
+  );
+}
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -304,6 +409,8 @@ export default function Landing() {
           subtitle="1080p · Google search, role signup (teacher, student, guest), Dean AI, classes, notes, homework & activity. Personal details are blurred for privacy."
         />
         <TutorialVideoDownloadLink />
+
+        <LandingStatsCard />
 
         <section className="grid animate-fade-up gap-8 rounded-3xl bg-white p-6 shadow-xl shadow-indigo-100 ring-1 ring-indigo-100 md:grid-cols-2 md:items-center md:p-10">
           <div>

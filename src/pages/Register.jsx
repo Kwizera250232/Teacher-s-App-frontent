@@ -300,46 +300,73 @@ export default function Register() {
               </div>
               {(selectedRole === 'teacher' || selectedRole === 'head_teacher') ? (
                 <>
-                {!verifiedSchool && (
-                  <div className="form-group">
-                    <label>Hitamo ishuri (optional)</label>
-                    <select
-                      value={form.staffSchoolId}
-                      onChange={(e) => {
-                        const id = e.target.value;
-                        const picked = schools.find((s) => String(s.id) === id);
-                        setForm({
-                          ...form,
-                          staffSchoolId: id,
-                          staffSchoolName: picked ? picked.name : form.staffSchoolName,
-                        });
-                        setSchoolEmailStatus('');
-                      }}
-                    >
-                      <option value="">— cyangwa wandike izina hepfo —</option>
-                      {schools.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div className="form-group">
-                  <label>Izina ry&apos;ishuri</label>
+                <div className="form-group" style={{ position: 'relative' }}>
+                  <label>Izina ry&apos;ishuri *</label>
                   <input
                     type="text"
                     value={verifiedSchool ? verifiedSchool.name : form.staffSchoolName}
                     onChange={(e) => {
                       if (verifiedSchool) return;
-                      setForm({ ...form, staffSchoolName: e.target.value, staffSchoolId: '' });
+                      setForm({ ...form, staffSchoolName: e.target.value, staffSchoolId: '', newSchool: '' });
                       setSchoolEmailStatus('');
                     }}
                     readOnly={Boolean(verifiedSchool)}
-                    placeholder="e.g. Green Hills Academy"
-                    required={!verifiedSchool && !form.staffSchoolId}
+                    placeholder="Andika izina ry'ishuri ryawe"
+                    required={!verifiedSchool}
+                    autoComplete="off"
                     style={verifiedSchool ? { background: '#f1f5f9' } : undefined}
                   />
+                  {/* Typeahead: only matching schools appear as you type — the full
+                      school list is never shown. If nothing matches, the typed
+                      name is saved as a new school. */}
+                  {!verifiedSchool && !form.staffSchoolId && form.staffSchoolName.trim().length >= 2 && (() => {
+                    const q = form.staffSchoolName.trim().toLowerCase();
+                    const matches = schools.filter((s) => (s.name || '').toLowerCase().includes(q)).slice(0, 6);
+                    const exact = schools.some((s) => (s.name || '').toLowerCase() === q);
+                    if (!matches.length && exact) return null;
+                    return (
+                      <div style={{
+                        position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 20,
+                        background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 10,
+                        boxShadow: '0 8px 24px rgba(15,23,42,0.12)', marginTop: 4, overflow: 'hidden',
+                      }}>
+                        {matches.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => {
+                              setForm({ ...form, staffSchoolId: String(s.id), staffSchoolName: s.name });
+                              setSchoolEmailStatus('');
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
+                              padding: '10px 14px', border: 'none', background: '#fff', cursor: 'pointer',
+                              fontSize: 14, fontWeight: 600, color: '#1e293b',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
+                          >
+                            <span style={{ color: '#7c3aed' }}>🏫</span> {s.name}
+                          </button>
+                        ))}
+                        {!exact && (
+                          <div style={{ padding: '8px 14px', fontSize: 12, color: '#64748b', borderTop: matches.length ? '1px solid #f1f5f9' : 'none' }}>
+                            ➕ &quot;{form.staffSchoolName.trim()}&quot; izongerwa nk&apos;ishuri rishya
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {form.staffSchoolId && (
+                    <p style={{ fontSize: 12, marginTop: 4, color: '#059669', fontWeight: 600 }}>
+                      ✓ Ishuri ryatoranyijwe — {form.staffSchoolName}
+                    </p>
+                  )}
+                  {!verifiedSchool && !form.staffSchoolId && (
+                    <p style={{ fontSize: 12, marginTop: 4, color: '#64748b' }}>
+                      Andika izina ry&apos;ishuri — niba ririba, uhitemo; niba ritariho, ryongerwaho.
+                    </p>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Imeyili yawe (login)</label>
