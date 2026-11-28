@@ -13,3 +13,111 @@
 .donate-banner-compact { padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
 .donate-banner-text strong { display: block; color: #92400e; margin-bottom: 0.25rem; }
 .donate-banner-text p { margin: 0; font-size: 0.88rem; color: #78350f; line-height: 1.45; max-width: 520px; }
+
+/* ── Hero donation portal (landing page) ─────────────────────────────────── */
+.donate-hero {
+  margin-bottom: 1.5rem;
+  border-radius: 24px;
+  padding: 2px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #ea580c, #fbbf24);
+  box-shadow: 0 12px 40px rgba(234, 88, 12, 0.25);
+}
+.donate-hero-inner {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+  align-items: center;
+  border-radius: 22px;
+  padding: 1.75rem 2rem;
+  background:
+    radial-gradient(1200px 300px at -10% -20%, rgba(251, 191, 36, 0.18), transparent),
+    radial-gradient(800px 300px at 110% 120%, rgba(124, 58, 237, 0.10), transparent),
+    linear-gradient(135deg, #fffdf7, #fff7ed);
+}
+.donate-hero-badge {
+  display: inline-block;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+.donate-hero-title {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 900;
+  line-height: 1.15;
+  background: linear-gradient(135deg, #b45309, #ea580c, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.donate-hero-sub {
+  margin: 0 0 1.25rem;
+  color: #57534e;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 540px;
+}
+.donate-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.7rem;
+}
+.donate-hero-item {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  padding: 0.65rem 0.85rem;
+}
+.donate-hero-icon { font-size: 1.5rem; flex-shrink: 0; }
+.donate-hero-item-title { font-weight: 800; font-size: 0.82rem; color: #92400e; }
+.donate-hero-item-text { font-size: 0.75rem; color: #78716c; line-height: 1.35; }
+
+.donate-hero-cta { display: flex; justify-content: center; }
+.donate-cta-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1.5rem 1.75rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(180, 83, 9, 0.15);
+  border: 1px solid #fde68a;
+  width: 100%;
+  max-width: 280px;
+}
+.donate-cta-amounts {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+.donate-cta-amounts span {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #b45309;
+  font-weight: 800;
+  font-size: 0.78rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+}
+.donate-cta-label { font-size: 0.72rem; color: #a8a29e; font-weight: 700; margin-bottom: 0.9rem; letter-spacing: 0.03em; }
+.donate-cta-card .donate-header-btn {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1.05rem;
+  border-radius: 12px;
+}
+.donate-cta-note { margin: 0.7rem 0 0; font-size: 0.74rem; color: #a8a29e; }
+
+@media (max-width: 860px) {
+  .donate-hero-inner { grid-template-columns: 1fr; gap: 1.25rem; padding: 1.25rem; }
+  .donate-hero-grid { grid-template-columns: 1fr; }
+}
