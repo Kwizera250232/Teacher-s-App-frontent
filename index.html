@@ -85,12 +85,32 @@
         setTimeout(hide, 8000);
       })();
     </script>
+    <script>
+      // After a deploy, an open tab may request deleted old asset chunks.
+      // Silently reload once instead of flashing a "not found" error.
+      (function () {
+        var CHUNK_ERR = /dynamically imported module|ChunkLoadError|module script|error loading.*chunk|Failed to fetch/i;
+        function recover(e) {
+          var msg = (e && e.message) || (e && e.reason && (e.reason.message || String(e.reason))) || '';
+          if (!CHUNK_ERR.test(String(msg))) return;
+          var last = +sessionStorage.getItem('uclass-chunk-reload') || 0;
+          if (Date.now() - last > 30000) {
+            sessionStorage.setItem('uclass-chunk-reload', String(Date.now()));
+            location.reload();
+          }
+        }
+        window.addEventListener('error', recover, true);
+        window.addEventListener('unhandledrejection', recover);
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(() => {
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
             console.log('[SW] Registered');
+            // Check for a new SW on every load so stale caches clear after deploys
+            setInterval(() => reg.update().catch(() => {}), 60000);
           }).catch(err => console.warn('[SW] Registration failed:', err));
         });
       }
