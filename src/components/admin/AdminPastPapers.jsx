@@ -34,6 +34,42 @@ export default function AdminPastPapers({ token }) {
   const [questions, setQuestions] = useState([{ ...EMPTY_QUESTION }]);
   const [saving, setSaving] = useState(false);
 
+  // AI generate state
+  const [showAiImport, setShowAiImport] = useState(false);
+  const [aiText, setAiText] = useState('');
+  const [aiMax, setAiMax] = useState(25);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiNotice, setAiNotice] = useState('');
+
+  const handleAiGenerate = async () => {
+    if (!aiText.trim() || aiText.trim().length < 80) {
+      setError('Paste the full exam text first (at least 80 characters).');
+      return;
+    }
+    setAiGenerating(true);
+    setError('');
+    setAiNotice('');
+    try {
+      const data = await api.post('/past-papers/admin/generate-questions', {
+        exam_text: aiText,
+        subject: form.subject,
+        max_questions: aiMax,
+      }, token);
+      const gen = (data.questions || []).map(q => ({ ...EMPTY_QUESTION, ...q }));
+      if (!gen.length) throw new Error('AI returned no questions — try a clearer paste.');
+      setQuestions(gen);
+      setShowAiImport(false);
+      setAiNotice(`✨ ${gen.length} questions generated — review and edit them below, then Create Exam.`);
+      if (!form.title.trim()) {
+        setForm(f => ({ ...f, title: `${f.year} ${f.subject} ${f.exam_type}` }));
+      }
+    } catch (e) {
+      setError(e.message || 'AI generation failed.');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const loadExams = async () => {
     setLoading(true);
     try {
@@ -233,6 +269,47 @@ export default function AdminPastPapers({ token }) {
                 <input type="text" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Optional description" style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14 }} />
               </div>
             </div>
+
+            {/* AI Import — paste a real exam, AI builds the MCQs */}
+            <div style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%)', border: '1px solid #c7d2fe', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#4338ca' }}>✨ AI Import — paste the real exam paper</div>
+                  <div style={{ fontSize: 12, color: '#6366f1', marginTop: 2 }}>AI converts it to multiple-choice questions instantly — then review &amp; edit before saving.</div>
+                </div>
+                <button
+                  onClick={() => setShowAiImport(v => !v)}
+                  style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: '#6366f1', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}
+                >
+                  {showAiImport ? 'Hide' : 'Paste exam'}
+                </button>
+              </div>
+              {showAiImport && (
+                <div style={{ marginTop: 12 }}>
+                  <textarea
+                    value={aiText}
+                    onChange={e => setAiText(e.target.value)}
+                    rows={8}
+                    placeholder={'Paste the full exam text here — questions, sections, instructions…\nAI will extract the questions and turn them into MCQs with correct answers.'}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #c7d2fe', fontSize: 13, resize: 'vertical', background: '#fff' }}
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                    <label style={{ fontSize: 13, color: '#475569' }}>Max questions:</label>
+                    <input type="number" min={1} max={50} value={aiMax} onChange={e => setAiMax(e.target.value)} style={{ width: 70, padding: '5px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }} />
+                    <button
+                      onClick={handleAiGenerate}
+                      disabled={aiGenerating}
+                      style={{ marginLeft: 'auto', padding: '8px 18px', borderRadius: 8, border: 'none', background: aiGenerating ? '#a5b4fc' : '#4f46e5', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}
+                    >
+                      {aiGenerating ? '⏳ Generating…' : '✨ Generate questions'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {aiNotice && (
+              <div style={{ background: '#ecfdf5', color: '#047857', padding: '10px 14px', borderRadius: 8, marginBottom: 12, fontSize: 13, fontWeight: 600 }}>{aiNotice}</div>
+            )}
 
             <h3 style={{ fontSize: 16, fontWeight: 700, margin: '16px 0 8px' }}>Questions</h3>
             {questions.map((q, idx) => (

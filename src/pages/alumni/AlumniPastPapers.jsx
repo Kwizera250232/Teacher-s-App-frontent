@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
 export default function AlumniPastPapers() {
   const { token } = useAuth();
+  const navigate = useNavigate();
+  const [locked, setLocked] = useState(null); // { class_name, class_id, amount_rwf } when premium required
   const [phase, setPhase] = useState('browse'); // browse | exam | results
   const [years, setYears] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -26,15 +29,23 @@ export default function AlumniPastPapers() {
   // Results state
   const [result, setResult] = useState(null);
 
-  // Load years on mount
+  // Load access + years on mount
   useEffect(() => {
-    api.get('/past-papers/years', token)
-      .then(data => {
+    let alive = true;
+    (async () => {
+      try {
+        const a = await api.get('/past-papers/access', token).catch(() => ({ premium_required: false }));
+        if (!alive) return;
+        if (a?.premium_required) { setLocked(a.classes?.[0] || {}); setLoading(false); return; }
+        const data = await api.get('/past-papers/years', token);
+        if (!alive) return;
         setYears(data.years || []);
         if (data.years?.length > 0) setActiveYear(String(data.years[0]));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      } catch {} finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
   }, [token]);
 
   // Load subjects when year changes
@@ -251,7 +262,22 @@ export default function AlumniPastPapers() {
 
         {error && <div style={{ background: '#fef2f2', color: '#dc2626', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{error}</div>}
 
+        {/* Premium lock banner */}
+        {locked && (
+          <div style={{ background: 'linear-gradient(135deg,#fef3c7,#fde68a)', border: '1px solid #fbbf24', borderRadius: 14, padding: '16px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 28 }}>🔒</span>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <strong style={{ fontSize: 15 }}>Past Papers is a Premium feature of {locked.class_name || 'your class'}</strong>
+              <div style={{ fontSize: 13, color: '#78350f', marginTop: 2 }}>Pay for class access to practice real national exams with instant marks and AI feedback.</div>
+            </div>
+            <button type="button" onClick={() => navigate(`/student/classes/${locked.class_id}`)} style={{ background: '#fbbf24', border: 'none', color: '#451a03', fontWeight: 800, borderRadius: 10, padding: '10px 16px', cursor: 'pointer', fontSize: 14 }}>
+              Pay {locked.amount_rwf ? `${Number(locked.amount_rwf).toLocaleString()} RWF` : 'for access'}
+            </button>
+          </div>
+        )}
+
         {/* Step 1: Year selection */}
+        {locked ? null : (<>
         <div style={{ marginBottom: 20 }}>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>1. Select Year</label>
           {loading ? (
@@ -325,6 +351,7 @@ export default function AlumniPastPapers() {
             )}
           </div>
         )}
+        </>)}
       </div>
     </AlumniLayout>
   );

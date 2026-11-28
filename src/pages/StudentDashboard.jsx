@@ -196,6 +196,14 @@ export default function StudentDashboard() {
           <button
             type="button"
             className="admin-nav-item"
+            onClick={() => navigate('/alumni/past-papers')}
+          >
+            <span className="admin-nav-icon">📄</span>
+            {sidebarOpen && <span className="admin-nav-label">Past Papers</span>}
+          </button>
+          <button
+            type="button"
+            className="admin-nav-item"
             onClick={() => navigate('/student/speaking')}
           >
             <span className="admin-nav-icon">🗣️</span>
