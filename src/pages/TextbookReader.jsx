@@ -401,7 +401,7 @@ export default function TextbookReader() {
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', padding: 24 }}>
           <div style={{ background: '#fff', borderRadius: 18, padding: '30px 26px', maxWidth: 380, textAlign: 'center' }}>
             <div style={{ fontSize: 42 }}>🔒</div>
-            <h2 style={{ margin: '10px 0 8px', fontSize: 20 }}>AI Textbooks is Premium</h2>
+            <h2 style={{ margin: '10px 0 8px', fontSize: 20 }}>REB Textbooks is Premium</h2>
             <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: '0 0 16px' }}>{data.message}</p>
             <button type="button" onClick={() => navigate(-1)} style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: '#6366f1', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>← Back</button>
           </div>

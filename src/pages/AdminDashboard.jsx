@@ -40,7 +40,7 @@ const NAV = [
   { key: 'announcements', label: 'Announcements', icon: '📢' },
   { key: 'articles', label: 'Articles', icon: '🧾' },
   { key: 'reports', label: 'Reports', icon: '💬' },
-  { key: 'textbooks', label: 'AI Textbooks', icon: '🤖' },
+  { key: 'textbooks', label: 'REB Textbooks', icon: '📖' },
   { key: 'alumni', label: 'Alumni', icon: '🎓' },
   { key: 'ai-revision', label: 'AI Revision', icon: '🤖' },
   { key: 'past-papers', label: 'Past Papers', icon: '📄' },

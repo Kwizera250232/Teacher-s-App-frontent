@@ -119,7 +119,7 @@ export default function StaffDashboard({ roleLabel, basePath }) {
     { id: 'connect', label: '📞 Teacher Connect', path: `${basePath}/connect` },
     { id: 'library', label: "📚 Colleagues' Library", path: `${basePath}/library` },
     { id: 'classnow', label: '📸 Class Now' },
-    { id: 'textbooks', label: '📖 AI Textbooks', path: `${basePath}/textbooks` },
+    { id: 'textbooks', label: '📖 REB Textbooks', path: `${basePath}/textbooks` },
     { id: 'inyandiko', label: '✍️ Inyandiko' },
     { id: 'alumni', label: '🎓 Alumni' },
     { id: 'lessonplan', label: '📝 Lesson Plan' },

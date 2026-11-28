@@ -54,7 +54,7 @@ export default function StudentTextbooks() {
       <header style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', color: '#fff', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
         <button type="button" onClick={() => navigate(homePath)} style={{ background: 'rgba(255,255,255,.18)', border: 'none', color: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 15 }}>← Back</button>
         <div>
-          <h1 style={{ margin: 0, fontSize: 19 }}>📖 AI Textbooks</h1>
+          <h1 style={{ margin: 0, fontSize: 19 }}>📖 REB Textbooks</h1>
           <p style={{ margin: 0, fontSize: 12, opacity: 0.85 }}>Open a real book — read unit by unit, take exercises, pass the End-Unit test, then the Summative Assessment.</p>
         </div>
       </header>
@@ -64,7 +64,7 @@ export default function StudentTextbooks() {
           <div style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color: '#fff', borderRadius: 14, padding: '16px 18px', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', boxShadow: '0 6px 18px rgba(124,58,237,.3)' }}>
             <span style={{ fontSize: 30 }}>🔒</span>
             <div style={{ flex: 1, minWidth: 220 }}>
-              <strong style={{ fontSize: 15 }}>AI Textbooks is a Premium feature of {locked.class_name || 'your class'}</strong>
+              <strong style={{ fontSize: 15 }}>REB Textbooks is a Premium feature of {locked.class_name || 'your class'}</strong>
               <div style={{ fontSize: 13, opacity: 0.9, marginTop: 3 }}>Pay for class access to open and read every book, take unit tests and the Summative.</div>
             </div>
             <button type="button" onClick={() => navigate(`/student/classes/${locked.class_id}`)} style={{ background: '#fbbf24', border: 'none', color: '#451a03', fontWeight: 800, borderRadius: 10, padding: '10px 16px', cursor: 'pointer', fontSize: 14 }}>

@@ -191,7 +191,7 @@ export default function StudentDashboard() {
             onClick={() => navigate('/student/textbooks')}
           >
             <span className="admin-nav-icon">📖</span>
-            {sidebarOpen && <span className="admin-nav-label">AI Textbooks</span>}
+            {sidebarOpen && <span className="admin-nav-label">REB Textbooks</span>}
           </button>
           <button
             type="button"
@@ -462,7 +462,7 @@ export default function StudentDashboard() {
                 </Link>
                 <Link to="/student/textbooks" className="student-tool-card">
                   <span className="student-tool-icon">📖</span>
-                  <span className="student-tool-label">AI Textbooks</span>
+                  <span className="student-tool-label">REB Textbooks</span>
                 </Link>
                 <Link to="/student/speaking" className="student-tool-card">
                   <span className="student-tool-icon">🗣️</span>
