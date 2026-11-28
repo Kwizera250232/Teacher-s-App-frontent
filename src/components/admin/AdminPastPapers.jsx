@@ -37,7 +37,7 @@ export default function AdminPastPapers({ token }) {
   // AI generate state
   const [showAiImport, setShowAiImport] = useState(false);
   const [aiText, setAiText] = useState('');
-  const [aiMax, setAiMax] = useState(25);
+  const [aiMax, setAiMax] = useState(50);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiNotice, setAiNotice] = useState('');
 
@@ -295,7 +295,8 @@ export default function AdminPastPapers({ token }) {
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
                     <label style={{ fontSize: 13, color: '#475569' }}>Max questions:</label>
-                    <input type="number" min={1} max={50} value={aiMax} onChange={e => setAiMax(e.target.value)} style={{ width: 70, padding: '5px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }} />
+                    <input type="number" min={1} max={80} value={aiMax} onChange={e => setAiMax(e.target.value)} style={{ width: 70, padding: '5px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }} />
+                    <span style={{ fontSize: 12, color: '#6366f1' }}>all questions are extracted in order — set this ≥ the exam's question count</span>
                     <button
                       onClick={handleAiGenerate}
                       disabled={aiGenerating}
