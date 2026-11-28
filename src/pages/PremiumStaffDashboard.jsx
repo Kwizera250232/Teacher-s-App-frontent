@@ -28,6 +28,7 @@ import WeeklyQuizReport from '../components/staff/WeeklyQuizReport';
 import AIQuizGenerator from '../components/staff/AIQuizGenerator';
 import ClassMomentsDashboardBlock from '../components/classMoments/ClassMomentsDashboardBlock';
 import OnlineNowStrip from '../components/classMoments/OnlineNowStrip';
+import DonateButton from '../components/DonateButton';
 import { usePresence } from '../hooks/usePresence';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import TeacherMobileMenu from '../components/TeacherMobileMenu';
@@ -217,6 +218,7 @@ export default function PremiumStaffDashboard({ roleLabel = 'Teacher', basePath 
                 "Education is the most powerful weapon which you can use to change the world."
               </div>
               <div className="footer-brand">❤️ Made for Teachers in Rwanda</div>
+              <div style={{ marginTop: 10 }}><DonateButton /></div>
             </footer>
           </>
         )}
