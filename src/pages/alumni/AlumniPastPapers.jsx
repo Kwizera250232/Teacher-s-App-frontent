@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../api';
+import { api, UPLOADS_BASE } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AlumniLayout from '../../components/AlumniLayout';
 
@@ -29,6 +29,14 @@ export default function AlumniPastPapers() {
   // Results state
   const [result, setResult] = useState(null);
 
+  // Document papers (uploaded docs — view or take as AI quiz)
+  const [docPapers, setDocPapers] = useState([]);
+  const [docLevel, setDocLevel] = useState('all'); // all | primary | secondary
+  const [docQuiz, setDocQuiz] = useState(null); // { paper, questions }
+  const [docAnswers, setDocAnswers] = useState({});
+  const [docIdx, setDocIdx] = useState(0);
+  const [docGenerating, setDocGenerating] = useState(null); // paper id
+
   // Load access + years on mount
   useEffect(() => {
     let alive = true;
@@ -41,6 +49,9 @@ export default function AlumniPastPapers() {
         if (!alive) return;
         setYears(data.years || []);
         if (data.years?.length > 0) setActiveYear(String(data.years[0]));
+        api.get('/alumni/past-papers', token)
+          .then(d => { if (alive) setDocPapers(d.papers || []); })
+          .catch(() => {});
       } catch {} finally {
         if (alive) setLoading(false);
       }
@@ -113,6 +124,124 @@ export default function AlumniPastPapers() {
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, '0')}`;
   };
+
+  // ── Doc paper quiz (AI-generated from the uploaded document) ───────────────
+  const startDocQuiz = async (paper) => {
+    setError('');
+    setDocGenerating(paper.id);
+    try {
+      const data = await api.post(`/alumni/past-papers/${paper.id}/generate-quiz`, {}, token);
+      setDocQuiz({ paper, questions: data.questions });
+      setDocAnswers({});
+      setDocIdx(0);
+    } catch (e) {
+      setError(e.message || 'Could not generate the quiz for this paper.');
+    } finally {
+      setDocGenerating(null);
+    }
+  };
+
+  const docScore = docQuiz
+    ? docQuiz.questions.reduce((s, q, i) => s + (docAnswers[i] === q.correct_answer ? 1 : 0), 0)
+    : 0;
+
+  // ── DOC QUIZ PHASE (AI quiz generated from an uploaded paper) ─────────────
+  if (docQuiz) {
+    const { paper, questions } = docQuiz;
+    const q = questions[docIdx];
+    const answered = Object.keys(docAnswers).length;
+    const finished = answered === questions.length;
+    const pct = Math.round((docScore / questions.length) * 100);
+
+    return (
+      <div style={{ minHeight: '100vh', background: '#f1f5f9' }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <strong style={{ fontSize: 16 }}>{paper.title}</strong>
+            <span style={{ color: '#94a3b8', fontSize: 13, marginLeft: 8 }}>{paper.subject} · {paper.year} · AI Quiz</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: 13, color: '#64748b' }}>{answered}/{questions.length} answered</span>
+            <button onClick={() => setDocQuiz(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>✕ Exit</button>
+          </div>
+        </div>
+
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: 24 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+            {questions.map((qq, i) => (
+              <button key={i} onClick={() => setDocIdx(i)} style={{
+                width: 36, height: 36, borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                background: i === docIdx ? '#6366f1' : docAnswers[i] ? '#dcfce7' : '#fff',
+                color: i === docIdx ? '#fff' : docAnswers[i] ? '#166534' : '#64748b',
+                border: '1px solid #e2e8f0',
+              }}>{i + 1}</button>
+            ))}
+          </div>
+
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 20 }}>
+            <div style={{ fontSize: 13, color: '#6366f1', fontWeight: 700, marginBottom: 8 }}>Question {docIdx + 1} of {questions.length}</div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 20px', lineHeight: 1.5 }}>{q.question}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {['a', 'b', 'c', 'd'].filter(k => q[`option_${k}`]).map(k => {
+                const chosen = docAnswers[docIdx] === k;
+                return (
+                  <button key={k} onClick={() => setDocAnswers({ ...docAnswers, [docIdx]: k })} style={{
+                    padding: '14px 16px', borderRadius: 10, border: chosen ? '2px solid #6366f1' : '2px solid #e2e8f0',
+                    background: chosen ? '#eef2ff' : '#fff', textAlign: 'left', cursor: 'pointer', fontSize: 15,
+                    display: 'flex', alignItems: 'center', gap: 12,
+                  }}>
+                    <span style={{ width: 28, height: 28, borderRadius: '50%', background: chosen ? '#6366f1' : '#f1f5f9', color: chosen ? '#fff' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{k.toUpperCase()}</span>
+                    <span>{q[`option_${k}`]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <button onClick={() => setDocIdx(Math.max(0, docIdx - 1))} disabled={docIdx === 0} style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 600, cursor: docIdx === 0 ? 'default' : 'pointer', opacity: docIdx === 0 ? 0.5 : 1 }}>← Previous</button>
+            {docIdx < questions.length - 1 ? (
+              <button onClick={() => setDocIdx(docIdx + 1)} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#6366f1', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Next →</button>
+            ) : (
+              <div style={{ padding: '10px 20px', borderRadius: 10, background: finished ? '#059669' : '#e2e8f0', color: finished ? '#fff' : '#64748b', fontWeight: 700 }}>
+                {finished ? `Score: ${docScore}/${questions.length} (${pct}%)` : `Answer all questions (${questions.length - answered} left)`}
+              </div>
+            )}
+          </div>
+
+          {/* Review — appears once every question is answered */}
+          {finished && (
+            <div style={{ marginTop: 28 }}>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 24, textAlign: 'center', marginBottom: 16 }}>
+                <div style={{ fontSize: 48 }}>{pct >= 80 ? '🏆' : pct >= 50 ? '✅' : '📚'}</div>
+                <div style={{ fontSize: 28, fontWeight: 800 }}>{pct}%</div>
+                <div style={{ color: '#64748b' }}>{docScore} of {questions.length} correct</div>
+              </div>
+              <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px' }}>Review Answers</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {questions.map((qq, i) => {
+                  const ok = docAnswers[i] === qq.correct_answer;
+                  return (
+                    <div key={i} style={{ background: '#fff', borderRadius: 12, padding: 14, border: `2px solid ${ok ? '#bbf7d0' : '#fecaca'}` }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{ok ? '✅' : '❌'} Q{i + 1}. {qq.question}</div>
+                      <div style={{ fontSize: 13 }}>
+                        <span style={{ color: '#166534', fontWeight: 700 }}>Correct: {qq[`option_${qq.correct_answer}`]}</span>
+                        {!ok && <span style={{ color: '#dc2626', marginLeft: 8 }}>You: {qq[`option_${docAnswers[i]}`] || '—'}</span>}
+                      </div>
+                      {qq.explanation && <div style={{ marginTop: 6, fontSize: 12, color: '#1e40af', background: '#eff6ff', padding: '6px 10px', borderRadius: 6 }}>💡 {qq.explanation}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <button onClick={() => setDocQuiz(null)} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: '#6366f1', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Back to Past Papers</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // ── RESULTS PHASE ──────────────────────────────────────────────────────────
   if (phase === 'results' && result) {
@@ -349,6 +478,56 @@ export default function AlumniPastPapers() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Document papers — view the original doc or take it as an AI quiz */}
+        {docPapers.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#475569' }}>📄 Document Papers — read the original or take it as a quiz</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[['all', 'All'], ['primary', '📘 Primary'], ['secondary', '📗 Secondary']].map(([v, l]) => (
+                  <button key={v} onClick={() => setDocLevel(v)} style={{
+                    padding: '5px 12px', borderRadius: 8, border: docLevel === v ? '2px solid #6366f1' : '2px solid #e2e8f0',
+                    background: docLevel === v ? '#eef2ff' : '#fff', color: docLevel === v ? '#6366f1' : '#64748b',
+                    fontWeight: 700, cursor: 'pointer', fontSize: 12,
+                  }}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {docPapers.filter(p => docLevel === 'all' || (p.level || 'primary') === docLevel).map(p => (
+                <div key={p.id} style={{ background: '#fff', borderRadius: 12, padding: 14, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</div>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
+                      {(p.level || 'primary') === 'secondary' ? '📗 Secondary' : '📘 Primary'} · {p.subject} · {p.year}
+                      {Array.isArray(p.quiz_questions) && p.quiz_questions.length > 0 && ' · ✨ quiz ready'}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {p.file_url && (
+                      <a href={`${UPLOADS_BASE}${p.file_url}`} target="_blank" rel="noreferrer" style={{
+                        padding: '8px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', background: '#fff',
+                        color: '#475569', fontWeight: 700, fontSize: 13, textDecoration: 'none',
+                      }}>📖 View Doc</a>
+                    )}
+                    {p.file_url && /\.(pdf|docx|txt)$/i.test(p.file_url) && (
+                      <button onClick={() => startDocQuiz(p)} disabled={docGenerating === p.id} style={{
+                        padding: '8px 14px', borderRadius: 8, border: 'none', background: '#6366f1',
+                        color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: docGenerating === p.id ? 0.6 : 1,
+                      }}>
+                        {docGenerating === p.id ? '⏳ Building…' : '📝 Take as Quiz'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {docPapers.filter(p => docLevel === 'all' || (p.level || 'primary') === docLevel).length === 0 && (
+                <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: 16 }}>No {docLevel} papers yet.</div>
+              )}
+            </div>
           </div>
         )}
         </>)}

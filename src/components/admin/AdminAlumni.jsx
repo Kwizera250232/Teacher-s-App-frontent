@@ -60,7 +60,7 @@ export default function AdminAlumni({ token }) {
 
       if (activeTab === 'pastpapers' && form._file) {
         const fd = new FormData();
-        ['title','subject','year','description'].forEach((key) => {
+        ['title','subject','year','level','description'].forEach((key) => {
           if (form[key] !== undefined && form[key] !== '') fd.append(key, form[key]);
         });
         fd.append('file', form._file);
@@ -141,18 +141,31 @@ export default function AdminAlumni({ token }) {
       );
     }
     if (activeTab === 'pastpapers') {
+      const PRIMARY_SUBJECTS = ['Mathematics','English','Kinyarwanda','Science and Elementary Technology (SET)','Social and Religious Studies (SST)','Creative Arts','Physical Education and Sports (PES)','French','ICT','Religious Education'];
+      const SECONDARY_SUBJECTS = ['Mathematics','English','Kinyarwanda','Physics','Chemistry','Biology','History','Geography','Economics','Entrepreneurship','Computer Science','Literature in English','French','Kiswahili','German','Accounting','Business Studies','Agriculture','Technical Drawing','Religious Education','General Studies','ICT'];
+      const YEARS = Array.from({ length: 49 }, (_, i) => String(2002 + i));
       return (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
           <h4 style={{ margin: '0 0 8px' }}>{editing ? 'Edit Past Paper' : 'Add New Past Paper'}</h4>
           <input placeholder="Title (e.g., Primary 6 Math 2024)" value={form.title || ''} onChange={(e) => setForm({...form, title: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} required />
-          <select value={form.subject || 'Mathematics'} onChange={(e) => setForm({...form, subject: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
-            {['Mathematics','English','Kinyarwanda','Science','Social Studies','French','ICT','Religion'].map(s => <option key={s} value={s}>{s}</option>)}
+          <select value={form.level || 'primary'} onChange={(e) => setForm({...form, level: e.target.value, subject: ''})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
+            <option value="primary">📘 Primary</option>
+            <option value="secondary">📗 Secondary</option>
           </select>
-          <select value={form.year || '2024'} onChange={(e) => setForm({...form, year: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
-            {['2024','2023','2022','2021','2020','2019'].map(y => <option key={y} value={y}>{y}</option>)}
+          <select value={form.subject || ''} onChange={(e) => setForm({...form, subject: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }} required>
+            <option value="" disabled>Select subject…</option>
+            <optgroup label="Primary">
+              {PRIMARY_SUBJECTS.map(s => <option key={'p-' + s} value={s}>{s}</option>)}
+            </optgroup>
+            <optgroup label="Secondary">
+              {SECONDARY_SUBJECTS.filter(s => !PRIMARY_SUBJECTS.includes(s) || (form.level || 'primary') === 'secondary').map(s => <option key={'s-' + s} value={s}>{s}</option>)}
+            </optgroup>
+          </select>
+          <select value={form.year || String(new Date().getFullYear())} onChange={(e) => setForm({...form, year: e.target.value})} style={{ padding: 10, borderRadius: 8, border: '1.5px solid #e2e8f0' }}>
+            {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <input type="file" onChange={(e) => setForm({...form, _file: e.target.files[0]})} style={{ fontSize: 13 }} accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx" />
-          <div style={{ fontSize: 12, color: '#94a3b8' }}>Upload a Word, PDF, or other document</div>
+          <div style={{ fontSize: 12, color: '#94a3b8' }}>Upload a Word, PDF, or other document — students can view it or take it as an AI-generated quiz (PDF/DOCX/TXT)</div>
           {form._file && <div style={{ fontSize: 13, color: '#059669', padding: '6px 10px', background: '#f0fdf4', borderRadius: 6 }}>✅ File ready: {form._file.name}</div>}
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="submit" disabled={uploading} style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{editing ? 'Update' : 'Add Past Paper'}</button>
